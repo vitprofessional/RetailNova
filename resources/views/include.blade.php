@@ -290,11 +290,6 @@
                                           </a>
                                   </li>
                                   <li class="">
-                                          <a href="{{route('returnSale')}}">
-                                              <i class="las la-minus"></i><span>Sale Return</span>
-                                          </a>
-                                  </li>
-                                  <li class="">
                                             <a href="{{route('returnSaleList')}}">
                                                 <i class="las la-minus"></i><span>Sale Return List</span>
                                             </a>

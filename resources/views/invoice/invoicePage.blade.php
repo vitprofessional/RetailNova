@@ -31,7 +31,7 @@
           <th>Unit Price</th>
           <th>Total</th>
         </tr>
-      </thead>
+      </thead>  
       <tbody class="text-right">
         @if($items)
         @php

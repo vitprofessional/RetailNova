@@ -694,4 +694,39 @@ $(document).on('click','#add-product',function(){
         },
     });
 })
+
+    function returnQtyCalculate(avlQty,qty,salePrice,returnAmount){
+        let retQty = parseInt($("#"+qty).val());
+        let ablQty = parseInt($("#"+avlQty).val());
+        let returnSalePrice = parseInt($("#"+salePrice).val());
+        if(retQty>ablQty){
+            alert('You have max '+ablQty+' for return');
+        }else{
+            let returnAmt = parseInt(retQty*returnSalePrice);            
+            $("#"+returnAmount).val(returnAmt);
+
+            
+            let products = [];
+
+            $('.product-row').each(function () {
+                let price = parseFloat($(this).find('.price').val()) || 0;
+                let quantity = parseInt($(this).find('.quantity').val()) || 0;
+                products.push({ price: price, quantity: quantity });
+            });
+
+            $.ajax({
+                url: '{{ route("calculate.grand.total") }}',
+                type: 'get',
+                data: {
+                    items: products, purchaseId: 0
+                },
+                success: function (response) {
+                    $('#grandTotal').text(response.grandTotal);
+                },
+                error: function () {
+                    alert("Error calculating total.");
+                }
+            });
+        }
+    }
 </script>

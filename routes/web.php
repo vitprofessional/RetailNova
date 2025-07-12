@@ -342,7 +342,7 @@ Route::middleware(['posAdmin'])->group(function(){
         'invoiceGenerate'
     ])->name('invoiceGenerate');
 
-    Route::get('/return/sale',[
+    Route::get('/return/sale/{id}',[
         saleController::class,
         'returnSale'
     ])->name('returnSale');
