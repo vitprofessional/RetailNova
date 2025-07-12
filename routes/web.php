@@ -59,6 +59,21 @@ Route::get('/business/setup',[
     'storeCreat'
 ])->name('storeCreat');
 
+Route::post('/business/save',[
+    businessController::class,
+    'saveBusiness'
+])->name('saveBusiness');
+
+Route::post('/business/logo/save',[
+    businessController::class,
+    'saveBusinessLogo'
+])->name('saveBusinessLogo');
+
+Route::get('/business/logo/delete/{id}',[
+    businessController::class,
+    'delBusinessLogo'
+])->name('delBusinessLogo');
+
 Route::get('/user/confirm/mail',[
     userInfo::class,
     'userConfirmMail'

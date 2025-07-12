@@ -7,7 +7,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>E-Shop | @yield('backTitle')</title>
+    <title>Retail Nova | @yield('backTitle')</title>
     
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{asset('/public/eshop/')}}/assets/images/favicon.ico" />
@@ -138,7 +138,7 @@
       <div class="iq-sidebar  sidebar-default ">
           <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
               <a href="{{ route('dashboard') }}" class="header-logo">
-                  <img src="{{asset('/public/eshop/')}}/assets/images/logo.png" class="img-fluid rounded-normal light-logo" alt="logo"><h5 class="logo-title light-logo ml-3">E-Shop</h5>
+                  <img src="{{asset('/public/eshop/')}}/assets/images/logo.png" class="img-fluid rounded-normal light-logo" alt="logo"><h5 class="logo-title light-logo ml-3">Retail Nova</h5>
               </a>
               <div class="iq-menu-bt-sidebar ml-0">
                   <i class="las la-bars wrapper-menu"></i>
@@ -481,16 +481,11 @@
                               </svg>
                           </a>
                           <ul id="return" class="iq-submenu collapse" data-parent="#iq-sidebar-toggle">
-                                  <li class="">
-                                          <a href="{{route('addBusinessSetupPage')}}">
-                                              <i class="las la-minus"></i><span>Setup Page</span>
-                                          </a>
-                                  </li>
-                                  <li class="">
-                                          <a href="{{route('invoicePage')}}">
-                                              <i class="las la-minus"></i><span>Invoice Page</span>
-                                          </a>
-                                  </li>
+                                <li class="">
+                                        <a href="{{route('addBusinessSetupPage')}}">
+                                            <i class="las la-minus"></i><span>Setup Page</span>
+                                        </a>
+                                </li>
                           </ul>
                       </li>
                   </ul>
