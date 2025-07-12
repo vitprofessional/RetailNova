@@ -59,7 +59,8 @@
                                 <td>
                                     <a href="{{ route('invoiceGenerate',['id'=>$sl->id]) }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-print"></i></a>
                                 </td>
-                                <td>-</td>
+                                <td><a href="{{ route('returnSale',['id'=>$sl->id]) }}" class="btn btn-danger btn-sm"><i class="fa-regular fa-turn-down-left "></i></a></td>
+                                <td><a href="{{ route('invoiceGenerate',['id'=>$sl->id]) }}" ><i class="fa-solid fa-trash fa-xl" style="color: #c20c0cff;"></i></a></td>
                             </tr>
                             @empty
                             <tr>

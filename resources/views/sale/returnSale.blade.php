@@ -1,22 +1,22 @@
-@extends('include') @section('backTitle') sale list @endsection @section('container')
+@extends('include') @section('backTitle') sale return @endsection @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
 <div class="card">
-    <div class="card-header text-center"><h4>Sale Return</h4></div>
+    <div class="card-header text-center" style="color: #c20c0cff;"><h4>Sale Return</h4></div>
     <div class="card-body">
         <div class="row">
             <div class="col-md-4">
                 <h5>Customer Details</h5>
                 <hr />
-                <p><strong>Name:</strong> Hasnat Saimun</p>
-                <p><strong>Mobile:</strong> 01755048017</p>
-                <p><strong>Address:</strong> cumilla</p>
+                <p><strong>Name:</strong> {{ $customer->name }}</p>
+                <p><strong>Mobile:</strong> {{ $customer->mobile }}</p>
+                <p><strong>Address:</strong> {{ $customer->city }},{{ $customer->area }}</p>
             </div>
-            <div class="col-md-4">
-                <p><strong>Date:</strong> 03-07-2025</p>
-                <p><strong>Reference:</strong> lk</p>
-                <p><strong>Note:</strong></p>
+            <div class="col-md-4 mt-5">
+                <p class="mt-1"><strong>Date:</strong> {{ \Carbon\Carbon::parse($invoice->date)->format('d-m-Y') }}</p>
+                <p><strong>Reference:</strong> {{ $invoice->reference }}</p>
+                <p><strong>Note:</strong>{{ $invoice->note }}</p>
             </div>
             <div class="col-md-4 text-md-end">
                 <div class="card">
@@ -25,17 +25,17 @@
                         <div class="row">
                             <div class="col-12 p-1">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label class="form-label" style="margin-bottom: 0px;">Total:</label><input disabled="" class="form-control form-control-sm" type="text" value="1,400" style="width: 50%;" />
+                                    <label class="form-label" style="margin-bottom: 0px;">Total:</label><input disabled="" class="form-control form-control-sm" type="text" value="{{ $invoice->totalSale }}" style="width: 50%;" />
                                 </div>
                             </div>
                             <div class="col-12 p-1">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label class="form-label" style="margin-bottom: 0px;">Paid Amount:</label><input disabled="" class="form-control form-control-sm" type="text" value="0" style="width: 50%;" />
+                                    <label class="form-label" style="margin-bottom: 0px;">Paid Amount:</label><input disabled="" class="form-control form-control-sm" type="text" value="{{ $invoice->paidAmount }}" style="width: 50%;" />
                                 </div>
                             </div>
                             <div class="col-12 p-1">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label class="form-label" style="margin-bottom: 0px;">Due Amount:</label><input disabled="" class="form-control form-control-sm" type="text" value="1,400" style="width: 50%;" />
+                                    <label class="form-label" style="margin-bottom: 0px;">Due Amount:</label><input disabled="" class="form-control form-control-sm" type="text" value="{{ $invoice->curDue }}" style="width: 50%;" />
                                 </div>
                             </div>
                         </div>
@@ -61,17 +61,28 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>Roci Chanacur</td>
-                            <td>10</td>
-                            <td>120</td>
-                            <td>1,200</td>
+                        @if($items)
+                        @php
+                        $sl = 1;
+                        @endphp
+                        @foreach($items as $item)
+                        <tr class="product-row">
+                            <td>{{ $sl }}</td>
+                            <td>{{ $item->productName }}</td>
+                            <td><input type="number" step="0.01" id="avlQty{{$sl}}" class="form-control form-control-sm" value="{{ $item->qty }}" readonly /></td>
+                            <td><input type="number" step="0.01" id="salePrice{{$sl}}" class="form-control form-control-sm price" value="{{ $item->salePrice }}" readonly /></td>
+                            <td>{{ number_format($item->totalSale ?? 0, 2, '.', ',') }}</td>
                             <td><input type="checkbox" /></td>
-                            <td><input type="number" step="0.01" class="form-control form-control-sm" value="" /></td>
-                            <td><input type="number" class="form-control form-control-sm" value="0" /></td>
+                            <td><input type="number" step="0.01" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" onkeyup="returnQtyCalculate('avlQty{{$sl}}','rtnqty{{$sl}}','salePrice{{$sl}}','returnAmount{{$sl}}')" value="" /></td>
+                            <td><input type="number" class="form-control form-control-sm" value="0" id="returnAmount{{$sl}}" /></td>
                             <td></td>
                         </tr>
+                        
+                        @php
+                        $sl++;
+                        @endphp
+                        @endforeach
+                        @else
                         <tr>
                             <td>2</td>
                             <td>Crime Chake</td>
@@ -83,11 +94,12 @@
                             <td><input type="number" class="form-control form-control-sm" value="0" /></td>
                             <td></td>
                         </tr>
+        @endif
                     </tbody>
                 </table>
             </div>
         </div>
-        <div class="mt-3 text-end mx-5 text-danger"><h5>Total Return Amount: 0</h5></div>
+        <div class="mt-3 text-end mx-5 text-danger"><h5>Total Return Amount: <span id="grandTotal">0</span></h5></div>
         <div class="row shadow p-3">
             <div class="col-12">
                 <h5 class="card-title">Return Details</h5>
@@ -113,3 +125,4 @@
     </div>
 </div>
 @endsection
+@include('customScript')
