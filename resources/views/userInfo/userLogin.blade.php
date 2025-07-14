@@ -8,7 +8,7 @@
 <head>
     <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-      <title>POS Dash | uesr-login</title>
+      <title>Retail Nova | User Login</title>
       
       <!-- Favicon -->
       <link rel="shortcut icon" href="https://templates.iqonic.design/posdash/html/assets/images/favicon.ico" />
@@ -16,8 +16,15 @@
       <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/backende209.css?v=1.0.0">
       <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/%40fortawesome/fontawesome-free/css/all.min.css">
       <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/line-awesome/dist/line-awesome/css/line-awesome.min.css">
-      <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/remixicon/fonts/remixicon.css">  </head>
-  <body class=" ">
+      <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/remixicon/fonts/remixicon.css">  
+   <head>
+      <style>
+         .bg-login {
+            background-color: #dadbdb !important;
+         }
+      </style>
+   </head>
+  <body class="bg-login">
     <!-- loader Start -->
     <div id="loading">
           <div id="loading-center">
@@ -29,15 +36,15 @@
       <section class="login-content">
          <div class="container">
             <div class="row align-items-center justify-content-center height-self-center">
-               <div class="col-lg-7">
-                  <div class="card auth-card">
+               <div class="@if($config->count()>0) col-5 @else col-7 @endif">
+                  <div class="card auth-card shadow">
                      <div class="card-body">
                         <div class="d-flex align-items-center auth-content">
-                           <div class="col-lg-5 content-right">
-                              <img src="{{asset('/public/eshop/')}}/assets/images/login/01.png" class="img-fluid image-right" alt="">
-                           </div>
-                           <div class="col-lg-7 align-self-center">
+                           <div class="col-12 align-self-center">
                               <div class="row">
+                                 <div class="@if($config->count()>0) col-6 @else col-4 @endif mx-auto">
+                                    <img src="{{asset('/public/eshop/')}}/assets/images/login/01.png" class="img-fluid image-right" alt="">
+                                 </div>
                                  <div class="col-12">
                                        @if(session()->has('success'))
                                           <div class="alert alert-success w-100">
