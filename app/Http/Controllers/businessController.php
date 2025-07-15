@@ -46,8 +46,9 @@ class businessController extends Controller
         $business = BusinessSetup::find($requ->businessId);
         if($requ->hasFile('businessLogo')):
 
-            $file = $requ->file('businessLogo');
-            $filename = time() . '_' . $file->getClientOriginalName();
+            $file       = $requ->file('businessLogo');
+            // $filename   = time() . '_' . $file->getClientOriginalName();
+            $upFile     = $file->hashName();
             $destinationPath = public_path('uploads/business');
 
             // Create directory if not exists
@@ -55,9 +56,9 @@ class businessController extends Controller
                 mkdir($destinationPath, 0755, true);
             }
 
-            $file->move($destinationPath, $filename);
+            $file->move($destinationPath, $upFile);
 
-            $business->businessLogo = $filename;
+            $business->businessLogo = $upFile;
             if($business->save()):
                 Alert::success("Success","Business logo updated");
                 return back();
