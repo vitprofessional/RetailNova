@@ -61,8 +61,8 @@ Dashboard
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-3 ">
-                        <div class="alert alert-info">
-                            <div class="card-body">
+                        <div class="alert text-white bg-secondary" role="alert">
+                            <div class="iq-alert-text  card-body">
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
                                         <p class="mb-2">Received</p>
@@ -70,7 +70,7 @@ Dashboard
                                     </div>
                                 </div>                                
                                 <div class="iq-progress-bar">
-                                    <span class="bg-info iq-progress progress-1" data-percent="70">
+                                    <span class="bg-light iq-progress progress-1" data-percent="70">
                                     </span>
                                 </div>
                             </div>
