@@ -48,7 +48,8 @@
                                 <td>
                                     <a href="{{ route('purchaseView',['id'=>$purchase->id]) }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-eye"></i></a>
                                 </td>
-                                <td>-</td>
+                                <td><a href="{{ route('returnPurchase',['id'=>$purchase->id]) }}" class="btn btn-danger btn-sm"><i class="fa-regular fa-turn-down-left "></i></a></td>
+                                <td><a href="{{ route('delPurchase',['id'=>$purchase->id]) }}" ><i class="fa-solid fa-trash fa-xl" style="color: #c20c0cff;"></i></a></td>
                             </tr>
                             @empty
                             <tr>
