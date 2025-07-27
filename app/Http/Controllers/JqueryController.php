@@ -164,7 +164,7 @@ class JqueryController extends Controller
         }
 
         return response()->json([
-            'grandTotal'    => number_format($grandTotal, 2),
+            'grandTotal'    => $grandTotal,
             'currentStock'  => $stock
         ]);
     }

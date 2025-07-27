@@ -367,6 +367,12 @@ Route::middleware(['posAdmin'])->group(function(){
         saleController::class,
         'returnSaleList'
     ])->name('returnSaleList');
+
+
+    Route::post('sale/return/save',[
+        saleController::class,
+        'saleReturnSave'
+    ])->name('saleReturnSave');
     //sale end
 
     // expense------------------------

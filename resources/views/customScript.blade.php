@@ -721,12 +721,21 @@ $(document).on('click','#add-product',function(){
                     items: products, purchaseId: 0
                 },
                 success: function (response) {
-                    $('#grandTotal').text(response.grandTotal);
+                    $('#grandTotal').val(response.grandTotal);
                 },
                 error: function () {
                     alert("Error calculating total.");
                 }
             });
         }
+    }
+
+    function adjustDue(total, due){
+        var gTotal      = parseInt($("#"+total).val());
+        var dueAmount   = parseInt($("#"+due).val());
+
+        var newGtotal   = gTotal-dueAmount;
+        console.log(gTotal)
+        $('#grandTotal').val(newGtotal);
     }
 </script>

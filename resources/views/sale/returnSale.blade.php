@@ -2,8 +2,11 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<div class="card">
-    <div class="card-header text-center" style="color: #c20c0cff;"><h4>Sale Return</h4></div>
+<form class="card form" action="{{ route('saleReturnSave') }}" method="POST">
+    @csrf
+    <div class="card-header text-center" style="color: #c20c0cff;">
+        <h4>Sale Return</h4>
+    </div>
     <div class="card-body">
         <div class="row">
             <div class="col-md-4">
@@ -99,13 +102,28 @@
                 </table>
             </div>
         </div>
-        <div class="mt-3 text-end mx-5 text-danger"><h5>Total Return Amount: <span id="grandTotal">0</span></h5></div>
+        <div class="row">
+            <div class="col-6">
+                <div class="input-group mb-3">
+                    <span class="input-group-text rounded-0 p-0 px-2 bg-light">Total Return:</span>
+                    <input type="number" id="grandTotal" class="form-control" value="0" readonly name="grandTotal">
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="input-group mb-3">
+                    <span class="input-group-text rounded-0 p-0 px-2 bg-light">Adjust Amount</span>
+                    <input type="number" id="adjustAmount" onchange="adjustDue('grandTotal','adjustAmount')" class="form-control" value="0" @if($invoice->curDue == 0) readonly @endif>
+                </div>
+            </div>
+            
+        </div>
+        
         <div class="row shadow p-3">
             <div class="col-12">
-                <h5 class="card-title">Return Details</h5>
+                <h5 class="card-title">Return Details(Optional)</h5>
                 <form>
                     <div class="row">
-                        <div class="col-md-6 mb-3"><label class="form-label">Return Note:</label><textarea class="form-control" rows="2"></textarea>
+                        <div class="col-md-6 mb-3"><textarea class="form-control" placeholder="Enter return note if any" rows="2"></textarea>
                     </div>
                     <div class="col-md-3 d-flex align-items-center">
                         <div class="d-flex gap-4 w-100">
@@ -123,6 +141,6 @@
             </div>
         </div>
     </div>
-</div>
+</form>
 @endsection
 @include('customScript')
