@@ -174,7 +174,7 @@ class JqueryController extends Controller
         $sales = new SaleProduct();
 
         $sales->invoice         = $requ->invoice;
-        $sales->date   = $requ->date;
+        $sales->date            = $requ->date;
         $sales->customerId      = $requ->customerId;
         $sales->reference       = $requ->reference;
         $sales->note            = $requ->note;
@@ -204,7 +204,7 @@ class JqueryController extends Controller
                     $profitMargin   = ($profitTotal/$totalPurchase)*100;
                     $profitParcent  = number_format($profitMargin,2);
 
-                    $invoice->totalSale = $totalSale;
+                    $invoice->totalSale     = $totalSale;
                     $invoice->totalPurchase = $totalPurchase;
                     $invoice->profitTotal   = $profitTotal;
                     $invoice->profitMargin  = $profitParcent;
