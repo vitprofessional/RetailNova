@@ -4,6 +4,7 @@
 </div>
 <form class="card form" action="{{ route('saleReturnSave') }}" method="POST">
     @csrf
+    <input type="hidden" name="saleId" value="{{ $customer->id }}">
     <div class="card-header text-center" style="color: #c20c0cff;">
         <h4>Sale Return</h4>
     </div>
@@ -38,7 +39,7 @@
                             </div>
                             <div class="col-12 p-1">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label class="form-label" style="margin-bottom: 0px;">Due Amount:</label><input disabled="" class="form-control form-control-sm" type="text" value="{{ $invoice->curDue }}" style="width: 50%;" />
+                                    <label class="form-label" style="margin-bottom: 0px;">Due Amount:</label><input disabled="" class="form-control form-control-sm" id="dueAmount" type="text" value="{{ $invoice->curDue }}" style="width: 50%;" />
                                 </div>
                             </div>
                         </div>

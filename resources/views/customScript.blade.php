@@ -89,49 +89,65 @@ function actSaleProduct(){
 }
 
 // calculate sale details
-function calculateSaleDetails(pid,proField,pf,bp,sp,ts,tp,qd,pm,pt){
-    let buyPrice        = parseInt($(bp).val());
-    let salePrice       = parseInt($(sp).val());
-    let purchaseId      = parseInt($(pf).val());
-    let qty             = parseInt($(qd).val());
-    let totalPurchase   = parseInt(buyPrice*qty);
-    let totalSale       = parseInt(salePrice*qty);
-    let profitValue     = parseInt((totalSale-totalPurchase));
-    let profitPercent   = parseFloat(parseFloat((profitValue/totalPurchase)*100).toFixed(2));
-    
-        let items = [];
+function calculateSaleDetails(pid, proField, pf, bp, sp, ts, tp, qd, pm, pt) {
+  // Helper to coerce any input (number or string with commas) into a number
+  const num = (v) => {
+    if (v === null || v === undefined) return 0;
+    const s = String(v).trim();
+    if (!s) return 0;
+    return Number(s.replace(/,/g, '')) || 0;
+  };
 
-        $('.product-row').each(function () {
-            let price = parseFloat($(this).find('.sale-price').val()) || 0;
-            let quantity = parseInt($(this).find('.quantity').val()) || 0;
-            items.push({ price: price, quantity: quantity });
-        });
+  const buyPrice      = num($(bp).val());
+  const salePrice     = num($(sp).val());
+  const purchaseId    = num($(pf).val());
+  const qty           = num($(qd).val());
 
-        $.get('{{ route("calculate.grand.total") }}', { items: items, purchaseId: purchaseId }, function (response) {
-            if(qty>response.currentStock){
-                alert('You can not order more then '+response.currentStock+', because of product sortage')
-            }else{
-                let discountAmount  = parseInt($("#discountAmount").val());
-                let dstAmount       = discountAmount ? discountAmount:0;
-                let grandTotal      = response.grandTotal.replace(/,/g, '');
-                let paidAmount      = parseInt($("#paidAmount").val());
-                let payAmount       = paidAmount ? paidAmount: 0;
-                let gTotal          = parseInt(grandTotal-dstAmount);
-                let dueAmount       = parseInt(gTotal-payAmount);
-                // let grandTotal  = gTotal;
-                $('#grandTotal').val(gTotal);
-                $('#totalSaleAmount').val(grandTotal);
-                $('#dueAmount').val(dueAmount);
-                $('#curDue').val(dueAmount);
-            }
-        });
-    
+  const totalPurchase = buyPrice * qty;
+  const totalSale     = salePrice * qty;
+  const profitValue   = totalSale - totalPurchase;
+  const profitPercent = totalPurchase > 0 ? Number(((profitValue / totalPurchase) * 100).toFixed(2)) : 0;
 
-        $(ts).html(totalSale);
-        $(tp).html(totalPurchase);
-        $(pm).html(profitPercent);
-        $(pt).html(profitValue);
+  // Collect line items robustly
+  const items = [];
+  $('.product-row').each(function () {
+    const price    = num($(this).find('.sale-price').val());
+    const quantity = num($(this).find('.quantity').val());
+    items.push({ price, quantity });
+  });
+
+  $.get('{{ route("calculate.grand.total") }}', { items, purchaseId }, function (response) {
+    // Guard numbers from response
+    const currentStock = num(response.currentStock);
+
+    if (qty > currentStock) {
+      alert('You cannot order more than ' + currentStock + ', due to product shortage');
+      return;
+    }
+
+    // Make sure grandTotal works whether it’s "1,234.50" or 1234.5
+    const serverGrandTotal = num(response.grandTotal);
+
+    const discountAmount = num($("#discountAmount").val());
+    const paidAmount     = num($("#paidAmount").val());
+
+    const gTotal    = Math.max(0, serverGrandTotal - discountAmount);
+    const dueAmount = Math.max(0, gTotal - paidAmount);
+
+    // Write back (keep raw numbers in inputs; format if you want to display)
+    $('#grandTotal').val(gTotal);
+    $('#totalSaleAmount').val(serverGrandTotal);
+    $('#dueAmount').val(dueAmount);
+    $('#curDue').val(dueAmount);
+  });
+
+  // Update UI bits
+  $(ts).html(totalSale);
+  $(tp).html(totalPurchase);
+  $(pm).html(profitPercent);
+  $(pt).html(profitValue);
 }
+
 
 function saleProductSelect(){
     var product = $("#productName").val();
@@ -731,11 +747,38 @@ $(document).on('click','#add-product',function(){
     }
 
     function adjustDue(total, due){
-        var gTotal      = parseInt($("#"+total).val());
-        var dueAmount   = parseInt($("#"+due).val());
+            
+        let products = [];
 
-        var newGtotal   = gTotal-dueAmount;
-        console.log(gTotal)
-        $('#grandTotal').val(newGtotal);
+        $('.product-row').each(function () {
+            let price = parseFloat($(this).find('.price').val()) || 0;
+            let quantity = parseInt($(this).find('.quantity').val()) || 0;
+            products.push({ price: price, quantity: quantity });
+        });
+
+        $.ajax({
+            url: '{{ route("calculate.grand.total") }}',
+            type: 'get',
+            data: {
+                items: products, purchaseId: 0
+            },
+            success: function (response) {
+                $('#grandTotal').val(response.grandTotal);
+
+                var totalDue    = parseInt($("#dueAmount").val());
+                var gTotal      = parseInt($("#"+total).val());
+                var dueAmount   = parseInt($("#"+due).val());
+                if(dueAmount>totalDue){
+                    alert('Sorry! You can not adjust more then '+totalDue);
+                }else{
+                    var newGtotal   = gTotal-dueAmount;
+                    console.log(gTotal)
+                    $('#grandTotal').val(newGtotal);
+                }
+            },
+            error: function () {
+                alert("Error calculating total.");
+            }
+        });
     }
 </script>

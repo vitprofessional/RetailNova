@@ -71,11 +71,67 @@ class saleController extends Controller
             $message = Alert::error('Sorry!','No invoice items found');
             return back();
         endif;
+    }
+    
+    public function saleReturnSave(){
+        // return $requ;
+        $sales = new returnSaleProduct();
+
+        $sales->invoice         = $requ->invoice;
+        $sales->date            = $requ->date;
+        $sales->customerId      = $requ->customerId;
+        $sales->reference       = $requ->reference;
+        $sales->note            = $requ->note;
+        $sales->totalSale       = $requ->totalSaleAmount;
+        $sales->discountAmount  = $requ->discountAmount;
+        $sales->grandTotal      = $requ->grandTotal;
+        $sales->paidAmount      = $requ->paidAmount;
+        $sales->invoiceDue      = $requ->dueAmount;
+        $sales->prevDue         = $requ->prevDue;
+        $sales->curDue          = $requ->curDue;
+        $sales->status          = "Ordered";
         
+        $items = $requ->qty;
+        if($sales->save()):
+            if(count($items)>0):
+                foreach($items as $index => $item):
+                    $invoice = new returnInvoiceItem();
+                    $invoice->purchaseId = $requ->purchaseData[$index];
+                    $invoice->saleId = $sales->id;
+                    $invoice->qty = $item;
+                    $invoice->salePrice = $requ->salePrice[$index];
+                    $invoice->buyPrice = $requ->buyPrice[$index];
+
+                    $totalSale      = $requ->salePrice[$index]*$item;
+                    $totalPurchase  = $requ->buyPrice[$index]*$item;
+                    $profitTotal    = $totalSale-$totalPurchase;
+                    $profitMargin   = ($profitTotal/$totalPurchase)*100;
+                    $profitParcent  = number_format($profitMargin,2);
+
+                    $invoice->totalSale     = $totalSale;
+                    $invoice->totalPurchase = $totalPurchase;
+                    $invoice->profitTotal   = $profitTotal;
+                    $invoice->profitMargin  = $profitParcent;
+
+                    if($invoice->save()):
+                        // stock updated
+                        $stockHistory = ProductStock::where(['purchaseId'=>$requ->purchaseData[$index]])->first();
+                        $updatedStock = $stockHistory->currentStock-$item;
+                        $stockHistory->currentStock = $updatedStock;
+                        $stockHistory->save();
+                    endif;
+                endforeach;
+            endif;
+
+            $message = Alert::success('Success!','Data saved successfully');
+            return back();
+        else:
+            $message = Alert::error('Sorry!','Data failed to save');
+            return back();
+        endif;
     }
 
      public function returnSaleList(){
         return view('sale.returnSaleList');
-        
     }
 }
