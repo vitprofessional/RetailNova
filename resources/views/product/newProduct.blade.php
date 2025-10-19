@@ -188,7 +188,7 @@
                             <td>{{$productList->created_at->format('d-m-Y')}}</td>
                             <td>
                                 <div class="d-flex align-items-center list-action">
-                                    <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
+                                   
 
                                     <a href="{{route('editProduct',['id'=>$productList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit">
                                         <i class="ri-pencil-line mr-0"></i>
