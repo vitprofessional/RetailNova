@@ -29,20 +29,31 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>
-                                    <div class="checkbox d-inline-block">
-                                        <input type="checkbox" class="checkbox-input" id="checkbox2" />
-                                        <label for="checkbox2" class="mb-0"></label>
-                                    </div>
-                                </td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
+                            @if($productStockList)
+                                @foreach($productStockList as $product)
+                                    <tr>
+                                        <td>
+                                            <div class="checkbox d-inline-block">
+                                                <input type="checkbox" class="checkbox-input" id="checkbox{{ $product->id }}" />
+                                                <label for="checkbox{{ $product->id }}" class="mb-0"></label>
+                                            </div>
+                                        </td>
+                                        <td>{{ $product->productName }}</td>
+                                        <td>{{ $product->barcode }}</td>
+                                        <td>{{ $product->currentStock ? '-' }}</td>
+                                        <td>{{ $product->buyPrice }}</td>
+                                        <td>{{ $product->salePriceExVat }}</td>
+                                        <td>{{ $product->discount }}</td>
+                                        <td>
+                                            <!-- Action buttons can be added here -->
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @else
+                                <tr>
+                                    <td colspan="8" class="text-center">No products available.</td>
+                                </tr>
+                            @endif
                         </tbody>
                     </table>
                 </div>

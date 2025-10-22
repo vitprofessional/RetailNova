@@ -8,6 +8,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\ProductUnit;
 use Alert;
+use App\Models\ProductStock;
 
 class productController extends Controller
 {
@@ -117,7 +118,18 @@ class productController extends Controller
     
     //stock product
     public function stockProduct(){
-      return view('product.stockProduct');
+        $productStock = ProductStock::join('products','products.id','product_stocks.productId')->leftJoin('purchase_products','purchase_products.id','product_stocks.purchaseId')->select(
+            'product_stocks.id as stockId',
+            'products.id as productId',
+            'products.name as productName',
+            'purchase_products.invoice as invoiceNo',
+            'purchase_products.buyPrice as buyPrice',
+            'purchase_products.salePriceExVat as salePriceExVat',
+            'purchase_products.salePriceInVat as salePriceInVat',
+            'purchase_products.disAmount as discount',
+            'product_stocks.currentStock'
+        )->orderBy('product_stocks.id','DESC')->get();
+        return view('product.stockProduct',['productStockList'=>$productStock]);
    }
     
     //addBrand

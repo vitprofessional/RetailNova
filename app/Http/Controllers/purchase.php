@@ -18,7 +18,7 @@ class purchase extends Controller
         $productUnit = ProductUnit::orderBy('id','DESC')->get();
         $category = Category::orderBy('id','DESC')->get();
         $brand = Brand::orderBy('id','DESC')->get();
-    return view('purchase.addPurchase',['brandList'=>$brand,'categoryList'=>$category,'productUnitList'=>$productUnit,'supplierList'=>$supplier,'productList'=>$product]);
+         return view('purchase.addPurchase',['brandList'=>$brand,'categoryList'=>$category,'productUnitList'=>$productUnit,'supplierList'=>$supplier,'productList'=>$product]);
    }
 
    public function purchaseList(){
