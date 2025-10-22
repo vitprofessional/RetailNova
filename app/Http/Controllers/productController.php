@@ -118,7 +118,7 @@ class productController extends Controller
     
     //stock product
     public function stockProduct(){
-        $productStock = ProductStock::join('products','products.id','product_stocks.productId')->leftJoin('purchase_products','purchase_products.id','product_stocks.purchaseId')->select(
+        $productStock = ProductStock::join('products','products.id','product_stocks.productId')->leftJoin('purchase_products','purchase_products.id','product_stocks.purchaseId')->leftJoin('suppliers','suppliers.id','purchase_products.supplier')->select(
             'product_stocks.id as stockId',
             'products.id as productId',
             'products.name as productName',
@@ -127,7 +127,8 @@ class productController extends Controller
             'purchase_products.salePriceExVat as salePriceExVat',
             'purchase_products.salePriceInVat as salePriceInVat',
             'purchase_products.disAmount as discount',
-            'product_stocks.currentStock'
+            'product_stocks.currentStock',
+            'suppliers.name as supplierName'
         )->orderBy('product_stocks.id','DESC')->get();
         return view('product.stockProduct',['productStockList'=>$productStock]);
    }

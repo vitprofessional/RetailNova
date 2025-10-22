@@ -20,7 +20,7 @@
                                     </div>
                                 </th>
                                 <th>Product Name</th>
-                                <th>Barcode</th>
+                                <th>Supplier</th>
                                 <th>Stock Quantity</th>
                                 <th>Purchase Price</th>
                                 <th>Sale Price</th>
@@ -39,8 +39,8 @@
                                             </div>
                                         </td>
                                         <td>{{ $product->productName }}</td>
-                                        <td>{{ $product->barcode }}</td>
-                                        <td>{{ $product->currentStock ? '-' }}</td>
+                                        <td>{{ $product->supplierName }}</td>
+                                        <td>{{ $product->currentStock }}</td>
                                         <td>{{ $product->buyPrice }}</td>
                                         <td>{{ $product->salePriceExVat }}</td>
                                         <td>{{ $product->discount }}</td>

@@ -6,6 +6,11 @@ use App\Models\Product;
 use App\Models\SaleProduct;
 use App\Models\InvoiceItem;
 use Alert;
+use App\Models\returnSaleProduct;
+use App\Models\returnInvoiceItem;
+use App\Models\SaleReturn;
+use App\Models\ProductStock;
+use App\Models\ReturnSaleItem;
 
 
 use Illuminate\Http\Request;
@@ -66,63 +71,49 @@ class saleController extends Controller
                 'invoice_items.qty',
                 'invoice_items.totalSale',
             )->orderBy('totalSale','desc')->get();
-            return view('sale.returnSale',['invoice'=>$invoice,'items'=>$items,'customer'=>$customer]);
+            return view('sale.returnSale',['invoice'=>$invoice,'items'=>$items,'customer'=>$customer,'saleId'=>$id]);
         else:
             $message = Alert::error('Sorry!','No invoice items found');
             return back();
         endif;
     }
     
-    public function saleReturnSave(){
+    public function saleReturnSave(Request $requ){
         // return $requ;
-        $sales = new returnSaleProduct();
-
-        $sales->invoice         = $requ->invoice;
-        $sales->date            = $requ->date;
-        $sales->customerId      = $requ->customerId;
-        $sales->reference       = $requ->reference;
-        $sales->note            = $requ->note;
-        $sales->totalSale       = $requ->totalSaleAmount;
-        $sales->discountAmount  = $requ->discountAmount;
-        $sales->grandTotal      = $requ->grandTotal;
-        $sales->paidAmount      = $requ->paidAmount;
-        $sales->invoiceDue      = $requ->dueAmount;
-        $sales->prevDue         = $requ->prevDue;
-        $sales->curDue          = $requ->curDue;
-        $sales->status          = "Ordered";
-        
-        $items = $requ->qty;
-        if($sales->save()):
+        $history = new SaleReturn();
+        $history->saleId              = $requ->invoiceId;
+        $history->totalReturnAmount    = $requ->totalReturnAmount;
+        $history->adjustAmount         = $requ->adjustAmount;
+        if($history->save())
+            $items = $requ->totalQty;
+            // return $requ->adjustAmount;
             if(count($items)>0):
                 foreach($items as $index => $item):
-                    $invoice = new returnInvoiceItem();
-                    $invoice->purchaseId = $requ->purchaseData[$index];
-                    $invoice->saleId = $sales->id;
-                    $invoice->qty = $item;
-                    $invoice->salePrice = $requ->salePrice[$index];
-                    $invoice->buyPrice = $requ->buyPrice[$index];
-
-                    $totalSale      = $requ->salePrice[$index]*$item;
-                    $totalPurchase  = $requ->buyPrice[$index]*$item;
-                    $profitTotal    = $totalSale-$totalPurchase;
-                    $profitMargin   = ($profitTotal/$totalPurchase)*100;
-                    $profitParcent  = number_format($profitMargin,2);
-
-                    $invoice->totalSale     = $totalSale;
-                    $invoice->totalPurchase = $totalPurchase;
-                    $invoice->profitTotal   = $profitTotal;
-                    $invoice->profitMargin  = $profitParcent;
-
-                    if($invoice->save()):
+                    $sales = new ReturnSaleItem();
+                    $sales->returnId            = $history->id;
+                    $sales->saleId              = $requ->saleId[$index];
+                    $sales->productId           = $requ->productId[$index];
+                    $sales->purchaseId          = $requ->purchaseId[$index];
+                    $sales->qty                 = $item;
+                    
+                    if($sales->save()):
                         // stock updated
-                        $stockHistory = ProductStock::where(['purchaseId'=>$requ->purchaseData[$index]])->first();
-                        $updatedStock = $stockHistory->currentStock-$item;
+                        $stockHistory = ProductStock::where(['purchaseId'=>$requ->purchaseId[$index]])->first();
+                        $updatedStock = $stockHistory->currentStock+$item;
                         $stockHistory->currentStock = $updatedStock;
                         $stockHistory->save();
+
+                        
+                        // stock updated
+                        $saleHistory = InvoiceItem::where(['saleId'=>$requ->saleId[$index]])->first();
+                        if($saleHistory):
+                            $updatedStockItem = $saleHistory->qty-$item;
+                            $saleHistory->qty = $updatedStockItem;
+                            $saleHistory->save();
+                        endif;
                     endif;
                 endforeach;
-            endif;
-
+            
             $message = Alert::success('Success!','Data saved successfully');
             return back();
         else:

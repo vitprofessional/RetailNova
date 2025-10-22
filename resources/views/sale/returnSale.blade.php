@@ -4,7 +4,8 @@
 </div>
 <form class="card form" action="{{ route('saleReturnSave') }}" method="POST">
     @csrf
-    <input type="hidden" name="saleId" value="{{ $customer->id }}">
+    <input type="hidden" name="customerId" value="{{ $customer->id }}">
+    <input type="hidden" name="invoiceId" value="{{ $invoice->invoice }}">
     <div class="card-header text-center" style="color: #c20c0cff;">
         <h4>Sale Return</h4>
     </div>
@@ -70,6 +71,10 @@
                         $sl = 1;
                         @endphp
                         @foreach($items as $item)
+                        
+                        <input type="hidden" name="productId[]" value="{{ $item->productId }}">
+                        <input type="hidden" name="purchaseId[]" value="{{ $item->purchaseId   }}">
+                        <input type="hidden" name="saleId[]" value="{{ $item->saleId }}">
                         <tr class="product-row">
                             <td>{{ $sl }}</td>
                             <td>{{ $item->productName }}</td>
@@ -77,7 +82,7 @@
                             <td><input type="number" step="0.01" id="salePrice{{$sl}}" class="form-control form-control-sm price" value="{{ $item->salePrice }}" readonly /></td>
                             <td>{{ number_format($item->totalSale ?? 0, 2, '.', ',') }}</td>
                             <td><input type="checkbox" /></td>
-                            <td><input type="number" step="0.01" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" onkeyup="returnQtyCalculate('avlQty{{$sl}}','rtnqty{{$sl}}','salePrice{{$sl}}','returnAmount{{$sl}}')" value="" /></td>
+                            <td><input type="number" name="totalQty[]" step="0.01" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" onkeyup="returnQtyCalculate('avlQty{{$sl}}','rtnqty{{$sl}}','salePrice{{$sl}}','returnAmount{{$sl}}')" value="" /></td>
                             <td><input type="number" class="form-control form-control-sm" value="0" id="returnAmount{{$sl}}" /></td>
                             <td></td>
                         </tr>
@@ -107,13 +112,13 @@
             <div class="col-6">
                 <div class="input-group mb-3">
                     <span class="input-group-text rounded-0 p-0 px-2 bg-light">Total Return:</span>
-                    <input type="number" id="grandTotal" class="form-control" value="0" readonly name="grandTotal">
+                    <input type="number" id="grandTotal" name="returnAmount" class="form-control" value="0" readonly name="grandTotal">
                 </div>
             </div>
             <div class="col-6">
                 <div class="input-group mb-3">
                     <span class="input-group-text rounded-0 p-0 px-2 bg-light">Adjust Amount</span>
-                    <input type="number" id="adjustAmount" onchange="adjustDue('grandTotal','adjustAmount')" class="form-control" value="0" @if($invoice->curDue == 0) readonly @endif>
+                    <input type="number" name="adjustAmount" id="adjustAmount" onchange="adjustDue('grandTotal','adjustAmount')" class="form-control" value="0" @if($invoice->curDue == 0) readonly @endif>
                 </div>
             </div>
             
