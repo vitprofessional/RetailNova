@@ -66,6 +66,7 @@ class saleController extends Controller
                 'products.id as productId',
                 'products.name as productName',
                 'invoice_items.id as invoiceId',
+                'invoice_items.saleId as saleId',
                 'invoice_items.salePrice',
                 'invoice_items.buyPrice',
                 'invoice_items.qty',
@@ -94,6 +95,7 @@ class saleController extends Controller
                     $sales->saleId              = $requ->saleId[$index];
                     $sales->productId           = $requ->productId[$index];
                     $sales->purchaseId          = $requ->purchaseId[$index];
+                    $sales->customerId          = $requ->customerId;
                     $sales->qty                 = $item;
                     
                     if($sales->save()):
@@ -105,7 +107,7 @@ class saleController extends Controller
 
                         
                         // stock updated
-                        $saleHistory = InvoiceItem::where(['saleId'=>$requ->saleId[$index]])->first();
+                        $saleHistory = InvoiceItem::where(['saleId'=>$requ->saleId[$index],'purchaseId'=>$requ->purchaseId[$index]])->first();
                         if($saleHistory):
                             $updatedStockItem = $saleHistory->qty-$item;
                             $saleHistory->qty = $updatedStockItem;

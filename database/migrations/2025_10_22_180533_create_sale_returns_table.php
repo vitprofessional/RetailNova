@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('sale_returns', function (Blueprint $table) {
             $table->id();
-            $table->Integer('saleId')->nullable();
+            $table->text('saleId')->nullable();
             $table->decimal('totalReturnAmount',10,2)->nullable();
             $table->decimal('adjustAmount',10,2)->nullable();
             $table->timestamps();
