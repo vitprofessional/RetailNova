@@ -49,4 +49,10 @@ class purchase extends Controller
       )->orderBy('totalAmount','desc')->get();
       return view('purchase.purchaseList',['purchaseList'=>$purchaseList]);
    }
+
+
+   public function returnPurchase($id){
+       
+            return view('purchase.returnPurchase');
+    }
 }

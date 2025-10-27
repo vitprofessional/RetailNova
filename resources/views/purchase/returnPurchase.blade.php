@@ -9,14 +9,14 @@
             <div class="col-md-4">
                 <h5>Supplier Details</h5>
                 <hr />
-                <p><strong>Name:</strong> {{ $customer->name }}</p>
-                <p><strong>Mobile:</strong> {{ $customer->mobile }}</p>
-                <p><strong>Address:</strong> {{ $customer->city }},{{ $customer->area }}</p>
+                <p><strong>Name:</strong></p>
+                <p><strong>Mobile:</strong> </p>
+                <p><strong>Address:</strong> </p>
             </div>
             <div class="col-md-4 mt-5">
-                <p class="mt-1"><strong>Date:</strong> {{ \Carbon\Carbon::parse($invoice->date)->format('d-m-Y') }}</p>
-                <p><strong>Reference:</strong> {{ $invoice->reference }}</p>
-                <p><strong>Note:</strong>{{ $invoice->note }}</p>
+                <p class="mt-1"><strong>Date:</strong> </p>
+                <p><strong>Reference:</strong></p>
+                <p><strong>Note:</strong></p>
             </div>
             <div class="col-md-4 text-md-end">
                 <div class="card">
@@ -25,17 +25,17 @@
                         <div class="row">
                             <div class="col-12 p-1">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label class="form-label" style="margin-bottom: 0px;">Total:</label><input disabled="" class="form-control form-control-sm" type="text" value="{{ $invoice->totalSale }}" style="width: 50%;" />
+                                    <label class="form-label" style="margin-bottom: 0px;">Total:</label><input disabled="" class="form-control form-control-sm" type="text"  style="width: 50%;" />
                                 </div>
                             </div>
                             <div class="col-12 p-1">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label class="form-label" style="margin-bottom: 0px;">Paid Amount:</label><input disabled="" class="form-control form-control-sm" type="text" value="{{ $invoice->paidAmount }}" style="width: 50%;" />
+                                    <label class="form-label" style="margin-bottom: 0px;">Paid Amount:</label><input disabled="" class="form-control form-control-sm" type="text"  style="width: 50%;" />
                                 </div>
                             </div>
                             <div class="col-12 p-1">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label class="form-label" style="margin-bottom: 0px;">Due Amount:</label><input disabled="" class="form-control form-control-sm" type="text" value="{{ $invoice->curDue }}" style="width: 50%;" />
+                                    <label class="form-label" style="margin-bottom: 0px;">Due Amount:</label><input disabled="" class="form-control form-control-sm" type="text"  style="width: 50%;" />
                                 </div>
                             </div>
                         </div>
@@ -51,7 +51,7 @@
                         <tr>
                             <th>#</th>
                             <th>Name</th>
-                            <th>Sale Quantity</th>
+                            <th>Purchase Quantity</th>
                             <th>Price</th>
                             <th>Total</th>
                             <th>Select</th>
@@ -61,28 +61,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if($items)
-                        @php
-                        $sl = 1;
-                        @endphp
-                        @foreach($items as $item)
-                        <tr class="product-row">
-                            <td>{{ $sl }}</td>
-                            <td>{{ $item->productName }}</td>
-                            <td><input type="number" step="0.01" id="avlQty{{$sl}}" class="form-control form-control-sm" value="{{ $item->qty }}" readonly /></td>
-                            <td><input type="number" step="0.01" id="salePrice{{$sl}}" class="form-control form-control-sm price" value="{{ $item->salePrice }}" readonly /></td>
-                            <td>{{ number_format($item->totalSale ?? 0, 2, '.', ',') }}</td>
-                            <td><input type="checkbox" /></td>
-                            <td><input type="number" step="0.01" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" onkeyup="returnQtyCalculate('avlQty{{$sl}}','rtnqty{{$sl}}','salePrice{{$sl}}','returnAmount{{$sl}}')" value="" /></td>
-                            <td><input type="number" class="form-control form-control-sm" value="0" id="returnAmount{{$sl}}" /></td>
-                            <td></td>
-                        </tr>
-                        
-                        @php
-                        $sl++;
-                        @endphp
-                        @endforeach
-                        @else
                         <tr>
                             <td>2</td>
                             <td>Crime Chake</td>
@@ -94,7 +72,6 @@
                             <td><input type="number" class="form-control form-control-sm" value="0" /></td>
                             <td></td>
                         </tr>
-        @endif
                     </tbody>
                 </table>
             </div>
