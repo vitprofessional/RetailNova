@@ -76,6 +76,11 @@ class purchase extends Controller
     }
 
     public function purchaseReturnSave(Request $request){
+        // Validate that quantity is integer
+        $request->validate([
+            'returnQty' => 'required|integer|min:1'
+        ]);
+
         $history = new PurchaseReturn();
         $history->purchaseId = $request->purchaseId;
         $history->totalReturnAmount = $request->totalReturnAmount;
@@ -87,13 +92,13 @@ class purchase extends Controller
             $returnItem->purchaseId = $request->purchaseId;
             $returnItem->supplierId = $request->supplierId;
             $returnItem->productId = $request->productId;
-            $returnItem->qty = $request->returnQty;
+            $returnItem->qty = (int)$request->returnQty;
             
             if($returnItem->save()):
                 // Update stock - reduce stock because we're returning items
                 $stockHistory = ProductStock::where('purchaseId', $request->purchaseId)->first();
                 if($stockHistory):
-                    $updatedStock = $stockHistory->currentStock - $request->returnQty;
+                    $updatedStock = (int)$stockHistory->currentStock - (int)$request->returnQty;
                     $stockHistory->currentStock = max(0, $updatedStock); // Ensure stock doesn't go negative
                     $stockHistory->save();
                 endif;
@@ -101,7 +106,7 @@ class purchase extends Controller
                 // Update purchase quantity
                 $purchaseHistory = PurchaseProduct::find($request->purchaseId);
                 if($purchaseHistory):
-                    $updatedQty = $purchaseHistory->qty - $request->returnQty;
+                    $updatedQty = (int)$purchaseHistory->qty - (int)$request->returnQty;
                     $purchaseHistory->qty = max(0, $updatedQty);
                     $purchaseHistory->save();
                 endif;
@@ -130,5 +135,49 @@ class purchase extends Controller
             ->get();
             
         return view('purchase.returnPurchaseList', ['returnList' => $returnList]);
+    }
+
+    public function purchaseView($id){
+        $purchase = PurchaseProduct::find($id);
+        if($purchase):
+            $supplier = Supplier::find($purchase->supplier);
+            $product = Product::find($purchase->productName);
+            $stock = ProductStock::where('purchaseId', $id)->first();
+            
+            // Get purchase history/details
+            $purchaseDetails = PurchaseProduct::where('purchase_products.id', $id)
+                ->join('suppliers', 'suppliers.id', 'purchase_products.supplier')
+                ->join('products', 'products.id', 'purchase_products.productName')
+                ->select(
+                    'purchase_products.*',
+                    'suppliers.name as supplierName',
+                    'suppliers.mobile as supplierMobile',
+                    'suppliers.mail as supplierEmail',
+                    'suppliers.country as supplierCountry',
+                    'suppliers.state as supplierState',
+                    'suppliers.city as supplierCity',
+                    'suppliers.area as supplierArea',
+                    'products.name as productName',
+                    'products.barCode as productBarCode',
+                    'products.details as productDetails'
+                )
+                ->first();
+
+            // Get related returns if any
+            $returns = PurchaseReturn::where('purchase_returns.purchaseId', $id)
+                ->join('return_purchase_items', 'return_purchase_items.returnId', 'purchase_returns.id')
+                ->select('purchase_returns.*', 'return_purchase_items.qty as returnQty')
+                ->get();
+
+            return view('purchase.viewPurchase', [
+                'purchase' => $purchaseDetails,
+                'stock' => $stock,
+                'returns' => $returns,
+                'purchaseId' => $id
+            ]);
+        else:
+            Alert::error('Sorry!','Purchase not found');
+            return back();
+        endif;
     }
 }

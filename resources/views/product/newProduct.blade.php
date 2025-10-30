@@ -111,7 +111,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="quantity" class="form-label">Alert Quantity</label>
-                                <input type="text" class="form-control" placeholder="Optional" id="quantity" name="quantity" value="{{ $quantity }}" />
+                                <input type="number" class="form-control" placeholder="Optional" id="quantity" name="quantity" value="{{ $quantity }}" min="0" step="1" />
                             </div>
                         </div>
                         <div class="col-md-3">

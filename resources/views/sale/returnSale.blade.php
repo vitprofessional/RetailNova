@@ -78,11 +78,11 @@
                         <tr class="product-row">
                             <td>{{ $sl }}</td>
                             <td>{{ $item->productName }}</td>
-                            <td><input type="number" step="0.01" id="avlQty{{$sl}}" class="form-control form-control-sm" value="{{ $item->qty }}" readonly /></td>
+                            <td><input type="number" id="avlQty{{$sl}}" class="form-control form-control-sm" value="{{ $item->qty }}" readonly /></td>
                             <td><input type="number" step="0.01" id="salePrice{{$sl}}" class="form-control form-control-sm price" value="{{ $item->salePrice }}" readonly /></td>
                             <td>{{ number_format($item->totalSale ?? 0, 2, '.', ',') }}</td>
                             <td><input type="checkbox" /></td>
-                            <td><input type="number" name="totalQty[]" step="0.01" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" onkeyup="returnQtyCalculate('avlQty{{$sl}}','rtnqty{{$sl}}','salePrice{{$sl}}','returnAmount{{$sl}}')" value="" /></td>
+                            <td><input type="number" name="totalQty[]" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" onkeyup="returnQtyCalculate('avlQty{{$sl}}','rtnqty{{$sl}}','salePrice{{$sl}}','returnAmount{{$sl}}')" value="" min="0" step="1" /></td>
                             <td><input type="number" class="form-control form-control-sm" value="0" id="returnAmount{{$sl}}" /></td>
                             <td></td>
                         </tr>
@@ -99,7 +99,7 @@
                             <td>10</td>
                             <td>200</td>
                             <td><input type="checkbox" /></td>
-                            <td><input type="number" step="0.01" class="form-control form-control-sm" value="" /></td>
+                            <td><input type="number" class="form-control form-control-sm" value="" /></td>
                             <td><input type="number" class="form-control form-control-sm" value="0" /></td>
                             <td></td>
                         </tr>

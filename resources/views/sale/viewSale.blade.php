@@ -88,7 +88,7 @@
                             <td>10</td>
                             <td>200</td>
                             <td><input type="checkbox" /></td>
-                            <td><input type="number" step="0.01" class="form-control form-control-sm" value="" /></td>
+                            <td><input type="number" class="form-control form-control-sm" value="" /></td>
                             <td><input type="number" class="form-control form-control-sm" value="0" /></td>
                             <td></td>
                         </tr>

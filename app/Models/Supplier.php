@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Supplier extends Model
 {
     protected $fillable = [
-        'name', 'mobile', 'email', 'city', 'area', 'address'
+        'name', 'mobile', 'mail', 'city', 'area', 'country', 'state', 'accReceivable', 'accPayable'
     ];
 
     /**

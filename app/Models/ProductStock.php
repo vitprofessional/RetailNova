@@ -10,6 +10,10 @@ class ProductStock extends Model
         'purchaseId', 'productId', 'currentStock'
     ];
 
+    protected $casts = [
+        'currentStock' => 'integer',
+    ];
+
     /**
      * Get the product that owns the stock.
      */

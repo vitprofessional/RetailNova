@@ -17,7 +17,8 @@
                 <hr />
                 <p><strong>Name:</strong> {{ $supplier->name ?? 'N/A' }}</p>
                 <p><strong>Mobile:</strong> {{ $supplier->mobile ?? 'N/A' }}</p>
-                <p><strong>Address:</strong> {{ $supplier->city ?? 'N/A' }}, {{ $supplier->area ?? '' }}</p>
+                <p><strong>Email:</strong> {{ $supplier->mail ?? 'N/A' }}</p>
+                <p><strong>Location:</strong> {{ $supplier->city ?? 'N/A' }}@if($supplier->area), {{ $supplier->area }}@endif</p>
             </div>
             <div class="col-md-4 mt-5">
                 <p class="mt-1"><strong>Date:</strong> {{ \Carbon\Carbon::parse($purchase->purchase_date ?? now())->format('d-m-Y') }}</p>
@@ -70,11 +71,11 @@
                         <tr class="product-row">
                             <td>1</td>
                             <td>{{ $product->name }}</td>
-                            <td><input type="number" step="0.01" id="purchaseQty" class="form-control form-control-sm" value="{{ $purchase->qty ?? 0 }}" readonly /></td>
-                            <td><input type="number" step="0.01" id="currentStock" class="form-control form-control-sm" value="{{ $stock->currentStock ?? 0 }}" readonly /></td>
+                            <td><input type="number" id="purchaseQty" class="form-control form-control-sm" value="{{ $purchase->qty ?? 0 }}" readonly /></td>
+                            <td><input type="number" id="currentStock" class="form-control form-control-sm" value="{{ $stock->currentStock ?? 0 }}" readonly /></td>
                             <td><input type="number" step="0.01" id="buyPrice" class="form-control form-control-sm price" value="{{ $purchase->buyPrice ?? 0 }}" readonly /></td>
                             <td>{{ number_format(($purchase->buyPrice ?? 0) * ($purchase->qty ?? 0), 2, '.', ',') }}</td>
-                            <td><input type="number" name="returnQty" step="0.01" id="returnQty" class="form-control form-control-sm quantity" onkeyup="calculateReturnAmount()" value="" max="{{ $stock->currentStock ?? 0 }}" /></td>
+                            <td><input type="number" name="returnQty" id="returnQty" class="form-control form-control-sm quantity" onkeyup="calculateReturnAmount()" value="" max="{{ $stock->currentStock ?? 0 }}" min="1" step="1" /></td>
                             <td><input type="number" class="form-control form-control-sm" value="0" id="returnAmount" readonly /></td>
                         </tr>
                         @else
@@ -132,14 +133,21 @@ function calculateReturnAmount() {
     const buyPrice = document.getElementById('buyPrice').value || 0;
     const currentStock = document.getElementById('currentStock').value || 0;
     
-    // Ensure return quantity doesn't exceed current stock
-    if (parseFloat(returnQty) > parseFloat(currentStock)) {
+    // Ensure return quantity doesn't exceed current stock and is integer
+    if (parseInt(returnQty) > parseInt(currentStock)) {
         alert('Return quantity cannot exceed current stock (' + currentStock + ')');
         document.getElementById('returnQty').value = currentStock;
         return;
     }
     
-    const returnAmount = parseFloat(returnQty) * parseFloat(buyPrice);
+    // Ensure quantity is integer
+    if (returnQty % 1 !== 0) {
+        alert('Stock quantity must be a whole number');
+        document.getElementById('returnQty').value = Math.floor(returnQty);
+        return;
+    }
+    
+    const returnAmount = parseInt(returnQty) * parseFloat(buyPrice);
     document.getElementById('returnAmount').value = returnAmount.toFixed(2);
     document.getElementById('grandTotal').value = returnAmount.toFixed(2);
 }

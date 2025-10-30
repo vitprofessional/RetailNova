@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('saleId')->nullable();
             $table->string('purchaseId')->nullable();
-            $table->string('qty')->nullable();
+            $table->integer('qty')->nullable();
             $table->string('salePrice')->nullable();
             $table->string('buyPrice')->nullable();
             $table->string('totalSale')->nullable();

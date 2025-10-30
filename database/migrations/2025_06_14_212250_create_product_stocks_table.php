@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('purchaseId')->nullable();
             $table->string('productId')->nullable();
-            $table->string('currentStock')->nullable();
+            $table->integer('currentStock')->nullable();
             $table->timestamps();
         });
     }

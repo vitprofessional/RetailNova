@@ -12,6 +12,10 @@ class PurchaseProduct extends Model
         'dueAmount', 'purchase_date', 'reference'
     ];
 
+    protected $casts = [
+        'qty' => 'integer',
+    ];
+
     /**
      * Get the product for this purchase.
      */

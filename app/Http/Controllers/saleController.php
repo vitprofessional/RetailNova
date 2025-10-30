@@ -80,7 +80,11 @@ class saleController extends Controller
     }
     
     public function saleReturnSave(Request $requ){
-        // return $requ;
+        // Validate that quantities are integers
+        $requ->validate([
+            'totalQty.*' => 'integer|min:0'
+        ]);
+
         $history = new SaleReturn();
         $history->saleId              = $requ->invoiceId;
         $history->totalReturnAmount    = $requ->totalReturnAmount;
@@ -96,21 +100,21 @@ class saleController extends Controller
                     $sales->productId           = $requ->productId[$index];
                     $sales->purchaseId          = $requ->purchaseId[$index];
                     $sales->customerId          = $requ->customerId;
-                    $sales->qty                 = $item;
+                    $sales->qty                 = (int)$item;
                     
                     if($sales->save()):
-                        // stock updated
+                        // stock updated - ensure integer calculations
                         $stockHistory = ProductStock::where(['purchaseId'=>$requ->purchaseId[$index]])->first();
-                        $updatedStock = $stockHistory->currentStock+$item;
+                        $updatedStock = (int)$stockHistory->currentStock + (int)$item;
                         $stockHistory->currentStock = $updatedStock;
                         $stockHistory->save();
 
                         
-                        // stock updated
+                        // stock updated - ensure integer calculations
                         $saleHistory = InvoiceItem::where(['saleId'=>$requ->saleId[$index],'purchaseId'=>$requ->purchaseId[$index]])->first();
                         if($saleHistory):
-                            $updatedStockItem = $saleHistory->qty-$item;
-                            $saleHistory->qty = $updatedStockItem;
+                            $updatedStockItem = (int)$saleHistory->qty - (int)$item;
+                            $saleHistory->qty = max(0, $updatedStockItem);
                             $saleHistory->save();
                         endif;
                     endif;

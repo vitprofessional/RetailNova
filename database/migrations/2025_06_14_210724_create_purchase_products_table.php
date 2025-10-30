@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('purchase_date')->nullable();
             $table->string('invoice')->nullable();
             $table->string('reference')->nullable();
-            $table->string('qty')->nullable();
+            $table->integer('qty')->nullable();
             $table->string('buyPrice')->nullable();
             $table->string('salePriceExVat')->nullable();
             $table->string('vatStatus')->nullable();

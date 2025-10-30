@@ -72,7 +72,7 @@
                                     -
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="qty" name="qty" readonly />
+                                    <input type="number" class="form-control" id="qty" name="qty" min="1" step="1" readonly />
                                 </td>
                                 <td width="9%">
                                     <input type="number" class="form-control" id="currentStock" name="currentStock" readonly />
