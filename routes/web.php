@@ -340,6 +340,16 @@ Route::middleware(['posAdmin'])->group(function(){
         purchase::class,
         'returnPurchase'
     ])->name('returnPurchase');
+
+    Route::post('purchase/return/save',[
+        purchase::class,
+        'purchaseReturnSave'
+    ])->name('purchaseReturnSave');
+
+    Route::get('/return/purchase/list',[
+        purchase::class,
+        'returnPurchaseList'
+    ])->name('returnPurchaseList');
     //Purchase end
     
 

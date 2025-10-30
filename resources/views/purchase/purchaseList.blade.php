@@ -4,8 +4,11 @@
     <div class="col-md-12 col-sm-12 col-lg-12">
         <div class="card">
             <div class="card-body">
-                <div class="col-12 p-0 mt-0 mb-4">
+                <div class="col-12 p-0 mt-0 mb-4 d-flex justify-content-between align-items-center">
                     <h4>Purchase List</h4>
+                    <a href="{{ route('returnPurchaseList') }}" class="btn btn-info">
+                        <i class="ri-arrow-go-back-line"></i> View Returns
+                    </a>
                 </div>
                 <div class="rounded mb-2 table-responsive product-table">
                     <table class="data-tables table mb-0 table-bordered ">

@@ -26,6 +26,7 @@
                                 <th>Category</th>
                                 <th>Unit</th>
                                 <th>Alert Quantity</th>
+                                <th>Current Stock</th>
                                 <th>Barcode</th>
                                 <th>Deatils</th>
                                 <th>Action</th>
@@ -62,6 +63,27 @@
                                     <td>-</td>
                                 @endif
                                 <td>{{$productList->quantity}}</td>
+                                <td>
+                                    <span class="badge 
+                                        @if($productList->is_out_of_stock)
+                                            bg-danger
+                                        @elseif($productList->is_low_stock)
+                                            bg-danger
+                                        @else
+                                            bg-success
+                                        @endif
+                                    ">
+                                        {{ $productList->total_stock }}
+                                        @if($productList->is_out_of_stock)
+                                            (Out of Stock)
+                                        @elseif($productList->is_low_stock)
+                                            (Low Stock)
+                                        @endif
+                                    </span>
+                                    @if($productList->is_low_stock && !$productList->is_out_of_stock)
+                                        <br><small class="text-danger"><i class="ri-alert-line"></i> Low product in stock</small>
+                                    @endif
+                                </td>
                                 <td>{{$productList->barCode}}</td>
                                 <td>{{$productList->details}}</td>
                                 <td><div class="d-flex align-items-center list-action">

@@ -36,10 +36,10 @@ class productController extends Controller
             $data->barCode       = $req->barCode;
 
             if($data->save()):
-                Alert::success('Success!','Product created successfully');
+                Alert::success('Success!','Operation successfully completed');
                 return redirect(route('addProduct'));
             else:
-                Alert::error('Failed!','Product creation failed');
+                Alert::error('Failed!','Operation failed to execute');
                 return back();
             endif;
     }
@@ -99,7 +99,7 @@ class productController extends Controller
         $productUnit = ProductUnit::orderBy('id','DESC')->get();
         $category = Category::orderBy('id','DESC')->get();
         $brand = Brand::orderBy('id','DESC')->get();
-        $data = Product::orderBy('id','DESC')->get();
+        $data = Product::with('stocks')->orderBy('id','DESC')->get();
       return view('product.productList',['listItem'=>$data,'brandList'=>$brand,'categoryList'=>$category,'productUnitList'=>$productUnit]);
     }
 

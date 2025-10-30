@@ -7,6 +7,10 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\ProductUnit;
 use App\Models\PurchaseProduct;
+use App\Models\PurchaseReturn;
+use App\Models\ReturnPurchaseItem;
+use App\Models\ProductStock;
+use Alert;
 
 use Illuminate\Http\Request;
 
@@ -52,7 +56,79 @@ class purchase extends Controller
 
 
    public function returnPurchase($id){
-       
-            return view('purchase.returnPurchase');
+        $purchase = PurchaseProduct::find($id);
+        if($purchase):
+            $supplier = Supplier::find($purchase->supplier);
+            $product = Product::find($purchase->productName);
+            $stock = ProductStock::where('purchaseId', $id)->first();
+            
+            return view('purchase.returnPurchase', [
+                'purchase' => $purchase,
+                'supplier' => $supplier,
+                'product' => $product,
+                'stock' => $stock,
+                'purchaseId' => $id
+            ]);
+        else:
+            Alert::error('Sorry!','No purchase found');
+            return back();
+        endif;
+    }
+
+    public function purchaseReturnSave(Request $request){
+        $history = new PurchaseReturn();
+        $history->purchaseId = $request->purchaseId;
+        $history->totalReturnAmount = $request->totalReturnAmount;
+        $history->adjustAmount = $request->adjustAmount ?? 0;
+        
+        if($history->save()):
+            $returnItem = new ReturnPurchaseItem();
+            $returnItem->returnId = $history->id;
+            $returnItem->purchaseId = $request->purchaseId;
+            $returnItem->supplierId = $request->supplierId;
+            $returnItem->productId = $request->productId;
+            $returnItem->qty = $request->returnQty;
+            
+            if($returnItem->save()):
+                // Update stock - reduce stock because we're returning items
+                $stockHistory = ProductStock::where('purchaseId', $request->purchaseId)->first();
+                if($stockHistory):
+                    $updatedStock = $stockHistory->currentStock - $request->returnQty;
+                    $stockHistory->currentStock = max(0, $updatedStock); // Ensure stock doesn't go negative
+                    $stockHistory->save();
+                endif;
+
+                // Update purchase quantity
+                $purchaseHistory = PurchaseProduct::find($request->purchaseId);
+                if($purchaseHistory):
+                    $updatedQty = $purchaseHistory->qty - $request->returnQty;
+                    $purchaseHistory->qty = max(0, $updatedQty);
+                    $purchaseHistory->save();
+                endif;
+            endif;
+            
+            Alert::success('Success!','Purchase return saved successfully');
+            return redirect()->route('purchaseList');
+        else:
+            Alert::error('Sorry!','Failed to save purchase return');
+            return back();
+        endif;
+    }
+
+    public function returnPurchaseList(){
+        $returnList = PurchaseReturn::join('purchase_products', 'purchase_products.id', 'purchase_returns.purchaseId')
+            ->join('suppliers', 'suppliers.id', 'purchase_products.supplier')
+            ->join('products', 'products.id', 'purchase_products.productName')
+            ->select(
+                'purchase_returns.*',
+                'purchase_products.invoice',
+                'purchase_products.purchase_date',
+                'suppliers.name as supplierName',
+                'products.name as productName'
+            )
+            ->orderBy('purchase_returns.id', 'desc')
+            ->get();
+            
+        return view('purchase.returnPurchaseList', ['returnList' => $returnList]);
     }
 }
