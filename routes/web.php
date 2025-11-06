@@ -336,6 +336,16 @@ Route::middleware(['posAdmin'])->group(function(){
         'purchaseView'
     ])->name('purchaseView');
 
+    Route::get('purchase/edit/{id}',[
+        purchase::class,
+        'editPurchase'
+    ])->name('editPurchase');
+
+    Route::get('/delete/purchase/{id}',[
+        purchase::class,
+        'delPurchase'
+    ])->name('delPurchase');
+
     Route::get('/return/purchase/{id}',[
         purchase::class,
         'returnPurchase'

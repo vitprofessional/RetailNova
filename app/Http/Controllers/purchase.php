@@ -180,4 +180,39 @@ class purchase extends Controller
             return back();
         endif;
     }
+
+    public function editPurchase($id){
+        $purchase = PurchaseProduct::find($id);
+        if($purchase):
+            $supplierList = Supplier::orderBy('id','DESC')->get();
+            $productList = Product::orderBy('id','DESC')->get();
+            return view('purchase.editPurchase', [
+                'purchase' => $purchase,
+                'supplierList' => $supplierList,
+                'productList' => $productList
+            ]);
+        else:
+            Alert::error('Sorry!','Purchase not found');
+            return back();
+        endif;
+    }
+
+    
+
+    public function delPurchase($id){
+        $purchase = PurchaseProduct::find($id);
+        if($purchase):
+            // Also consider deleting related stock and return records if necessary
+            ProductStock::where('purchaseId', $id)->delete();
+            ReturnPurchaseItem::where('purchaseId', $id)->delete();
+            PurchaseReturn::where('purchaseId', $id)->delete();
+            
+            $purchase->delete();
+            Alert::success('Success!','Purchase deleted successfully');
+            return redirect()->route('purchaseList');
+        else:
+            Alert::error('Sorry!','Purchase not found');
+            return back();
+        endif;
+    }
 }

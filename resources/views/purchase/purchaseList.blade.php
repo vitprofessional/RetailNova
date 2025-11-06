@@ -29,6 +29,7 @@
                                 <th>Supplier</th>
                                 <th>Details</th>
                                 <th>return</th>
+                                <th>edit</th>
                                 <th>Delete</th>
                             </tr>
                         </thead>
@@ -50,10 +51,12 @@
                                 <td>{{ $purchase->currentStock }}</td>
                                 <td>{{ $purchase->supplierName }}</td>
                                 <td>
-                                    <a href="{{ route('purchaseView',['id'=>$purchase->purchaseId]) }}" class="btn btn-primary btn-sm" title="View Purchase Details"><i class="fa-solid fa-eye"></i></a>
+                                    <a href="{{ route('purchaseView',['id'=>$purchase->purchaseId]) }}" data-original-title="View" class="btn btn-primary btn-sm"data-toggle="tooltip" data-placement="top" title=""><i class="fa-solid fa-eye"></i></a>
                                 </td>
-                                <td><a href="{{ route('returnPurchase',['id'=>$purchase->id]) }}" class="btn btn-danger btn-sm"><i class="fa-regular fa-turn-down-left "></i></a></td>
-                                <td><a href="" ><i class="fa-solid fa-trash fa-xl" style="color: #c20c0cff;"></i></a></td>
+                                <td><a href="{{ route('returnPurchase',['id'=>$purchase->id]) }}" data-original-title="Return" class="btn btn-danger btn-sm" data-toggle="tooltip" data-placement="top" title=""><i class="fa-regular fa-turn-down-left "></i></a></td>
+                                <td> <a  class="badge bg-success btn-sm" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit"
+                                    href="{{ route('editPurchase',['id'=>$purchase->id]) }}"><i class="ri-pencil-line mr-0"></i></a></td>
+                                <td><a href="{{ route('delPurchase',['id'=>$purchase->id]) }}" data-original-title="Delete" data-toggle="tooltip" data-placement="top" title=""><i class="fa-solid fa-trash fa-xl" style="color: #c20c0cff;"></i></a></td>
                             </tr>
                             @empty
                             <tr>
