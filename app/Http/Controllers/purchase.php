@@ -184,13 +184,12 @@ class purchase extends Controller
     public function editPurchase($id){
         $purchase = PurchaseProduct::find($id);
         if($purchase):
-            $supplierList = Supplier::orderBy('id','DESC')->get();
-            $productList = Product::orderBy('id','DESC')->get();
-            return view('purchase.editPurchase', [
-                'purchase' => $purchase,
-                'supplierList' => $supplierList,
-                'productList' => $productList
-            ]);
+            $supplier = Supplier::orderBy('id','DESC')->get();
+            $product = Product::orderBy('id','DESC')->get();
+            $productUnit = ProductUnit::orderBy('id','DESC')->get();
+            $category = Category::orderBy('id','DESC')->get();
+            $brand = Brand::orderBy('id','DESC')->get();
+            return view('purchase.editPurchase',['brandList'=>$brand,'categoryList'=>$category,'productUnitList'=>$productUnit,'supplierList'=>$supplier,'productList'=>$product,'purchaseData'=>$purchase]);
         else:
             Alert::error('Sorry!','Purchase not found');
             return back();

@@ -2,8 +2,9 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<form action="{{ route('savePurchase') }}" class="row" method="POST">
+<form action="{{ route('savePurchase') }}" class="row" method="POST" id="savePurchase">
     @csrf
+    <input type="hidden" name="purchaseId" value="{{ $purchaseData->id ?? '' }}" />
     <div class="col-12">
         <div class="row">
             <div class="col-md-12 col-12">
@@ -18,7 +19,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="date" class="form-label">Date *</label>
-                                    <input type="date" class="form-control" id="date" name="purchaseDate" />
+                                    <input type="date" class="form-control" id="date" name="purchaseDate" value="{{ !empty($purchaseData->purchase_date) ? \Carbon\Carbon::parse($purchaseData->purchase_date)->format('Y-m-d') : '' }}" />
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -29,7 +30,7 @@
                                     <!--  form option show proccessing -->
                                     @if(!empty($supplierList) && count($supplierList)>0)
                                     @foreach($supplierList as $supplierData)
-                                        <option value="{{$supplierData->id}}">{{$supplierData->name}}</option>
+                                        <option value="{{$supplierData->id}}" {{ (!empty($purchaseData) && $purchaseData->supplier == $supplierData->id) ? 'selected' : '' }}>{{$supplierData->name}}</option>
                                         @endforeach
                                         @endif
                                     </select>
@@ -41,18 +42,18 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="invoice" class="form-label">Invoice *</label>
-                                    <input type="text" class="form-control" id="invoice" name="invoiceData" />
+                                    <input type="text" class="form-control" id="invoice" name="invoiceData" value="{{ $purchaseData->invoice ?? '' }}" />
                                 </div>
                             </div>
                             <div class="col-md-7">
                                 <div class="form-group">
                                     <label for="productName" class="form-label">Product *</label>
-                                    <select id="productName" name="productName"  class="form-control" >
+                                    <select id="productName" name="productName" onchange="productSelect()"   class="form-control" >
                                     <!--  form option show proccessing -->
                                         <option value="">Select</option>
                                     @if(!empty($productList) && count($productList)>0)
                                     @foreach($productList as $productData)
-                                        <option value="{{$productData->id}}">{{$productData->name}}</option>
+                                        <option value="{{$productData->id}}" {{ (!empty($purchaseData) && $purchaseData->productName == $productData->id) ? 'selected' : '' }}>{{$productData->name}}</option>
                                     @endforeach
                                     @endif
                                     </select>
@@ -65,7 +66,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="reference" class="form-label">Reference *</label>
-                                    <input type="text" class="form-control" id="reference" name="refData" />
+                                    <input type="text" class="form-control" id="reference" name="refData" value="{{ $purchaseData->reference ?? '' }}" />
                                 </div>
                             </div>
                         </div>
@@ -96,36 +97,38 @@
                         <tbody id="productDetails">
                             <tr>
                                 <td width="20%">
-                                    <input type="text" class="form-control" name="selectProductName" value="" id="selectProductName" readonly />
+                                    <input type="text" class="form-control" name="selectProductName" value="{{ $productList->firstWhere('id', $purchaseData->productName)->name ?? '' }}" id="selectProductName"  />
                                 </td>
                                 <td width="8%">
                                     -
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="qty" name="qty" min="1" step="1" readonly />
+                                    <input type="number" class="form-control" id="qty" name="qty" min="1" step="1" value="{{ $purchaseData->qty ?? '' }}"  />
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="currentStock" name="currentStock" readonly />
+                                    <input type="number" class="form-control" id="currentStock" name="currentStock" value="{{ optional($productList->firstWhere('id', $purchaseData->productName))->currentStock ?? '' }}"  />
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="buyingPrice" name="buyingPrice" readonly />
+                                    <input type="number" class="form-control" id="buyingPrice" name="buyingPrice" value="{{ $purchaseData->buyPrice ?? '' }}"  />
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="salingPriceWithoutVat" name="salingPriceWithoutVat" readonly />
+                                    <input type="number" class="form-control" id="salingPriceWithoutVat" name="salingPriceWithoutVat" value="{{ $purchaseData->salePriceExVat ?? '' }}"  />
                                 </td>
                                 <td width="9%">
-                                    <select name="vatStatus" id="vatStatus" class="form-control" readonly>
+                                    <select name="vatStatus" id="vatStatus" class="form-control" >
                                         <option value="">-</option>
+                                        <option value="1" {{ (!empty($purchaseData) && $purchaseData->vatStatus == 1) ? 'selected' : '' }}>Include</option>
+                                        <option value="2" {{ (!empty($purchaseData) && $purchaseData->vatStatus == 2) ? 'selected' : '' }}>Exclude</option>
                                     </select>
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="salingPriceWithVat" name="salingPriceWithVat" readonly />
+                                    <input type="number" class="form-control" id="salingPriceWithVat" name="salingPriceWithVat" value="{{ $purchaseData->salePriceInVat ?? '' }}"  />
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="profitMargin" name="profitMargin" readonly />
+                                    <input type="number" class="form-control" id="profitMargin" name="profitMargin" value="{{ $purchaseData->profit ?? '' }}"  />
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="totalPrice" name="totalPrice" readonly />
+                                    <input type="number" class="form-control" id="totalPrice" name="totalPrice" value="{{ $purchaseData->totalAmount ?? '' }}"  />
                                 </td>
                             </tr>
 
@@ -161,27 +164,27 @@
                                         <td>
                                             <select name="discountStatus" id="discountStatus" onchange="discountType()" class="form-control" disabled>
                                                 <option value="">-</option>
-                                                <option value="1">Amount</option>
-                                                <option value="2">Parcent</option>
+                                                <option value="1" {{ (!empty($purchaseData) && $purchaseData->disType == 1) ? 'selected' : '' }}>Amount</option>
+                                                <option value="2" {{ (!empty($purchaseData) && $purchaseData->disType == 2) ? 'selected' : '' }}>Parcent</option>
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="discountAmount" onkeyup="discountAmountChange()" name="discountAmount" readonly />
+                                            <input type="number" class="form-control" id="discountAmount" onkeyup="discountAmountChange()" name="discountAmount" value="{{ $purchaseData->disAmount ?? '' }}"  />
                                         </td>
                                         <td>
-                                            <input type="text" class="form-control" id="discountPercent" onkeyup="discountPercentChange()" name="discountPercent" readonly />
+                                            <input type="text" class="form-control" id="discountPercent" onkeyup="discountPercentChange()" name="discountPercent" value="{{ $purchaseData->disParcent ?? '' }}"  />
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="grandTotal" name="grandTotal" readonly />
+                                            <input type="number" class="form-control" id="grandTotal" name="grandTotal" value="{{ $purchaseData->grandTotal ?? '' }}"  />
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" onkeyup="dueCalculate()" readonly />
+                                            <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="{{ $purchaseData->paidAmount ?? 0 }}" onkeyup="dueCalculate()"  />
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="dueAmount" name="dueAmount" readonly />
+                                            <input type="number" class="form-control" id="dueAmount" name="dueAmount" value="{{ $purchaseData->dueAmount ?? '' }}"  />
                                         </td>
                                         <td>
-                                            <textarea class="form-control" id="specialNote" name="specialNote" readonly></textarea>
+                                            <textarea class="form-control" id="specialNote" name="specialNote" >{{ $purchaseData->specialNote ?? '' }}</textarea>
                                         </td>
                                     </tr>
                                 </tbody>
