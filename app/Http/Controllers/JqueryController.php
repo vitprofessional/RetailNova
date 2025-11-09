@@ -10,6 +10,7 @@ use App\Models\ProductUnit;
 use App\Models\PurchaseProduct;
 use App\Models\ProductStock;
 use App\Models\ProductSerial;
+use App\Models\ReturnPurchaseItem;
 use App\Models\SaleProduct;
 use App\Models\InvoiceItem;
 use App\Models\Service;
@@ -82,15 +83,108 @@ class JqueryController extends Controller
     }
 
     public function savePurchase(Request $requ){
-        // return $requ;
-        // return $serial = count($requ->serialNumber);
-        $purchaseHistory    = PurchaseProduct::where(['productName'=>$requ->productName,'qty'=>$requ->qty,'supplier'=>$requ->supplierName,'purchase_date'=>$requ->purchaseDate])->get();
-        if($purchaseHistory->count()>0):
-            Alert::error('Opps! Purchase history already exist');
-            return back();
-        else:
-            $purchase = new PurchaseProduct();
+        // Shared validation (integer-only enforcement)
+        $requ->validate([
+            'productName'    => 'required|integer',
+            'supplierName'   => 'required|integer',
+            'purchaseDate'   => 'required|date',
+            'qty'            => 'required|integer|min:1',
+            'buyingPrice'    => 'nullable|numeric',
+            'salingPriceWithoutVat' => 'nullable|numeric',
+            'salingPriceWithVat'    => 'nullable|numeric',
+            'profitMargin'   => 'nullable|numeric',
+            'totalPrice'     => 'nullable|numeric',
+            'grandTotal'     => 'nullable|numeric',
+            'paidAmount'     => 'nullable|numeric',
+            'dueAmount'      => 'nullable|numeric',
+        ]);
 
+        // Update path (editing existing purchase)
+        if(!empty($requ->purchaseId)):
+            $purchase = PurchaseProduct::find($requ->purchaseId);
+            if(!$purchase):
+                Alert::error('Sorry!','Purchase not found for update');
+                return back();
+            endif;
+
+            $oldQty      = (int)$purchase->qty;
+            $newQty      = (int)$requ->qty;
+            $returnedQty = (int)ReturnPurchaseItem::where('purchaseId',$purchase->id)->sum('qty');
+
+            if($newQty < $returnedQty):
+                Alert::error('Sorry!','New quantity cannot be less than already returned quantity (Returned: '.$returnedQty.')');
+                return back();
+            endif;
+
+            $delta = $newQty - $oldQty; // positive => increase, negative => decrease
+
+            // Update purchase fields
+            $purchase->productName      = $requ->productName;
+            $purchase->supplier         = $requ->supplierName;
+            $purchase->purchase_date    = $requ->purchaseDate;
+            $purchase->invoice          = $requ->invoiceData;
+            $purchase->reference        = $requ->refData;
+            $purchase->qty              = $newQty; // updated
+            $purchase->buyPrice         = $requ->buyingPrice;
+            $purchase->salePriceExVat   = $requ->salingPriceWithoutVat;
+            $purchase->vatStatus        = $requ->vatStatus;
+            $purchase->salePriceInVat   = $requ->salingPriceWithVat;
+            $purchase->profit           = $requ->profitMargin;
+            $purchase->totalAmount      = $requ->totalPrice;
+            $purchase->disType          = $requ->discountStatus;
+            $purchase->disAmount        = $requ->discountAmount;
+            $purchase->disParcent       = $requ->discountPercent;
+            $purchase->grandTotal       = $requ->grandTotal;
+            $purchase->paidAmount       = $requ->paidAmount;
+            $purchase->dueAmount        = $requ->dueAmount;
+            $purchase->specialNote      = $requ->specialNote;
+
+            if($purchase->save()):
+                // Adjust stock by delta
+                $stock = ProductStock::where('purchaseId',$purchase->id)->first();
+                if($stock):
+                    // If product changed, reflect it
+                    if($stock->productId != $purchase->productName):
+                        $stock->productId = $purchase->productName;
+                    endif;
+                    $stock->currentStock = max(0, (int)$stock->currentStock + $delta);
+                    $stock->save();
+                endif;
+
+                // Optional: add new serials if provided
+                if($requ->serialNumber && count($requ->serialNumber) > 0):
+                    foreach($requ->serialNumber as $serialValue):
+                        if(!empty($serialValue)):
+                            $newSerial = new ProductSerial();
+                            $newSerial->serialNumber = $serialValue;
+                            $newSerial->productId = $purchase->productName;
+                            $newSerial->save();
+                        endif;
+                    endforeach;
+                endif;
+
+                Alert::success('Success!','Purchase updated successfully');
+                return back();
+            else:
+                Alert::error('Sorry!','Failed to update purchase');
+                return back();
+            endif;
+
+        else:
+            // Create path (original logic with duplicate prevention)
+            $purchaseHistory = PurchaseProduct::where([
+                'productName'   => $requ->productName,
+                'qty'           => $requ->qty,
+                'supplier'      => $requ->supplierName,
+                'purchase_date' => $requ->purchaseDate
+            ])->get();
+
+            if($purchaseHistory->count()>0):
+                Alert::error('Opps! Purchase history already exist');
+                return back();
+            endif;
+
+            $purchase = new PurchaseProduct();
             $purchase->productName      = $requ->productName;
             $purchase->supplier         = $requ->supplierName;
             $purchase->purchase_date    = $requ->purchaseDate;
@@ -110,31 +204,32 @@ class JqueryController extends Controller
             $purchase->paidAmount       = $requ->paidAmount;
             $purchase->dueAmount        = $requ->dueAmount;
             $purchase->specialNote      = $requ->specialNote;
+
             if($purchase->save()):
-                if($requ->serialNumber  && count($requ->serialNumber)>0):
-                    $serial = count($requ->serialNumber);
-                    $i = 0;
-                    while($i<$serial){
-                        $newSerial = new ProductSerial();
-                        $newSerial->serialNumber = $requ->serialNumber[$i];
-                        $newSerial->productId = $requ->productName;
-                        $newSerial->save();
-                        $i++;
-                    }
+                if($requ->serialNumber && count($requ->serialNumber) > 0):
+                    foreach($requ->serialNumber as $serialValue):
+                        if(!empty($serialValue)):
+                            $newSerial = new ProductSerial();
+                            $newSerial->serialNumber = $serialValue;
+                            $newSerial->productId = $requ->productName;
+                            $newSerial->save();
+                        endif;
+                    endforeach;
                 endif;
+
                 $prevStock = new ProductStock();
                 $prevStock->productId    = $requ->productName;
                 $prevStock->purchaseId   = $purchase->id;
-                $prevStock->currentStock = $requ->qty;
+                $prevStock->currentStock = (int)$requ->qty;
                 $prevStock->save();
 
-                $message = Alert::success('Success!','Data saved successfully');
+                Alert::success('Success!','Data saved successfully');
                 return back();
             else:
-                $message = Alert::error('Sorry!','Data failed to save');
+                Alert::error('Sorry!','Data failed to save');
                 return back();
             endif;
-        endif;
+        endif; // end create/update branching
     }
 
     //service
