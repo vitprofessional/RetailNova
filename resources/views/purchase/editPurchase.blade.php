@@ -106,7 +106,7 @@
                                     <input type="number" class="form-control" id="qty" name="qty" min="1" step="1" value="{{ $purchaseData->qty ?? '' }}"  />
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="currentStock" name="currentStock" value="{{ optional($productList->firstWhere('id', $purchaseData->productName))->currentStock ?? '' }}"  />
+                                    <input type="number" class="form-control" id="currentStock" name="currentStock" value="{{ $stock->currentStock ?? (optional($productList->firstWhere('id', $purchaseData->productName))->currentStock ?? 0) }}" />
                                 </td>
                                 <td width="9%">
                                     <input type="number" class="form-control" id="buyingPrice" name="buyingPrice" value="{{ $purchaseData->buyPrice ?? '' }}"  />

@@ -189,7 +189,9 @@ class purchase extends Controller
             $productUnit = ProductUnit::orderBy('id','DESC')->get();
             $category = Category::orderBy('id','DESC')->get();
             $brand = Brand::orderBy('id','DESC')->get();
-            return view('purchase.editPurchase',['brandList'=>$brand,'categoryList'=>$category,'productUnitList'=>$productUnit,'supplierList'=>$supplier,'productList'=>$product,'purchaseData'=>$purchase]);
+            // load the current stock record for this purchase (if any)
+            $stock = ProductStock::where('purchaseId', $id)->first();
+            return view('purchase.editPurchase',['brandList'=>$brand,'categoryList'=>$category,'productUnitList'=>$productUnit,'supplierList'=>$supplier,'productList'=>$product,'purchaseData'=>$purchase,'stock' => $stock,]);
         else:
             Alert::error('Sorry!','Purchase not found');
             return back();
