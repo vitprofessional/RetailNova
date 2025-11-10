@@ -100,7 +100,25 @@
                                     <input type="text" class="form-control" name="selectProductName" value="{{ $productList->firstWhere('id', $purchaseData->productName)->name ?? '' }}" id="selectProductName"  />
                                 </td>
                                 <td width="8%">
-                                    -
+                                    {{-- Show Add button (same as new purchase) to open serial modal --}}
+                                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#serialModal">Add</button>
+                                    <button type="button" class="btn btn-secondary btn-sm ml-1" data-toggle="modal" data-target="#serialModal">View</button>
+
+                                    {{-- List existing serials with delete action (inline badges) --}}
+                                    <div class="mt-2">
+                                        @if(!empty($serials) && $serials->count() > 0)
+                                            @foreach($serials as $s)
+                                                @php
+                                                    $label = $s->serialNumber ?? $s->serial ?? $s->serial_number ?? $s->number ?? ($s->id ?? '');
+                                                @endphp
+                                                <span class="badge badge-light mr-1" id="serial-badge-{{ $s->id }}">{{ $label }}
+                                                    <a href="#" class="text-danger ml-1 delete-serial" data-id="{{ $s->id }}" title="Delete"><i class="ri-delete-bin-line"></i></a>
+                                                </span>
+                                            @endforeach
+                                        @else
+                                            <small class="text-muted">No serials</small>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td width="9%">
                                     <input type="number" class="form-control" id="qty" name="qty" min="1" step="1" value="{{ $purchaseData->qty ?? '' }}"  />
@@ -210,13 +228,33 @@
                     <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="resetSerial">
+                    {{-- Existing serials for this purchase (read-only list) --}}
+                    <div class="mb-3">
+                        <label class="form-label">Existing Serials</label>
+                        <div>
+                            @if(!empty($serials) && $serials->count() > 0)
+                                @foreach($serials as $s)
+                                    @php $label = $s->serialNumber ?? $s->serial ?? $s->serial_number ?? $s->number ?? $s->id; @endphp
+                                    <div id="serial-row-{{ $s->id }}" class="d-flex align-items-center mb-1">
+                                        <span class="mr-2">{{ $label }}</span>
+                                        <a href="#" class="text-danger delete-serial" data-id="{{ $s->id }}" title="Delete"><i class="ri-delete-bin-line"></i></a>
+                                    </div>
+                                @endforeach
+                            @else
+                                <div class="text-muted">No serials for this purchase.</div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <hr />
+
                     <div class="p-0">
-                        <label for="serialNumber" class="form-label">Serial Number</label>
+                        <label for="serialNumber" class="form-label">Add Serial Number(s)</label>
                     </div>
                     <div id="serialNumberBox">
                         <div class="row">
                             <div class="col-10 mb-3">
-                                <input type="" class="form-control" name="serialNumber[]" placeholder="Enter serial number" />
+                                <input type="text" class="form-control" name="serialNumber[]" placeholder="Enter serial number" />
                             </div>
                         </div>
                     </div>

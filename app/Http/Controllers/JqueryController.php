@@ -15,6 +15,7 @@ use App\Models\SaleProduct;
 use App\Models\InvoiceItem;
 use App\Models\Service;
 use Alert;
+use Illuminate\Support\Facades\Schema;
 
 class JqueryController extends Controller
 {
@@ -85,18 +86,18 @@ class JqueryController extends Controller
     public function savePurchase(Request $requ){
         // Shared validation (integer-only enforcement)
         $requ->validate([
-            'productName'    => 'required|integer',
-            'supplierName'   => 'required|integer',
-            'purchaseDate'   => 'required|date',
-            'qty'            => 'required|integer|min:1',
-            'buyingPrice'    => 'nullable|numeric',
+            'productName'           => 'required|integer',
+            'supplierName'          => 'required|integer',
+            'purchaseDate'          => 'required|date',
+            'qty'                   => 'required|integer|min:1',
+            'buyingPrice'           => 'nullable|numeric',
             'salingPriceWithoutVat' => 'nullable|numeric',
             'salingPriceWithVat'    => 'nullable|numeric',
-            'profitMargin'   => 'nullable|numeric',
-            'totalPrice'     => 'nullable|numeric',
-            'grandTotal'     => 'nullable|numeric',
-            'paidAmount'     => 'nullable|numeric',
-            'dueAmount'      => 'nullable|numeric',
+            'profitMargin'          => 'nullable|numeric',
+            'totalPrice'            => 'nullable|numeric',
+            'grandTotal'            => 'nullable|numeric',
+            'paidAmount'            => 'nullable|numeric',
+            'dueAmount'             => 'nullable|numeric',
         ]);
 
         // Update path (editing existing purchase)
@@ -158,6 +159,10 @@ class JqueryController extends Controller
                             $newSerial = new ProductSerial();
                             $newSerial->serialNumber = $serialValue;
                             $newSerial->productId = $purchase->productName;
+                            // associate this serial with the created purchase if DB column exists
+                            if (Schema::hasColumn('product_serials', 'purchaseId')) {
+                                $newSerial->purchaseId = $purchase->id;
+                            }
                             $newSerial->save();
                         endif;
                     endforeach;
@@ -211,7 +216,11 @@ class JqueryController extends Controller
                         if(!empty($serialValue)):
                             $newSerial = new ProductSerial();
                             $newSerial->serialNumber = $serialValue;
-                            $newSerial->productId = $requ->productName;
+                                $newSerial->productId = $requ->productName;
+                                // associate with this purchase if DB column exists
+                                if (Schema::hasColumn('product_serials', 'purchaseId')) {
+                                    $newSerial->purchaseId = $purchase->id;
+                                }
                             $newSerial->save();
                         endif;
                     endforeach;
@@ -320,5 +329,23 @@ class JqueryController extends Controller
             $message = Alert::error('Sorry!','Data failed to save');
             return back();
         endif;
+    }
+
+    /**
+     * Delete a product serial by id (AJAX)
+     */
+    public function deleteProductSerial($id)
+    {
+        $serial = ProductSerial::find($id);
+        if (!$serial) {
+            return response()->json(['status' => 'error', 'message' => 'Serial not found'], 404);
+        }
+
+        try {
+            $serial->delete();
+            return response()->json(['status' => 'success', 'message' => 'Serial deleted']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Failed to delete serial'], 500);
+        }
     }
 }

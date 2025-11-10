@@ -614,6 +614,23 @@ $(document).on('click','#add-serial', function(){
     i++;
 });
 
+// delete serial via ajax from edit page
+$(document).on('click', '.delete-serial', function(e){
+    e.preventDefault();
+    var id = $(this).data('id');
+    if(!confirm('Delete this serial?')) return;
+    $.get('{{ url('/') }}/product/serial/delete/'+id, function(res){
+        if(res.status == 'success'){
+            $('#serial-badge-'+id).remove();
+            $('#serial-row-'+id).remove();
+        }else{
+            alert(res.message || 'Failed to delete serial');
+        }
+    }).fail(function(){
+        alert('Failed to delete serial');
+    });
+});
+
 function resetSerial(){
     var serial = '<div class="row" id="serialField0"><div class="col-10 mb-3"><input type="" class="form-control" name="serialNumber[]" placeholder="Enter serial number" /></div><div class="col-1 mt-1  p-0"></div></div>';
     $('#serialNumberBox').html(serial);

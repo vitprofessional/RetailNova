@@ -10,7 +10,9 @@ use App\Models\PurchaseProduct;
 use App\Models\PurchaseReturn;
 use App\Models\ReturnPurchaseItem;
 use App\Models\ProductStock;
+use App\Models\ProductSerial;
 use Alert;
+use Illuminate\Support\Facades\Schema;
 
 use Illuminate\Http\Request;
 
@@ -193,6 +195,14 @@ class purchase extends Controller
             $stock = ProductStock::where('purchaseId', $id)->first();
             // total stock for the product across all purchases
             $totalStock = ProductStock::where('productId', $purchase->productName)->sum('currentStock');
+            // load available serials for this purchase (if any)
+            // If migration hasn't been run yet the `purchaseId` column may not exist.
+            if (Schema::hasColumn('product_serials', 'purchaseId')) {
+                $serials = ProductSerial::where('purchaseId', $id)->get();
+            } else {
+                // fallback: fetch by productId (older behavior)
+                $serials = ProductSerial::where('productId', $purchase->productName)->get();
+            }
             return view('purchase.editPurchase',[
                 'brandList'=>$brand,
                 'categoryList'=>$category,
@@ -202,6 +212,7 @@ class purchase extends Controller
                 'purchaseData'=>$purchase,
                 'stock' => $stock,
                 'totalStock' => $totalStock,
+                'serials' => $serials,
             ]);
         else:
             Alert::error('Sorry!','Purchase not found');
