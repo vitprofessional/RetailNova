@@ -341,6 +341,11 @@ Route::middleware(['posAdmin'])->group(function(){
         'editPurchase'
     ])->name('editPurchase');
 
+    Route::post('purchase/update',[
+        purchase::class,
+        'updatePurchase'
+    ])->name('updatePurchase');
+
     Route::get('/delete/purchase/{id}',[
         purchase::class,
         'delPurchase'

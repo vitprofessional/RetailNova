@@ -220,6 +220,35 @@ class purchase extends Controller
         endif;
     }
 
+    public function updatePurchase(Request $request){
+        $purchase = PurchaseProduct::find($request->purchaseId);
+        if($purchase):
+            $purchase->purchase_date = $request->purchaseDate;
+            $purchase->supplier = $request->supplierName;
+            $purchase->productName = $request->productName;
+            $purchase->buyPrice = $request->buyPrice;
+            $purchase->salePriceExVat = $request->salePriceExVat;
+            $purchase->salePriceInVat = $request->salePriceInVat;
+            $purchase->vatStatus = $request->vatStatus;
+            $purchase->qty = $request->quantity;
+            $purchase->totalAmount = $request->totalAmount;
+            $purchase->grandTotal = $request->grandTotal;
+            $purchase->paidAmount = $request->paidAmount;
+            $purchase->dueAmount = $request->dueAmount;
+
+            if($purchase->save()):
+                Alert::success('Success!','Purchase updated successfully');
+                return redirect()->route('purchaseList');
+            else:
+                Alert::error('Sorry!','Failed to update purchase');
+                return back();
+            endif;
+        else:
+            Alert::error('Sorry!','Purchase not found');
+            return back();
+        endif;
+    }
+
     
 
     public function delPurchase($id){

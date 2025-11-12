@@ -209,9 +209,6 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div id="saveButton" class="d-none  mt-2">
-                            <button class="btn btn-primary btn-sm" type="submit">Save</button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -267,6 +264,12 @@
                 </div>
             </div>
         </div>
+    </div>
+    
+    <div class="col-12 text-center my-3">
+       
+            <a href="{{ route('updatePurchase') }}" class="btn btn-success  ml-2">Update</a>
+            <a href="{{ route('purchaseList') }}" class="btn btn-warning  ml-2">Back</a>
     </div>
 </form>
 
