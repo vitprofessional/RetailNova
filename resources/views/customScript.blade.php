@@ -367,18 +367,59 @@ $(document).on('click','#add-productUnit', function(){
 })
 
 
+function handleFormSubmit(event){
+    console.log('=== FORM SUBMIT HANDLER ===');
+    console.log('Event:', event);
+    console.log('Form Data:', $('#savePurchase').serialize());
+    
+    let isValid = true;
+    let errors = [];
+    
+    // Check required fields
+    if(!$('#date').val()) { errors.push('Purchase Date is required'); isValid = false; }
+    if(!$('#supplierName').val()) { errors.push('Supplier is required'); isValid = false; }
+    if(!$('#productName').val()) { errors.push('Product is required'); isValid = false; }
+    if(!$('#quantity').val()) { errors.push('Quantity is required'); isValid = false; }
+    
+    if(!isValid) {
+        console.error('Validation errors:', errors);
+        alert('Please fill in all required fields:\n' + errors.join('\n'));
+        return false;
+    }
+    
+    console.log('All validations passed, allowing form submission');
+    return true;
+}
+
 function savePurchase(e){
-    let token = document.body.querySelector('input[name="_token"]');
-    var formData = $('#savePurchase').serialize();
-    $.ajax({
-        type:'post',
-        url:"{{ route('savePurchase') }}",
-        data: formData,
-        success:function(result)
-        {
-            console.log(result.purchaseHistory);
+    // Let form submit normally - no AJAX needed
+    console.log('Form submit handler called');
+    console.log('Form data:', $('#savePurchase').serialize());
+    // Don't prevent default - let the form submit normally
+}
+
+function debugForm(){
+    console.log('=== FORM DEBUG ===');
+    console.log('Supplier Name (supplierName):', $('#supplierName').val());
+    console.log('Product Name (productName):', $('#productName').val());
+    console.log('Purchase Date (purchaseDate):', $('#date').val());
+    console.log('Quantity:', $('#quantity').val());
+    console.log('Buy Price:', $('#buyPrice').val());
+    console.log('Sale Price Ex Vat:', $('#salePriceExVat').val());
+    console.log('Discount Status:', $('#discountStatus').val());
+    
+    // Debug serial numbers
+    var serials = [];
+    $('input[name="serialNumber[]"]').each(function(){
+        if($(this).val().trim() !== ''){
+            serials.push($(this).val());
         }
     });
+    console.log('Serial Numbers:', serials);
+    
+    console.log('Form Data:', $('#savePurchase').serialize());
+    console.log('Form valid:', document.getElementById('savePurchase').checkValidity());
+    console.log('=== END DEBUG ===');
 }
 
 // other details part
@@ -407,7 +448,7 @@ function discountAmountChange(){
     let dstAmount   = parseInt($("#discountAmount").val());
     let paidAmt     = parseInt($("#paidAmount").val());
     // let parcent     = parseInt($("#discountPercent").val());
-    let gTotal      = parseInt($("#totalPrice").val());
+    let gTotal      = parseInt($("#totalAmount").val());
 
     if(dstAmount >0){
         let finalAmount = parseInt(gTotal-dstAmount);
@@ -433,7 +474,7 @@ function discountPercentChange(){
     // let dstAmount   = parseInt($("#discountAmount").val());
     let paidAmt     = parseInt($("#paidAmount").val());
     let parcent     = parseFloat(parseFloat($("#discountPercent").val()).toFixed(2));
-    let gTotal      = parseInt($("#totalPrice").val());
+    let gTotal      = parseInt($("#totalAmount").val());
 
     if(parcent >0){
         let dstAmount   = parseInt((gTotal*parcent)/100);
@@ -456,7 +497,7 @@ function discountPercentChange(){
 function dueCalculate(){
     // $('#discountAmount').val('');
     let paidAmount      = parseInt($("#paidAmount").val());
-    let gTotal          = parseInt($("#totalPrice").val());
+    let gTotal          = parseInt($("#totalAmount").val());
     let dstAmount       = parseInt($("#discountAmount").val());
     let finalAmount     = parseInt(gTotal-dstAmount);  
 
@@ -472,13 +513,13 @@ function dueCalculate(){
 
 // total price calculation
 function totalPriceCalculate(){
-    let buyPrice    = parseInt($("#buyingPrice").val());
-    let qty         = parseInt($("#qty").val());
+    let buyPrice    = parseInt($("#buyPrice").val());
+    let qty         = parseInt($("#quantity").val());
     let total       = parseInt(buyPrice*qty);
     let paidAmount  = parseInt($("#paidAmount").val());
     let discount    = parseInt($("#discountAmount").val());
-    let spwovat     = parseInt($("#salingPriceWithoutVat").val());
-    let spwvat      = parseInt($("#salingPriceWithVat").val());
+    let spwovat     = parseInt($("#salePriceExVat").val());
+    let spwvat      = parseInt($("#salePriceInVat").val());
     let payAmount   = paidAmount ? paidAmount : 0;
     let dstAmt      = discount ? discount : 0;
 
@@ -497,7 +538,7 @@ function totalPriceCalculate(){
         $("#profitMargin").val(profitParcent);
     }
 
-    $("#totalPrice").val(total);
+    $("#totalAmount").val(total);
     $("#grandTotal").val(grandTotal);
     $("#dueAmount").val(dueAmount);
     $("#discountPercent").val(dstPercent);
@@ -509,23 +550,23 @@ function priceCalculation(){
     if(vatSts == 1){
         console.log(vatSts);
         let vat             = 15;
-        let salePrice       = parseInt($("#salingPriceWithoutVat").val());
-        let buyPrice        = parseInt($("#buyingPrice").val());
+        let salePrice       = parseInt($("#salePriceExVat").val());
+        let buyPrice        = parseInt($("#buyPrice").val());
 
         let totalVat        = parseInt((salePrice*15)/100);
         let newPrice        = parseInt(salePrice+totalVat);
         let profitValue     = parseInt((newPrice-buyPrice));
         let profitMargin    = parseFloat(parseFloat((profitValue/buyPrice)*100).toFixed(2));
 
-        $("#salingPriceWithVat").val(newPrice);
+        $("#salePriceInVat").val(newPrice);
         $("#profitMargin").val(profitMargin);
     }else{
-        let salePrice       = parseInt($("#salingPriceWithoutVat").val());
-        let buyPrice        = parseInt($("#buyingPrice").val());
+        let salePrice       = parseInt($("#salePriceExVat").val());
+        let buyPrice        = parseInt($("#buyPrice").val());
         let profitValue     = parseInt((salePrice-buyPrice));
         let profitMargin    = parseFloat(parseFloat((profitValue/buyPrice)*100).toFixed(2));
 
-        $("#salingPriceWithVat").val('');
+        $("#salePriceInVat").val('');
         $("#profitMargin").val(profitMargin);
     }
 }
@@ -536,8 +577,8 @@ function profitCalculation(){
     let vatSts      = $("#vatStatus").val();
     if(vatSts == 1){
         let vat             = 15;
-        let salePrice       = parseInt($("#salingPriceWithoutVat").val());
-        let buyPrice        = parseInt($("#buyingPrice").val());
+        let salePrice       = parseInt($("#salePriceExVat").val());
+        let buyPrice        = parseInt($("#buyPrice").val());
         let profit          = parseInt($("#profitMargin").val());
 
         let profitAmount    = parseInt((buyPrice/100)*profit);
@@ -546,19 +587,19 @@ function profitCalculation(){
         let totalVat        = parseInt((priceValueWOVat*15)/100);
         let newPrice        = parseInt(priceValueWOVat+totalVat);
 
-        $("#salingPriceWithVat").val(newPrice);
-        $("#salingPriceWithoutVat").val(priceValueWOVat);
+        $("#salePriceInVat").val(newPrice);
+        $("#salePriceExVat").val(priceValueWOVat);
     }else{
-        let salePrice       = parseInt($("#salingPriceWithoutVat").val());
-        let buyPrice        = parseInt($("#buyingPrice").val());
+        let salePrice       = parseInt($("#salePriceExVat").val());
+        let buyPrice        = parseInt($("#buyPrice").val());
         let profit          = parseInt($("#profitMargin").val());
 
         let profitAmount    = parseInt((buyPrice/100)*profit);
         let priceValueWOVat = parseInt(buyPrice+profitAmount);
 
 
-        $("#salingPriceWithVat").val('');
-        $("#salingPriceWithoutVat").val(priceValueWOVat);
+        $("#salePriceInVat").val('');
+        $("#salePriceExVat").val(priceValueWOVat);
     }
 }
 
@@ -574,7 +615,7 @@ function productSelect(){
 
         success:function(result) {
             console.log("message: ", result.message);
-            var field = '<tr><td width="20%"><input type="text" class="form-control" name="selectProductName" value="'+result.productName+'" id="selectProductName" readonly></td><td width="8%"><button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#serialModal">Add</button></td><td width="9%"><input type="number" class="form-control" onkeyup="totalPriceCalculate()" id="qty" name="qty"/></td><td width="9%"><input type="number" class="form-control" id="currentStock" name="currentStock" value="'+result.currentStock+'" readonly/></td><td width="9%"><input type="number" class="form-control" id="buyingPrice" name="buyingPrice" onkeyup="totalPriceCalculate()" /></td><td width="9%"><input type="number" class="form-control" id="salingPriceWithoutVat" name="salingPriceWithoutVat" onkeyup="priceCalculation()"/></td><td width="9%"><select name="vatStatus" id="vatStatus" onchange="priceCalculation()" class="form-control"><option value="">-</option><option value="1">Yes</option><option value="0">No</option></select></td><td width="9%"><input type="number" class="form-control" id="salingPriceWithVat" name="salingPriceWithVat" readonly/></td><td width="9%"><input type="text" class="form-control" id="profitMargin" onkeyup="profitCalculation()" name="profitMargin"/></td><td width="9%"><input type="number" class="form-control" id="totalPrice" name="totalPrice" readonly/></td></tr>';
+            var field = '<tr><td width="20%"><input type="text" class="form-control" name="selectProductName" value="'+result.productName+'" id="selectProductName" readonly></td><td width="8%"><button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#serialModal">Add</button></td><td width="9%"><input type="number" class="form-control" onkeyup="totalPriceCalculate()" id="quantity" name="quantity"/></td><td width="9%"><input type="number" class="form-control" id="currentStock" name="currentStock" value="'+result.currentStock+'" readonly/></td><td width="9%"><input type="number" class="form-control" id="buyPrice" name="buyPrice" onkeyup="totalPriceCalculate()" /></td><td width="9%"><input type="number" class="form-control" id="salePriceExVat" name="salePriceExVat" onkeyup="priceCalculation()"/></td><td width="9%"><select name="vatStatus" id="vatStatus" onchange="priceCalculation()" class="form-control"><option value="">-</option><option value="1">Yes</option><option value="0">No</option></select></td><td width="9%"><input type="number" class="form-control" id="salePriceInVat" name="salePriceInVat" readonly/></td><td width="9%"><input type="text" class="form-control" id="profitMargin" onkeyup="profitCalculation()" name="profitMargin"/></td><td width="9%"><input type="number" class="form-control" id="totalAmount" name="totalAmount" readonly/></td></tr>';
             // document.getElementById("supplierForm").reset();
             $('#productDetails').html(field); 
             $('#discountStatus').removeAttr('disabled');
@@ -589,9 +630,9 @@ function productSelect(){
             $('#discountPercent').val('');
         },
         error:function(){
-            let field = '<tr><td width="20%"><input type="text" class="form-control" name="selectProductName" value="" id="selectProductName" readonly></td><td width="8%">-</td><td width="9%"><input type="number" class="form-control" id="qty" name="qty" readonly/></td><td width="9%"><input type="number" class="form-control" id="currentStock" name="currentStock" readonly/></td><td width="9%"><input type="number" class="form-control" id="buyingPrice" name="buyingPrice" readonly/></td><td width="9%"><input type="number" class="form-control" id="salingPriceWithoutVat" name="salingPriceWithoutVat" readonly/></td><td width="9%"><select name="vatStatus" id="vatStatus" class="form-control" readonly><option value="">-</option></select></td><td width="9%"><input type="number" class="form-control" id="salingPriceWithVat" name="salingPriceWithVat" readonly/></td><td width="9%"><input type="number" class="form-control" id="profitMargin" name="profitMargin" readonly/></td><td width="9%"><input type="number" class="form-control" id="totalPrice" name="totalPrice" readonly/></td></tr>';
+            let field = '<tr><td width="20%"><input type="text" class="form-control" name="selectProductName" value="" id="selectProductName" readonly></td><td width="8%">-</td><td width="9%"><input type="number" class="form-control" id="quantity" name="quantity" readonly/></td><td width="9%"><input type="number" class="form-control" id="currentStock" name="currentStock" readonly/></td><td width="9%"><input type="number" class="form-control" id="buyPrice" name="buyPrice" readonly/></td><td width="9%"><input type="number" class="form-control" id="salePriceExVat" name="salePriceExVat" readonly/></td><td width="9%"><select name="vatStatus" id="vatStatus" class="form-control" readonly><option value="">-</option></select></td><td width="9%"><input type="number" class="form-control" id="salePriceInVat" name="salePriceInVat" readonly/></td><td width="9%"><input type="number" class="form-control" id="profitMargin" name="profitMargin" readonly/></td><td width="9%"><input type="number" class="form-control" id="totalAmount" name="totalAmount" readonly/></td></tr>';
             // disount field decleration
-            let discountField = '<tr><td><select name="discountStatus" id="discountStatus" onchange="discountType()" class="form-control" disabled><option value="">-</option><option value="1">Amount</option><option value="2">Parcent</option></select></td><td><input type="number" class="form-control" id="discountAmount" onkeyup="discountAmountChange()" name="discountAmount" readonly/></td><td><input type="number" class="form-control" id="discountPercent" onkeyup="discountParcentChange()" name="discountPercent" readonly/></td><td><input type="number" class="form-control" id="grandTotal" name="grandTotal" readonly/></td><td><input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" onkeyup="dueCalculate()" readonly /></td><td><input type="number" class="form-control" id="dueAmount" name="dueAmount" readonly/></td><td><textarea class="form-control" id="specialNote" name="specialNote" readonly ></textarea></td></tr>';
+            let discountField = '<tr><td><select name="discountStatus" id="discountStatus" onchange="discountType()" class="form-control" disabled><option value="">-</option><option value="1">Amount</option><option value="2">Parcent</option></select></td><td><input type="number" class="form-control" id="discountAmount" onkeyup="discountAmountChange()" name="discountAmount" readonly/></td><td><input type="number" class="form-control" id="discountPercent" onkeyup="discountPercentChange()" name="discountPercent" readonly/></td><td><input type="number" class="form-control" id="grandTotal" name="grandTotal" readonly/></td><td><input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" onkeyup="dueCalculate()" readonly /></td><td><input type="number" class="form-control" id="dueAmount" name="dueAmount" readonly/></td><td><textarea class="form-control" id="specialNote" name="specialNote" readonly ></textarea></td></tr>';
             // document.getElementById("supplierForm").reset();
             $('#productDetails').html(field); 
             $('#discountDetails').html(discountField); 
@@ -640,14 +681,14 @@ function actProductList(){
     var data = $('#supplierName').val();
     if(data == ""){ 
         // reset the product list
-        var field = '<tr><td width="20%"><input type="text" class="form-control" name="selectProductName" value="" id="selectProductName" readonly></td><td width="8%">-</td><td width="9%"><input type="number" class="form-control" id="qty" name="qty"/></td><td width="9%"><input type="number" class="form-control" id="currentStock" name="currentStock" readonly/></td><td width="9%"><input type="number" class="form-control" id="buyingPrice" name="buyingPrice"/></td><td width="9%"><input type="number" class="form-control" id="salingPriceWithoutVat" name="salingPriceWithoutVat"/></td><td width="9%"><select name="vatStatus" id="vatStatus" class="form-control"><option value="">-</option><option value="1">Yes</option><option value="0">No</option></select></td><td width="9%"><input type="number" class="form-control" id="salingPriceWithVat" name="salingPriceWithVat" readonly/></td><td width="9%"><input type="number" class="form-control" id="profitMargin" name="profitMargin"/></td><td width="9%"><input type="number" class="form-control" id="totalPrice" name="totalPrice" readonly/></td></tr>';
+        var field = '<tr><td width="20%"><input type="text" class="form-control" name="selectProductName" value="" id="selectProductName" readonly></td><td width="8%">-</td><td width="9%"><input type="number" class="form-control" id="quantity" name="quantity"/></td><td width="9%"><input type="number" class="form-control" id="currentStock" name="currentStock" readonly/></td><td width="9%"><input type="number" class="form-control" id="buyPrice" name="buyPrice"/></td><td width="9%"><input type="number" class="form-control" id="salePriceExVat" name="salePriceExVat"/></td><td width="9%"><select name="vatStatus" id="vatStatus" class="form-control"><option value="">-</option><option value="1">Yes</option><option value="0">No</option></select></td><td width="9%"><input type="number" class="form-control" id="salePriceInVat" name="salePriceInVat" readonly/></td><td width="9%"><input type="number" class="form-control" id="profitMargin" name="profitMargin"/></td><td width="9%"><input type="number" class="form-control" id="totalAmount" name="totalAmount" readonly/></td></tr>';
         $('#productDetails').html(field); 
         // reset the product
         $('#productName option:selected').prop("selected", false);
         // disable the product
         $('#productName').attr('disabled','disabled');
         // disount field decleration
-        let discountField = '<tr><td><select name="discountStatus" id="discountStatus" onchange="discountType()" class="form-control" disabled><option value="">-</option><option value="1">Amount</option><option value="2">Parcent</option></select></td><td><input type="number" class="form-control" id="discountAmount" onkeyup="discountAmount()" name="discountAmount" readonly/></td><td><input type="number" class="form-control" id="discountPercent" onkeyup="discountParcent()" name="discountPercent" readonly/></td><td><input type="number" class="form-control" id="grandTotal" name="grandTotal" readonly/></td><td><input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" onkeyup="dueCalculate()" readonly /></td><td><input type="number" class="form-control" id="dueAmount" name="dueAmount" readonly/></td><td><textarea class="form-control" id="specialNote" name="specialNote" readonly ></textarea></td></tr>';
+        let discountField = '<tr><td><select name="discountStatus" id="discountStatus" onchange="discountType()" class="form-control" disabled><option value="">-</option><option value="1">Amount</option><option value="2">Parcent</option></select></td><td><input type="number" class="form-control" id="discountAmount" onkeyup="discountAmountChange()" name="discountAmount" readonly/></td><td><input type="number" class="form-control" id="discountPercent" onkeyup="discountPercentChange()" name="discountPercent" readonly/></td><td><input type="number" class="form-control" id="grandTotal" name="grandTotal" readonly/></td><td><input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" onkeyup="dueCalculate()" readonly /></td><td><input type="number" class="form-control" id="dueAmount" name="dueAmount" readonly/></td><td><textarea class="form-control" id="specialNote" name="specialNote" readonly ></textarea></td></tr>';
         $('#discountDetails').html(discountField); 
     }else{
         $('#productName').removeAttr('disabled');

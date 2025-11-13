@@ -2,7 +2,7 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<form action="{{ route('savePurchase') }}" class="row" method="POST" id="savePurchase">
+<form action="{{ route('updatePurchase') }}" class="row" method="POST" id="savePurchase">
     @csrf
     <input type="hidden" name="purchaseId" value="{{ $purchaseData->id ?? '' }}" />
     <div class="col-12">
@@ -53,7 +53,11 @@
                                         <option value="">Select</option>
                                     @if(!empty($productList) && count($productList)>0)
                                     @foreach($productList as $productData)
-                                        <option value="{{$productData->id}}" {{ (!empty($purchaseData) && $purchaseData->productName == $productData->id) ? 'selected' : '' }}>{{$productData->name}}</option>
+                                        @php
+                                            $brand = \App\Models\Brand::find($productData->brand);
+                                            $brandName = $brand ? ' - ' . $brand->name : '';
+                                        @endphp
+                                        <option value="{{$productData->id}}" {{ (!empty($purchaseData) && $purchaseData->productName == $productData->id) ? 'selected' : '' }}>{{$productData->name}}{{$brandName}}</option>
                                     @endforeach
                                     @endif
                                     </select>
@@ -97,7 +101,17 @@
                         <tbody id="productDetails">
                             <tr>
                                 <td width="20%">
-                                    <input type="text" class="form-control" name="selectProductName" value="{{ $productList->firstWhere('id', $purchaseData->productName)->name ?? '' }}" id="selectProductName"  />
+                                    @php
+                                        $selectedProduct = $productList->firstWhere('id', $purchaseData->productName);
+                                        $productDisplay = $selectedProduct ? $selectedProduct->name : '';
+                                        if($selectedProduct) {
+                                            $brand = \App\Models\Brand::find($selectedProduct->brand);
+                                            if($brand) {
+                                                $productDisplay .= ' - ' . $brand->name;
+                                            }
+                                        }
+                                    @endphp
+                                    <input type="text" class="form-control" name="selectProductName" value="{{ $productDisplay }}" id="selectProductName"  />
                                 </td>
                                 <td width="8%">
                                     {{-- Show Add button (same as new purchase) to open serial modal --}}
@@ -121,33 +135,33 @@
                                     </div>
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="qty" name="qty" min="1" step="1" value="{{ $purchaseData->qty ?? '' }}"  />
+                                    <input type="number" class="form-control" id="quantity" name="quantity" min="1" step="1" value="{{ $purchaseData->qty ?? '' }}" onkeyup="totalPriceCalculate()" />
                                 </td>
                                 <td width="9%">
                                     <input type="number" class="form-control" id="currentStock" value="{{ $totalStock ?? ($stock->currentStock ?? 0) }}" readonly />
                                     <input type="hidden" name="currentStock" value="{{ $totalStock ?? ($stock->currentStock ?? 0) }}" />
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="buyingPrice" name="buyingPrice" value="{{ $purchaseData->buyPrice ?? '' }}"  />
+                                    <input type="number" class="form-control" id="buyPrice" name="buyPrice" value="{{ $purchaseData->buyPrice ?? '' }}" onkeyup="totalPriceCalculate()" />
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="salingPriceWithoutVat" name="salingPriceWithoutVat" value="{{ $purchaseData->salePriceExVat ?? '' }}"  />
+                                    <input type="number" class="form-control" id="salePriceExVat" name="salePriceExVat" value="{{ $purchaseData->salePriceExVat ?? '' }}" onkeyup="priceCalculation()" />
                                 </td>
                                 <td width="9%">
-                                    <select name="vatStatus" id="vatStatus" class="form-control" >
+                                    <select name="vatStatus" id="vatStatus" class="form-control" onchange="priceCalculation()">
                                         <option value="">-</option>
-                                        <option value="1" {{ (!empty($purchaseData) && $purchaseData->vatStatus == 1) ? 'selected' : '' }}>Include</option>
-                                        <option value="2" {{ (!empty($purchaseData) && $purchaseData->vatStatus == 2) ? 'selected' : '' }}>Exclude</option>
+                                        <option value="1" {{ (!empty($purchaseData) && $purchaseData->vatStatus == 1) ? 'selected' : '' }}>Yes</option>
+                                        <option value="0" {{ (!empty($purchaseData) && $purchaseData->vatStatus == 0) ? 'selected' : '' }}>No</option>
                                     </select>
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="salingPriceWithVat" name="salingPriceWithVat" value="{{ $purchaseData->salePriceInVat ?? '' }}"  />
+                                    <input type="number" class="form-control" id="salePriceInVat" name="salePriceInVat" value="{{ $purchaseData->salePriceInVat ?? '' }}" readonly />
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="profitMargin" name="profitMargin" value="{{ $purchaseData->profit ?? '' }}"  />
+                                    <input type="number" class="form-control" id="profitMargin" name="profitMargin" value="{{ $purchaseData->profit ?? '' }}" onkeyup="profitCalculation()" />
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="totalPrice" name="totalPrice" value="{{ $purchaseData->totalAmount ?? '' }}"  />
+                                    <input type="number" class="form-control" id="totalAmount" name="totalAmount" value="{{ $purchaseData->totalAmount ?? '' }}" readonly />
                                 </td>
                             </tr>
 
@@ -181,7 +195,7 @@
                                 <tbody id="discountDetails">
                                     <tr>
                                         <td>
-                                            <select name="discountStatus" id="discountStatus" onchange="discountType()" class="form-control" disabled>
+                                            <select name="discountStatus" id="discountStatus" onchange="discountType()" class="form-control">
                                                 <option value="">-</option>
                                                 <option value="1" {{ (!empty($purchaseData) && $purchaseData->disType == 1) ? 'selected' : '' }}>Amount</option>
                                                 <option value="2" {{ (!empty($purchaseData) && $purchaseData->disType == 2) ? 'selected' : '' }}>Parcent</option>
@@ -268,8 +282,8 @@
     
     <div class="col-12 text-center my-3">
        
-            <a href="{{ route('updatePurchase') }}" class="btn btn-success  ml-2">Update</a>
-            <a href="{{ route('purchaseList') }}" class="btn btn-warning  ml-2">Back</a>
+            <button type="submit" class="btn btn-success ml-2">Update</button>
+            <a href="{{ route('purchaseList') }}" class="btn btn-warning ml-2">Back</a>
     </div>
 </form>
 

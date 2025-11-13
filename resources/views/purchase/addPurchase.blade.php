@@ -2,7 +2,7 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<form action="{{ route('savePurchase') }}" class="row" method="POST">
+<form action="{{ route('savePurchase') }}" class="row" method="POST" id="savePurchase" onsubmit="handleFormSubmit(event);" novalidate>
     @csrf
     <div class="col-12">
         <div class="row">
@@ -18,7 +18,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="date" class="form-label">Date *</label>
-                                    <input type="date" class="form-control" id="date" name="purchaseDate" />
+                                    <input type="date" class="form-control" id="date" name="purchaseDate" required />
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -47,12 +47,16 @@
                             <div class="col-md-7">
                                 <div class="form-group">
                                     <label for="productName" class="form-label">Product *</label>
-                                    <select id="productName" name="productName" onchange="productSelect()" class="form-control" required disabled>
+                                    <select id="productName" name="productName" onchange="productSelect()" class="form-control" required>
                                     <!--  form option show proccessing -->
                                         <option value="">Select</option>
                                     @if(!empty($productList) && count($productList)>0)
                                     @foreach($productList as $productData)
-                                        <option value="{{$productData->id}}">{{$productData->name}}</option>
+                                        @php
+                                            $brand = \App\Models\Brand::find($productData->brand);
+                                            $brandName = $brand ? ' - ' . $brand->name : '';
+                                        @endphp
+                                        <option value="{{$productData->id}}">{{$productData->name}}{{$brandName}}</option>
                                     @endforeach
                                     @endif
                                     </select>
@@ -102,16 +106,16 @@
                                     -
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="qty" name="qty" min="1" step="1" readonly />
+                                    <input type="number" class="form-control" id="quantity" name="quantity" min="1" step="1" readonly />
                                 </td>
                                 <td width="9%">
                                     <input type="number" class="form-control" id="currentStock" name="currentStock" readonly />
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="buyingPrice" name="buyingPrice" readonly />
+                                    <input type="number" class="form-control" id="buyPrice" name="buyPrice" readonly />
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="salingPriceWithoutVat" name="salingPriceWithoutVat" readonly />
+                                    <input type="number" class="form-control" id="salePriceExVat" name="salePriceExVat" readonly />
                                 </td>
                                 <td width="9%">
                                     <select name="vatStatus" id="vatStatus" class="form-control" readonly>
@@ -119,13 +123,13 @@
                                     </select>
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="salingPriceWithVat" name="salingPriceWithVat" readonly />
+                                    <input type="number" class="form-control" id="salePriceInVat" name="salePriceInVat" readonly />
                                 </td>
                                 <td width="9%">
                                     <input type="number" class="form-control" id="profitMargin" name="profitMargin" readonly />
                                 </td>
                                 <td width="9%">
-                                    <input type="number" class="form-control" id="totalPrice" name="totalPrice" readonly />
+                                    <input type="number" class="form-control" id="totalAmount" name="totalAmount" readonly />
                                 </td>
                             </tr>
 
@@ -187,8 +191,9 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div id="saveButton" class="d-none  mt-2">
+                        <div id="saveButton" class="mt-2">
                             <button class="btn btn-primary btn-sm" type="submit">Save</button>
+                            <button class="btn btn-warning btn-sm" type="button" onclick="debugForm()">Debug</button>
                         </div>
                     </div>
                 </div>

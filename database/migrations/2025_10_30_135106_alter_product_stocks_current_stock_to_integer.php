@@ -12,10 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('product_stocks', function (Blueprint $table) {
-            // First, convert any decimal values to integers
+        // First, convert any decimal values to integers
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('UPDATE product_stocks SET currentStock = CAST(currentStock AS INTEGER) WHERE currentStock IS NOT NULL');
+        } else {
             DB::statement('UPDATE product_stocks SET currentStock = FLOOR(CAST(currentStock AS DECIMAL(10,2))) WHERE currentStock IS NOT NULL');
-            
+        }
+        
+        Schema::table('product_stocks', function (Blueprint $table) {
             // Then change the column type to integer
             $table->integer('currentStock')->nullable()->change();
         });

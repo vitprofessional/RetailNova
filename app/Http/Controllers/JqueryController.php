@@ -30,12 +30,17 @@ class JqueryController extends Controller
                 $currentStock   = 0;
             endif;
 
+            // Get brand information
+            $brand = Brand::find($getData->brand);
+            $brandName = $brand ? $brand->name : '';
+
             // $purchaseHistory = ProductPurchase::where(['productId'=>$getData->id])->get();
 
             $productName = $getData->name;
+            $productWithBrand = $productName . ($brandName ? ' - ' . $brandName : '');
             // $buyingPrice = $getData->purchasePrice;
             // $productName = $getData->name;
-            return ['productName' => $productName, 'currentStock' => $currentStock, 'message'=>'Success ! Form successfully subjmit.','id'=> $getData->id];
+            return ['productName' => $productWithBrand, 'currentStock' => $currentStock, 'message'=>'Success ! Form successfully subjmit.','id'=> $getData->id];
         else:
             return ['productName' => "",'currentStock' =>"", 'message'=>'Error ! There is an error. Please try agin.','id'=>''];
         endif;    
@@ -89,12 +94,12 @@ class JqueryController extends Controller
             'productName'           => 'required|integer',
             'supplierName'          => 'required|integer',
             'purchaseDate'          => 'required|date',
-            'qty'                   => 'required|integer|min:1',
-            'buyingPrice'           => 'nullable|numeric',
-            'salingPriceWithoutVat' => 'nullable|numeric',
-            'salingPriceWithVat'    => 'nullable|numeric',
+            'quantity'              => 'required|integer|min:1',
+            'buyPrice'              => 'nullable|numeric',
+            'salePriceExVat'        => 'nullable|numeric',
+            'salePriceInVat'        => 'nullable|numeric',
             'profitMargin'          => 'nullable|numeric',
-            'totalPrice'            => 'nullable|numeric',
+            'totalAmount'           => 'nullable|numeric',
             'grandTotal'            => 'nullable|numeric',
             'paidAmount'            => 'nullable|numeric',
             'dueAmount'             => 'nullable|numeric',
@@ -109,7 +114,7 @@ class JqueryController extends Controller
             endif;
 
             $oldQty      = (int)$purchase->qty;
-            $newQty      = (int)$requ->qty;
+            $newQty      = (int)$requ->quantity;
             $returnedQty = (int)ReturnPurchaseItem::where('purchaseId',$purchase->id)->sum('qty');
 
             if($newQty < $returnedQty):
@@ -123,22 +128,22 @@ class JqueryController extends Controller
             $purchase->productName      = $requ->productName;
             $purchase->supplier         = $requ->supplierName;
             $purchase->purchase_date    = $requ->purchaseDate;
-            $purchase->invoice          = $requ->invoiceData;
-            $purchase->reference        = $requ->refData;
+            $purchase->invoice          = $requ->get('invoiceData');
+            $purchase->reference        = $requ->get('refData');
             $purchase->qty              = $newQty; // updated
-            $purchase->buyPrice         = $requ->buyingPrice;
-            $purchase->salePriceExVat   = $requ->salingPriceWithoutVat;
-            $purchase->vatStatus        = $requ->vatStatus;
-            $purchase->salePriceInVat   = $requ->salingPriceWithVat;
-            $purchase->profit           = $requ->profitMargin;
-            $purchase->totalAmount      = $requ->totalPrice;
-            $purchase->disType          = $requ->discountStatus;
-            $purchase->disAmount        = $requ->discountAmount;
-            $purchase->disParcent       = $requ->discountPercent;
-            $purchase->grandTotal       = $requ->grandTotal;
-            $purchase->paidAmount       = $requ->paidAmount;
-            $purchase->dueAmount        = $requ->dueAmount;
-            $purchase->specialNote      = $requ->specialNote;
+            $purchase->buyPrice         = $requ->get('buyPrice');
+            $purchase->salePriceExVat   = $requ->get('salePriceExVat');
+            $purchase->vatStatus        = $requ->get('vatStatus');
+            $purchase->salePriceInVat   = $requ->get('salePriceInVat');
+            $purchase->profit           = $requ->get('profitMargin');
+            $purchase->totalAmount      = $requ->get('totalAmount');
+            $purchase->disType          = $requ->get('discountStatus');
+            $purchase->disAmount        = $requ->get('discountAmount');
+            $purchase->disParcent       = $requ->get('discountPercent');
+            $purchase->grandTotal       = $requ->get('grandTotal');
+            $purchase->paidAmount       = $requ->get('paidAmount');
+            $purchase->dueAmount        = $requ->get('dueAmount');
+            $purchase->specialNote      = $requ->get('specialNote');
 
             if($purchase->save()):
                 // Adjust stock by delta
@@ -153,19 +158,22 @@ class JqueryController extends Controller
                 endif;
 
                 // Optional: add new serials if provided
-                if($requ->serialNumber && count($requ->serialNumber) > 0):
-                    foreach($requ->serialNumber as $serialValue):
-                        if(!empty($serialValue)):
-                            $newSerial = new ProductSerial();
-                            $newSerial->serialNumber = $serialValue;
-                            $newSerial->productId = $purchase->productName;
-                            // associate this serial with the created purchase if DB column exists
-                            if (Schema::hasColumn('product_serials', 'purchaseId')) {
-                                $newSerial->purchaseId = $purchase->id;
-                            }
-                            $newSerial->save();
-                        endif;
-                    endforeach;
+                if($requ->has('serialNumber')):
+                    $serials = $requ->input('serialNumber', []);
+                    if(is_array($serials) && count($serials) > 0):
+                        foreach($serials as $serialValue):
+                            if(!empty(trim($serialValue))):
+                                $newSerial = new ProductSerial();
+                                $newSerial->serialNumber = trim($serialValue);
+                                $newSerial->productId = $purchase->productName;
+                                // associate this serial with the created purchase if DB column exists
+                                if (Schema::hasColumn('product_serials', 'purchaseId')) {
+                                    $newSerial->purchaseId = $purchase->id;
+                                }
+                                $newSerial->save();
+                            endif;
+                        endforeach;
+                    endif;
                 endif;
 
                 Alert::success('Success!','Purchase updated successfully');
@@ -179,7 +187,7 @@ class JqueryController extends Controller
             // Create path (original logic with duplicate prevention)
             $purchaseHistory = PurchaseProduct::where([
                 'productName'   => $requ->productName,
-                'qty'           => $requ->qty,
+                'qty'           => $requ->quantity,
                 'supplier'      => $requ->supplierName,
                 'purchase_date' => $requ->purchaseDate
             ])->get();
@@ -193,22 +201,22 @@ class JqueryController extends Controller
             $purchase->productName      = $requ->productName;
             $purchase->supplier         = $requ->supplierName;
             $purchase->purchase_date    = $requ->purchaseDate;
-            $purchase->invoice          = $requ->invoiceData;
-            $purchase->reference        = $requ->refData;
-            $purchase->qty              = $requ->qty;
-            $purchase->buyPrice         = $requ->buyingPrice;
-            $purchase->salePriceExVat   = $requ->salingPriceWithoutVat;
-            $purchase->vatStatus        = $requ->vatStatus;
-            $purchase->salePriceInVat   = $requ->salingPriceWithVat;
-            $purchase->profit           = $requ->profitMargin;
-            $purchase->totalAmount      = $requ->totalPrice;
-            $purchase->disType          = $requ->discountStatus;
-            $purchase->disAmount        = $requ->discountAmount;
-            $purchase->disParcent       = $requ->discountPercent;
-            $purchase->grandTotal       = $requ->grandTotal;
-            $purchase->paidAmount       = $requ->paidAmount;
-            $purchase->dueAmount        = $requ->dueAmount;
-            $purchase->specialNote      = $requ->specialNote;
+            $purchase->invoice          = $requ->get('invoiceData');
+            $purchase->reference        = $requ->get('refData');
+            $purchase->qty              = $requ->quantity;
+            $purchase->buyPrice         = $requ->get('buyPrice');
+            $purchase->salePriceExVat   = $requ->get('salePriceExVat');
+            $purchase->vatStatus        = $requ->get('vatStatus');
+            $purchase->salePriceInVat   = $requ->get('salePriceInVat');
+            $purchase->profit           = $requ->get('profitMargin');
+            $purchase->totalAmount      = $requ->get('totalAmount');
+            $purchase->disType          = $requ->get('discountStatus');
+            $purchase->disAmount        = $requ->get('discountAmount');
+            $purchase->disParcent       = $requ->get('discountPercent');
+            $purchase->grandTotal       = $requ->get('grandTotal');
+            $purchase->paidAmount       = $requ->get('paidAmount');
+            $purchase->dueAmount        = $requ->get('dueAmount');
+            $purchase->specialNote      = $requ->get('specialNote');
 
             if($purchase->save()):
                 if($requ->serialNumber && count($requ->serialNumber) > 0):
@@ -229,7 +237,7 @@ class JqueryController extends Controller
                 $prevStock = new ProductStock();
                 $prevStock->productId    = $requ->productName;
                 $prevStock->purchaseId   = $purchase->id;
-                $prevStock->currentStock = (int)$requ->qty;
+                $prevStock->currentStock = (int)$requ->quantity;
                 $prevStock->save();
 
                 Alert::success('Success!','Data saved successfully');
