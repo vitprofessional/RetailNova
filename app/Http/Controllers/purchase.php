@@ -24,7 +24,18 @@ class purchase extends Controller
         $productUnit = ProductUnit::orderBy('id','DESC')->get();
         $category = Category::orderBy('id','DESC')->get();
         $brand = Brand::orderBy('id','DESC')->get();
-         return view('purchase.addPurchase',['brandList'=>$brand,'categoryList'=>$category,'productUnitList'=>$productUnit,'supplierList'=>$supplier,'productList'=>$product]);
+         // generate a new invoice for the add form: INV + YYYYMMDD + zero-padded next id
+         $nextId = (int)(PurchaseProduct::max('id') ?? 0) + 1;
+         $generatedInvoice = 'INV'.date('Ymd').str_pad($nextId, 6, '0', STR_PAD_LEFT);
+
+         return view('purchase.addPurchase',[
+             'brandList'=>$brand,
+             'categoryList'=>$category,
+             'productUnitList'=>$productUnit,
+             'supplierList'=>$supplier,
+             'productList'=>$product,
+             'generatedInvoice' => $generatedInvoice,
+         ]);
    }
 
    public function purchaseList(){
@@ -203,6 +214,9 @@ class purchase extends Controller
                 // fallback: fetch by productId (older behavior)
                 $serials = ProductSerial::where('productId', $purchase->productName)->get();
             }
+            // ensure invoice exists for the edit form: keep existing or generate from id
+            $generatedInvoice = $purchase->invoice ?: ('INV'.date('Ymd').str_pad($purchase->id, 6, '0', STR_PAD_LEFT));
+
             return view('purchase.editPurchase',[
                 'brandList'=>$brand,
                 'categoryList'=>$category,
@@ -213,6 +227,7 @@ class purchase extends Controller
                 'stock' => $stock,
                 'totalStock' => $totalStock,
                 'serials' => $serials,
+                'generatedInvoice' => $generatedInvoice,
             ]);
         else:
             Alert::error('Sorry!','Purchase not found');
@@ -230,18 +245,71 @@ class purchase extends Controller
             $purchase->salePriceExVat = $request->salePriceExVat;
             $purchase->salePriceInVat = $request->salePriceInVat;
             $purchase->vatStatus = $request->vatStatus;
-            $purchase->qty = $request->quantity;
+            // preserve previous quantity for delta calculation
+            $oldQty = (int)$purchase->qty;
+            $newQty = (int)$request->quantity;
+
+            // Protect against reducing below already returned qty
+            $returnedQty = (int)ReturnPurchaseItem::where('purchaseId', $purchase->id)->sum('qty');
+            if($newQty < $returnedQty):
+                Alert::error('Sorry!','New quantity cannot be less than already returned quantity (Returned: '.$returnedQty.')');
+                return back();
+            endif;
+
+            $purchase->qty = $newQty;
             $purchase->totalAmount = $request->totalAmount;
             $purchase->grandTotal = $request->grandTotal;
             $purchase->paidAmount = $request->paidAmount;
             $purchase->dueAmount = $request->dueAmount;
+            // additional fields (profit, discounts, notes)
+            $purchase->profit = $request->profitMargin ?? $purchase->profit;
+            $purchase->disType = $request->discountStatus ?? $purchase->disType;
+            $purchase->disAmount = $request->discountAmount ?? $purchase->disAmount;
+            $purchase->disParcent = $request->discountPercent ?? $purchase->disParcent;
+            $purchase->specialNote = $request->specialNote ?? $purchase->specialNote;
 
             if($purchase->save()):
+                // Adjust stock by delta
+                $delta = $newQty - $oldQty;
+                $stock = ProductStock::where('purchaseId', $purchase->id)->first();
+                if($stock):
+                    if($stock->productId != $purchase->productName):
+                        $stock->productId = $purchase->productName;
+                    endif;
+                    $stock->currentStock = max(0, (int)$stock->currentStock + $delta);
+                    $stock->save();
+                else:
+                    // create stock record if missing
+                    $newStock = new ProductStock();
+                    $newStock->productId = $purchase->productName;
+                    $newStock->purchaseId = $purchase->id;
+                    $newStock->currentStock = max(0, $newQty);
+                    $newStock->save();
+                endif;
+
+                // Save any new serials provided
+                if($request->has('serialNumber')):
+                    $serials = $request->input('serialNumber', []);
+                    if(is_array($serials) && count($serials) > 0):
+                        foreach($serials as $serialValue):
+                            if(!empty(trim($serialValue))):
+                                $newSerial = new ProductSerial();
+                                $newSerial->serialNumber = trim($serialValue);
+                                $newSerial->productId = $purchase->productName;
+                                if (Schema::hasColumn('product_serials', 'purchaseId')) {
+                                    $newSerial->purchaseId = $purchase->id;
+                                }
+                                $newSerial->save();
+                            endif;
+                        endforeach;
+                    endif;
+                endif;
+
                 Alert::success('Success!','Purchase updated successfully');
-                return redirect()->route('purchaseList');
+                return redirect()->route('editPurchase', ['id' => $purchase->id]);
             else:
                 Alert::error('Sorry!','Failed to update purchase');
-                return back();
+                return redirect()->route('editPurchase', ['id' => $purchase->id])->withInput();
             endif;
         else:
             Alert::error('Sorry!','Purchase not found');

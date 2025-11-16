@@ -470,6 +470,12 @@ Route::middleware(['posAdmin'])->group(function(){
         'savePurchase'
     ])->name('savePurchase');
     
+    // add product serial via AJAX
+    Route::post('/purchase/serial/add',[
+        JqueryController::class,
+        'addProductSerial'
+    ])->name('addProductSerial');
+    
     // delete product serial (AJAX)
     Route::get('product/serial/delete/{id}', [
         JqueryController::class,

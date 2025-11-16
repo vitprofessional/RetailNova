@@ -41,7 +41,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="invoice" class="form-label">Invoice *</label>
-                                    <input type="text" class="form-control" id="invoice" name="invoiceData" />
+                                    <input type="text" class="form-control" id="invoice" name="invoiceData" value="{{ $generatedInvoice ?? '' }}" />
                                 </div>
                             </div>
                             <div class="col-md-7">

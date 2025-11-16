@@ -356,4 +356,46 @@ class JqueryController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Failed to delete serial'], 500);
         }
     }
+
+    /**
+     * Add product serials via AJAX for an existing purchase
+     */
+    public function addProductSerial(Request $request)
+    {
+        $request->validate([
+            'purchaseId' => 'required|integer',
+            'serials' => 'required|array',
+            'serials.*' => 'nullable|string'
+        ]);
+
+        $purchase = PurchaseProduct::find($request->purchaseId);
+        if (!$purchase) {
+            return response()->json(['status' => 'error', 'message' => 'Purchase not found'], 404);
+        }
+
+        $created = [];
+        $skipped = [];
+        $serials = $request->input('serials', []);
+        foreach ($serials as $val) {
+            $v = trim($val);
+            if ($v === '') continue;
+            // skip if already exists
+            $exists = ProductSerial::where('serialNumber', $v)->first();
+            if ($exists) {
+                $skipped[] = $v;
+                continue;
+            }
+            $newSerial = new ProductSerial();
+            $newSerial->serialNumber = $v;
+            // link to the product on this purchase
+            $newSerial->productId = $purchase->productName;
+            if (Schema::hasColumn('product_serials', 'purchaseId')) {
+                $newSerial->purchaseId = $purchase->id;
+            }
+            $newSerial->save();
+            $created[] = ['id' => $newSerial->id, 'serialNumber' => $newSerial->serialNumber];
+        }
+
+        return response()->json(['status' => 'success', 'created' => $created, 'skipped' => $skipped]);
+    }
 }

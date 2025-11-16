@@ -672,6 +672,115 @@ $(document).on('click', '.delete-serial', function(e){
     });
 });
 
+// small helper to show toast/alert (use Swal if available)
+function showToast(title, text, icon){
+    if(window.Swal && typeof Swal.fire === 'function'){
+        Swal.fire({ title: title || '', text: text || '', icon: icon || 'success', timer: 2000, showConfirmButton: false });
+    } else if(window.swal){
+        try{ window.swal(title || '', text || '', icon || 'success'); } catch(e){ alert((title?title+' - ':'')+(text||'')); }
+    } else {
+        alert((title?title+' - ':'')+(text||''));
+    }
+}
+
+// Save serials via AJAX
+$(document).on('click', '#save-serials', function(e){
+    e.preventDefault();
+    var serials = [];
+    $('input[name="serialNumber[]"]').each(function(){
+        var v = $(this).val();
+        if(v && v.trim() !== '') serials.push(v.trim());
+    });
+    var purchaseId = $('input[name="purchaseId"]').val();
+    if(!purchaseId){
+        showToast('Error','Purchase ID missing. Save the purchase first.','error');
+        return;
+    }
+    if(serials.length == 0){
+        showToast('Notice','Please add at least one serial','warning');
+        return;
+    }
+
+    $.ajax({
+        // Use direct URL as a fallback so blade rendering won't fail if the named route is missing
+        url: '{{ url("/purchase/serial/add") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            purchaseId: purchaseId,
+            serials: serials
+        },
+        success: function(res){
+            if(res.status == 'success'){
+                // append created serials to list
+                res.created.forEach(function(item){
+                    var badge = '<span class="badge badge-light mr-1" id="serial-badge-'+item.id+'">'+item.serialNumber+' <a href="#" class="text-danger ml-1 delete-serial" data-id="'+item.id+'" title="Delete"><i class="ri-delete-bin-line"></i></a></span>';
+                    $('#serialNumberBox').before(badge);
+                    // also add full list row in modal area
+                    var row = '<div id="serial-row-'+item.id+'" class="d-flex align-items-center mb-1"><span class="mr-2">'+item.serialNumber+'</span><a href="#" class="text-danger ml-1 delete-serial" data-id="'+item.id+'" title="Delete"><i class="ri-delete-bin-line"></i></a></div>';
+                    // append to the existing list container (first block in modal body)
+                    $('#serialModal .modal-body').find('div').first().append(row);
+                });
+                // show skipped info if any
+                if(res.skipped && res.skipped.length>0){
+                    showToast('Partial','Some serials were skipped because they already exist: '+res.skipped.join(', '),'warning');
+                } else {
+                    showToast('Success','Serial(s) added','success');
+                }
+                // reset inputs
+                resetSerial();
+                $('#serialModal').modal('hide');
+            }else{
+                showToast('Error', res.message || 'Failed to add serials','error');
+            }
+        },
+        error: function(xhr){
+            var msg = 'Failed to add serials';
+            if(xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+            showToast('Error', msg, 'error');
+        }
+    });
+});
+
+// Update supplier badge on change
+$('#supplierName').on('change', function(){
+    var txt = $('#supplierName option:selected').text();
+    $('#supplierBadge').text(txt);
+});
+
+// Form client-side validation: inline errors
+$('#savePurchase').on('submit', function(e){
+    // Clear previous errors
+    $('.is-invalid').removeClass('is-invalid');
+    $('.invalid-feedback.inline').remove();
+
+    var errors = [];
+    function showError(el, msg){
+        $(el).addClass('is-invalid');
+        $(el).after('<div class="invalid-feedback inline">'+msg+'</div>');
+    }
+
+    var date = $('#date').val();
+    var supplier = $('#supplierName').val();
+    var product = $('#productName').val();
+    var qty = $('#quantity').val();
+    var buy = $('#buyPrice').val();
+
+    if(!date){ showError('#date','Purchase date is required'); errors.push('date'); }
+    if(!supplier){ showError('#supplierName','Supplier is required'); errors.push('supplier'); }
+    if(!product){ showError('#productName','Product is required'); errors.push('product'); }
+    if(!qty || parseInt(qty) <= 0){ showError('#quantity','Quantity must be at least 1'); errors.push('quantity'); }
+    if(!buy || parseFloat(buy) <= 0){ showError('#buyPrice','Buy price must be a positive number'); errors.push('buy'); }
+
+    if(errors.length>0){
+        e.preventDefault();
+        // focus first error
+        $('.is-invalid').first().focus();
+        return false;
+    }
+    // allow submission
+});
+
 function resetSerial(){
     var serial = '<div class="row" id="serialField0"><div class="col-10 mb-3"><input type="" class="form-control" name="serialNumber[]" placeholder="Enter serial number" /></div><div class="col-1 mt-1  p-0"></div></div>';
     $('#serialNumberBox').html(serial);

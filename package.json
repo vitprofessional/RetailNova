@@ -11,6 +11,13 @@
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^1.2.0",
         "tailwindcss": "^4.0.0",
-        "vite": "^6.2.4"
+        "vite": "^6.2.4",
+        "jquery": "^3.6.0",
+        "datatables.net": "^1.13.6",
+        "datatables.net-dt": "^1.13.6",
+        "datatables.net-buttons": "^2.4.1",
+        "datatables.net-buttons-dt": "^2.4.1",
+        "jszip": "^3.10.1",
+        "pdfmake": "^0.2.7"
     }
 }

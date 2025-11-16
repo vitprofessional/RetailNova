@@ -8,13 +8,24 @@
     <div class="col-12">
         <div class="row">
             <div class="col-md-12 col-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between">
-                        <div class="header-title">
-                            <h4 class="card-title">Edit Purchase</h4>
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb mb-1 bg-transparent p-0">
+                                    <li class="breadcrumb-item"><a href="{{ route('purchaseList') }}">Purchases</a></li>
+                                    <li class="breadcrumb-item active" aria-current="page">Edit</li>
+                                </ol>
+                            </nav>
+                            <h4 class="card-title mb-0">Edit Purchase</h4>
+                            <small class="text-muted">Update purchase details, serials and stock</small>
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-primary" title="Save changes"> <i class="ri-save-line mr-1"></i> Update Purchase</button>
+                            <a href="{{ route('purchaseList') }}" class="btn btn-outline-secondary ml-2">Back to list</a>
                         </div>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body py-3">
                         <div class="row align-items-center">
                             <div class="col-md-3">
                                 <div class="form-group">
@@ -23,8 +34,8 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="supplierName" class="form-label">Supplier *</label>
+                                <div class="form-group d-flex align-items-center">
+                                    <label for="supplierName" class="form-label mr-2">Supplier *</label>
                                     <select id="supplierName" name="supplierName" onchange="actProductList()" class="form-control" required>
                                     <option value="">-</option>
                                     <!--  form option show proccessing -->
@@ -34,15 +45,17 @@
                                         @endforeach
                                         @endif
                                     </select>
+                                    <span id="supplierBadge" class="badge badge-info ml-2" style="font-size:.9rem;">{{ $supplierList->firstWhere('id', $purchaseData->supplier)->name ?? '' }}</span>
                                 </div>
-                            </div>
+                                </div>
+                            
                             <div class="col-md-2 mt-4 p-0">
                                 <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#supplier"><i class="las la-plus mr-2"></i>New Supplier</button>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="invoice" class="form-label">Invoice *</label>
-                                    <input type="text" class="form-control" id="invoice" name="invoiceData" value="{{ $purchaseData->invoice ?? '' }}" />
+                                    <input type="text" class="form-control" id="invoice" name="invoiceData" value="{{ $purchaseData->invoice ?? $generatedInvoice ?? '' }}" />
                                 </div>
                             </div>
                             <div class="col-md-7">
@@ -83,24 +96,24 @@
         <div class="card">
             <div class="card-body">
                 <div class="mb-3 table-responsive product-table">
-                    <table class="table mb-0 table-bordered rounded-0">
-                        <thead class="bg-white text-uppercase">
+                    <table class="table table-striped table-bordered mb-0">
+                        <thead class="bg-light text-uppercase small">
                             <tr>
-                                <th>Product Name</th>
-                                <th>Serial</th>
-                                <th>Purchase Qty</th>
-                                <th>Current Stock</th>
-                                <th>Buy Price</th>
-                                <th>Sale Price(Ex. Vat)</th>
-                                <th>Vat Include</th>
-                                <th>Sale Price(Inc. Vat)</th>
-                                <th>Profit %</th>
-                                <th>Total Price</th>
+                                <th style="min-width:220px">Product</th>
+                                <th style="width:140px">Serials</th>
+                                <th style="width:110px" class="text-center">Qty</th>
+                                <th style="width:120px" class="text-center">Stock</th>
+                                <th style="width:120px" class="text-right">Buy Price</th>
+                                <th style="width:130px" class="text-right">Sale (Ex VAT)</th>
+                                <th style="width:100px" class="text-center">VAT</th>
+                                <th style="width:130px" class="text-right">Sale (Inc)</th>
+                                <th style="width:120px" class="text-right">Profit %</th>
+                                <th style="width:140px" class="text-right">Total</th>
                             </tr>
                         </thead>
                         <tbody id="productDetails">
                             <tr>
-                                <td width="20%">
+                                <td>
                                     @php
                                         $selectedProduct = $productList->firstWhere('id', $purchaseData->productName);
                                         $productDisplay = $selectedProduct ? $selectedProduct->name : '';
@@ -111,57 +124,75 @@
                                             }
                                         }
                                     @endphp
-                                    <input type="text" class="form-control" name="selectProductName" value="{{ $productDisplay }}" id="selectProductName"  />
+                                    <div class="d-flex align-items-center">
+                                        <div class="mr-3" style="width:64px;height:64px;flex:0 0 64px;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f6f6f6;">
+                                            @php
+                                                $img = '';
+                                                if(!empty($selectedProduct) && isset($selectedProduct->image) && $selectedProduct->image){
+                                                    $img = asset('storage/'.$selectedProduct->image);
+                                                }
+                                            @endphp
+                                            @if($img)
+                                                <img src="{{ $img }}" alt="{{ $productDisplay }}" style="max-width:100%;max-height:100%;object-fit:cover;" />
+                                            @else
+                                                {{-- inline SVG placeholder --}}
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="4" fill="#e9ecef"/><path d="M7 9h10v6H7z" fill="#ced4da"/><path d="M9 11h2v2H9zM13 11h2v2h-2z" fill="#adb5bd"/></svg>
+                                            @endif
+                                        </div>
+                                        <div>
+                                            <div class="font-weight-bold">{{ $productDisplay }}</div>
+                                            <div class="small text-muted">Invoice: {{ $purchaseData->invoice ?? $generatedInvoice ?? '-' }} | Ref: {{ $purchaseData->reference ?? '-' }}</div>
+                                        </div>
+                                    </div>
                                 </td>
-                                <td width="8%">
-                                    {{-- Show Add button (same as new purchase) to open serial modal --}}
-                                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#serialModal">Add</button>
-                                    <button type="button" class="btn btn-secondary btn-sm ml-1" data-toggle="modal" data-target="#serialModal">View</button>
-
-                                    {{-- List existing serials with delete action (inline badges) --}}
-                                    <div class="mt-2">
+                                <td>
+                                    <div class="mb-2">
+                                        <button type="button" class="btn btn-outline-success btn-sm" data-toggle="modal" data-target="#serialModal">Add / View</button>
+                                    </div>
+                                    <div>
                                         @if(!empty($serials) && $serials->count() > 0)
-                                            @foreach($serials as $s)
-                                                @php
-                                                    $label = $s->serialNumber ?? $s->serial ?? $s->serial_number ?? $s->number ?? ($s->id ?? '');
-                                                @endphp
-                                                <span class="badge badge-light mr-1" id="serial-badge-{{ $s->id }}">{{ $label }}
-                                                    <a href="#" class="text-danger ml-1 delete-serial" data-id="{{ $s->id }}" title="Delete"><i class="ri-delete-bin-line"></i></a>
-                                                </span>
-                                            @endforeach
+                                            <ul class="list-unstyled mb-0 small">
+                                                @foreach($serials as $s)
+                                                    @php $label = $s->serialNumber ?? $s->serial ?? $s->serial_number ?? $s->number ?? $s->id; @endphp
+                                                    <li class="d-flex align-items-center justify-content-between mb-1">
+                                                        <span class="text-truncate">{{ $label }}</span>
+                                                        <a href="#" class="text-danger ml-2 delete-serial" data-id="{{ $s->id }}" title="Delete"><i class="ri-delete-bin-line"></i></a>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
                                         @else
-                                            <small class="text-muted">No serials</small>
+                                            <div class="text-muted small">No serials</div>
                                         @endif
                                     </div>
                                 </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="quantity" name="quantity" min="1" step="1" value="{{ $purchaseData->qty ?? '' }}" onkeyup="totalPriceCalculate()" />
+                                <td class="text-center align-middle">
+                                    <input type="number" class="form-control form-control-sm text-center" id="quantity" name="quantity" min="1" step="1" value="{{ $purchaseData->qty ?? '' }}" onkeyup="totalPriceCalculate()" />
                                 </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="currentStock" value="{{ $totalStock ?? ($stock->currentStock ?? 0) }}" readonly />
+                                <td class="text-center align-middle">
+                                    <input type="number" class="form-control form-control-sm text-center" id="currentStock" value="{{ $totalStock ?? ($stock->currentStock ?? 0) }}" readonly />
                                     <input type="hidden" name="currentStock" value="{{ $totalStock ?? ($stock->currentStock ?? 0) }}" />
                                 </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="buyPrice" name="buyPrice" value="{{ $purchaseData->buyPrice ?? '' }}" onkeyup="totalPriceCalculate()" />
+                                <td class="align-middle">
+                                    <input type="number" class="form-control form-control-sm text-right" id="buyPrice" name="buyPrice" value="{{ $purchaseData->buyPrice ?? '' }}" onkeyup="totalPriceCalculate()" step="0.01" />
                                 </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="salePriceExVat" name="salePriceExVat" value="{{ $purchaseData->salePriceExVat ?? '' }}" onkeyup="priceCalculation()" />
+                                <td class="align-middle">
+                                    <input type="number" class="form-control form-control-sm text-right" id="salePriceExVat" name="salePriceExVat" value="{{ $purchaseData->salePriceExVat ?? '' }}" onkeyup="priceCalculation()" step="0.01" />
                                 </td>
-                                <td width="9%">
-                                    <select name="vatStatus" id="vatStatus" class="form-control" onchange="priceCalculation()">
+                                <td class="align-middle text-center">
+                                    <select name="vatStatus" id="vatStatus" class="form-control form-control-sm" onchange="priceCalculation()">
                                         <option value="">-</option>
                                         <option value="1" {{ (!empty($purchaseData) && $purchaseData->vatStatus == 1) ? 'selected' : '' }}>Yes</option>
                                         <option value="0" {{ (!empty($purchaseData) && $purchaseData->vatStatus == 0) ? 'selected' : '' }}>No</option>
                                     </select>
                                 </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="salePriceInVat" name="salePriceInVat" value="{{ $purchaseData->salePriceInVat ?? '' }}" readonly />
+                                <td class="align-middle">
+                                    <input type="number" class="form-control form-control-sm text-right" id="salePriceInVat" name="salePriceInVat" value="{{ $purchaseData->salePriceInVat ?? '' }}" readonly />
                                 </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="profitMargin" name="profitMargin" value="{{ $purchaseData->profit ?? '' }}" onkeyup="profitCalculation()" />
+                                <td class="align-middle">
+                                    <input type="number" class="form-control form-control-sm text-right" id="profitMargin" name="profitMargin" value="{{ $purchaseData->profit ?? '' }}" onkeyup="profitCalculation()" step="0.01" />
                                 </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="totalAmount" name="totalAmount" value="{{ $purchaseData->totalAmount ?? '' }}" readonly />
+                                <td class="align-middle">
+                                    <input type="number" class="form-control form-control-sm text-right font-weight-bold" id="totalAmount" name="totalAmount" value="{{ $purchaseData->totalAmount ?? '' }}" readonly />
                                 </td>
                             </tr>
 
@@ -271,20 +302,16 @@
                     </div>
                     <button type="button" class="btn btn-success btn-sm rounded-0" id="add-serial">Add Serial</button>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" onclick="resetSerial()" class="btn btn-warning" data-dismiss="modal">Clear</button>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+                    <div class="modal-footer">
+                    <button type="button" onclick="resetSerial()" class="btn btn-warning">Clear</button>
+                    <button type="button" class="btn btn-primary" id="save-serials">Save</button>
                     <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="col-12 text-center my-3">
-       
-            <button type="submit" class="btn btn-success ml-2">Update</button>
-            <a href="{{ route('purchaseList') }}" class="btn btn-warning ml-2">Back</a>
-    </div>
+        <!-- actions moved to header toolbar -->
 </form>
 
 
