@@ -20,7 +20,68 @@
    <head>
       <style>
          .bg-login {
-            background-color: #dadbdb !important;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%) !important;
+         }
+         .login-content {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+         }
+         .auth-card {
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(60,72,120,0.15);
+            padding: 2rem 2.5rem;
+         }
+         .auth-content h2 {
+            font-weight: 700;
+            color: #3b82f6;
+         }
+         .auth-content p {
+            color: #64748b;
+            font-size: 1.1rem;
+         }
+         .floating-label {
+            position: relative;
+         }
+         .floating-label label {
+            position: absolute;
+            left: 12px;
+            top: 10px;
+            color: #94a3b8;
+            font-size: 0.95rem;
+            pointer-events: none;
+            transition: 0.2s;
+         }
+         .floating-input:focus + label,
+         .floating-input:not(:placeholder-shown) + label {
+            top: -12px;
+            left: 8px;
+            font-size: 0.8rem;
+            color: #3b82f6;
+         }
+         .form-control {
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            padding-left: 2.5rem;
+         }
+         .input-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1.1rem;
+         }
+         .btn-primary {
+            background: #3b82f6;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 0.6rem 2rem;
+         }
+         .image-right {
+            max-width: 120px;
          }
       </style>
    </head>
@@ -42,8 +103,39 @@
                         <div class="d-flex align-items-center auth-content">
                            <div class="col-12 align-self-center">
                               <div class="row">
-                                 <div class="@if($config->count()>0) col-6 @else col-4 @endif mx-auto">
-                                    <img src="{{asset('/public/eshop/')}}/assets/images/login/01.png" class="img-fluid image-right" alt="">
+                                 <div class="col-12 text-center mb-3">
+                                          @php $shop = $business[0] ?? null; @endphp
+                                          @if($shop)
+                                             <div class="mb-3 px-4 py-3" style="background:#f3f6fb;border-radius:12px;box-shadow:0 2px 8px rgba(60,72,120,0.07);display:inline-block;min-width:260px;">
+                                                   <div class="d-flex flex-column align-items:flex-start;justify-content:flex-start;">
+                                                   <img src="{{ $shop->businessLogo ? asset($shop->businessLogo) : asset('/public/eshop/assets/images/login/01.png') }}" alt="Logo" style="max-width:70px;max-height:70px;border-radius:8px;margin-bottom:8px;">
+                                                      <h4 class="mb-1" style="color:#3b82f6;margin-bottom:0.25rem;text-align:left;width:100%;">{{ $shop->businessName ?? '' }}, <small style="font-size:12px">{{ $shop->businessLocation }}</small></h4>
+                                                   <div style="color:#64748b;font-size:1rem;">
+                                                      <div style="display:flex;justify-content:center;gap:18px;">
+                                                         @if(!empty($shop->mobile))
+                                                            <span style="display:flex;align-items:center;gap:6px;"><i class="ri-phone-line" style="font-size:1.15em;"></i> <span>{{ $shop->mobile }}</span></span>
+                                                         @endif
+                                                         @if(!empty($shop->email))
+                                                            <span style="display:flex;align-items:center;gap:6px;"><i class="ri-mail-line" style="font-size:1.15em;"></i> <span>{{ $shop->email }}</span></span>
+                                                         @endif
+                                                      </div>
+                                                   </div>
+                                                </div>
+                                             </div>
+                                          @endif
+                                       @if($config->count()>0)
+                                          <div class="mb-2">
+                                             <h4 class="mb-1" style="color:#3b82f6;font-weight:600;">{{ $config[0]->businessName ?? '' }}</h4>
+                                             <div style="color:#64748b;font-size:1rem;">
+                                                @if(!empty($config[0]->mobile))
+                                                   <span><i class="ri-phone-line"></i> {{ $config[0]->mobile }}</span>
+                                                @endif
+                                                @if(!empty($config[0]->email))
+                                                   <span class="ml-2"><i class="ri-mail-line"></i> {{ $config[0]->email }}</span>
+                                                @endif
+                                             </div>
+                                          </div>
+                                       @endif
                                  </div>
                                  <div class="col-12">
                                        @if(session()->has('success'))
@@ -58,26 +150,26 @@
                                        @endif
                                  </div>
                               </div>
-                              <h2 class="mb-2">Admin Panel</h2>
-                              <p>Discover Your World</p>
+                              <h2 class="mb-2 text-center">Welcome to Retail Nova</h2>
+                              <p class="text-center">Sign in to your account to continue</p>
                               @if($config->count()>0)
                               <form action="{{ route('adminLogin') }}" class="login-form" method="POST">
                                     @csrf
                                  <div class="row">
                                     <div class="col-lg-12">
-                                       <div class="floating-label form-group">
-                                          <input class="floating-input form-control" type="email" id="userMail" name="userMail" placeholder=" ">
-                                          <label>Email</label>
+                                       <div class="floating-label form-group position-relative">
+                                          <span class="input-icon"><i class="ri-mail-line"></i></span>
+                                          <input class="form-control" type="email" id="userMail" name="userMail" autocomplete="username" placeholder="Email">
                                        </div>
                                     </div>
                                     <div class="col-lg-12">
-                                       <div class="floating-label form-group">
-                                          <input class="floating-input form-control" type="password" id="password" name="password" placeholder=" ">
-                                          <label>Password</label>
+                                       <div class="floating-label form-group position-relative">
+                                          <span class="input-icon"><i class="ri-lock-line"></i></span>
+                                          <input class="form-control" type="password" id="password" name="password" autocomplete="current-password" placeholder="Password">
                                        </div>
                                     </div>
                                  </div>
-                                 <button type="submit" class="btn btn-primary">Sign In</button>
+                                 <button type="submit" class="btn btn-primary w-100 mt-2">Sign In</button>
                               </form>
                               @else
                                  <form action="{{ route('creatAdmin') }}" class="login-form" method="POST">
@@ -126,7 +218,7 @@
                                           </div>
                                        </div>
                                     </div>
-                                    <button type="submit" class="btn btn-primary">Pos Register</button>
+                                    <button type="submit" class="btn btn-primary w-100 mt-2">POS Register</button>
                                  </form>
                               @endif
                            </div>

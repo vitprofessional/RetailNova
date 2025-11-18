@@ -12,8 +12,8 @@ class userInfo extends Controller
 {
     //user login & rge form str
     public function userLogin(){
-        $server = AdminUser::orderby('id','DESC')->limit(1);
-        return view('userInfo.userLogin',['server'=>$server]);
+        $business = \App\Models\BusinessSetup::orderBy('id','DESC')->limit(1)->get();
+        return view('userInfo.userLogin',['business'=>$business]);
     }
 
     public function adminLogin(Request $req){
