@@ -108,11 +108,13 @@ class purchase extends Controller
             $returnItem->qty = (int)$request->returnQty;
             
             if($returnItem->save()):
-                // Update stock - reduce stock because we're returning items
+                // Update stock: recalculate from original quantity minus all returns
                 $stockHistory = ProductStock::where('purchaseId', $request->purchaseId)->first();
-                if($stockHistory):
-                    $updatedStock = (int)$stockHistory->currentStock - (int)$request->returnQty;
-                    $stockHistory->currentStock = max(0, $updatedStock); // Ensure stock doesn't go negative
+                $purchaseHistory = PurchaseProduct::find($request->purchaseId);
+                if($stockHistory && $purchaseHistory):
+                    $originalQty = (int)$purchaseHistory->qty + \App\Models\ReturnPurchaseItem::where('purchaseId', $request->purchaseId)->sum('qty');
+                    $totalReturned = \App\Models\ReturnPurchaseItem::where('purchaseId', $request->purchaseId)->sum('qty');
+                    $stockHistory->currentStock = max(0, $originalQty - $totalReturned);
                     $stockHistory->save();
                 endif;
 

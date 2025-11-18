@@ -37,16 +37,31 @@
                                         $p = floatval($purchase->paidAmount ?? 0);
                                         $d = floatval($purchase->dueAmount ?? 0);
                                         $s = intval($purchase->currentStock ?? 0);
-                                        $totalGrand += $g; $totalPaid += $p; $totalDue += $d; $totalStock += $s;
+                                        // Get total returned quantity and amount for this purchase
+                                        $returnedQty = \App\Models\ReturnPurchaseItem::where('purchaseId', $pid)->sum('qty');
+                                        $returnedAmount = \App\Models\PurchaseReturn::where('purchaseId', $pid)->sum('totalReturnAmount');
+                                        // Adjusted values
+                                        $adjustedQty = max(0, ($purchase->qty ?? 0) - $returnedQty);
+                                        $adjustedStock = max(0, $s - $returnedQty);
+                                        $adjustedGrand = max(0, $g - $returnedAmount);
+                                        $totalGrand += $adjustedGrand; $totalPaid += $p; $totalDue += $d; $totalStock += $adjustedStock;
                                     @endphp
                                     <tr>
                                         <td><input type="checkbox" class="row-select" data-id="{{ $pid }}" /></td>
                                         <td>{{ $purchase->invoice ?? '-' }}</td>
                                         <td>{{ $purchase->productName ?? '-' }}</td>
-                                        <td class="text-right">{{ number_format($g, 2) }}</td>
+                                        <td class="text-right">{{ number_format($adjustedGrand, 2) }}
+                                            @if($returnedAmount > 0)
+                                                <span class="badge bg-warning" title="Returned">-{{ number_format($returnedAmount, 2) }}</span>
+                                            @endif
+                                        </td>
                                         <td class="text-right">{{ number_format($p, 2) }}</td>
                                         <td class="text-right">{{ number_format($d, 2) }}</td>
-                                        <td class="text-right">{{ number_format($s) }}</td>
+                                        <td class="text-right">{{ number_format($adjustedStock) }}
+                                            @if($returnedQty > 0)
+                                                <span class="badge bg-warning" title="Returned">-{{ $returnedQty }}</span>
+                                            @endif
+                                        </td>
                                         <td>{{ $purchase->supplierName ?? '-' }}</td>
                                         <td class="text-center">
                                             <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
@@ -101,8 +116,9 @@
                         (function(){
                             if (!window.jQuery) return;
                             $(function(){
-                                if ($('#purchaseTable').length){
-                                    $('#purchaseTable').DataTable({
+                                var $table = $('#purchaseTable');
+                                if ($table.length && !$.fn.dataTable.isDataTable($table[0])){
+                                    $table.DataTable({
                                         dom: 'Bfrtip',
                                         buttons: [
                                             { extend: 'copy', className: 'btn btn-outline-secondary btn-sm' },

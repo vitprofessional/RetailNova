@@ -42,6 +42,11 @@
                 <div class="card">
                     <div class="card-body">
                         <h6>Purchase Summary</h6>
+                        @php
+                            $returnedQty = \App\Models\ReturnPurchaseItem::where('purchaseId', $purchaseId)->sum('qty');
+                            $returnedAmount = \App\Models\PurchaseReturn::where('purchaseId', $purchaseId)->sum('totalReturnAmount');
+                            $adjustedGrand = max(0, ($purchase->grandTotal ?? 0) - $returnedAmount);
+                        @endphp
                         <div class="row">
                             <div class="col-12 p-1">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -51,8 +56,11 @@
                             </div>
                             <div class="col-12 p-1">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label class="form-label" style="margin-bottom: 0px;">Grand Total:</label>
-                                    <input disabled class="form-control form-control-sm" type="text" value="{{ number_format($purchase->grandTotal ?? 0, 2) }}" style="width: 50%;" />
+                                    <label class="form-label" style="margin-bottom: 0px;">Grand Total (Adjusted):</label>
+                                    <input disabled class="form-control form-control-sm" type="text" value="{{ number_format($adjustedGrand, 2) }}" style="width: 50%;" />
+                                    @if($returnedAmount > 0)
+                                        <span class="badge bg-warning" title="Returned">-{{ number_format($returnedAmount, 2) }}</span>
+                                    @endif
                                 </div>
                             </div>
                             <div class="col-12 p-1">
