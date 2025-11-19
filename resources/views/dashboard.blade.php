@@ -29,6 +29,38 @@ Dashboard
             <div class="col-lg-12">
                 <div class="row">
                     <div class="col-lg-3 col-md-3 ">
+                        <div class="alert text-white bg-primary" role="alert">
+                            <div class="iq-alert-text  card-body">
+                                <div class="d-flex align-items-center  card-total-sale">
+                                    <div>
+                                        <p class="mb-2">Customer Opening Balance</p>
+                                        <h4>@money($customerOpeningTotal ?? 0)</h4>
+                                    </div>
+                                </div>
+                                <div class="iq-progress-bar">
+                                    <span class="bg-dark iq-progress progress-1" data-percent="70">
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-3 ">
+                        <div class="alert text-white bg-warning" role="alert">
+                            <div class="iq-alert-text  card-body">
+                                <div class="d-flex align-items-center  card-total-sale">
+                                    <div>
+                                        <p class="mb-2">Supplier Opening Balance</p>
+                                        <h4>@money($supplierOpeningTotal ?? 0)</h4>
+                                    </div>
+                                </div>
+                                <div class="iq-progress-bar">
+                                    <span class="bg-dark iq-progress progress-1" data-percent="70">
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-3 ">
                         <div class="alert text-white bg-secondary" role="alert">
                             <div class="iq-alert-text  card-body">
                                 <div class="d-flex align-items-center  card-total-sale">

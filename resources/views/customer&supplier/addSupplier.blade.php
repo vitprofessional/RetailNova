@@ -1,36 +1,32 @@
-@extends('include') @section('backTitle') addCoustomer @endsection @section('container')
+@extends('include') 
+@section('backTitle') addSupplier @endsection 
+@section('container')
+<div class="col-12">@include('sweetalert::alert')</div>
 <div class="row">
     <div class="col-sm-12">
-        <div class="row">
-<div class="col-12">
-    @include('sweetalert::alert')
-</div>
-            @php
-                if(isset($profile)):
-                    $name           = $profile->name;
-                    $accReceivable  = $profile->accReceivable;
-                    $accPayable     = $profile->accPayable;
-                    $mail           = $profile->mail;
-                    $mobile         = $profile->mobile;
-                    $country        = $profile->country;
-                    $state          = $profile->state;
-                    $city           = $profile->city;
-                    $area           = $profile->area;
-                    $profileId      = $profile->id;
-                else:
-                    $name           ='';
-                    $accReceivable  ='';
-                    $accPayable     ='';
-                    $mail           ='';
-                    $mobile         ='';
-                    $country        ='';
-                    $state          ='';
-                    $city           ='';
-                    $area           ='';
-                    $profileId      = '';
-                endif;
-            @endphp
-        </div>
+        @php
+            if(isset($profile)):
+                $name           = $profile->name;
+                $openingBalance = $profile->openingBalance;
+                $mail           = $profile->mail;
+                $mobile         = $profile->mobile;
+                $country        = $profile->country;
+                $state          = $profile->state;
+                $city           = $profile->city;
+                $area           = $profile->area;
+                $profileId      = $profile->id;
+            else:
+                $name           = '';
+                $openingBalance = '';
+                $mail           = '';
+                $mobile         = '';
+                $country        = '';
+                $state          = '';
+                $city           = '';
+                $area           = '';
+                $profileId      = '';
+            endif;
+        @endphp
         <div class="card">
             <div class="card-header d-flex justify-content-between">
                 <div class="header-title">
@@ -38,71 +34,61 @@
                 </div>
             </div>
             <div class="card-body">
-                <form action="{{route('saveSupplier')}}" method="POST" >
+                <form action="{{route('saveSupplier')}}" method="POST">
                     @csrf
+                    <input type="hidden" name="profileId" value="{{ $profileId }}">
                     <div class="row">
-                        <input type="hidden" name="profileId" value="{{ $profileId }}">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Name *</label>
-                                <input type="text" class="form-control" placeholder="Enter Name"  id="fullName" name="fullName"  value="{{$name}}" required />
-                                <div class="help-block with-errors"></div>
+                                <input type="text" class="form-control" placeholder="Enter Name" id="fullName" name="fullName" value="{{$name}}" required />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="inputState" class="form-label">Accoount Receivable *</label>
-                                
-                                <input type="number" class="form-control" placeholder="Enter Accoount Receivable Amount" id="accReceivable" name="accReceivable" value="{{$accReceivable}}"  required />
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="inputState" class="form-label">Accoount Payable *</label>
-                                
-                                <input type="number" class="form-control" placeholder="Enter Accoount Payable Amount" id="accPayable" name="accPayable"value="{{$accPayable}}"   required />
+                                <label for="openingBalance" class="form-label">Opening Balance *
+                                    <span class="ml-1" data-toggle="tooltip" data-bs-toggle="tooltip" title="Positive = you owe supplier (payable). Negative = supplier owes you (receivable).">
+                                        <i class="ri-information-line"></i>
+                                    </span>
+                                </label>
+                                <input type="number" step="1" class="form-control" placeholder="Enter Opening Balance" id="openingBalance" name="openingBalance" value="{{$openingBalance}}" required />
+                                <small class="text-muted">Positive payable, negative receivable.</small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Email *</label>
-                                <input type="email" class="form-control" placeholder="Enter Email" id="mail" name="mail" value="{{$mail}}"   required />
-                                <div class="help-block with-errors"></div>
+                                <input type="email" class="form-control" placeholder="Enter Email" id="mail" name="mail" value="{{$mail}}" required />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Phone Number *</label>
-                                <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" value="{{$mobile}}"  required />
-                                <div class="help-block with-errors"></div>
+                                <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" value="{{$mobile}}" required />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="inputState" class="form-label">Country *</label>
-                                
-                                <input type="text" class="form-control" placeholder="Enter The Country" id="country" name="country" value="{{$country}}"  required />
+                                <label>Country *</label>
+                                <input type="text" class="form-control" placeholder="Enter The Country" id="country" name="country" value="{{$country}}" required />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="inputState" class="form-label">State *</label>
-                                
-                                <input type="text" class="form-control" placeholder="Enter The State" id="state" name="state" value="{{$state}}"  required />
+                                <label>State *</label>
+                                <input type="text" class="form-control" placeholder="Enter The State" id="state" name="state" value="{{$state}}" required />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="inputState" class="form-label">City *</label>
-                               
-                                <input type="text" class="form-control" placeholder="Enter The City" id="city" name="city" value="{{$city}}"  required />
+                                <label>City *</label>
+                                <input type="text" class="form-control" placeholder="Enter The City" id="city" name="city" value="{{$city}}" required />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="area" class="form-label">Area *</label>
-                               
-                                <input type="text" class="form-control" placeholder="Enter The Area" id="area" name="area" value="{{$area}}"  required />
+                                <label>Area *</label>
+                                <input type="text" class="form-control" placeholder="Enter The Area" id="area" name="area" value="{{$area}}" required />
                             </div>
                         </div>
                     </div>
@@ -119,94 +105,91 @@
         <div class="card">
             <div class="card-header ">
                     <div class="row">
-                        <div class="col-md-6">
-                            <h5 class="">Customer Receivable : 1000000</h4>
-                        </div>
-                        <div class="col-md-6 text-last">
-                            <h5 class="">Customer Payable : 50000000</h4>
+                        <div class="col-md-12 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Opening Balance Summary</h5>
+                            <div>
+                                <span class="font-weight-bold">Total Opening Balance:</span>
+                                <span>@money($openingTotal ?? 0)</span>
+                            </div>
                         </div>
                     </div>
             </div>
         </div>
     </div>
     <div class="col-lg-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            @include('partials.searchbar', [
+                'searchId' => 'supplier-table-search',
+                'tableId' => 'supplier-table',
+                'placeholder' => 'Search suppliers by name, email, mobile, address...'
+            ])
+            <div class="small text-muted mt-2 mt-sm-0 ml-sm-3">
+                <span class="badge bg-success">Positive</span> payable, <span class="badge bg-danger">Negative</span> receivable
+            </div>
+        </div>
         <div class="table-responsive rounded mb-3">
-            <table class="data-tables table mb-0 tbl-server-info">
+            <table class="data-tables table mb-0 tbl-server-info" id="supplier-table">
                 <thead class="bg-white text-uppercase">
                     <tr class="ligth ligth-data">
-                        <th>
+                        <th class="rn-col-compact d-none d-sm-table-cell">
                             <div class="checkbox d-inline-block">
                                 <input type="checkbox" class="checkbox-input" id="checkbox1">
                                 <label for="checkbox1" class="mb-0"></label>
                             </div>
                         </th>
-                        <th>Supplier Name</th>
-                        <th>Balance</th>
+                        <th>Supplier</th>
+                        <th>Opening Balance</th>
                         <th>Mobile</th>
-                        <th>Address</th>
-                        <th>Total Credit</th>
-                        <th>Last Transaction</th>
-                        <th>Balance Sheet</th>
-                        <th>Action</th>
+                        <th class="d-none d-lg-table-cell">Address</th>
+                        <th class="d-none d-xl-table-cell">Last Transaction</th>
+                        <th class="rn-col-compact">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="ligth-body">
                     @if(!empty($listItem))
                     @foreach($listItem as $supplierList)
                     <tr>
-                        <td>
+                        <td class="rn-col-compact d-none d-sm-table-cell">
                             <div class="checkbox d-inline-block">
                                 <input type="checkbox" class="checkbox-input" id="checkbox2">
                                 <label for="checkbox2" class="mb-0"></label>
                             </div>
                         </td>
+                        <td><div class="font-weight-600">{{$supplierList->name}}</div><div class="text-muted small">{{$supplierList->mail}}</div></td>
                         <td>
-                            {{$supplierList->name}}
+                            @php $ob = (int)($supplierList->openingBalance ?? 0); @endphp
+                            <span class="badge {{ $ob < 0 ? 'bg-danger' : 'bg-success' }}">@money($ob)</span>
                         </td>
-                        <td>{{$supplierList->accReceivable}}</td>
                         <td>{{$supplierList->mobile}}</td>
-                        <td>{{$supplierList->area}}</td>
-                        <td>{{$supplierList->accPayable}}</td>
-                        <td>not entry</td>
-                        <td>
-                            <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="View"
-                                    href="{{route('supplierbalancesheet')}}"><i class="ri-eye-line mr-0 "></i></a></td>
-                        <td>
+                        <td class="d-none d-lg-table-cell"><div class="rn-ellipsis rn-addr">@php $addr = array_filter([$supplierList->area,$supplierList->city,$supplierList->state,$supplierList->country]); @endphp {{ implode(', ', $addr) }}</div></td>
+                        <td class="d-none d-xl-table-cell">not entry</td>
+                        <td class="rn-col-compact">
                             <div class="d-flex align-items-center list-action">
-                                
-                                <a href="{{route('editSupplier',['id'=>$supplierList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit"
-                                    href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"
-                                    href="{{route('delSupplier',['id'=>$supplierList->id])}}"><i class="ri-delete-bin-line mr-0"></i></a>
+                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="View" href="{{route('supplierbalancesheet')}}"><i class="ri-eye-line mr-0 "></i></a>
+                                <a href="{{route('editSupplier',['id'=>$supplierList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Edit"><i class="ri-pencil-line mr-0"></i></a>
+                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Delete" href="{{route('delSupplier',['id'=>$supplierList->id])}}"><i class="ri-delete-bin-line mr-0"></i></a>
                             </div>
                         </td>
                     </tr>
                     @endforeach
                     @else
                     <tr>
-                        <td>
+                        <td class="rn-col-compact d-none d-sm-table-cell">
                             <div class="checkbox d-inline-block">
                                 <input type="checkbox" class="checkbox-input" id="checkbox2">
                                 <label for="checkbox2" class="mb-0"></label>
                             </div>
                         </td>
-                        <td>
-                            Hasnat Saimun
-                        </td>
+                        <td><div class="font-weight-600">Hasnat Saimun</div><div class="text-muted small">demo@mail.com</div></td>
                         <td>1200</td>
                         <td>01755048017</td>
-                        <td>Cumilla</td>
-                        <td>10000</td>
-                        <td>10.10.2025</td>
-                        <td><a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="View"
-                                    href="#"><i class="ri-eye-line mr-0"></i></a></td>
-                        <td>
+                        <td class="d-none d-lg-table-cell"><div class="rn-ellipsis rn-addr">Cumilla</div></td>
+                        <td class="d-none d-xl-table-cell">10.10.2025</td>
+                        <td class="rn-col-compact">
                             <div class="d-flex align-items-center list-action">
-                                
-                                <a  class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit"
-                                    href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"
-                                    href="#"><i class="ri-delete-bin-line mr-0"></i></a>
+                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
+                                <a  class="badge bg-success mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
+                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Delete" href="#"><i class="ri-delete-bin-line mr-0"></i></a>
                             </div>
                         </td>
                     </tr>
@@ -220,3 +203,26 @@
 @endif
 <!-- Page end  -->
 @endsection
+<script>
+    (function(){
+        var selector = '[data-bs-toggle="tooltip"],[data-toggle="tooltip"]';
+        var els = Array.prototype.slice.call(document.querySelectorAll(selector));
+        if (window.bootstrap && bootstrap.Tooltip) {
+            els.forEach(function (el) { new bootstrap.Tooltip(el); });
+        } else if (typeof window.$ !== 'undefined' && typeof window.$.fn.tooltip === 'function') {
+            window.$(els).tooltip();
+        }
+    })();
+    function copyToClipboard(text){
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text);
+        } else {
+            var el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+        }
+    }
+</script>

@@ -125,6 +125,23 @@
                                 <label for="invoiceFooter" class="form-label"> Invoice Footer Note</label>
                                 <textarea class="form-control" placeholder="Enter invoice footer note here" id="invoiceFooter" name="invoiceFooter" >{{ $invoiceFooter }}</textarea>
                             </div>
+                            <div class="form-group">
+                                <label for="currencySymbol" class="form-label">Currency Symbol *</label>
+                                <input type="text" class="form-control" placeholder="e.g. $, ৳, €" value="{{ $business->currencySymbol ?? '' }}" id="currencySymbol" name="currencySymbol" />
+                            </div>
+                            <div class="form-group">
+                                <label for="currencyPosition" class="form-label">Currency Position *</label>
+                                <select class="form-control" id="currencyPosition" name="currencyPosition">
+                                    @php $pos = $business->currencyPosition ?? 'left'; @endphp
+                                    <option value="left" {{ $pos==='left'?'selected':'' }}>Left (e.g. $100)</option>
+                                    <option value="right" {{ $pos==='right'?'selected':'' }}>Right (e.g. 100$)</option>
+                                </select>
+                            </div>
+                            <div class="form-group form-check">
+                                @php $negP = $business->currencyNegParentheses ?? true; @endphp
+                                <input type="checkbox" class="form-check-input" id="currencyNegParentheses" name="currencyNegParentheses" value="1" {{ $negP ? 'checked' : '' }}>
+                                <label class="form-check-label" for="currencyNegParentheses">Use parentheses for negative (e.g. (100))</label>
+                            </div>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary mr-2"> Update</button>

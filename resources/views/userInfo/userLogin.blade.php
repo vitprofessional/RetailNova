@@ -108,7 +108,7 @@
                                           @if($shop)
                                              <div class="mb-3 px-4 py-3" style="background:#f3f6fb;border-radius:12px;box-shadow:0 2px 8px rgba(60,72,120,0.07);display:inline-block;min-width:260px;">
                                                    <div class="d-flex flex-column align-items:flex-start;justify-content:flex-start;">
-                                                   <img src="{{ $shop->businessLogo ? asset($shop->businessLogo) : asset('/public/eshop/assets/images/login/01.png') }}" alt="Logo" style="max-width:70px;max-height:70px;border-radius:8px;margin-bottom:8px;">
+                                                   <img src="{{ asset('/public/uploads/business/' . $shop->businessLogo) ? asset('/public/uploads/business/' . $shop->businessLogo) : asset('/public/eshop/assets/images/login/01.png') }}" alt="Logo" style="max-width:70px;max-height:70px;border-radius:8px;margin-bottom:8px;">
                                                       <h4 class="mb-1" style="color:#3b82f6;margin-bottom:0.25rem;text-align:left;width:100%;">{{ $shop->businessName ?? '' }}, <small style="font-size:12px">{{ $shop->businessLocation }}</small></h4>
                                                    <div style="color:#64748b;font-size:1rem;">
                                                       <div style="display:flex;justify-content:center;gap:18px;">

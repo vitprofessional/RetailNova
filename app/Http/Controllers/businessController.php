@@ -33,6 +33,9 @@ class businessController extends Controller
         $business->twitter          = $requ->twitter;
         $business->youtube          = $requ->youtubeChannel;
         $business->linkedin         = $requ->linkedin;
+        $business->currencySymbol   = $requ->currencySymbol ?? $business->currencySymbol;
+        $business->currencyPosition = $requ->currencyPosition ?? $business->currencyPosition ?? 'left';
+        $business->currencyNegParentheses = isset($requ->currencyNegParentheses) ? (bool)$requ->currencyNegParentheses : ($business->currencyNegParentheses ?? true);
         if($business->save()):
             Alert::success("Success!","Business data saved successfully");
             return back();

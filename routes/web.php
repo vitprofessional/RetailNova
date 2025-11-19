@@ -121,6 +121,12 @@ Route::middleware(['posAdmin'])->group(function(){
         'delCustomer'
     ])->name('delCustomer');
 
+    //customer restore
+    Route::get('/customer/restore/{id}',[
+        coustomerSupplier::class,
+        'restoreCustomer'
+    ])->name('restoreCustomer');
+
     
     // submit supplier by ajax
     Route::get('/customer/save',[
@@ -141,6 +147,12 @@ Route::middleware(['posAdmin'])->group(function(){
         coustomerSupplier::class,
         'saveSupplier'
     ])->name('saveSupplier');
+
+    //supplier restore
+    Route::get('/supplier/restore/{id}',[
+        coustomerSupplier::class,
+        'restoreSupplier'
+    ])->name('restoreSupplier');
 
     // submit supplier by ajax
     Route::get('/supplier/save',[

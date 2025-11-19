@@ -3,11 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Supplier extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
-        'name', 'mobile', 'mail', 'city', 'area', 'country', 'state', 'accReceivable', 'accPayable'
+        'name', 'mobile', 'mail', 'city', 'area', 'country', 'state', 'openingBalance'
+    ];
+
+    protected $casts = [
+        'openingBalance' => 'integer',
     ];
 
     /**

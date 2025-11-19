@@ -123,6 +123,19 @@
         .btn i{
             margin-right: 0 !important;u
         }
+        /* Global rounded search input styling */
+        .rn-search { max-width: 420px; width: 100%; }
+        .rn-search-box { position: relative; width: 100%; }
+        .rn-search-input { height: 40px; border-radius: 999px; padding-left: 40px; padding-right: 38px; border: 1px solid #e9ecef; transition: all .15s ease; }
+        .rn-search-input:focus { border-color: #86b7fe; box-shadow: 0 0 0 3px rgba(13,110,253,.15); }
+        .rn-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6c757d; font-size: 18px; }
+        .rn-search-clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: #6c757d; padding: 4px; display: none; }
+        .rn-search-clear:hover { color: #343a40; }
+        /* Table scaling helpers */
+        .rn-col-compact { width: 1%; white-space: nowrap; }
+        .rn-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .rn-addr { max-width: 260px; }
+        .table td, .table th { vertical-align: middle; }
     </style>
 </head>
   <body class="">
@@ -838,6 +851,47 @@
     
     <!-- app JavaScript -->
     <script src="{{asset('/public/eshop/')}}/assets/js/app.js"></script>
+    <script>
+        // Reusable search binding (DataTables aware, fallback to text filter)
+        (function(){
+            function filterTable(tableId, query){
+                query = (query || '').toLowerCase();
+                var table = document.getElementById(tableId);
+                if(!table) return;
+                var rows = table.querySelectorAll('tbody tr');
+                rows.forEach(function(tr){
+                    var text = tr.innerText.toLowerCase();
+                    tr.style.display = text.indexOf(query) > -1 ? '' : 'none';
+                });
+            }
+            document.querySelectorAll('.rn-search-input').forEach(function(input){
+                var tableId = input.getAttribute('data-table-target');
+                var clearBtn = input.parentElement.querySelector('.rn-search-clear');
+                function toggleClear(){ if(clearBtn) clearBtn.style.display = input.value ? 'block' : 'none'; }
+                if(window.$ && typeof $.fn.DataTable === 'function' && tableId){
+                    var $table = $('#'+tableId);
+                    var dtInstance = null;
+                    if ($table.length) {
+                        if ($.fn.DataTable.isDataTable($table)) {
+                            dtInstance = $table.DataTable();
+                        } else {
+                            dtInstance = $table.DataTable({
+                                pageLength: 10,
+                                order: [],
+                                lengthChange: false
+                            });
+                        }
+                    }
+                    input.addEventListener('input', function(){ if(dtInstance){ dtInstance.search(this.value).draw(); } toggleClear(); });
+                    if(clearBtn){ clearBtn.addEventListener('click', function(){ input.value=''; if(dtInstance){ dtInstance.search('').draw(); } toggleClear(); input.focus(); }); }
+                } else {
+                    input.addEventListener('input', function(){ filterTable(tableId, this.value); toggleClear(); });
+                    if(clearBtn){ clearBtn.addEventListener('click', function(){ input.value=''; filterTable(tableId,''); toggleClear(); input.focus(); }); }
+                }
+                toggleClear();
+            });
+        })();
+    </script>
   </body>
 
 <!-- Mirrored from templates.iqonic.design/eshop/html/backend/index.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 12 Mar 2025 08:07:42 GMT -->
