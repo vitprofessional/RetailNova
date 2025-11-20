@@ -10,6 +10,14 @@ use App\Http\Requests\SaveCustomerRequest;
 use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\balancesheet;
+use App\Models\SaleProduct;
+use App\Models\InvoiceItem;
+use App\Models\ReturnSaleItem;
+use App\Models\SaleReturn;
+use App\Models\PurchaseProduct;
+use App\Models\PurchaseReturn;
+use App\Models\ReturnPurchaseItem;
+use App\Models\ProductStock;
 use Alert;
 
 class coustomerSupplier extends Controller
@@ -61,15 +69,49 @@ class coustomerSupplier extends Controller
 
     //delete customer
     public function delCustomer($id){
-        $data = Customer::find($id);
-        if($data):
-            $data->delete();
-            Alert::success('Deleted!','Customer profile deleted successfully');
-            return back();
-        else:
+        $data = Customer::withTrashed()->find($id);
+        if(!$data){
             Alert::error('Failed!','Customer not found');
             return back();
-        endif;
+        }
+
+        DB::beginTransaction();
+        try{
+            $this->cascadeDeleteCustomer($id);
+            // finally delete customer record permanently
+            $data->forceDelete();
+            DB::commit();
+            Alert::success('Deleted!','Customer profile and related records deleted successfully');
+        }catch(\Throwable $e){
+            DB::rollBack();
+            Alert::error('Failed!','Failed to delete customer and related records');
+        }
+        return back();
+    }
+
+    // bulk delete customers
+    public function bulkDeleteCustomer(Request $req){
+        $ids = $req->input('selected', []);
+        if(!is_array($ids) || count($ids) === 0){
+            Alert::error('No selection','No customers selected for deletion');
+            return back();
+        }
+
+        $clean = array_filter(array_map('intval', $ids));
+        DB::beginTransaction();
+        try{
+            foreach($clean as $cid){
+                $this->cascadeDeleteCustomer($cid);
+                $cust = Customer::withTrashed()->find($cid);
+                if($cust) $cust->forceDelete();
+            }
+            DB::commit();
+            Alert::success('Deleted!','Selected customers and related records deleted successfully');
+        }catch(\Throwable $e){
+            DB::rollBack();
+            Alert::error('Failed!','Failed to delete selected customers');
+        }
+        return back();
     }
 
      // submit customer by ajax
@@ -231,15 +273,95 @@ class coustomerSupplier extends Controller
     
     //delete supplier
     public function delSupplier($id){
-        $data = Supplier::find($id);
-        if(!empty($data)):
-            $data->delete();
-                Alert::success('Deleted!','Supplier profile deleted successfully');
-                return back();
-        else:
-                Alert::error('Failed!','Supplier not found');
-                return back();
-        endif;
+        $data = Supplier::withTrashed()->find($id);
+        if(!$data){
+            Alert::error('Failed!','Supplier not found');
+            return back();
+        }
+
+        DB::beginTransaction();
+        try{
+            $this->cascadeDeleteSupplier($id);
+            $data->forceDelete();
+            DB::commit();
+            Alert::success('Deleted!','Supplier profile and related records deleted successfully');
+        }catch(\Throwable $e){
+            DB::rollBack();
+            Alert::error('Failed!','Failed to delete supplier and related records');
+        }
+        return back();
+    }
+
+    // bulk delete suppliers
+    public function bulkDeleteSupplier(Request $req){
+        $ids = $req->input('selected', []);
+        if(!is_array($ids) || count($ids) === 0){
+            Alert::error('No selection','No suppliers selected for deletion');
+            return back();
+        }
+        $clean = array_filter(array_map('intval', $ids));
+        DB::beginTransaction();
+        try{
+            foreach($clean as $sid){
+                $this->cascadeDeleteSupplier($sid);
+                $sup = Supplier::withTrashed()->find($sid);
+                if($sup) $sup->forceDelete();
+            }
+            DB::commit();
+            Alert::success('Deleted!','Selected suppliers and related records deleted successfully');
+        }catch(\Throwable $e){
+            DB::rollBack();
+            Alert::error('Failed!','Failed to delete selected suppliers');
+        }
+        return back();
+    }
+
+    /**
+     * Cascade delete all records related to a customer id.
+     * This performs permanent deletes across related tables.
+     */
+    private function cascadeDeleteCustomer(int $id){
+        // Sales belonging to this customer
+        $saleIds = SaleProduct::where('customerId', (string)$id)->pluck('id')->toArray();
+
+        if(!empty($saleIds)){
+            // invoice items referencing those sales
+            InvoiceItem::whereIn('saleId', $saleIds)->delete();
+            // return sale items referencing those sales
+            ReturnSaleItem::whereIn('saleId', $saleIds)->delete();
+            // sale returns (saleId column is text) - match as string
+            SaleReturn::whereIn('saleId', array_map('strval',$saleIds))->delete();
+            // delete the sales themselves
+            SaleProduct::whereIn('id', $saleIds)->delete();
+        }
+
+        // Also delete any return_sale_items that reference this customer directly
+        ReturnSaleItem::where('customerId', $id)->delete();
+    }
+
+    /**
+     * Cascade delete all records related to a supplier id.
+     * This performs permanent deletes across related tables.
+     */
+    private function cascadeDeleteSupplier(int $id){
+        // Purchases belonging to this supplier
+        $purchaseIds = PurchaseProduct::where('supplier', (string)$id)->pluck('id')->toArray();
+
+        if(!empty($purchaseIds)){
+            // invoice items referencing those purchases
+            InvoiceItem::whereIn('purchaseId', $purchaseIds)->delete();
+            // purchase returns that belong to those purchases
+            PurchaseReturn::whereIn('purchaseId', $purchaseIds)->delete();
+            // return purchase items linked to those purchases
+            ReturnPurchaseItem::whereIn('purchaseId', $purchaseIds)->delete();
+            // product stock rows tied to those purchases
+            ProductStock::whereIn('purchaseId', $purchaseIds)->delete();
+            // delete the purchases themselves
+            PurchaseProduct::whereIn('id', $purchaseIds)->delete();
+        }
+
+        // Also delete any return_purchase_items that reference this supplier directly
+        ReturnPurchaseItem::where('supplierId', $id)->delete();
     }
 
     // restore soft-deleted supplier

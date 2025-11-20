@@ -6,13 +6,13 @@
     @include('sweetalert::alert')
 </div>
 @php
-    if(isset($profile)):
+    if (isset($profile)) {
         $name           = $profile->name;
         $profileId      = $profile->id;
-    else:
-        $name           ='';
+    } else {
+        $name           = '';
         $profileId      = '';
-    endif;
+    }
 @endphp
     <form action="{{route('saveExpense')}}" method="POST" >
     @csrf

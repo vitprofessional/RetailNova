@@ -127,6 +127,12 @@ Route::middleware(['posAdmin'])->group(function(){
         'restoreCustomer'
     ])->name('restoreCustomer');
 
+    // customer bulk delete
+    Route::post('/customer/bulk-delete',[
+        coustomerSupplier::class,
+        'bulkDeleteCustomer'
+    ])->name('customers.bulkDelete');
+
     
     // submit supplier by ajax
     Route::get('/customer/save',[
@@ -171,6 +177,11 @@ Route::middleware(['posAdmin'])->group(function(){
         coustomerSupplier::class,
         'delSupplier'
     ])->name('delSupplier');
+    // supplier bulk delete
+    Route::post('/supplier/bulk-delete',[
+        coustomerSupplier::class,
+        'bulkDeleteSupplier'
+    ])->name('suppliers.bulkDelete');
     //Coustomer&supplier Controller end
 
 

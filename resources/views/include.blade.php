@@ -136,6 +136,12 @@
         .rn-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .rn-addr { max-width: 260px; }
         .table td, .table th { vertical-align: middle; }
+        /* Center most table content, allow opt-out with .text-left */
+        .tbl-server-info th, .tbl-server-info td { text-align: center; }
+        .tbl-server-info td.text-left, .tbl-server-info th.text-left { text-align: left; }
+        /* Make action badges centered and compact */
+        .list-action { justify-content: center !important; }
+        .list-action .badge { margin: 0 .25rem; }
     </style>
 </head>
   <body class="">

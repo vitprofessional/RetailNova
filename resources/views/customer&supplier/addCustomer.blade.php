@@ -8,7 +8,7 @@
     <div class="col-sm-12">
         <div class="row">
             @php
-                if(isset($profile)):
+                if (isset($profile)) {
                     $name           = $profile->name;
                     $openingBalance = $profile->openingBalance;
                     $mail           = $profile->mail;
@@ -18,7 +18,7 @@
                     $city           = $profile->city;
                     $area           = $profile->area;
                     $profileId      = $profile->id;
-                else:
+                } else {
                     $name           = '';
                     $openingBalance = '';
                     $mail           = '';
@@ -28,7 +28,7 @@
                     $city           = '';
                     $area           = '';
                     $profileId      = '';
-                endif;
+                }
             @endphp
         </div>
         <div class="card">
@@ -130,21 +130,26 @@
                 'tableId' => 'customer-table',
                 'placeholder' => 'Search customers by name, email, mobile, address...'
             ])
-            <div class="small text-muted mt-2 mt-sm-0 ml-sm-3">
-                <span class="badge bg-success">Positive</span> receivable, <span class="badge bg-danger">Negative</span> payable
+            <div class="d-flex align-items-center">
+                <button id="delete-selected-customers" class="btn btn-sm btn-danger mr-3">Delete Selected</button>
+                <div class="small text-muted mt-2 mt-sm-0 ml-sm-3">
+                    <span class="badge bg-success">Positive</span> receivable, <span class="badge bg-danger">Negative</span> payable
+                </div>
             </div>
         </div>
         <div class="table-responsive rounded mb-3">
-            <table class="data-tables table mb-0 tbl-server-info" id="customer-table">
+            <form id="customer-bulk-delete-form" method="POST" action="{{ route('customers.bulkDelete') }}">
+                @csrf
+                <table class="data-tables table mb-0 tbl-server-info" id="customer-table">
                 <thead class="bg-white text-uppercase">
                     <tr class="ligth ligth-data">
                         <th class="rn-col-compact d-none d-sm-table-cell">
                             <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input" id="checkbox1">
-                                <label for="checkbox1" class="mb-0"></label>
+                                <input type="checkbox" class="checkbox-input" id="select-all-customers">
+                                <label for="select-all-customers" class="mb-0"></label>
                             </div>
                         </th>
-                        <th>Customer</th>
+                        <th class="text-left">Customer</th>
                         <th>Opening Balance</th>
                         <th>Mobile</th>
                         <th class="d-none d-lg-table-cell">Address</th>
@@ -158,11 +163,11 @@
                     <tr>
                         <td class="rn-col-compact d-none d-sm-table-cell">
                             <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input" id="checkbox2">
-                                <label for="checkbox2" class="mb-0"></label>
+                                <input type="checkbox" class="checkbox-input row-checkbox" id="select-row-{{ $customerList->id }}" name="selected[]" value="{{ $customerList->id }}">
+                                <label for="select-row-{{ $customerList->id }}" class="mb-0"></label>
                             </div>
                         </td>
-                        <td>
+                        <td class="text-left">
                             <div class="font-weight-600">{{$customerList->name}}</div>
                             <div class="text-muted small">{{$customerList->mail}}</div>
                         </td>
@@ -174,12 +179,12 @@
                             <a href="tel:{{$customerList->mobile}}" class="text-dark">{{$customerList->mobile}}</a>
                             <a href="javascript:void(0)" class="badge badge-light ml-2" data-toggle="tooltip" data-bs-toggle="tooltip" title="Copy" onclick="copyToClipboard('{{$customerList->mobile}}')"><i class="ri-file-copy-line"></i></a>
                         </td>
-                        <td class="d-none d-lg-table-cell">
+                        <td class="d-none d-lg-table-cell text-left">
                             <div class="rn-ellipsis rn-addr">{{$customerList->full_address ?? $customerList->area}}</div>
                         </td>
                         <td class="d-none d-xl-table-cell">not entry</td>
                         <td class="rn-col-compact">
-                            <div class="d-flex align-items-center list-action">
+                                     <div class="d-flex align-items-center justify-content-center list-action">
                                 <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" data-original-title="View"
                                    href="{{route('balancesheet')}}"><i class="ri-eye-line mr-0 "></i></a>
                                 <a href="{{route('editCustomer',['id'=>$customerList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" data-original-title="Edit">
@@ -207,7 +212,7 @@
                         <td>10000</td>
                         <td>10.10.2025</td>
                         <td class="rn-col-compact">
-                            <div class="d-flex align-items-center list-action">
+                            <div class="d-flex align-items-center justify-content-center list-action">
                                 <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" data-original-title="View"
                                    href="{{route('balancesheet')}}"><i class="ri-eye-line mr-0"></i></a>
                                 <a  class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
@@ -217,7 +222,8 @@
                     </tr>
                     @endif
                 </tbody>
-            </table>
+                </table>
+            </form>
         </div>
     </div>
     @if(!empty($trashedList) && count($trashedList)>0)
@@ -293,5 +299,31 @@
             document.body.removeChild(el);
         }
     }
+
+    // Bulk delete helpers
+    document.addEventListener('DOMContentLoaded', function(){
+        var selectAll = document.getElementById('select-all-customers');
+        if(selectAll){
+            selectAll.addEventListener('change', function(e){
+                var rows = document.querySelectorAll('.row-checkbox');
+                rows.forEach(function(cb){ cb.checked = selectAll.checked; });
+            });
+        }
+
+        var deleteBtn = document.getElementById('delete-selected-customers');
+        if(deleteBtn){
+            deleteBtn.addEventListener('click', function(e){
+                e.preventDefault();
+                var any = document.querySelectorAll('.row-checkbox:checked').length > 0;
+                if(!any){
+                    alert('Please select at least one customer to delete.');
+                    return;
+                }
+                if(confirm('Are you sure you want to delete selected customers?')){
+                    document.getElementById('customer-bulk-delete-form').submit();
+                }
+            });
+        }
+    });
 </script>
 @endsection

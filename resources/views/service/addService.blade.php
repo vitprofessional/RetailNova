@@ -10,15 +10,15 @@
             </div>
         </div>
         @php
-            if(isset($profile)):
+            if (isset($profile)) {
                 $serviceName = $profile->serviceName;
                 $rate = $profile->rate;
                 $profileId = $profile->id;
-            else:
+            } else {
                 $serviceName = '';
                 $rate = '';
                 $profileId = '';
-            endif;
+            }
 
         @endphp
         <form action="{{route('saveService')}}" method="POST">

@@ -36,11 +36,11 @@
                             @forelse($saleList as $sl)
                             @php
                                 $customer = \App\Models\Customer::find($sl->customerId);
-                                if($customer):
+                                if ($customer) {
                                     $customerName = $customer->name;
-                                else:
+                                } else {
                                     $customerName = '-';
-                                endif;
+                                }
                             @endphp
                             <tr>
                                 <td>

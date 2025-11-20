@@ -5,7 +5,7 @@
 <div class="row">
     <div class="col-sm-12">
         @php
-            if(isset($profile)):
+            if (isset($profile)) {
                 $name           = $profile->name;
                 $openingBalance = $profile->openingBalance;
                 $mail           = $profile->mail;
@@ -15,7 +15,7 @@
                 $city           = $profile->city;
                 $area           = $profile->area;
                 $profileId      = $profile->id;
-            else:
+            } else {
                 $name           = '';
                 $openingBalance = '';
                 $mail           = '';
@@ -25,7 +25,7 @@
                 $city           = '';
                 $area           = '';
                 $profileId      = '';
-            endif;
+            }
         @endphp
         <div class="card">
             <div class="card-header d-flex justify-content-between">
@@ -123,21 +123,26 @@
                 'tableId' => 'supplier-table',
                 'placeholder' => 'Search suppliers by name, email, mobile, address...'
             ])
-            <div class="small text-muted mt-2 mt-sm-0 ml-sm-3">
-                <span class="badge bg-success">Positive</span> payable, <span class="badge bg-danger">Negative</span> receivable
+            <div class="d-flex align-items-center">
+                <button id="delete-selected-suppliers" class="btn btn-sm btn-danger mr-3">Delete Selected</button>
+                <div class="small text-muted mt-2 mt-sm-0 ml-sm-3">
+                    <span class="badge bg-success">Positive</span> payable, <span class="badge bg-danger">Negative</span> receivable
+                </div>
             </div>
         </div>
         <div class="table-responsive rounded mb-3">
-            <table class="data-tables table mb-0 tbl-server-info" id="supplier-table">
+            <form id="supplier-bulk-delete-form" method="POST" action="{{ route('suppliers.bulkDelete') }}">
+                @csrf
+                <table class="data-tables table mb-0 tbl-server-info" id="supplier-table">
                 <thead class="bg-white text-uppercase">
                     <tr class="ligth ligth-data">
                         <th class="rn-col-compact d-none d-sm-table-cell">
                             <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input" id="checkbox1">
-                                <label for="checkbox1" class="mb-0"></label>
+                                <input type="checkbox" class="checkbox-input" id="select-all-suppliers">
+                                <label for="select-all-suppliers" class="mb-0"></label>
                             </div>
                         </th>
-                        <th>Supplier</th>
+                        <th class="text-left">Supplier</th>
                         <th>Opening Balance</th>
                         <th>Mobile</th>
                         <th class="d-none d-lg-table-cell">Address</th>
@@ -151,20 +156,20 @@
                     <tr>
                         <td class="rn-col-compact d-none d-sm-table-cell">
                             <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input" id="checkbox2">
-                                <label for="checkbox2" class="mb-0"></label>
+                                <input type="checkbox" class="checkbox-input row-checkbox" id="select-row-supplier-{{ $supplierList->id }}" name="selected[]" value="{{ $supplierList->id }}">
+                                <label for="select-row-supplier-{{ $supplierList->id }}" class="mb-0"></label>
                             </div>
                         </td>
-                        <td><div class="font-weight-600">{{$supplierList->name}}</div><div class="text-muted small">{{$supplierList->mail}}</div></td>
+                        <td class="text-left"><div class="font-weight-600">{{$supplierList->name}}</div><div class="text-muted small">{{$supplierList->mail}}</div></td>
                         <td>
                             @php $ob = (int)($supplierList->openingBalance ?? 0); @endphp
                             <span class="badge {{ $ob < 0 ? 'bg-danger' : 'bg-success' }}">@money($ob)</span>
                         </td>
                         <td>{{$supplierList->mobile}}</td>
-                        <td class="d-none d-lg-table-cell"><div class="rn-ellipsis rn-addr">@php $addr = array_filter([$supplierList->area,$supplierList->city,$supplierList->state,$supplierList->country]); @endphp {{ implode(', ', $addr) }}</div></td>
+                        <td class="d-none d-lg-table-cell text-left"><div class="rn-ellipsis rn-addr">@php $addr = array_filter([$supplierList->area,$supplierList->city,$supplierList->state,$supplierList->country]); @endphp {{ implode(', ', $addr) }}</div></td>
                         <td class="d-none d-xl-table-cell">not entry</td>
-                        <td class="rn-col-compact">
-                            <div class="d-flex align-items-center list-action">
+                        <td>
+                            <div class="d-flex align-items-center justify-content-center list-action">
                                 <a class="badge badge-info mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="View" href="{{route('supplierbalancesheet')}}"><i class="ri-eye-line mr-0 "></i></a>
                                 <a href="{{route('editSupplier',['id'=>$supplierList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Edit"><i class="ri-pencil-line mr-0"></i></a>
                                 <a class="badge bg-warning mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Delete" href="{{route('delSupplier',['id'=>$supplierList->id])}}"><i class="ri-delete-bin-line mr-0"></i></a>
@@ -186,7 +191,7 @@
                         <td class="d-none d-lg-table-cell"><div class="rn-ellipsis rn-addr">Cumilla</div></td>
                         <td class="d-none d-xl-table-cell">10.10.2025</td>
                         <td class="rn-col-compact">
-                            <div class="d-flex align-items-center list-action">
+                            <div class="d-flex align-items-center justify-content-center list-action">
                                 <a class="badge badge-info mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
                                 <a  class="badge bg-success mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
                                 <a class="badge bg-warning mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Delete" href="#"><i class="ri-delete-bin-line mr-0"></i></a>
@@ -195,7 +200,8 @@
                     </tr>
                     @endif
                 </tbody>
-            </table>
+                </table>
+            </form>
         </div>
     </div>
     
@@ -225,4 +231,30 @@
             document.body.removeChild(el);
         }
     }
+
+    // Bulk delete helpers for suppliers
+    document.addEventListener('DOMContentLoaded', function(){
+        var selectAll = document.getElementById('select-all-suppliers');
+        if(selectAll){
+            selectAll.addEventListener('change', function(e){
+                var rows = document.querySelectorAll('#supplier-table .row-checkbox');
+                rows.forEach(function(cb){ cb.checked = selectAll.checked; });
+            });
+        }
+
+        var deleteBtn = document.getElementById('delete-selected-suppliers');
+        if(deleteBtn){
+            deleteBtn.addEventListener('click', function(e){
+                e.preventDefault();
+                var any = document.querySelectorAll('#supplier-table .row-checkbox:checked').length > 0;
+                if(!any){
+                    alert('Please select at least one supplier to delete.');
+                    return;
+                }
+                if(confirm('Are you sure you want to delete selected suppliers?')){
+                    document.getElementById('supplier-bulk-delete-form').submit();
+                }
+            });
+        }
+    });
 </script>
