@@ -16,6 +16,11 @@ use App\Models\InvoiceItem;
 use App\Models\Service;
 use Alert;
 use Illuminate\Support\Facades\Schema;
+use App\Services\InvoiceService;
+use App\Services\StockService;
+use App\Http\Requests\SaleStoreRequest;
+use App\Http\Requests\PurchaseSaveRequest;
+use Illuminate\Support\Facades\DB;
 
 class JqueryController extends Controller
 {
@@ -77,33 +82,59 @@ class JqueryController extends Controller
             return ['productName' => "", 'id'=>$id, 'getData' => null, 'buyPrice'=>'', 'salePrice'=>''];
         endif;
     }
+
+    /**
+     * Return product <option> HTML for a customer. For now this returns all products
+     * (customer-specific filtering can be added later). This endpoint is consumed
+     * by the sale page when a customer is selected so the product dropdown is
+     * populated dynamically.
+     */
+    public function getProductsForCustomer($customerId)
+    {
+        // TODO: filter products by customer if needed. For now return all active products.
+        $products = Product::orderBy('name','asc')->get();
+
+        $options = '<option value="">Select</option>';
+        foreach ($products as $p) {
+            $options .= '<option value="'.$p->id.'">'.htmlspecialchars($p->name).'</option>';
+        }
+
+        return response()->json(['data' => $options]);
+    }
+
+    /**
+     * Public variant of getProductsForCustomer used by AJAX on the sale page.
+     * This intentionally does not require authentication and returns the same
+     * option HTML payload so the frontend can populate the select safely.
+     */
+    public function getProductsForCustomerPublic($customerId)
+    {
+        // For now return all products; we keep the response identical to the
+        // authenticated version for simplicity.
+        $products = Product::orderBy('name','asc')->get();
+
+        $options = '<option value="">Select</option>';
+        foreach ($products as $p) {
+            $options .= '<option value="'.$p->id.'">'.htmlspecialchars($p->name).'</option>';
+        }
+
+        return response()->json(['data' => $options]);
+    }
     public function getPurchaseDetails($id){
         $getData = PurchaseProduct::find($id);
         if($getData){
             $salePrice      = $getData->salePriceExVat;
             $buyPrice       = $getData->buyPrice;
-            return ['id'=>$id, 'buyPrice'=> $buyPrice, 'getData' => $getData, 'salePrice'=>$salePrice];
+            // include current stock for this purchase row so frontend can validate quantities immediately
+            $currentStock = \App\Models\ProductStock::where('purchaseId', $id)->sum('currentStock');
+            return ['id'=>$id, 'buyPrice'=> $buyPrice, 'getData' => $getData, 'salePrice'=>$salePrice, 'currentStock' => $currentStock];
         }else{
             return ['id'=>"", 'buyPrice'=> "", 'getData' => null, 'salePrice'=>""];
         }
     }
 
-    public function savePurchase(Request $requ){
-        // Shared validation (integer-only enforcement)
-        $requ->validate([
-            'productName'           => 'required|integer',
-            'supplierName'          => 'required|integer',
-            'purchaseDate'          => 'required|date',
-            'quantity'              => 'required|integer|min:1',
-            'buyPrice'              => 'nullable|numeric',
-            'salePriceExVat'        => 'nullable|numeric',
-            'salePriceInVat'        => 'nullable|numeric',
-            'profitMargin'          => 'nullable|numeric',
-            'totalAmount'           => 'nullable|numeric',
-            'grandTotal'            => 'nullable|numeric',
-            'paidAmount'            => 'nullable|numeric',
-            'dueAmount'             => 'nullable|numeric',
-        ]);
+    public function savePurchase(PurchaseSaveRequest $requ){
+        // Validation moved to FormRequest
 
         // Update path (editing existing purchase)
         if(!empty($requ->purchaseId)):
@@ -281,62 +312,102 @@ class JqueryController extends Controller
         ]);
     }
 
-    public function saveSale(Request $requ){
-        // return $requ;
-        $sales = new SaleProduct();
+    public function saveSale(SaleStoreRequest $requ){
+        // Validation handled by FormRequest
+        $stockService = app(StockService::class);
+        $invoiceService = app(InvoiceService::class);
 
-        $sales->invoice         = $requ->invoice;
-        $sales->date            = $requ->date;
-        $sales->customerId      = $requ->customerId;
-        $sales->reference       = $requ->reference;
-        $sales->note            = $requ->note;
-        $sales->totalSale       = $requ->totalSaleAmount;
-        $sales->discountAmount  = $requ->discountAmount;
-        $sales->grandTotal      = $requ->grandTotal;
-        $sales->paidAmount      = $requ->paidAmount;
-        $sales->invoiceDue      = $requ->dueAmount;
-        $sales->prevDue         = $requ->prevDue;
-        $sales->curDue          = $requ->curDue;
-        $sales->status          = "Ordered";
-        
-        $items = $requ->qty;
-        if($sales->save()):
-            if(count($items)>0):
-                foreach($items as $index => $item):
-                    $invoice = new InvoiceItem();
-                    $invoice->purchaseId = $requ->purchaseData[$index];
-                    $invoice->saleId = $sales->id;
-                    $invoice->qty = $item;
-                    $invoice->salePrice = $requ->salePrice[$index];
-                    $invoice->buyPrice = $requ->buyPrice[$index];
+        $items = $requ->qty ?? [];
 
-                    $totalSale      = $requ->salePrice[$index]*$item;
-                    $totalPurchase  = $requ->buyPrice[$index]*$item;
-                    $profitTotal    = $totalSale-$totalPurchase;
-                    $profitMargin   = ($profitTotal/$totalPurchase)*100;
-                    $profitParcent  = number_format($profitMargin,2);
+        try {
+            DB::transaction(function() use ($requ, $items, $stockService, $invoiceService, &$message) {
+                $sales = new SaleProduct();
+                // Generate a sequenced sale invoice (replaces client-provided invoice)
+                $sales->invoice         = $invoiceService->generateSaleInvoice();
+                $sales->date            = $requ->date;
+                $sales->customerId      = $requ->customerId;
+                $sales->reference       = $requ->reference;
+                $sales->note            = $requ->note;
+                $sales->totalSale       = $requ->totalSaleAmount;
+                $sales->discountAmount  = $requ->discountAmount;
+                $sales->grandTotal      = $requ->grandTotal;
+                $sales->paidAmount      = $requ->paidAmount;
+                $sales->invoiceDue      = $requ->dueAmount;
+                $sales->prevDue         = $requ->prevDue;
+                $sales->curDue          = $requ->curDue;
+                $sales->status          = "Ordered";
 
-                    $invoice->totalSale     = $totalSale;
-                    $invoice->totalPurchase = $totalPurchase;
-                    $invoice->profitTotal   = $profitTotal;
-                    $invoice->profitMargin  = $profitParcent;
+                if(!$sales->save()){
+                    throw new \Exception('Failed to save sale');
+                }
 
-                    if($invoice->save()):
-                        // stock updated
-                        $stockHistory = ProductStock::where(['purchaseId'=>$requ->purchaseData[$index]])->first();
-                        $updatedStock = $stockHistory->currentStock-$item;
-                        $stockHistory->currentStock = $updatedStock;
-                        $stockHistory->save();
-                    endif;
-                endforeach;
-            endif;
+                if(count($items)>0){
+                    foreach($items as $index => $item){
+                        $invoice = new InvoiceItem();
+                        $invoice->purchaseId = $requ->purchaseData[$index];
+                        $invoice->saleId = $sales->id;
+                        $invoice->qty = $item;
+                        $invoice->salePrice = $requ->salePrice[$index];
+                        $invoice->buyPrice = $requ->buyPrice[$index];
+
+                        $totalSale      = $requ->salePrice[$index]*$item;
+                        $totalPurchase  = $requ->buyPrice[$index]*$item;
+                        $profitTotal    = $totalSale - $totalPurchase;
+                        $profitMargin   = $totalPurchase != 0 ? ($profitTotal / $totalPurchase) * 100 : 0;
+                        $profitParcent  = number_format($profitMargin,2);
+
+                        $invoice->totalSale     = $totalSale;
+                        $invoice->totalPurchase = $totalPurchase;
+                        $invoice->profitTotal   = $profitTotal;
+                        $invoice->profitMargin  = $profitParcent;
+
+                        if(!$invoice->save()){
+                            throw new \Exception('Failed to save invoice item');
+                        }
+
+                        // Use StockService to safely decrease stock for this purchase row (sale-specific)
+                        $purchaseId = (int)$requ->purchaseData[$index];
+                        $qty = (int)$item;
+                        $ok = $stockService->decreaseStockForSale($purchaseId, $qty);
+                        // decreaseStockForSale returns false if stock insufficient or not found
+                        if(!$ok){
+                            throw new \Exception('Insufficient stock or invalid purchaseId: '.$purchaseId);
+                        }
+                    }
+                }
+            });
 
             $message = Alert::success('Success!','Data saved successfully');
             return back();
-        else:
-            $message = Alert::error('Sorry!','Data failed to save');
+        } catch (\Exception $e) {
+            // Log exception
+            \Log::error('saveSale transaction failed: '.$e->getMessage());
+
+            $msg = 'Data failed to save';
+            // Friendly message for insufficient stock
+            if (stripos($e->getMessage(), 'Insufficient stock') !== false) {
+                // try to extract purchaseId from message
+                $purchaseId = null;
+                if (preg_match('/(\d+)$/', $e->getMessage(), $m)) {
+                    $purchaseId = (int)$m[1];
+                }
+                $productName = null;
+                if ($purchaseId) {
+                    $pp = PurchaseProduct::find($purchaseId);
+                    if ($pp) {
+                        $productName = $pp->productName;
+                    }
+                }
+                if ($productName) {
+                    $msg = 'Insufficient stock for "'.$productName.'". Adjust quantity or restock and try again.';
+                } else {
+                    $msg = 'Insufficient stock for one or more items. Adjust quantity or restock and try again.';
+                }
+            }
+
+            $message = Alert::error('Sorry!',$msg);
             return back();
-        endif;
+        }
     }
 
     /**

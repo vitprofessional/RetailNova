@@ -13,20 +13,21 @@ use App\Models\ProductStock;
 use App\Models\ProductSerial;
 use Alert;
 use Illuminate\Support\Facades\Schema;
+use App\Services\StockService;
+use App\Services\InvoiceService;
 
 use Illuminate\Http\Request;
 
 class purchase extends Controller
 {
    public function addPurchase(){
-        $supplier = Supplier::orderBy('id','DESC')->get();
-        $product = Product::orderBy('id','DESC')->get();
-        $productUnit = ProductUnit::orderBy('id','DESC')->get();
-        $category = Category::orderBy('id','DESC')->get();
-        $brand = Brand::orderBy('id','DESC')->get();
-         // generate a new invoice for the add form: INV + YYYYMMDD + zero-padded next id
-         $nextId = (int)(PurchaseProduct::max('id') ?? 0) + 1;
-         $generatedInvoice = 'INV'.date('Ymd').str_pad($nextId, 6, '0', STR_PAD_LEFT);
+       $supplier = Supplier::orderBy('id','DESC')->get();
+       $product = Product::orderBy('id','DESC')->get();
+       $productUnit = ProductUnit::orderBy('id','DESC')->get();
+       $category = Category::orderBy('id','DESC')->get();
+       $brand = Brand::orderBy('id','DESC')->get();
+       // robust invoice generation using sequence table
+       $generatedInvoice = app(InvoiceService::class)->generatePurchaseInvoice();
 
          return view('purchase.addPurchase',[
              'brandList'=>$brand,
@@ -89,50 +90,41 @@ class purchase extends Controller
     }
 
     public function purchaseReturnSave(Request $request){
-        // Validate that quantity is integer
-        $request->validate([
-            'returnQty' => 'required|integer|min:1'
+        $validated = $request->validate([
+            'purchaseId' => ['required','integer','exists:purchase_products,id'],
+            'supplierId' => ['required','integer','exists:suppliers,id'],
+            'productId'  => ['required','integer','exists:products,id'],
+            'returnQty'  => ['required','integer','min:1'],
+            'totalReturnAmount' => ['nullable','numeric','min:0'],
+            'adjustAmount'      => ['nullable','numeric','min:0']
         ]);
 
+        $service = new StockService();
+        if(!$service->validatePurchaseReturn($validated['purchaseId'], (int)$validated['returnQty'])){
+            Alert::error('Sorry!','Return quantity exceeds available purchase quantity');
+            return back();
+        }
+
         $history = new PurchaseReturn();
-        $history->purchaseId = $request->purchaseId;
-        $history->totalReturnAmount = $request->totalReturnAmount;
-        $history->adjustAmount = $request->adjustAmount ?? 0;
-        
-        if($history->save()):
+        $history->purchaseId = $validated['purchaseId'];
+        $history->totalReturnAmount = $validated['totalReturnAmount'] ?? 0;
+        $history->adjustAmount = $validated['adjustAmount'] ?? 0;
+
+        if($history->save()){
             $returnItem = new ReturnPurchaseItem();
             $returnItem->returnId = $history->id;
-            $returnItem->purchaseId = $request->purchaseId;
-            $returnItem->supplierId = $request->supplierId;
-            $returnItem->productId = $request->productId;
-            $returnItem->qty = (int)$request->returnQty;
-            
-            if($returnItem->save()):
-                // Update stock: recalculate from original quantity minus all returns
-                $stockHistory = ProductStock::where('purchaseId', $request->purchaseId)->first();
-                $purchaseHistory = PurchaseProduct::find($request->purchaseId);
-                if($stockHistory && $purchaseHistory):
-                    $originalQty = (int)$purchaseHistory->qty + \App\Models\ReturnPurchaseItem::where('purchaseId', $request->purchaseId)->sum('qty');
-                    $totalReturned = \App\Models\ReturnPurchaseItem::where('purchaseId', $request->purchaseId)->sum('qty');
-                    $stockHistory->currentStock = max(0, $originalQty - $totalReturned);
-                    $stockHistory->save();
-                endif;
-
-                // Update purchase quantity
-                $purchaseHistory = PurchaseProduct::find($request->purchaseId);
-                if($purchaseHistory):
-                    $updatedQty = (int)$purchaseHistory->qty - (int)$request->returnQty;
-                    $purchaseHistory->qty = max(0, $updatedQty);
-                    $purchaseHistory->save();
-                endif;
-            endif;
-            
+            $returnItem->purchaseId = $validated['purchaseId'];
+            $returnItem->supplierId = $validated['supplierId'];
+            $returnItem->productId = $validated['productId'];
+            $returnItem->qty = (int)$validated['returnQty'];
+            if($returnItem->save()){
+                $service->decreaseStockForPurchaseReturn($validated['purchaseId'], (int)$validated['returnQty']);
+            }
             Alert::success('Success!','Purchase return saved successfully');
             return redirect()->route('purchaseList');
-        else:
-            Alert::error('Sorry!','Failed to save purchase return');
-            return back();
-        endif;
+        }
+        Alert::error('Sorry!','Failed to save purchase return');
+        return back();
     }
 
     public function returnPurchaseList(){
@@ -240,56 +232,53 @@ class purchase extends Controller
     public function updatePurchase(Request $request){
         $purchase = PurchaseProduct::find($request->purchaseId);
         if($purchase):
-            $purchase->purchase_date = $request->purchaseDate;
-            $purchase->supplier = $request->supplierName;
-            $purchase->productName = $request->productName;
-            $purchase->buyPrice = $request->buyPrice;
-            $purchase->salePriceExVat = $request->salePriceExVat;
-            $purchase->salePriceInVat = $request->salePriceInVat;
-            $purchase->vatStatus = $request->vatStatus;
-            // preserve previous quantity for delta calculation
+            // Basic validation inline (could be moved to Form Request later)
+            $request->validate([
+                'supplierName'    => ['required','integer','exists:suppliers,id'],
+                'productName'     => ['required','integer','exists:products,id'],
+                'buyPrice'        => ['nullable','numeric','min:0'],
+                'salePriceExVat'  => ['nullable','numeric','min:0'],
+                'salePriceInVat'  => ['nullable','numeric','min:0'],
+                'vatStatus'       => ['nullable','string','max:50'],
+                'quantity'        => ['required','integer','min:0'],
+                'totalAmount'     => ['nullable','numeric','min:0'],
+                'grandTotal'      => ['nullable','numeric','min:0'],
+                'paidAmount'      => ['nullable','numeric','min:0'],
+                'dueAmount'       => ['nullable','numeric','min:0'],
+                'discountAmount'  => ['nullable','numeric','min:0'],
+                'discountPercent' => ['nullable','numeric','min:0'],
+            ]);
+
             $oldQty = (int)$purchase->qty;
             $newQty = (int)$request->quantity;
 
-            // Protect against reducing below already returned qty
-            $returnedQty = (int)ReturnPurchaseItem::where('purchaseId', $purchase->id)->sum('qty');
-            if($newQty < $returnedQty):
-                Alert::error('Sorry!','New quantity cannot be less than already returned quantity (Returned: '.$returnedQty.')');
-                return back();
-            endif;
-
-            $purchase->qty = $newQty;
-            $purchase->totalAmount = $request->totalAmount;
-            $purchase->grandTotal = $request->grandTotal;
-            $purchase->paidAmount = $request->paidAmount;
-            $purchase->dueAmount = $request->dueAmount;
-            // additional fields (profit, discounts, notes)
-            $purchase->profit = $request->profitMargin ?? $purchase->profit;
-            $purchase->disType = $request->discountStatus ?? $purchase->disType;
-            $purchase->disAmount = $request->discountAmount ?? $purchase->disAmount;
-            $purchase->disParcent = $request->discountPercent ?? $purchase->disParcent;
-            $purchase->specialNote = $request->specialNote ?? $purchase->specialNote;
+            $purchase->purchase_date    = $request->purchaseDate;
+            $purchase->supplier         = $request->supplierName;
+            $purchase->productName      = $request->productName;
+            $purchase->buyPrice         = $request->buyPrice;
+            $purchase->salePriceExVat   = $request->salePriceExVat;
+            $purchase->salePriceInVat   = $request->salePriceInVat;
+            $purchase->vatStatus        = $request->vatStatus;
+            $purchase->qty              = $newQty;
+            $purchase->totalAmount      = $request->totalAmount;
+            $purchase->grandTotal       = $request->grandTotal;
+            $purchase->paidAmount       = $request->paidAmount;
+            $purchase->dueAmount        = $request->dueAmount;
+            $purchase->profit           = $request->profitMargin ?? $purchase->profit;
+            $purchase->disType          = $request->discountStatus ?? $purchase->disType;
+            $purchase->disAmount        = $request->discountAmount ?? $purchase->disAmount;
+            $purchase->disParcent       = $request->discountPercent ?? $purchase->disParcent;
+            $purchase->specialNote      = $request->specialNote ?? $purchase->specialNote;
 
             if($purchase->save()):
-                // Adjust stock by delta
-                $delta = $newQty - $oldQty;
-                $stock = ProductStock::where('purchaseId', $purchase->id)->first();
-                if($stock):
-                    if($stock->productId != $purchase->productName):
-                        $stock->productId = $purchase->productName;
-                    endif;
-                    $stock->currentStock = max(0, (int)$stock->currentStock + $delta);
-                    $stock->save();
-                else:
-                    // create stock record if missing
-                    $newStock = new ProductStock();
-                    $newStock->productId = $purchase->productName;
-                    $newStock->purchaseId = $purchase->id;
-                    $newStock->currentStock = max(0, $newQty);
-                    $newStock->save();
+                $service = new StockService();
+                $result = $service->adjustStockForPurchaseQtyChange($purchase->id, $oldQty, $newQty);
+                if(!$result['success']):
+                    Alert::error('Sorry!',$result['message']);
+                    return redirect()->route('editPurchase',['id'=>$purchase->id]);
                 endif;
 
-                // Save any new serials provided
+                // Save new serials (unchanged logic, but after stock adjustment)
                 if($request->has('serialNumber')):
                     $serials = $request->input('serialNumber', []);
                     if(is_array($serials) && count($serials) > 0):

@@ -124,7 +124,6 @@
                 'placeholder' => 'Search suppliers by name, email, mobile, address...'
             ])
             <div class="d-flex align-items-center">
-                <button id="delete-selected-suppliers" class="btn btn-sm btn-danger mr-3">Delete Selected</button>
                 <div class="small text-muted mt-2 mt-sm-0 ml-sm-3">
                     <span class="badge bg-success">Positive</span> payable, <span class="badge bg-danger">Negative</span> receivable
                 </div>
@@ -133,6 +132,9 @@
         <div class="table-responsive rounded mb-3">
             <form id="supplier-bulk-delete-form" method="POST" action="{{ route('suppliers.bulkDelete') }}">
                 @csrf
+                <div class="mb-2 d-flex justify-content-end">
+                    <button id="delete-selected-suppliers" type="button" class="btn btn-sm btn-danger mr-3" data-confirm="delete">Delete Selected</button>
+                </div>
                 <table class="data-tables table mb-0 tbl-server-info" id="supplier-table">
                 <thead class="bg-white text-uppercase">
                     <tr class="ligth ligth-data">
@@ -169,11 +171,15 @@
                         <td class="d-none d-lg-table-cell text-left"><div class="rn-ellipsis rn-addr">@php $addr = array_filter([$supplierList->area,$supplierList->city,$supplierList->state,$supplierList->country]); @endphp {{ implode(', ', $addr) }}</div></td>
                         <td class="d-none d-xl-table-cell">not entry</td>
                         <td>
-                            <div class="d-flex align-items-center justify-content-center list-action">
-                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="View" href="{{route('supplierbalancesheet')}}"><i class="ri-eye-line mr-0 "></i></a>
-                                <a href="{{route('editSupplier',['id'=>$supplierList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Edit"><i class="ri-pencil-line mr-0"></i></a>
-                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Delete" href="{{route('delSupplier',['id'=>$supplierList->id])}}"><i class="ri-delete-bin-line mr-0"></i></a>
-                            </div>
+                                <div class="d-flex align-items-center justify-content-center list-action">
+                                    <a class="badge badge-info mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="View" href="{{route('supplierbalancesheet')}}"><i class="ri-eye-line mr-0 "></i></a>
+                                    <a href="{{route('editSupplier',['id'=>$supplierList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Edit"><i class="ri-pencil-line mr-0"></i></a>
+                                    <form method="POST" action="{{ route('delSupplier', ['id' => $supplierList->id]) }}" style="display:inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="badge bg-warning mr-2" data-confirm="delete" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
+                                    </form>
+                                </div>
                         </td>
                     </tr>
                     @endforeach
@@ -194,7 +200,11 @@
                             <div class="d-flex align-items-center justify-content-center list-action">
                                 <a class="badge badge-info mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
                                 <a  class="badge bg-success mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Delete" href="#"><i class="ri-delete-bin-line mr-0"></i></a>
+                                <form method="POST" action="#" style="display:inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button" class="badge bg-warning mr-2" data-confirm="delete" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
+                                </form>
                             </div>
                         </td>
                     </tr>
@@ -242,19 +252,6 @@
             });
         }
 
-        var deleteBtn = document.getElementById('delete-selected-suppliers');
-        if(deleteBtn){
-            deleteBtn.addEventListener('click', function(e){
-                e.preventDefault();
-                var any = document.querySelectorAll('#supplier-table .row-checkbox:checked').length > 0;
-                if(!any){
-                    alert('Please select at least one supplier to delete.');
-                    return;
-                }
-                if(confirm('Are you sure you want to delete selected suppliers?')){
-                    document.getElementById('supplier-bulk-delete-form').submit();
-                }
-            });
-        }
+        // Bulk delete handled by global SweetAlert confirmation when button has `data-confirm`
     });
 </script>

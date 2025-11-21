@@ -15,6 +15,13 @@
     </div>
 
     @php
+        // Ensure view variables exist to avoid "Undefined variable" errors
+        $profile = $profile ?? null;
+        $brandList = $brandList ?? [];
+        $categoryList = $categoryList ?? [];
+        $productUnitList = $productUnitList ?? [];
+        $listItem = isset($listItem) ? $listItem : collect();
+
         $name = $profile->name ?? '';
         $brandId = $profile->brand ?? null;
         $categoryId = $profile->category ?? null;
@@ -160,38 +167,23 @@
                     </thead>
                     <tbody>
                         @if(!empty($listItem) && $listItem->count()>0)
-                        @foreach($listItem as $productList)
-                        @php
-                          $categorySingleData  = \App\Models\Category::find($productList->category);
-                          $productUnitSingleData  = \App\Models\ProductUnit::find($productList->unitName);
-                          $brandSingleData  = \App\Models\Brand::find($productList->brand);
-                        @endphp
+                                                @foreach($listItem as $productList)
                         <tr>
                             <td>{{ $productList->name }}</td>
-                            @if(!empty($categorySingleData))
-                                <td>{{ $categorySingleData->name }}</td>
-                            @else
-                                <td>-</td>
-                            @endif
-                            @if(!empty($brandSingleData))
-                                <td>{{ $brandSingleData->name }}</td>
-                            @else
-                                <td>-</td>
-                            @endif
-                            @if(!empty($productUnitSingleData))
-                                <td>{{ $productUnitSingleData->name }}</td>
-                            @else
-                                <td>-</td>
-                            @endif
+                            <td>{{ $productList->categoryModel->name ?? '-' }}</td>
+                            <td>{{ $productList->brandModel->name ?? '-' }}</td>
+                            <td>{{ $productList->unitModel->name ?? '-' }}</td>
                             <td>{{ $productList->created_at->format('d-m-Y') }}</td>
                             <td>
                                 <div class="d-flex align-items-center list-action">
                                     <a href="{{ route('editProduct',['id'=>$productList->id]) }}" class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="Edit">
                                         <i class="ri-pencil-line mr-0"></i>
                                     </a>
-                                    <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('delProduct',['id'=>$productList->id]) }}">
-                                        <i class="ri-delete-bin-line mr-0"></i>
-                                    </a>
+                                    <form method="POST" action="{{ route('delProduct',['id'=>$productList->id]) }}" style="display:inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="badge bg-warning mr-2" data-confirm="delete" data-toggle="tooltip" data-placement="top" title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

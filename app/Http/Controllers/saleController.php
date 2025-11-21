@@ -11,9 +11,11 @@ use App\Models\returnInvoiceItem;
 use App\Models\SaleReturn;
 use App\Models\ProductStock;
 use App\Models\ReturnSaleItem;
+use App\Services\StockService;
 
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class saleController extends Controller
 {
@@ -84,51 +86,87 @@ class saleController extends Controller
         $requ->validate([
             'totalQty.*' => 'integer|min:0'
         ]);
-
         $history = new SaleReturn();
-        $history->saleId              = $requ->invoiceId;
-        $history->totalReturnAmount    = $requ->totalReturnAmount;
-        $history->adjustAmount         = $requ->adjustAmount;
-        if($history->save())
-            $items = $requ->totalQty;
-            // return $requ->adjustAmount;
-            if(count($items)>0):
-                foreach($items as $index => $item):
-                    $sales = new ReturnSaleItem();
-                    $sales->returnId            = $history->id;
-                    $sales->saleId              = $requ->saleId[$index];
-                    $sales->productId           = $requ->productId[$index];
-                    $sales->purchaseId          = $requ->purchaseId[$index];
-                    $sales->customerId          = $requ->customerId;
-                    $sales->qty                 = (int)$item;
-                    
-                    if($sales->save()):
-                        // stock updated - ensure integer calculations
-                        $stockHistory = ProductStock::where(['purchaseId'=>$requ->purchaseId[$index]])->first();
-                        $updatedStock = (int)$stockHistory->currentStock + (int)$item;
-                        $stockHistory->currentStock = $updatedStock;
-                        $stockHistory->save();
+        // Prefer numeric sale id from the form (saleId[] per item). If not available,
+        // attempt to resolve the sale id by invoice string.
+        $resolvedSaleId = null;
+        if (isset($requ->saleId) && is_array($requ->saleId) && count($requ->saleId) > 0) {
+            $resolvedSaleId = (int) $requ->saleId[0];
+        } elseif (!empty($requ->invoiceId)) {
+            $found = SaleProduct::where('invoice', $requ->invoiceId)->first();
+            $resolvedSaleId = $found ? $found->id : null;
+        }
+        $history->saleId = $resolvedSaleId;
+        $history->totalReturnAmount = $requ->totalReturnAmount;
+        $history->adjustAmount      = $requ->adjustAmount;
 
-                        
-                        // stock updated - ensure integer calculations
-                        $saleHistory = InvoiceItem::where(['saleId'=>$requ->saleId[$index],'purchaseId'=>$requ->purchaseId[$index]])->first();
-                        if($saleHistory):
-                            $updatedStockItem = (int)$saleHistory->qty - (int)$item;
-                            $saleHistory->qty = max(0, $updatedStockItem);
-                            $saleHistory->save();
-                        endif;
-                    endif;
-                endforeach;
-            
-            $message = Alert::success('Success!','Data saved successfully');
+        if($history->save()){
+            $service = new StockService();
+            $items = $requ->totalQty ?? [];
+            if(is_array($items) && count($items) > 0){
+                foreach($items as $index => $item){
+                    $qty = (int)$item;
+                    if($qty <= 0){
+                        continue;
+                    }
+                    $returnItem = new ReturnSaleItem();
+                    $returnItem->returnId   = $history->id;
+                    $returnItem->saleId     = $requ->saleId[$index];
+                    $returnItem->productId  = $requ->productId[$index];
+                    $returnItem->purchaseId = $requ->purchaseId[$index];
+                    $returnItem->customerId = $requ->customerId;
+                    $returnItem->qty        = $qty;
+                    if($returnItem->save()){
+                        $service->applySaleReturnItem($returnItem);
+                    }
+                }
+            }
+            Alert::success('Success!','Sale return saved successfully');
             return back();
-        else:
-            $message = Alert::error('Sorry!','Data failed to save');
-            return back();
-        endif;
+        }
+        Alert::error('Sorry!','Data failed to save');
+        return back();
     }
 
      public function returnSaleList(){
         return view('sale.returnSaleList');
+    }
+
+    /**
+     * Delete a sale and its invoice items, reverting stock quantities.
+     */
+    public function delSale($id)
+    {
+        $sale = SaleProduct::find($id);
+        if (!$sale) {
+            Alert::error('Error', 'Sale not found');
+            return back();
+        }
+
+        $service = new StockService();
+
+        DB::beginTransaction();
+        try {
+            $items = InvoiceItem::where('saleId', $sale->id)->get();
+            foreach ($items as $it) {
+                // revert stock for each purchase row
+                $service->increaseStockForSaleReturn((int)$it->purchaseId, (int)$it->qty);
+            }
+
+            // delete invoice items
+            InvoiceItem::where('saleId', $sale->id)->delete();
+
+            // delete sale
+            $sale->delete();
+
+            DB::commit();
+            Alert::success('Deleted', 'Sale deleted and stock reverted');
+            return redirect()->route('saleList');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('delSale failed: ' . $e->getMessage());
+            Alert::error('Error', 'Failed to delete sale');
+            return back();
+        }
     }
 }

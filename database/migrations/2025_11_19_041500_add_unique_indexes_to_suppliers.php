@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration {
     public function up(): void
@@ -11,19 +12,16 @@ return new class extends Migration {
             return;
         }
 
+        // Fallback index detection using SHOW INDEX to avoid dependency on doctrine/dbal
         $indexes = [];
         try {
-            $connection = Schema::getConnection();
-            $tableName = $connection->getTablePrefix() . 'suppliers';
-            // Try to obtain Doctrine schema manager for index inspection
-            $sm = method_exists($connection, 'getDoctrineSchemaManager')
-                ? $connection->getDoctrineSchemaManager()
-                : null;
-            if ($sm) {
-                $indexes = $sm->listTableIndexes($tableName);
+            $rows = DB::select('SHOW INDEX FROM `suppliers`');
+            foreach ($rows as $r) {
+                if (isset($r->Key_name)) {
+                    $indexes[$r->Key_name] = true;
+                }
             }
         } catch (\Throwable $e) {
-            // If introspection fails, proceed and let the DDL run
             $indexes = [];
         }
 

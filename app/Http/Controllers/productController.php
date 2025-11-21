@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\ProductSaveRequest;
 use App\Models\Product;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\ProductUnit;
 use Alert;
 use App\Models\ProductStock;
+use App\Http\Requests\BrandSaveRequest;
+use App\Http\Requests\CategorySaveRequest;
+use App\Http\Requests\ProductUnitSaveRequest;
 
 class productController extends Controller
 {
@@ -16,32 +20,40 @@ class productController extends Controller
         $productUnit = ProductUnit::orderBy('id','DESC')->get();
         $category = Category::orderBy('id','DESC')->get();
         $brand = Brand::orderBy('id','DESC')->get();
-        $data = Product::orderBy('id','DESC')->get();
+        $data = Product::with(['brandModel','categoryModel','unitModel','stocks'])->orderBy('id','DESC')->get();
 
-        return view('product.newProduct',['listItem'=>$data,'brandList'=>$brand,'categoryList'=>$category,'productUnitList'=>$productUnit]);
+        return view('product.newProduct',[
+            'listItem'=>$data,
+            'brandList'=>$brand,
+            'categoryList'=>$category,
+            'productUnitList'=>$productUnit
+        ]);
    }
 
-   public function saveProduct(Request $req){
-        if($req->profileId):
-            $data = Product::find($req->profileId);
-        else:
-            $data = new Product();
-        endif;
-            $data->name          = $req->name;
-            $data->brand         = $req->brand;
-            $data->category      = $req->category;
-            $data->unitName      = $req->unitName;
-            $data->quantity      = $req->quantity;
-            $data->details       = $req->details;
-            $data->barCode       = $req->barCode;
+   public function saveProduct(ProductSaveRequest $req){
+       $validated = $req->validated();
 
-            if($data->save()):
-                Alert::success('Success!','Operation successfully completed');
-                return redirect(route('addProduct'));
-            else:
-                Alert::error('Failed!','Operation failed to execute');
-                return back();
-            endif;
+        $data = $req->profileId ? Product::find($req->profileId) : new Product();
+        if($req->profileId && !$data){
+            Alert::error('Failed!','Product not found for update');
+            return redirect()->route('addProduct');
+        }
+
+        $data->name     = trim($validated['name']);
+        $data->brand    = (int)$validated['brand'];
+        $data->category = (int)$validated['category'];
+        $data->unitName = (int)$validated['unitName'];
+        $data->quantity = $validated['quantity'] ?? 0;
+        $data->details  = $validated['details'] ?? null;
+        $data->barCode  = $validated['barCode'] ?? null;
+
+        if($data->save()){
+            $msg = $req->profileId ? 'Product updated successfully' : 'Product created successfully';
+            Alert::success('Success!', $msg);
+            return redirect(route('addProduct'));
+        }
+        Alert::error('Failed!','Product save failed');
+        return back();
     }
 
     //edit product
@@ -57,6 +69,8 @@ class productController extends Controller
     public function delProduct($id){
         $data = Product::find($id);
         if(!empty($data)):
+            // Authorization hook
+            $this->authorize('delete', $data);
             $data->delete();
                 Alert::success('Success!','Product delete successfully');
                 return back();
@@ -69,38 +83,69 @@ class productController extends Controller
     
     // submit product by ajax
     public function createProduct(Request $req){
-            $data = new Product();
-            $data->name          = $req->fullName;
-            $data->brand         = $req->brand;
-            $data->category      = $req->category;
-            $data->unitName      = $req->unitName;
-            $data->quantity      = $req->quantity;
-            $data->details       = $req->details;
-            $data->barCode       = $req->barCode;
-            $option="";
+        $payload = [
+            'fullName' => trim((string)$req->fullName),
+            'brand'    => $req->brand,
+            'category' => $req->category,
+            'unitName' => $req->unitName,
+            'quantity' => $req->quantity,
+            'details'  => $req->details,
+            'barCode'  => $req->barCode,
+        ];
 
-            if($data->save()):
-                $getData = Product::orderBy('id','DESC')->get();
-                if(!empty($getData)):
-                    $option .='<option value="">Select</option>';
-                    foreach($getData as $d):
-                        $option .='<option value="'.$d->id.'">'.$d->name.'</option>';
-                    endforeach;
-                endif;
-                
-                return ['data' => $option, 'message'=>'Success ! Form successfully subjmit.'];
-            else:
-                return ['data' => $option, 'message'=>'Error ! There is an error. Please try agin.'];
-            endif;
+        $validator = \Validator::make($payload, [
+            'fullName' => ['required','string','min:2','max:200'],
+            'brand'    => ['required','integer','exists:brands,id'],
+            'category' => ['required','integer','exists:categories,id'],
+            'unitName' => ['required','integer','exists:product_units,id'],
+            'quantity' => ['nullable','integer','min:0'],
+            'details'  => ['nullable','string','max:1000'],
+            'barCode'  => ['nullable','string','max:190'],
+        ]);
+
+        if($validator->fails()){
+            return [
+                'data' => '',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()->toArray(),
+            ];
+        }
+
+        $data = new Product();
+        $data->name     = $payload['fullName'];
+        $data->brand    = (int)$payload['brand'];
+        $data->category = (int)$payload['category'];
+        $data->unitName = (int)$payload['unitName'];
+        $data->quantity = (int)($payload['quantity'] ?? 0);
+        $data->details  = $payload['details'];
+        $data->barCode  = $payload['barCode'];
+        $option = '';
+
+        if($data->save()){
+            $getData = Product::orderBy('id','DESC')->get();
+            if($getData->count() > 0){
+                $option .= '<option value="">Select</option>';
+                foreach($getData as $d){
+                    $option .= '<option value="'.$d->id.'">'.$d->name.'</option>';
+                }
+            }
+            return ['data' => $option, 'message' => 'Success! Product created'];
+        }
+        return ['data' => $option, 'message' => 'Error! Failed to create product'];
     }
 
     //product list page
     public function productlist(){
-        $productUnit = ProductUnit::orderBy('id','DESC')->get();
-        $category = Category::orderBy('id','DESC')->get();
-        $brand = Brand::orderBy('id','DESC')->get();
-        $data = Product::with('stocks')->orderBy('id','DESC')->get();
-      return view('product.productList',['listItem'=>$data,'brandList'=>$brand,'categoryList'=>$category,'productUnitList'=>$productUnit]);
+                $productUnit = ProductUnit::orderBy('id','DESC')->get();
+                $category = Category::orderBy('id','DESC')->get();
+                $brand = Brand::orderBy('id','DESC')->get();
+                $data = Product::with(['brandModel','categoryModel','unitModel','stocks'])->orderBy('id','DESC')->get();
+                return view('product.productList',[
+                        'listItem'=>$data,
+                        'brandList'=>$brand,
+                        'categoryList'=>$category,
+                        'productUnitList'=>$productUnit
+                ]);
     }
 
     
@@ -139,13 +184,13 @@ class productController extends Controller
       return view('product.brand',['listItem'=>$data]);
    }
     //save Brand
-    public function saveBrand(Request $req){
+    public function saveBrand(BrandSaveRequest $req){
         if($req->profileId):
             $data = Brand::find($req->profileId);
         else:
             $data = new Brand();
         endif;
-            $data->name          = $req->name;
+            $data->name          = $req->validated()['name'];
 
             if($data->save()):
                 Alert::success('Success!','Brand created successfully');
@@ -167,7 +212,7 @@ class productController extends Controller
     public function delBrand($id){
         $data = Brand::find($id);
         if(!empty($data)):
-            $data->delete();
+            $this->authorize('delete', $data);
             $data->delete();
                 Alert::success('Success!','Brand delete successfully');
                 return back();
@@ -179,9 +224,9 @@ class productController extends Controller
 
 
     // submit Brand by ajax
-    public function createBrand(Request $req){
+        public function createBrand(BrandSaveRequest $req){
             $data = new Brand();
-            $data->name     = $req->name;
+            $data->name     = $req->validated()['name'];
             
             $option="";
 
@@ -208,13 +253,13 @@ class productController extends Controller
    }
 
     //save Category
-    public function saveCategory(Request $req){
+    public function saveCategory(CategorySaveRequest $req){
         if($req->profileId):
             $data = Category::find($req->profileId);
         else:
             $data = new Category();
         endif;
-            $data->name          = $req->name;
+            $data->name          = $req->validated()['name'];
 
             if($data->save()):
                 Alert::success('Success!','Category created successfully');
@@ -236,6 +281,7 @@ class productController extends Controller
     public function delCategory($id){
         $data = Category::find($id);
         if(!empty($data)):
+            $this->authorize('delete', $data);
             $data->delete();
                 Alert::success('Success!','Category delete successfully');
                 return back();
@@ -246,9 +292,9 @@ class productController extends Controller
     }
 
     // submit Category by ajax
-    public function createCategory(Request $req){
+        public function createCategory(CategorySaveRequest $req){
             $data = new Category();
-            $data->name     = $req->name;
+            $data->name     = $req->validated()['name'];
             
             $option="";
 
@@ -274,13 +320,13 @@ class productController extends Controller
       return view('product.productUnit',['listItem'=>$data]);
    }
     //save ProductUnit
-    public function saveProductUnit(Request $req){
+    public function saveProductUnit(ProductUnitSaveRequest $req){
         if($req->profileId):
             $data = ProductUnit::find($req->profileId);
         else:
             $data = new ProductUnit();
         endif;
-            $data->name          = $req->name;
+            $data->name          = $req->validated()['name'];
 
             if($data->save()):
                 Alert::success('Success!','Product unit created successfully');
@@ -302,6 +348,7 @@ class productController extends Controller
     public function delProductUnit($id){
         $data = ProductUnit::find($id);
         if(!empty($data)):
+            $this->authorize('delete', $data);
             $data->delete();
                 Alert::success('Success!','Product unit delete successfully');
                 return back();
@@ -312,9 +359,9 @@ class productController extends Controller
     }
 
     // submit ProductUnit by ajax
-    public function createProductUnit(Request $req){
+        public function createProductUnit(ProductUnitSaveRequest $req){
             $data = new ProductUnit();
-            $data->name     = $req->name;
+            $data->name     = $req->validated()['name'];
             
             $option="";
 

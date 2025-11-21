@@ -155,6 +155,7 @@
                             </table>
                         </div>
                         <div class="d-md-flex  mt-2">
+                            <div id="saleErrorSummary" class="me-3" style="flex:1"></div>
                             <button class="btn btn-primary btn-sm" type="submit">Save</button>
                         </div>
                     </div>

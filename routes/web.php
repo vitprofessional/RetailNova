@@ -90,7 +90,15 @@ Route::get('/logout',[
 Route::get('/', function () {
     return view('welcome');
 });
-Route::middleware(['posAdmin'])->group(function(){
+
+// Public AJAX endpoint for product list (no auth) — used by sale page to populate product select when
+// admin session/cookies are not available to AJAX (keeps UI responsive). This returns option HTML.
+Route::get('/ajax/public/customer/{id}/products', [
+    JqueryController::class,
+    'getProductsForCustomerPublic'
+])->name('ajax.customer.products.public');
+// Require legacy session sync (`posAdmin`) and authenticate via admin guard
+Route::middleware(['posAdmin','auth:admin'])->group(function(){
 
     Route::get('/dashboard',[
         dashboardController::class,
@@ -410,6 +418,12 @@ Route::middleware(['posAdmin'])->group(function(){
         'invoiceGenerate'
     ])->name('invoiceGenerate');
 
+    // Delete sale (revert stock and remove records)
+    Route::get('/sale/delete/{id}',[
+        saleController::class,
+        'delSale'
+    ])->name('delSale');
+
     Route::get('/return/sale/{id}',[
         saleController::class,
         'returnSale'
@@ -509,6 +523,12 @@ Route::middleware(['posAdmin'])->group(function(){
         JqueryController::class,
         'getSaleProductDetails'
     ])->name('getSaleProductDetails');
+
+    // AJAX: get products for a given customer (returns option HTML)
+    Route::get('ajax/customer/{id}/products',[
+        JqueryController::class,
+        'getProductsForCustomer'
+    ])->name('ajax.customer.products');
     
     Route::get('purchase/details/{id}',[
         JqueryController::class,
@@ -661,6 +681,10 @@ Route::middleware(['posAdmin'])->group(function(){
         invoiceController::class,
         'invoicePage'
     ])->name('invoicePage');
+
+    // audits viewer
+    Route::get('/audits',[\App\Http\Controllers\AuditController::class,'index'])->name('audits.index');
+    Route::get('/audits/export',[\App\Http\Controllers\AuditController::class,'export'])->name('audits.export');
 
 
 });

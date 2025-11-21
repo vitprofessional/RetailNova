@@ -189,8 +189,11 @@
                                    href="{{route('balancesheet')}}"><i class="ri-eye-line mr-0 "></i></a>
                                 <a href="{{route('editCustomer',['id'=>$customerList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" data-original-title="Edit">
                                    <i class="ri-pencil-line mr-0"></i></a>
-                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" data-original-title="Delete"
-                                   href="{{route('delCustomer',['id'=>$customerList->id])}}"><i class="ri-delete-bin-line mr-0"></i></a>
+                                <form action="{{ route('delCustomer',['id'=>$customerList->id]) }}" method="POST" style="display:inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="badge bg-warning mr-2" data-confirm="Are you sure to delete this customer?" data-toggle="tooltip" data-placement="top" data-original-title="Delete" style="border:none;background:transparent;padding:0;"><i class="ri-delete-bin-line mr-0"></i></button>
+                                </form>
                             </div>
                         </td>
                     </tr>

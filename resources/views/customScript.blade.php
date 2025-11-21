@@ -1,5 +1,30 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script>
+// Update sale error summary: shows a short list of line errors near the Save button
+window.updateSaleErrorSummary = function(){
+    var $container = $('#saleErrorSummary');
+    if(!$container.length) return;
+    var errors = [];
+    $('.invalid-feedback.sale-error').each(function(i){
+        var txt = $(this).text().trim();
+        // try to find related product name in same row
+        var row = $(this).closest('tr');
+        var product = row.find('td').eq(1).text().trim() || ('Line '+(i+1));
+        errors.push(product+': '+txt);
+    });
+    if(errors.length === 0){
+        $container.html('');
+    } else {
+        var html = '<div class="alert alert-danger p-2 mb-0 small">';
+        html += '<strong>'+errors.length+' problem(s):</strong><ul class="mb-0">';
+        errors.forEach(function(e){ html += '<li>'+e+'</li>'; });
+        html += '</ul></div>';
+        $container.html(html);
+    }
+};
+
+// ensure initial state
+$(function(){ window.updateSaleErrorSummary(); });
 // not use function
 $('#calculateTotal').on('click', function () {
     let products = [];
@@ -83,7 +108,56 @@ function actSaleProduct(){
         $('#productName').attr('disabled','disabled');
 
     }else{
+        // Immediately enable the product select so user can choose from server-rendered options.
         $('#productName').removeAttr('disabled');
+        // Fetch products for the selected customer and populate the product select if available.
+        console.log('actSaleProduct: fetching products for customer id=', data);
+
+        // Helper to populate the select from a result object
+        function populateProducts(result){
+            try{
+                console.log('actSaleProduct: populateProducts result=', result);
+                if(result && result.data && String(result.data).trim().length>0){
+                    $('#productName').html(result.data);
+                } else {
+                    console.warn('actSaleProduct: no data returned from ajax, keeping existing options');
+                }
+            } catch(e){ console.error('actSaleProduct: populate error', e); }
+        }
+
+        // Try authenticated endpoint first; if it fails (login redirect / 401/403), fallback to public endpoint
+        $.ajax({
+            url: '{{ url('/') }}/ajax/customer/'+data+'/products',
+            method: 'GET',
+            dataType: 'json',
+            timeout: 10000,
+            success: function(result, status, xhr){
+                populateProducts(result);
+            },
+            error: function(xhr, status, err){
+                var respSnippet = xhr && xhr.responseText ? xhr.responseText.substring(0,500) : '';
+                console.warn('actSaleProduct: authenticated ajax failed', status, err, 'responseSnippet=', respSnippet);
+
+                // If failure looks like an HTML login redirect or an auth error, try public endpoint
+                var looksLikeLoginHTML = /<\!DOCTYPE|<html|login/i.test(respSnippet) || xhr.status === 0 || xhr.status === 401 || xhr.status === 302 || xhr.status === 403;
+                if(looksLikeLoginHTML){
+                    console.log('actSaleProduct: falling back to public ajax endpoint');
+                    $.ajax({
+                        url: '{{ url('/') }}/ajax/public/customer/'+data+'/products',
+                        method: 'GET',
+                        dataType: 'json',
+                        timeout: 10000,
+                        success: function(result){ populateProducts(result); },
+                        error: function(px, ps, pe){
+                            console.error('actSaleProduct: public ajax failed', ps, pe, px && px.responseText ? px.responseText.substring(0,500) : '');
+                            if(window.showToast) showToast('Error','Failed to load products (see console).','error');
+                        }
+                    });
+                } else {
+                    if(window.showToast) showToast('Error','Failed to load products (see console).','error');
+                }
+            }
+        });
     };
 
 }
@@ -98,10 +172,49 @@ function calculateSaleDetails(pid, proField, pf, bp, sp, ts, tp, qd, pm, pt) {
     return Number(s.replace(/,/g, '')) || 0;
   };
 
-  const buyPrice      = num($(bp).val());
-  const salePrice     = num($(sp).val());
-  const purchaseId    = num($(pf).val());
-  const qty           = num($(qd).val());
+    // Robust resolver: `arg` may be an id like 'qty123' or a full selector like '#qty123' or an element.
+    function resolveValue(arg){
+        if (!arg && arg !== 0) return 0;
+        try{
+            // If arg is a jQuery/DOM element, attempt to read its value
+            if (typeof arg === 'object' && arg !== null) {
+                if (arg.value !== undefined) return arg.value;
+                if (arg.val && typeof arg.val === 'function') return arg.val();
+            }
+            // Try by id
+            var $el = $('#' + arg);
+            if ($el.length === 0) $el = $(arg);
+            if ($el.length === 0) {
+                var dom = document.getElementById(arg);
+                if (dom) return dom.value;
+            }
+            if ($el && $el.length) return $el.val();
+        } catch(e){ console.warn('resolveValue error', e); }
+        return 0;
+    }
+
+    const buyPrice      = num(resolveValue(bp));
+    const salePrice     = num(resolveValue(sp));
+    const purchaseId    = num(resolveValue(pf));
+    const qty           = num(resolveValue(qd));
+
+    // Resolve an element reference (id, selector, or element) and return a jQuery object
+    function resolveElement(arg){
+        try{
+            if (!arg && arg !== 0) return $();
+            if (typeof arg === 'object' && arg !== null){
+                if (arg instanceof jQuery) return arg;
+                if (arg.nodeType) return $(arg);
+            }
+            var $el = $('#' + arg);
+            if ($el.length) return $el;
+            $el = $(arg);
+            if ($el.length) return $el;
+            var dom = document.getElementById(arg);
+            if (dom) return $(dom);
+        }catch(e){ console.warn('resolveElement error', e); }
+        return $();
+    }
 
   const totalPurchase = buyPrice * qty;
   const totalSale     = salePrice * qty;
@@ -116,30 +229,95 @@ function calculateSaleDetails(pid, proField, pf, bp, sp, ts, tp, qd, pm, pt) {
     items.push({ price, quantity });
   });
 
-  $.get('{{ route("calculate.grand.total") }}', { items, purchaseId }, function (response) {
-    // Guard numbers from response
-    const currentStock = num(response.currentStock);
-
-    if (qty > currentStock) {
-      alert('You cannot order more than ' + currentStock + ', due to product shortage');
-      return;
+    // Debounce per quantity input to avoid excessive AJAX calls
+    if (!window._saleDebounceTimers) window._saleDebounceTimers = {};
+    var timerKey = String(qd || purchaseId);
+    if (window._saleDebounceTimers[timerKey]) {
+        clearTimeout(window._saleDebounceTimers[timerKey]);
     }
+    window._saleDebounceTimers[timerKey] = setTimeout(function(){
+        $.get('{{ route("calculate.grand.total") }}', { items, purchaseId }, function (response) {
+            // Guard numbers from response
+            const currentStock = num(response.currentStock);
 
-    // Make sure grandTotal works whether it’s "1,234.50" or 1234.5
-    const serverGrandTotal = num(response.grandTotal);
+            // Robust selector: try id selector first, then raw selector, then getElementById
+            var $qtyEl = null;
+            if (qd) {
+                $qtyEl = $('#' + qd);
+                if ($qtyEl.length === 0) {
+                    $qtyEl = $(qd);
+                }
+                if ($qtyEl.length === 0) {
+                    var dom = document.getElementById(qd);
+                    if (dom) $qtyEl = $(dom);
+                }
+            }
 
-    const discountAmount = num($("#discountAmount").val());
-    const paidAmount     = num($("#paidAmount").val());
+            // remove any previous inline error for this qty
+            function clearQtyError() {
+                if ($qtyEl && $qtyEl.length) {
+                    $qtyEl.removeClass('is-invalid');
+                    $qtyEl.next('.invalid-feedback.sale-error').remove();
+                    $qtyEl.closest('tr').removeClass('table-danger');
+                    // refresh summary
+                    if (typeof window.updateSaleErrorSummary === 'function') window.updateSaleErrorSummary();
+                }
+            }
+            function setQtyError(msg) {
+                if ($qtyEl && $qtyEl.length) {
+                    if ($qtyEl.next('.invalid-feedback.sale-error').length === 0) {
+                        $qtyEl.after('<div class="invalid-feedback sale-error">'+msg+'</div>');
+                    } else {
+                        $qtyEl.next('.invalid-feedback.sale-error').text(msg);
+                    }
+                    $qtyEl.addClass('is-invalid');
+                    $qtyEl.closest('tr').addClass('table-danger');
+                    // refresh summary
+                    if (typeof window.updateSaleErrorSummary === 'function') window.updateSaleErrorSummary();
+                }
+            }
 
-    const gTotal    = Math.max(0, serverGrandTotal - discountAmount);
-    const dueAmount = Math.max(0, gTotal - paidAmount);
+            if (qty > currentStock) {
+                setQtyError('Only '+currentStock+' units available for the selected purchase row');
+                // disable submit for the sale form
+                $('form[action="{{ route('saveSale') }}"] button[type=submit]').prop('disabled', true);
+            } else {
+                clearQtyError();
+                // if no other sale errors remain, enable submit
+                if ($('.invalid-feedback.sale-error').length === 0) {
+                    $('form[action="{{ route('saveSale') }}"] button[type=submit]').prop('disabled', false);
+                }
+            }
 
-    // Write back (keep raw numbers in inputs; format if you want to display)
-    $('#grandTotal').val(gTotal);
-    $('#totalSaleAmount').val(serverGrandTotal);
-    $('#dueAmount').val(dueAmount);
-    $('#curDue').val(dueAmount);
-  });
+            // Make sure grandTotal works whether it’s "1,234.50" or 1234.5
+            const serverGrandTotal = num(response.grandTotal);
+
+            const discountAmount = num($("#discountAmount").val());
+            const paidAmount     = num($("#paidAmount").val());
+
+            const gTotal    = Math.max(0, serverGrandTotal - discountAmount);
+            const dueAmount = Math.max(0, gTotal - paidAmount);
+
+            // Write back (keep raw numbers in inputs; format if you want to display)
+            $('#grandTotal').val(gTotal);
+            $('#totalSaleAmount').val(serverGrandTotal);
+            $('#dueAmount').val(dueAmount);
+            $('#curDue').val(dueAmount);
+
+            // Also update the per-row UI elements (total, purchase total, profit)
+            var $ts = resolveElement(ts);
+            var $tp = resolveElement(tp);
+            var $pm = resolveElement(pm);
+            var $pt = resolveElement(pt);
+            if ($ts.length) $ts.html(totalSale);
+            if ($tp.length) $tp.html(totalPurchase);
+            if ($pm.length) $pm.html(profitPercent);
+            if ($pt.length) $pt.html(profitValue);
+
+            // clear timer after execution
+            delete window._saleDebounceTimers[timerKey];
+        });
+    }, 300);
 
   // Update UI bits
   $(ts).html(totalSale);
@@ -176,9 +354,21 @@ function saleProductSelect(){
                 
                 $.each(items, function (b,item) {
                     var date = new Date(item.created_at).toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" })
-                    dataItems +=  '<option value="'+item.purchaseId+'">('+item.currentStock+') '+item.supplierName+'-'+date+'</option>';
+                    var disabled = (parseInt(item.currentStock) <= 0) ? ' disabled' : '';
+                    dataItems +=  '<option value="'+item.purchaseId+'"'+disabled+'>('+item.currentStock+') '+item.supplierName+'-'+date+'</option>';
                 });
-                var field = '<tr class="product-row" id="'+productField+'"><td><i onclick="remove('+productField+')" class="ri-delete-bin-line mr-0"></i></td><td>'+result.productName+'</td><td><select class="form-control" id="'+purchaseField+'" onchange="purchaseData('+result.id+','+productField+','+purchaseField+','+buyPrice+','+salePrice+','+totalSale+','+totalPurchase+','+qtyData+','+profitMargin+','+profitTotal+','+productField+')" name="purchaseData[]">'+dataItems+'</select></td><td><input type="number" class="form-control quantity" id="'+qtyData+'" name="qty[]" onkeyup="calculateSaleDetails('+result.id+','+productField+','+purchaseField+','+buyPrice+','+salePrice+','+totalSale+','+totalPurchase+','+qtyData+','+profitMargin+','+profitTotal+','+productField+')"/></td><td><input type="number" class="form-control sale-price" id="'+salePrice+'" name="salePrice[]" value="'+result.salePrice+'" onkeyup="calculateSaleDetails('+result.id+','+productField+','+purchaseField+','+buyPrice+','+salePrice+','+totalSale+','+totalPurchase+','+qtyData+','+profitMargin+','+profitTotal+','+productField+')"/></td><td id="'+totalSale+'"></td><td><input type="number" class="form-control" id="'+buyPrice+'" name="buyPrice[]" value="'+result.buyPrice+'" readonly /></td><td id="'+totalPurchase+'">-</td><td id="'+profitMargin+'"></td><td id="'+profitTotal+'"></td></tr>';
+                var field = '<tr class="product-row" id="'+productField+'">'
+                    + '<td><i onclick="remove(\''+productField+'\')" class="ri-delete-bin-line mr-0"></i></td>'
+                    + '<td>'+result.productName+'</td>'
+                    + '<td><select class="form-control" id="'+purchaseField+'" onchange="purchaseData('+result.id+',\''+productField+'\',\''+purchaseField+'\',\''+buyPrice+'\',\''+salePrice+'\',\''+totalSale+'\',\''+totalPurchase+'\',\''+qtyData+'\',\''+profitMargin+'\',\''+profitTotal+'\',\''+productField+'\')" name="purchaseData[]">'+dataItems+'</select></td>'
+                    + '<td><input type="number" class="form-control quantity" id="'+qtyData+'" name="qty[]" onkeyup="calculateSaleDetails('+result.id+',\''+productField+'\',\''+purchaseField+'\',\''+buyPrice+'\',\''+salePrice+'\',\''+totalSale+'\',\''+totalPurchase+'\',\''+qtyData+'\',\''+profitMargin+'\',\''+profitTotal+'\',\''+productField+'\')"/></td>'
+                    + '<td><input type="number" class="form-control sale-price" id="'+salePrice+'" name="salePrice[]" value="'+result.salePrice+'" onkeyup="calculateSaleDetails('+result.id+',\''+productField+'\',\''+purchaseField+'\',\''+buyPrice+'\',\''+salePrice+'\',\''+totalSale+'\',\''+totalPurchase+'\',\''+qtyData+'\',\''+profitMargin+'\',\''+profitTotal+'\',\''+productField+'\')"/></td>'
+                    + '<td id="'+totalSale+'"></td>'
+                    + '<td><input type="number" class="form-control" id="'+buyPrice+'" name="buyPrice[]" value="'+result.buyPrice+'" readonly /></td>'
+                    + '<td id="'+totalPurchase+'">-</td>'
+                    + '<td id="'+profitMargin+'"></td>'
+                    + '<td id="'+profitTotal+'"></td>'
+                    + '</tr>';
                 $('#productDetails').append(field);
             }
         },
@@ -199,27 +389,74 @@ function purchaseData(pid,proField,pf,bp,sp,ts,tp,qd,pm,pt){
         contentType: 'html',
 
         success:function(result){
-            if(result.getData==null){
+                if(result.getData==null){
                 alert("no available items found in stock for sale");
             }else{
                 // alert("success data");
                 let buyPrice        = parseInt(result.buyPrice);
                 let salePrice       = parseInt(result.salePrice);
-                let qty             = parseInt($(qd).val());
+                // robust qty selector: qd may be an id string (without #) or a selector
+                var $qtyEl = $('#' + qd);
+                if ($qtyEl.length === 0) $qtyEl = $(qd);
+                if ($qtyEl.length === 0) {
+                    var domEl = document.getElementById(qd);
+                    if (domEl) $qtyEl = $(domEl);
+                }
+                let qty = 0;
+                if ($qtyEl && $qtyEl.length) qty = parseInt($qtyEl.val()) || 0;
+                
+                // immediately validate against current stock returned by server
+                let currentStock = 0;
+                if (result.currentStock !== undefined) currentStock = parseInt(result.currentStock) || 0;
+                else if (result.getData && result.getData.currentStock !== undefined) currentStock = parseInt(result.getData.currentStock) || 0;
+                if (qty > currentStock) {
+                    // show inline error and alert
+                    if ($qtyEl && $qtyEl.length) {
+                        if ($qtyEl.next('.invalid-feedback.sale-error').length === 0) {
+                            $qtyEl.after('<div class="invalid-feedback sale-error">Only '+currentStock+' units available for the selected purchase row</div>');
+                        } else {
+                            $qtyEl.next('.invalid-feedback.sale-error').text('Only '+currentStock+' units available for the selected purchase row');
+                        }
+                        $qtyEl.addClass('is-invalid');
+                        $qtyEl.closest('tr').addClass('table-danger');
+                    }
+                    showToast('Error','Only '+currentStock+' units available for the selected purchase row','error');
+                    $('form[action="{{ route('saveSale') }}"] button[type=submit]').prop('disabled', true);
+                } else {
+                    // clear any previous inline error
+                    if ($qtyEl && $qtyEl.length) {
+                        $qtyEl.removeClass('is-invalid');
+                        $qtyEl.next('.invalid-feedback.sale-error').remove();
+                        $qtyEl.closest('tr').removeClass('table-danger');
+                    }
+                    if ($('.invalid-feedback.sale-error').length === 0) {
+                        $('form[action="{{ route('saveSale') }}"] button[type=submit]').prop('disabled', false);
+                    }
+                }
                 
                 let totalPurchase   = parseInt(buyPrice*qty);
                 let totalSale       = parseInt(salePrice*qty);
-                    
+
                 let profitValue     = parseInt((totalSale-totalPurchase));
-                let profitPercent   = parseFloat(parseFloat((profitValue/totalPurchase)*100).toFixed(2));
+                let profitPercent   = 0;
+                if (totalPurchase > 0) {
+                    profitPercent = parseFloat(((profitValue/totalPurchase)*100).toFixed(2));
+                }
                 // let profitPercent   = parseInt(salePrice*qty);
 
-                $(ts).html(totalSale);
-                $(tp).html(totalPurchase);
-                $(sp).val(salePrice);
-                $(bp).val(buyPrice);
-                $(pm).html(profitPercent);
-                $(pt).html(profitValue);    
+                // write into resolved elements
+                var $ts = resolveElement(ts);
+                var $tp = resolveElement(tp);
+                var $sp = resolveElement(sp);
+                var $bp = resolveElement(bp);
+                var $pm = resolveElement(pm);
+                var $pt = resolveElement(pt);
+                if ($ts.length) $ts.html(totalSale);
+                if ($tp.length) $tp.html(totalPurchase);
+                if ($sp.length) $sp.val(salePrice);
+                if ($bp.length) $bp.val(buyPrice);
+                if ($pm.length) $pm.html(profitPercent);
+                if ($pt.length) $pt.html(profitValue);    
     
                 let items = [];
 
@@ -647,7 +884,7 @@ $(document).on('click','#add-serial', function(){
     var i = 1;
     if(i<=10){
         var serialField = "'#serialField"+i+"'";
-        var serial = '<div class="row" id="serialField'+i+'"><div class="col-10 mb-3"><input type="" class="form-control" name="serialNumber[]" placeholder="Enter serial number" /></div><div class="col-1 mt-1  p-0"><a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title="delete serial number" onclick="remove('+serialField+')" data-original-title="Delete" href="#"><i class="ri-delete-bin-line mr-0"></i></a></div></div>';
+        var serial = '<div class="row" id="serialField'+i+'"><div class="col-10 mb-3"><input type="" class="form-control" name="serialNumber[]" placeholder="Enter serial number" /></div><div class="col-1 mt-1  p-0"><button type="button" class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title="delete serial number" onclick="remove('+serialField+')"><i class="ri-delete-bin-line mr-0"></i></button></div></div>';
         $('#serialNumberBox').append(serial);
     }else{
         alert('Max number of serial added');
@@ -656,20 +893,34 @@ $(document).on('click','#add-serial', function(){
 });
 
 // delete serial via ajax from edit page
-$(document).on('click', '.delete-serial', function(e){
+    $(document).on('click', '.delete-serial', function(e){
     e.preventDefault();
     var id = $(this).data('id');
-    if(!confirm('Delete this serial?')) return;
-    $.get('{{ url('/') }}/product/serial/delete/'+id, function(res){
-        if(res.status == 'success'){
-            $('#serial-badge-'+id).remove();
-            $('#serial-row-'+id).remove();
-        }else{
-            alert(res.message || 'Failed to delete serial');
-        }
-    }).fail(function(){
-        alert('Failed to delete serial');
-    });
+    function doDelete(){
+        $.get('{{ url('/') }}/product/serial/delete/'+id, function(res){
+            if(res.status == 'success'){
+                $('#serial-badge-'+id).remove();
+                $('#serial-row-'+id).remove();
+            }else{
+                showToast('Error', res.message || 'Failed to delete serial', 'error');
+            }
+        }).fail(function(){
+            showToast('Error','Failed to delete serial','error');
+        });
+    }
+    if(window.Swal && typeof Swal.fire === 'function'){
+        Swal.fire({
+            title: 'Delete serial?',
+            text: 'Are you sure you want to delete this serial?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete',
+            cancelButtonText: 'Cancel'
+        }).then(function(result){ if(result.isConfirmed) doDelete(); });
+    } else {
+        if(confirm('Delete this serial?')) doDelete();
+    }
 });
 
 // small helper to show toast/alert (use Swal if available)
@@ -713,11 +964,11 @@ $(document).on('click', '#save-serials', function(e){
         success: function(res){
             if(res.status == 'success'){
                 // append created serials to list
-                res.created.forEach(function(item){
-                    var badge = '<span class="badge badge-light mr-1" id="serial-badge-'+item.id+'">'+item.serialNumber+' <a href="#" class="text-danger ml-1 delete-serial" data-id="'+item.id+'" title="Delete"><i class="ri-delete-bin-line"></i></a></span>';
+                    res.created.forEach(function(item){
+                    var badge = '<span class="badge badge-light mr-1" id="serial-badge-'+item.id+'">'+item.serialNumber+' <button type="button" class="btn btn-link p-0 text-danger ml-1 delete-serial" data-id="'+item.id+'" title="Delete"><i class="ri-delete-bin-line"></i></button></span>';
                     $('#serialNumberBox').before(badge);
                     // also add full list row in modal area
-                    var row = '<div id="serial-row-'+item.id+'" class="d-flex align-items-center mb-1"><span class="mr-2">'+item.serialNumber+'</span><a href="#" class="text-danger ml-1 delete-serial" data-id="'+item.id+'" title="Delete"><i class="ri-delete-bin-line"></i></a></div>';
+                    var row = '<div id="serial-row-'+item.id+'" class="d-flex align-items-center mb-1"><span class="mr-2">'+item.serialNumber+'</span><button type="button" class="btn btn-link p-0 text-danger ml-1 delete-serial" data-id="'+item.id+'" title="Delete"><i class="ri-delete-bin-line"></i></button></div>';
                     // append to the existing list container (first block in modal body)
                     $('#serialModal .modal-body').find('div').first().append(row);
                 });
@@ -835,6 +1086,16 @@ $(document).on('click','#add-supplier', function(){
     });
 })
 
+// Prevent sale form submission if any line has a sale-error
+$(document).on('submit', 'form[action="{{ route('saveSale') }}"]', function(e){
+    if ($('.invalid-feedback.sale-error').length > 0) {
+        e.preventDefault();
+        showToast('Error','Please fix quantity errors before submitting the sale','error');
+        return false;
+    }
+    return true;
+});
+
 $(document).on('click','#add-product',function(){
     var fullName = $('#productNameModal').val();
     var brand = $('#brandName').val();
@@ -877,6 +1138,30 @@ $(document).on('click','#add-product',function(){
         },
     });
 })
+
+// Live validation: when quantity or sale-price inputs change, recalc that row
+$(document).on('input', '.product-row .quantity, .product-row .sale-price', function(){
+    var $row = $(this).closest('.product-row');
+    if(!$row.length) return;
+    // find ids created earlier
+    var rowId = $row.attr('id');
+    var productId = null;
+    // attempt to get product id from select name or from data attributes if present
+    var purchaseSelect = $row.find('select[name="purchaseData[]"]');
+    var purchaseId = purchaseSelect.val();
+    var pf = purchaseSelect.attr('id');
+    var bp = $row.find('input[id^="buyPrice"]').attr('id');
+    var sp = $row.find('input.sale-price').attr('id');
+    var qtyEl = $row.find('input.quantity').attr('id');
+    var ts = $row.find('[id^="totalSale"]').attr('id');
+    var tp = $row.find('[id^="totalPurchase"]').attr('id');
+    var pm = $row.find('[id^="profitMargin"]').attr('id');
+    var pt = $row.find('[id^="profitTotal"]').attr('id');
+    // product id is encoded in element ids we generated earlier via result.id during row creation
+    var pid = productId || 0;
+    // call calculateSaleDetails with resolved ids
+    calculateSaleDetails(pid, rowId, pf, bp, sp, ts, tp, qtyEl, pm, pt);
+});
 
     function returnQtyCalculate(avlQty,qty,salePrice,returnAmount){
         let retQty = parseInt($("#"+qty).val());

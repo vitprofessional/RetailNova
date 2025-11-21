@@ -4,10 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Product extends Model
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
+
+class Product extends Model implements AuditableContract
 {
+    use Auditable;
     protected $fillable = [
         'name', 'brand', 'category', 'unitName', 'quantity', 'details', 'barCode'
+    ];
+
+    protected $auditExclude = [
+        'updated_at'
     ];
 
     /**
@@ -16,6 +24,22 @@ class Product extends Model
     public function stocks()
     {
         return $this->hasMany(ProductStock::class, 'productId', 'id');
+    }
+
+    // Eager-loadable relationships for brand, category, and unit
+    public function brandModel()
+    {
+        return $this->belongsTo(Brand::class, 'brand');
+    }
+
+    public function categoryModel()
+    {
+        return $this->belongsTo(Category::class, 'category');
+    }
+
+    public function unitModel()
+    {
+        return $this->belongsTo(ProductUnit::class, 'unitName');
     }
 
     /**

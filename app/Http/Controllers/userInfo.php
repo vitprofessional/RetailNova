@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\AdminUser;
 use Hash;
 use Session;
+use Illuminate\Support\Facades\Auth;
 
 
 class userInfo extends Controller
@@ -17,19 +18,24 @@ class userInfo extends Controller
     }
 
     public function adminLogin(Request $req){
-        $server = AdminUser::Where(['mail'=>$req->userMail])->first();
-        if(!empty($server)):
-            if(Hash::check($req->password,$server->password)):
-                session()->flush();
-                session(['pos'=>$server->id]);
-                session()->put('pos',$server->id);
-                return redirect(route('dashboard'));
-            else:
-                return back()->with('error',"Wrong password provided");
-            endif;
-        else:
-            return back()->with('error',"User not exist");
-        endif;
+        $credentials = [
+            'mail' => $req->userMail,
+            'password' => $req->password,
+        ];
+
+        if (Auth::guard('admin')->attempt($credentials)) {
+            // Regenerate session to prevent fixation
+            $req->session()->regenerate();
+
+            $admin = Auth::guard('admin')->user();
+            // keep legacy session keys for other code paths
+            session()->put('pos', $admin->id);
+            session()->put('pos_user_id', $admin->id);
+
+            return redirect()->route('dashboard');
+        }
+
+        return back()->with('error', 'Invalid credentials');
         
     }
 
@@ -58,8 +64,12 @@ class userInfo extends Controller
     }
 
     public function logout(){
-        Session::flush();
-        Session::regenerate();
+        // logout admin guard if used
+        Auth::guard('admin')->logout();
+        Session::forget('pos');
+        Session::forget('pos_user_id');
+        Session::invalidate();
+        Session::regenerateToken();
         return redirect(route('userLogin'))->with('success','logout successful');
     }
     

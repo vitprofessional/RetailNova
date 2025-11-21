@@ -4,8 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class PurchaseProduct extends Model
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
+
+class PurchaseProduct extends Model implements AuditableContract
 {
+    use Auditable;
     protected $fillable = [
         'productName', 'supplier', 'invoice', 'qty', 'buyPrice', 'salePriceExVat', 
         'salePriceInVat', 'vatStatus', 'totalAmount', 'grandTotal', 'paidAmount', 
@@ -14,6 +18,19 @@ class PurchaseProduct extends Model
 
     protected $casts = [
         'qty' => 'integer',
+        'buyPrice' => 'decimal:2',
+        'salePriceExVat' => 'decimal:2',
+        'salePriceInVat' => 'decimal:2',
+        'profit' => 'decimal:2',
+        'totalAmount' => 'decimal:2',
+        'disAmount' => 'decimal:2',
+        'grandTotal' => 'decimal:2',
+        'paidAmount' => 'decimal:2',
+        'dueAmount' => 'decimal:2',
+    ];
+
+    protected $auditExclude = [
+        'updated_at'
     ];
 
     /**

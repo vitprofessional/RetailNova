@@ -6,6 +6,7 @@
 <!-- Mirrored from templates.iqonic.design/eshop/html/backend/index.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 12 Mar 2025 08:07:13 GMT -->
 <head>
     <meta charset="utf-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Retail Nova | @yield('backTitle')</title>
     
@@ -483,6 +484,14 @@
                                               </li>
                                       </ul>
                       </li>
+                      @can('viewAudits')
+                      <li class=" {{ request()->routeIs('audits.index') ? 'active' : '' }}">
+                          <a href="{{ route('audits.index') }}" class="svg-icon">
+                              <i class="las la-history"></i>
+                              <span class="ml-4">Audits</span>
+                          </a>
+                      </li>
+                      @endcan
                       <li class=" ">
                           <a href="#return" class="{{ request()->routeIs('addBusinessSetupPage') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addBusinessSetupPage') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash6" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -842,6 +851,109 @@
             $(e).remove();
         };
     </script>
+    <!-- SweetAlert2 for nicer confirmations -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        (function(){
+            function isDeleteLink(href){
+                if(!href) return false;
+                try{
+                    var url = href.toString();
+                    return /\/delete(\/|$)/i.test(url) || /delete\?/i.test(url);
+                }catch(e){ return false; }
+            }
+
+            function csrfToken(){
+                var m = document.querySelector('meta[name="csrf-token"]');
+                return m ? m.getAttribute('content') : '';
+            }
+
+            function submitDeleteViaPost(href){
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = href;
+                form.style.display = 'none';
+                var token = document.createElement('input');
+                token.type = 'hidden'; token.name = '_token'; token.value = csrfToken();
+                form.appendChild(token);
+                var meth = document.createElement('input');
+                meth.type = 'hidden'; meth.name = '_method'; meth.value = 'DELETE';
+                form.appendChild(meth);
+                document.body.appendChild(form);
+                form.submit();
+            }
+
+            document.addEventListener('click', function(e){
+                var el = e.target.closest('a, button');
+                if(!el) return;
+
+                var explicit = el.getAttribute('data-confirm');
+                if(explicit){
+                    if(explicit === 'false' || explicit === '0') return;
+                    var msg = explicit === 'delete' ? 'Are you sure you want to delete this item? This action cannot be undone.' : explicit;
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Confirm',
+                        text: msg,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        confirmButtonText: 'Yes, proceed',
+                        cancelButtonText: 'Cancel'
+                    }).then(function(result){ if(result.isConfirmed){
+                        // if link, navigate; if button in form, submit
+                        if(el.tagName.toLowerCase() === 'a'){
+                            var href = el.getAttribute('href');
+                            // for delete-like links prefer POST/DELETE
+                            if(isDeleteLink(href)) submitDeleteViaPost(href); else window.location = href;
+                        } else {
+                            var form = el.closest('form'); if(form) form.submit();
+                        }
+                    }});
+                    return;
+                }
+
+                if(el.tagName.toLowerCase() === 'a'){
+                    var href = el.getAttribute('href');
+                    if(isDeleteLink(href)){
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Delete item?',
+                            text: 'Are you sure you want to delete this item? This will revert stock where applicable.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            confirmButtonText: 'Yes, delete',
+                            cancelButtonText: 'Cancel'
+                        }).then(function(result){ if(result.isConfirmed){ submitDeleteViaPost(href); } });
+                        return;
+                    }
+                }
+
+                if(el.tagName.toLowerCase() === 'button'){
+                    var form = el.closest('form');
+                    if(form){
+                        var action = form.getAttribute('action') || '';
+                        var method = (form.getAttribute('method') || '').toLowerCase();
+                        var hasDeleteMethod = !!form.querySelector('input[name="_method"][value="DELETE"]');
+                        if(isDeleteLink(action) || hasDeleteMethod || method === 'delete'){
+                            e.preventDefault();
+                            Swal.fire({
+                                title: 'Delete item?',
+                                text: 'Are you sure you want to delete this item? This action cannot be undone.',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#d33',
+                                confirmButtonText: 'Yes, delete',
+                                cancelButtonText: 'Cancel'
+                            }).then(function(result){ if(result.isConfirmed){ form.submit(); } });
+                            return;
+                        }
+                    }
+                }
+            }, true);
+        })();
+    </script>
     <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
     <!-- Backend Bundle JavaScript -->
     <script src="{{asset('/public/eshop/')}}/assets/js/backend-bundle.min.js"></script>
@@ -898,6 +1010,65 @@
             });
         })();
     </script>
+        <script>
+            // Generic table filters binding: handles selects, date range and search inputs with class `rn-filter-input`.
+            (function(){
+                function parseDateYMD(s){ if(!s) return null; try{ return new Date(s); }catch(e){ return null; } }
+
+                function applyTableFilters(tableId){
+                    if(!tableId) return;
+                    var table = document.getElementById(tableId);
+                    if(!table) return;
+                    var rows = Array.prototype.slice.call(table.querySelectorAll('tbody tr'));
+
+                    // collect filters for this table
+                    var filters = {};
+                    document.querySelectorAll('.rn-filter-input[data-table-target="'+tableId+'"]').forEach(function(el){
+                        var fid = el.getAttribute('data-filter-for');
+                        var fdate = el.getAttribute('data-filter-date');
+                        if(fid){ filters[fid] = (el.value || '').toString().toLowerCase(); }
+                        if(fdate === 'from') filters._dateFrom = el.value || '';
+                        if(fdate === 'to') filters._dateTo = el.value || '';
+                        // also support generic search input (no data-filter-for)
+                        if(!fid && !fdate && el.classList.contains('rn-search-input')) filters._search = (el.value||'').toString().toLowerCase();
+                    });
+
+                    rows.forEach(function(r){
+                        var text = r.innerText.toLowerCase();
+                        var ok = true;
+                        // match selects
+                        Object.keys(filters).forEach(function(k){
+                            if(k.indexOf('_') === 0) return; // skip meta
+                            var v = filters[k]; if(!v) return;
+                            if(text.indexOf(v) === -1) ok = false;
+                        });
+                        // search
+                        if(ok && filters._search){ if(text.indexOf(filters._search) === -1) ok = false; }
+                        // date range: try data-date attribute first, otherwise try to find date-like text in row
+                        if(ok && (filters._dateFrom || filters._dateTo)){
+                            var rdate = r.getAttribute('data-date') || '';
+                            var d = parseDateYMD(rdate);
+                            if(!d){ // try to find first date-like cell text
+                                var t = r.innerText.match(/\d{1,2}[\-/ ]\w{3,}[\-/ ]\d{2,4}|\d{4}-\d{2}-\d{2}/);
+                                if(t) d = parseDateYMD(t[0]);
+                            }
+                            if(filters._dateFrom){ var from = new Date(filters._dateFrom+'T00:00:00'); if(!d || d < from) ok = false; }
+                            if(filters._dateTo){ var to = new Date(filters._dateTo+'T23:59:59'); if(!d || d > to) ok = false; }
+                        }
+
+                        r.style.display = ok ? '' : 'none';
+                    });
+                }
+
+                // bind inputs
+                document.querySelectorAll('.rn-filter-input').forEach(function(el){
+                    var tableId = el.getAttribute('data-table-target');
+                    if(!tableId) return;
+                    el.addEventListener('input', function(){ applyTableFilters(tableId); });
+                    el.addEventListener('change', function(){ applyTableFilters(tableId); });
+                });
+            })();
+        </script>
   </body>
 
 <!-- Mirrored from templates.iqonic.design/eshop/html/backend/index.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 12 Mar 2025 08:07:42 GMT -->

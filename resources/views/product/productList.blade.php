@@ -5,14 +5,20 @@
  <div class="card">
             <div class="card-body">
                
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                    @include('partials.table-filters', [
+                        'tableId' => 'productTable',
+                        'searchId' => 'globalSearchProduct',
+                        'selects' => [
+                            ['id' => 'filterBrand', 'label' => 'Brands', 'options' => \App\Models\Brand::orderBy('name')->get()],
+                            ['id' => 'filterCategory', 'label' => 'Categories', 'options' => \App\Models\Category::orderBy('name')->get()],
+                        ],
+                        'date' => false,
+                        'searchPlaceholder' => 'Search product, brand, category...'
+                    ])
+                </div>
                 <div class="rounded mb-3 table-responsive product-table">
-                    <div class="row">
-                        <div class="col-12 mb-3">
-                            <h4>Product List</h4>
-
-                        </div>
-                    </div>
-                    <table class="data-tables table mb-0 table-bordered">
+                    <table id="productTable" class="data-tables table mb-0 table-bordered">
                         <thead class="bg-white text-uppercase">
                             <tr>
                                 <th>
@@ -33,12 +39,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                        @if(!empty($listItem) && $listItem->count()>0 ) @foreach($listItem as $productList) 
-                        @php                         
-                          $categorySingleData  = \App\Models\Category::find($productList->category);           
-                          $productUnitSingleData  = \App\Models\ProductUnit::find($productList->unitName);
-                          $brandSingleData  = \App\Models\Brand::find($productList->brand);
-                        @endphp
+                                                @if(!empty($listItem) && $listItem->count()>0 ) @foreach($listItem as $productList)
                             <tr>
                                 <td>
                                     <div class="checkbox d-inline-block">
@@ -47,21 +48,9 @@
                                     </div>
                                 </td>
                                 <td>{{$productList->name}}</td>
-                                @if(!empty($brandSingleData))
-                                    <td>{{$brandSingleData->name}}</td>
-                                @else
-                                    <td>-</td>
-                                @endif
-                                @if(!empty($categorySingleData))
-                                    <td>{{$categorySingleData->name}}</td>
-                                @else
-                                    <td>-</td>
-                                @endif
-                                @if(!empty($productUnitSingleData))
-                                    <td>{{$productUnitSingleData->name}}</td>
-                                @else
-                                    <td>-</td>
-                                @endif
+                                <td>{{ $productList->brandModel->name ?? '-' }}</td>
+                                <td>{{ $productList->categoryModel->name ?? '-' }}</td>
+                                <td>{{ $productList->unitModel->name ?? '-' }}</td>
                                 <td>{{$productList->quantity}}</td>
                                 <td>
                                     <span class="badge 
@@ -92,8 +81,11 @@
                                     <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit"
                                         href="{{route('editProduct',['id'=>$productList->id])}}"><i class="ri-pencil-line mr-0"></i></a>
 
-                                    <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"
-                                        href="{{route('delProduct',['id'=>$productList->id])}}"><i class="ri-delete-bin-line mr-0"></i></a>
+                                    <form method="POST" action="{{ route('delProduct',['id'=>$productList->id]) }}" style="display:inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="badge bg-warning mr-2" data-confirm="delete" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
+                                    </form>
                                 </div></td>
                             </tr>
                         @endforeach 
@@ -104,4 +96,31 @@
             
             </div>
         </div>
+@endsection
+
+@section('scripts')
+<script>
+    (function(){
+        function applyProductFilters(){
+            var brand = document.getElementById('filterBrand') ? document.getElementById('filterBrand').value.toLowerCase() : '';
+            var category = document.getElementById('filterCategory') ? document.getElementById('filterCategory').value.toLowerCase() : '';
+            var search = document.getElementById('globalSearchProduct') ? document.getElementById('globalSearchProduct').value.toLowerCase() : '';
+            var rows = document.querySelectorAll('#productTable tbody tr');
+            rows.forEach(function(r){
+                var text = r.innerText.toLowerCase();
+                var ok = true;
+                if(brand && text.indexOf(brand) === -1) ok = false;
+                if(category && text.indexOf(category) === -1) ok = false;
+                if(search && text.indexOf(search) === -1) ok = false;
+                r.style.display = ok ? '' : 'none';
+            });
+        }
+        ['filterBrand','filterCategory','globalSearchProduct'].forEach(function(id){
+            var el = document.getElementById(id);
+            if(!el) return;
+            el.addEventListener('input', applyProductFilters);
+            el.addEventListener('change', applyProductFilters);
+        });
+    })();
+</script>
 @endsection
