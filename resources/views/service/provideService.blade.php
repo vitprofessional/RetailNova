@@ -76,7 +76,6 @@
 
 
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script>
 
 function serviceSelect(){
@@ -90,12 +89,12 @@ console.log(data)
 
         success:function(result){
             var serialField = "'#serialField"+result.id+"'";
-            var field ='<tr id="serialField'+result.id+'"><td><input type="text" class="form-control" name="serviceName[]" value="'+result.serviceName+'" id="serviceName" readonly/></td><td><input type="number" class="form-control" value="'+result.rate+'" id="rate" name="rate[]" /></td><td><a class="badge bg-warning mr-2" title="delete serial number" onclick="remove('+serialField+')" data-original-title="Delete" href="#"><i class="ri-delete-bin-line mr-0"></i></a></td></tr>';
+            var field = '<tr id="serialField'+result.id+'"><td><input type="text" class="form-control" name="serviceName[]" value="'+result.serviceName+'" id="serviceName" readonly/></td><td><input type="number" class="form-control" value="'+result.rate+'" id="rate" name="rate[]" /></td><td><button type="button" class="badge bg-warning mr-2 rn-dyn-remove" title="delete serial number" onclick="remove('+serialField+')" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button></td></tr>';
             
             $('#serviceBox').append(field);
         },
         error:function(){
-            var field ='<tr><td><input type="text" class="form-control" name="serviceName" value="" id="serviceName" readonly/></td><td><input type="number" class="form-control" value="" id="rent" name="rent" readonly/></td><td><a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete" href="#"><i class="ri-delete-bin-line mr-0"></i></a></td></tr>';
+            var field = '<tr><td><input type="text" class="form-control" name="serviceName" value="" id="serviceName" readonly/></td><td><input type="number" class="form-control" value="" id="rent" name="rent" readonly/></td><td><button type="button" class="badge bg-warning mr-2 rn-dyn-remove" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button></td></tr>';
         }
     });
 }

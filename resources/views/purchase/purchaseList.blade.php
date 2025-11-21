@@ -11,7 +11,6 @@
                     </a>
                 </div>
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                    <h4 class="mb-2 mb-sm-0">Purchase List</h4>
                     @include('partials.table-filters', [
                         'tableId' => 'purchaseTable',
                         'searchId' => 'globalSearchPurchase',
@@ -119,7 +118,6 @@
                     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" />
 
                     <!-- Fallback scripts -->
-                    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
                     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
                     <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -129,44 +127,6 @@
                     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 
                     <script>
-                        (function(){
-                            function parseDateYMD(s){ if(!s) return null; try{ return new Date(s); }catch(e){ return null; } }
-
-                            function applyPurchaseFilters(){
-                                var supplier = document.getElementById('filterSupplier') ? document.getElementById('filterSupplier').value : '';
-                                var status = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : '';
-                                var from = document.getElementById('filterDateFrom') ? document.getElementById('filterDateFrom').value : '';
-                                var to = document.getElementById('filterDateTo') ? document.getElementById('filterDateTo').value : '';
-                                var search = document.getElementById('globalSearchPurchase') ? document.getElementById('globalSearchPurchase').value.toLowerCase() : '';
-
-                                var rows = document.querySelectorAll('#purchaseTable tbody tr');
-                                rows.forEach(function(r){
-                                    var text = r.innerText.toLowerCase();
-                                    var ok = true;
-                                    if(supplier && text.indexOf(supplier.toLowerCase()) === -1) ok = false;
-                                    if(status){
-                                        // derive status from due/paid columns if available
-                                        var paidText = r.cells[3] ? r.cells[3].innerText : '';
-                                        var dueText = r.cells[5] ? r.cells[5].innerText : '';
-                                        var rowStatus = 'Due';
-                                        try { if(dueText && parseFloat(dueText.replace(/,/g,'')) <= 0) rowStatus = 'Paid'; else if(paidText && parseFloat(paidText.replace(/,/g,'')) > 0) rowStatus = 'Partial'; } catch(e){}
-                                        if(status && status.toLowerCase() !== rowStatus.toLowerCase()) ok = false;
-                                    }
-                                    if(from){ var d = parseDateYMD(r.getAttribute('data-date') || r.cells[1] && r.cells[1].innerText); if(!d || d < new Date(from+'T00:00:00')) ok = false; }
-                                    if(to){ var d2 = parseDateYMD(r.getAttribute('data-date') || r.cells[1] && r.cells[1].innerText); if(!d2 || d2 > new Date(to+'T23:59:59')) ok = false; }
-                                    if(search && text.indexOf(search) === -1) ok = false;
-                                    r.style.display = ok ? '' : 'none';
-                                });
-                            }
-
-                            ['filterSupplier','filterStatus','filterDateFrom','filterDateTo','globalSearchPurchase'].forEach(function(id){
-                                var el = document.getElementById(id);
-                                if(!el) return;
-                                el.addEventListener('input', applyPurchaseFilters);
-                                el.addEventListener('change', applyPurchaseFilters);
-                            });
-                        })();
-
                         (function(){
                             if (!window.jQuery) return;
                             $(function(){

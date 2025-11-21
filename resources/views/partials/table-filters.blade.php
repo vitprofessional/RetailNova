@@ -36,7 +36,7 @@
             </div>
         @endif
     </div>
-    <div class="rn-search">
+    <div class="rn-search my-3">
         <div class="rn-search-box">
             <i class="las la-search rn-search-icon"></i>
             <input id="{{ $searchId }}" type="text" class="form-control rn-search-input rn-filter-input" data-table-target="{{ $tableId }}" placeholder="{{ $searchPlaceholder }}" />

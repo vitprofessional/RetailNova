@@ -15,6 +15,7 @@
                         'searchId' => 'globalSearch',
                         'selects' => [
                             ['id' => 'filterCustomer', 'label' => 'Customers', 'options' => \App\Models\Customer::orderBy('name')->get()],
+                            ['id' => 'filterStatus', 'label' => 'Status', 'options' => ['Paid','Partial','Due']],
                         ],
                         'date' => true,
                         'searchPlaceholder' => 'Search invoice, customer, amount...'
@@ -90,7 +91,11 @@
                                                     <a class="dropdown-item" href="{{ route('invoiceGenerate',['id'=>$sl->id]) }}"><i class="las la-print mr-2"></i>Print</a>
                                                     <a class="dropdown-item" href="{{ route('returnSale',['id'=>$sl->id]) }}"><i class="las la-undo mr-2"></i>Return</a>
                                                     <div class="dropdown-divider"></div>
-                                                    <a class="dropdown-item text-danger" href="{{ route('delSale',['id'=>$sl->id]) }}"><i class="las la-trash-alt mr-2"></i>Delete</a>
+                                                    <form method="POST" action="{{ route('delSale',['id'=>$sl->id]) }}" style="display:block; margin:0;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="dropdown-item text-danger" data-confirm="delete"><i class="las la-trash-alt mr-2"></i>Delete</button>
+                                                    </form>
                                                 </div>
                                             </div>
                                         </td>
@@ -108,43 +113,4 @@
         </div>
     </div>
 </div>
-@endsection
-@section('scripts')
-<script>
-    (function(){
-        function parseDateYMD(s){ if(!s) return null; try{ return new Date(s); }catch(e){ return null; } }
-
-        function applyFilters(){
-            var cust = document.getElementById('filterCustomer').value;
-            var status = document.getElementById('filterStatus').value;
-            var from = document.getElementById('filterDateFrom').value;
-            var to = document.getElementById('filterDateTo').value;
-            var search = document.getElementById('globalSearch').value.toLowerCase();
-
-            var rows = document.querySelectorAll('#salesTable tbody tr');
-            rows.forEach(function(r){
-                var rcust = r.getAttribute('data-customer') || '';
-                var rstatus = (r.getAttribute('data-status') || '').toLowerCase();
-                var rdate = r.getAttribute('data-date') || '';
-                var text = r.innerText.toLowerCase();
-
-                var ok = true;
-                if(cust && cust !== rcust) ok = false;
-                if(status && status.toLowerCase() !== rstatus) ok = false;
-                if(from){ var d = parseDateYMD(rdate); if(!d || d < new Date(from+'T00:00:00')) ok = false; }
-                if(to){ var d2 = parseDateYMD(rdate); if(!d2 || d2 > new Date(to+'T23:59:59')) ok = false; }
-                if(search && text.indexOf(search) === -1) ok = false;
-
-                r.style.display = ok ? '' : 'none';
-            });
-        }
-
-        ['filterCustomer','filterStatus','filterDateFrom','filterDateTo','globalSearch'].forEach(function(id){
-            var el = document.getElementById(id);
-            if(!el) return;
-            el.addEventListener('input', applyFilters);
-            el.addEventListener('change', applyFilters);
-        });
-    })();
-</script>
 @endsection

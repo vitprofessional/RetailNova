@@ -4,7 +4,7 @@
 </div>
  <div class="card">
             <div class="card-body">
-               
+               <h4>Product List</h4>
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                     @include('partials.table-filters', [
                         'tableId' => 'productTable',

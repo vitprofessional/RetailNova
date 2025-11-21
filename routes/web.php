@@ -14,12 +14,21 @@ use App\Http\Controllers\accountController;
 use App\Http\Controllers\reportController;
 use App\Http\Controllers\businessController;
 use App\Http\Controllers\invoiceController;
+use App\Http\Controllers\AdminProfileController;
 
 //user info str
 Route::get('/login',[
     userInfo::class,
     'userLogin'
 ])->name('userLogin');
+
+// Backward-compatible named route expected by Laravel auth middleware
+// Some middleware or packages expect a route named `login`. Provide a
+// lightweight redirect so `route('login')` resolves and forwards to the
+// real login handler `userLogin` without changing existing code.
+Route::get('/login-redirect', function(){
+    return redirect()->route('userLogin');
+})->name('login');
 
 Route::post('creat/admin',[
     userInfo::class,
@@ -99,6 +108,30 @@ Route::get('/ajax/public/customer/{id}/products', [
 ])->name('ajax.customer.products.public');
 // Require legacy session sync (`posAdmin`) and authenticate via admin guard
 Route::middleware(['posAdmin','auth:admin'])->group(function(){
+
+    // Admin profile management
+    Route::get('/admin/profile', [
+        AdminProfileController::class,
+        'show'
+    ])->name('admin.profile.show');
+
+    Route::get('/admin/profile/edit', [
+        AdminProfileController::class,
+        'edit'
+    ])->name('admin.profile.edit');
+
+    Route::post('/admin/profile/update', [
+        AdminProfileController::class,
+        'update'
+    ])->name('admin.profile.update');
+
+    Route::post('/admin/profile/password', [
+        AdminProfileController::class,
+        'changePassword'
+    ])->name('admin.profile.password');
+
+    
+
 
     Route::get('/dashboard',[
         dashboardController::class,
@@ -349,6 +382,26 @@ Route::middleware(['posAdmin','auth:admin'])->group(function(){
         productController::class,
         'damageProductList'
     ])->name('damageProductList');
+        // save damage product
+        Route::post('/damage/product/save', [
+            productController::class,
+            'damageProductSave'
+        ])->name('damageProductSave');
+        // View a damage record
+        Route::get('/damage/product/view/{id}', [
+            productController::class,
+            'damageProductView'
+        ])->name('damageProductView');
+        // Printable view
+        Route::get('/damage/product/print/{id}', [
+            productController::class,
+            'damageProductPrint'
+        ])->name('damageProductPrint');
+        // Delete damage record (DELETE)
+        Route::delete('/damage/product/delete/{id}', [
+            productController::class,
+            'damageProductDelete'
+        ])->name('damageProductDelete');
 
     //purchase str-------------------------
 

@@ -47,7 +47,7 @@
                             <div class="col-md-7">
                                 <div class="form-group">
                                     <label for="productName" class="form-label">Product *</label>
-                                    <select id="productName" name="productName" onchange="productSelect()" class="form-control" required>
+                                    <select id="productName" name="productName" class="form-control js-product-select" required>
                                     <!--  form option show proccessing -->
                                         <option value="">Select</option>
                                     @if(!empty($productList) && count($productList)>0)

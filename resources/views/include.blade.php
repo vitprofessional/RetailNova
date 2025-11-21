@@ -18,6 +18,46 @@
     <link rel= "stylesheet" href= "https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css" >
     <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/remixicon/fonts/remixicon.css"> 
     <script src="https://kit.fontawesome.com/163dbb3d41.js" crossorigin="anonymous"></script>
+    <!-- Ensure jQuery is available early for inline scripts -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+        // Defensive shim: make sure window.$ and window.jQuery are consistent
+        try{
+            if(window.jQuery && !window.$) window.$ = window.jQuery;
+        }catch(e){ /* ignore */ }
+
+        // Simple queue for callbacks that want to run when jQuery is ready
+        (function(){
+            window.__jqReadyQueue = window.__jqReadyQueue || [];
+            window.__jqOnReady = function(fn){
+                if(typeof fn !== 'function') return;
+                if(window.jQuery && typeof jQuery === 'function') return jQuery(fn);
+                window.__jqReadyQueue.push(fn);
+            };
+
+            function flushQueue(){
+                try{
+                    if(window.jQuery && window.__jqReadyQueue && window.__jqReadyQueue.length){
+                        window.__jqReadyQueue.forEach(function(f){ try{ jQuery(f); }catch(_){} });
+                        window.__jqReadyQueue = [];
+                    }
+                }catch(e){}
+            }
+
+            // If jQuery appears later, flush queue
+            if(!window.jQuery){
+                var __jqInterval = setInterval(function(){
+                    if(window.jQuery){
+                        if(!window.$) window.$ = window.jQuery;
+                        clearInterval(__jqInterval);
+                        flushQueue();
+                    }
+                }, 50);
+            } else {
+                flushQueue();
+            }
+        })();
+    </script>
     
     <style>
         body {
@@ -749,26 +789,42 @@
                                   </div>
                               </li>
                               <li class="nav-item nav-icon dropdown caption-content">
+                                  @php
+                                      $adminUser = auth('admin')->user();
+                                      $topAvatar = asset('/public/eshop/') . '/assets/images/user/1.png';
+                                      if($adminUser && !empty($adminUser->avatar) && \Illuminate\Support\Facades\Storage::disk('public')->exists($adminUser->avatar)){
+                                          $file = storage_path('app/public/' . $adminUser->avatar);
+                                          $timestamp = @filemtime($file) ?: time();
+                                          $root = rtrim(request()->root(), '/');
+                                          $publicPath = public_path('storage/' . $adminUser->avatar);
+                                          if(file_exists($publicPath)){
+                                              $topAvatar = $root . '/public/storage/' . $adminUser->avatar . '?v=' . $timestamp;
+                                          } else {
+                                              $topAvatar = $root . '/storage/' . $adminUser->avatar . '?v=' . $timestamp;
+                                          }
+                                      }
+                                  @endphp
                                   <a href="#" class="search-toggle dropdown-toggle" id="dropdownMenuButton4"
                                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                      <img src="{{asset('/public/eshop/')}}/assets/images/user/1.png" class="img-fluid rounded" alt="user">
+                                      <img src="{{ $topAvatar }}" class="img-fluid rounded" alt="user">
                                   </a>
-                                  <div class="iq-sub-dropdown dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                  <div class="iq-sub-dropdown dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton4" style="right:0;left:auto;min-width:260px;max-width:360px;">
                                       <div class="card shadow-none m-0">
                                           <div class="card-body p-0 text-center">
                                               <div class="media-body profile-detail text-center">
-                                                  <img src="{{asset('/public/eshop/')}}/assets/images/page-img/profile-bg.jpg" alt="profile-bg"
-                                                      class="rounded-top img-fluid mb-4">
-                                                  <img src="{{asset('/public/eshop/')}}/assets/images/user/1.png" alt="profile-img"
-                                                      class="rounded profile-img img-fluid avatar-70">
+                                                  <div class="rounded-top img-fluid mb-3" style="background:#f5f5f7;">
+                                                      <img src="{{asset('/public/eshop/')}}/assets/images/page-img/profile-bg.jpg" alt="profile-bg" class="img-fluid" style="width:100%;height:90px;object-fit:cover;border-top-left-radius:6px;border-top-right-radius:6px;">
+                                                  </div>
+                                                  <img src="{{ $topAvatar }}" alt="profile-img" class="rounded profile-img img-fluid avatar-70" style="margin-top:-36px;border:4px solid #fff;">
                                               </div>
                                               <div class="p-3">
-                                                  <h5 class="mb-1">JoanDuo@property.com</h5>
-                                                  <p class="mb-0">Since 10 march, 2020</p>
+                                                  @php $displayName = ($adminUser->fullName ?? '') . ($adminUser->sureName ? ' ' . $adminUser->sureName : ''); @endphp
+                                                  <h5 class="mb-1">{{ $displayName ?: ($adminUser->mail ?? 'Admin User') }}</h5>
+                                                  <p class="mb-0">{{ $adminUser->mail ?? '' }}</p>
+                                                  <p class="mb-0">Since {{ optional($adminUser->created_at)->format('j M, Y') ?? '' }}</p>
                                                   <div class="d-flex align-items-center justify-content-center mt-3">
-                                                      <a href="{{ route('dashboard') }}" class="btn border mr-2">Profile</a>
-                                                      <a href="{{ route('logout') }}" class="btn border">
-                                                        Sign Out</a>
+                                                      <a href="{{ route('admin.profile.show') }}" class="btn border mr-2">My Profile</a>
+                                                      <a href="{{ route('logout') }}" class="btn border">Sign Out</a>
                                                   </div>
                                               </div>
                                           </div>
@@ -816,15 +872,15 @@
             <div class="container-fluid">
             <div class="card border-0">
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-lg-6">
-                            <ul class="list-inline mb-0">
-                                <li class="list-inline-item"><a href="#">Privacy Policy</a></li>
-                                <li class="list-inline-item"><a href="#">Terms of Use</a></li>
-                            </ul>
-                        </div>
-                        <div class="col-lg-6 text-right">
-                            <span class="mr-1"><script>document.write(new Date().getFullYear())</script>©</span> <a href="#" class="">Retail Nova</a>.
+                                                  <div class="p-3">
+                                                  <h5 class="mb-1">{{ $adminUser->mail ?? 'user@domain' }}</h5>
+                                                  <p class="mb-0">Since 10 march, 2020</p>
+                                                  <div class="d-flex align-items-center justify-content-center mt-3">
+                                                      <a href="{{ route('admin.profile.show') }}" class="btn border mr-2">My Profile</a>
+                                                      <a href="{{ route('dashboard') }}" class="btn border mr-2">Dashboard</a>
+                                                      <a href="{{ route('logout') }}" class="btn border">Sign Out</a>
+                                                  </div>
+                                              </div>
                         </div>
                     </div>
                 </div>
@@ -1019,7 +1075,6 @@
                     if(!tableId) return;
                     var table = document.getElementById(tableId);
                     if(!table) return;
-                    var rows = Array.prototype.slice.call(table.querySelectorAll('tbody tr'));
 
                     // collect filters for this table
                     var filters = {};
@@ -1029,26 +1084,39 @@
                         if(fid){ filters[fid] = (el.value || '').toString().toLowerCase(); }
                         if(fdate === 'from') filters._dateFrom = el.value || '';
                         if(fdate === 'to') filters._dateTo = el.value || '';
-                        // also support generic search input (no data-filter-for)
                         if(!fid && !fdate && el.classList.contains('rn-search-input')) filters._search = (el.value||'').toString().toLowerCase();
                     });
 
-                    rows.forEach(function(r){
+                    // If DataTables is active for this table, prefer filtering via DataTables rows API
+                    var dtInstance = null;
+                    try{
+                        if(window.jQuery && typeof jQuery.fn.DataTable === 'function'){
+                            var $t = jQuery('#'+tableId);
+                            if($t.length && jQuery.fn.DataTable.isDataTable($t[0])) dtInstance = $t.DataTable();
+                        }
+                    }catch(e){ dtInstance = null; }
+
+                    var nodes = dtInstance ? dtInstance.rows().nodes().toArray() : Array.prototype.slice.call(table.querySelectorAll('tbody tr'));
+
+                    nodes.forEach(function(r){
                         var text = r.innerText.toLowerCase();
                         var ok = true;
-                        // match selects
+
+                        // match selects (string containment)
                         Object.keys(filters).forEach(function(k){
                             if(k.indexOf('_') === 0) return; // skip meta
                             var v = filters[k]; if(!v) return;
                             if(text.indexOf(v) === -1) ok = false;
                         });
-                        // search
+
+                        // generic search
                         if(ok && filters._search){ if(text.indexOf(filters._search) === -1) ok = false; }
-                        // date range: try data-date attribute first, otherwise try to find date-like text in row
+
+                        // date range: prefer row data-date attribute
                         if(ok && (filters._dateFrom || filters._dateTo)){
                             var rdate = r.getAttribute('data-date') || '';
                             var d = parseDateYMD(rdate);
-                            if(!d){ // try to find first date-like cell text
+                            if(!d){
                                 var t = r.innerText.match(/\d{1,2}[\-/ ]\w{3,}[\-/ ]\d{2,4}|\d{4}-\d{2}-\d{2}/);
                                 if(t) d = parseDateYMD(t[0]);
                             }
@@ -1056,8 +1124,12 @@
                             if(filters._dateTo){ var to = new Date(filters._dateTo+'T23:59:59'); if(!d || d > to) ok = false; }
                         }
 
+                        // show/hide row
                         r.style.display = ok ? '' : 'none';
                     });
+
+                    // If using DataTables, redraw to ensure paging and layout update
+                    try{ if(dtInstance) dtInstance.draw(false); }catch(e){}
                 }
 
                 // bind inputs

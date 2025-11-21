@@ -1,4 +1,3 @@
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script>
 // Update sale error summary: shows a short list of line errors near the Save button
 window.updateSaleErrorSummary = function(){
@@ -1202,6 +1201,7 @@ $(document).on('input', '.product-row .quantity, .product-row .sale-price', func
             
         let products = [];
 
+
         $('.product-row').each(function () {
             let price = parseFloat($(this).find('.price').val()) || 0;
             let quantity = parseInt($(this).find('.quantity').val()) || 0;
@@ -1233,4 +1233,30 @@ $(document).on('input', '.product-row .quantity, .product-row .sale-price', func
             }
         });
     }
+
+// Delegated change handler for product selects that used inline onchange attributes.
+// Adds resilience against load-order issues by calling the global `productSelect` when
+// any element with the `js-product-select` class changes.
+document.addEventListener('change', function(e){
+    try{
+        var t = e.target;
+        if(!t || !t.classList) return;
+        // product select used in purchase/damage pages
+        if(t.classList.contains('js-product-select')){
+            if(typeof window.productSelect === 'function'){
+                window.productSelect();
+            } else {
+                console.warn('productSelect is not defined at delegated handler time');
+            }
+        }
+        // sale page product select
+        if(t.classList.contains('js-sale-product-select')){
+            if(typeof window.saleProductSelect === 'function'){
+                window.saleProductSelect();
+            } else {
+                console.warn('saleProductSelect is not defined at delegated handler time');
+            }
+        }
+    }catch(err){ console.error('delegated productSelect handler error', err); }
+});
 </script>

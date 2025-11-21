@@ -61,7 +61,7 @@
                             <div class="col-md-7">
                                 <div class="form-group">
                                     <label for="productName" class="form-label">Product *</label>
-                                    <select id="productName" name="productName" onchange="productSelect()"   class="form-control" >
+                                    <select id="productName" name="productName" class="form-control js-product-select" >
                                     <!--  form option show proccessing -->
                                         <option value="">Select</option>
                                     @if(!empty($productList) && count($productList)>0)
@@ -156,7 +156,7 @@
                                                     @php $label = $s->serialNumber ?? $s->serial ?? $s->serial_number ?? $s->number ?? $s->id; @endphp
                                                     <li class="d-flex align-items-center justify-content-between mb-1">
                                                         <span class="text-truncate">{{ $label }}</span>
-                                                        <a href="#" class="text-danger ml-2 delete-serial" data-id="{{ $s->id }}" title="Delete"><i class="ri-delete-bin-line"></i></a>
+                                                        <button type="button" class="text-danger ml-2 delete-serial btn btn-link p-0" data-id="{{ $s->id }}" title="Delete"><i class="ri-delete-bin-line"></i></button>
                                                     </li>
                                                 @endforeach
                                             </ul>
@@ -279,7 +279,7 @@
                                     @php $label = $s->serialNumber ?? $s->serial ?? $s->serial_number ?? $s->number ?? $s->id; @endphp
                                     <div id="serial-row-{{ $s->id }}" class="d-flex align-items-center mb-1">
                                         <span class="mr-2">{{ $label }}</span>
-                                        <a href="#" class="text-danger delete-serial" data-id="{{ $s->id }}" title="Delete"><i class="ri-delete-bin-line"></i></a>
+                                        <button type="button" class="text-danger delete-serial btn btn-link p-0" data-id="{{ $s->id }}" title="Delete"><i class="ri-delete-bin-line"></i></button>
                                     </div>
                                 @endforeach
                             @else
