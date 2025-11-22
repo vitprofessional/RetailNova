@@ -622,11 +622,23 @@ Route::middleware(['posAdmin','auth:admin'])->group(function(){
     ])->name('editService');
 
     
-    //brand delete
-    Route::get('/service/delete/{id}',[
+    //service delete (use DELETE to match forms)
+    Route::delete('/service/delete/{id}',[
         serviceController::class,
         'delService'
     ])->name('delService');
+
+    // save provided service entries
+    Route::post('/save/provideService',[
+        serviceController::class,
+        'saveProvideService'
+    ])->name('saveProvideService');
+
+    // service bulk delete
+    Route::post('/service/bulk-delete',[
+        serviceController::class,
+        'bulkDeleteService'
+    ])->name('services.bulkDelete');
 
     Route::get('provide/service/',[
         serviceController::class,
@@ -637,6 +649,17 @@ Route::middleware(['posAdmin','auth:admin'])->group(function(){
         serviceController::class,
         'serviceProvideList'
     ])->name('serviceProvideList');
+
+    // Admin report: list provide_services rows missing rate or qty
+    Route::get('admin/provide-services/missing-data', [
+        serviceController::class,
+        'provideServicesMissingData'
+    ])->name('admin.provideServices.missing')->middleware(['posAdmin','auth:admin']);
+
+    Route::get('admin/provide-services/missing-data/export', [
+        serviceController::class,
+        'exportProvideServicesMissing'
+    ])->name('admin.provideServices.missing.export')->middleware(['posAdmin','auth:admin']);
 
     //account------------------------
     Route::get('/add/account',[

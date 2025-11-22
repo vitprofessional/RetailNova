@@ -7,89 +7,257 @@ use App\Models\Service;
 use App\Models\ProvideService;
 use App\Models\Customer;
 use Alert;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class serviceController extends Controller
 {
 
-//add service
-  Public function addServiceName (){
-      $data = Service::orderBy('id','DESC')->get();
-    return view('service.addService',['listItem'=>$data]);
-
-  }
-  //save service 
-  Public function saveService(Request $req){
-    if($req->profileId):
-      $data = Service::find($req->profileId);
-    else:
-      $data = new Service();
-    endif;
-
-    $data->serviceName = $req->serviceName;
-    $data->rate = $req->rate;
-
-
-    if($data->save()):
-        Alert::success('Success!','Service profile created successfully');
-        return redirect(route('addServiceName'));
-    else:
-        Alert::error('Failed!','Service profile creation failed');
-        return back();
-    endif;
-  }
-
-  //edit service
-  public function editService($id){
-    $data = Service::find($id);
-    return view('service.addService',['profile'=>$data]);
-  }
-
-   //delete Service
-    public function delService($id){
-        $data = Service::find($id);
-        if($data->save()):
-            $data->delete();
-            Alert::success('Success!','Service delete successfully');
-            return redirect(route('addServiceName'));
-        else:
-            Alert::error('Failed!','Service delete failed');
-            return back();
-        endif;
+    // List service profiles and show create form
+    public function addServiceName()
+    {
+        $data = Service::orderBy('id', 'DESC')->get();
+        return view('service.addService', ['listItem' => $data]);
     }
 
+    // Save or update single service profile
+    public function saveService(Request $req)
+    {
+        $req->validate([
+            'serviceName' => 'required|string|max:191',
+            'rate' => 'required|numeric'
+        ]);
 
-  //add provideService
-  Public function provideService(){
-    $service = Service::orderBy('id','DESC')->get();
-    $customer = Customer::orderBy('id','DESC')->get();
-    return view('service.provideService',['customerList'=>$customer,'serviceList'=>$service]);
-  }
+        if ($req->profileId) {
+            $data = Service::find($req->profileId);
+            if (!$data) {
+                Alert::error('Failed!', 'Service not found');
+                return back();
+            }
+        } else {
+            $data = new Service();
+        }
 
-  //save provideService service 
-  Public function saveProvideService(Request $req){
-    if($req->profileId):
-      $data = ProvideService::find($req->profileId);
-    else:
-      $data = new ProvideService();
-    endif;
+        $data->serviceName = $req->serviceName;
+        $data->rate = $req->rate;
 
-    $data->customerName = $req->customerName;
-    $data->serviceName  = $req->serviceName;
-    $data->amount       = $req->amount;
-    $data->note         = $req->note;
+        if ($data->save()) {
+            Alert::success('Success!', 'Service profile created successfully');
+            return redirect(route('addServiceName'));
+        } else {
+            Alert::error('Failed!', 'Service profile creation failed');
+            return back();
+        }
+    }
 
-    if($data->save()):
-        Alert::success('Success!','Service profile created successfully');
-        return redirect(route('provideService'));
-    else:
-        Alert::error('Failed!','Service profile creation failed');
-        return back();
-    endif;
-  }
+    // Bulk delete services
+    public function bulkDeleteService(Request $req)
+    {
+        $req->validate([
+            'selected' => 'required|array'
+        ]);
 
-  
-  //list provideService
-  Public function serviceProvideList(){
-    return view('service.serviceList');
-  }
+        $ids = $req->input('selected', []);
+
+        try {
+            DB::transaction(function () use ($ids) {
+                Service::whereIn('id', $ids)->delete();
+            });
+
+            Alert::success('Success!', 'Selected services deleted successfully');
+            return redirect(route('addServiceName'));
+        } catch (\Exception $e) {
+            Log::error('Service bulk delete failed: ' . $e->getMessage());
+            Alert::error('Failed!', 'Bulk delete failed');
+            return back();
+        }
+    }
+
+    // Edit service form
+    public function editService($id)
+    {
+        $data = Service::find($id);
+        return view('service.addService', ['profile' => $data]);
+    }
+
+    // Delete a single service
+    public function delService($id)
+    {
+        $data = Service::find($id);
+        if (!$data) {
+            Alert::error('Failed!', 'Service not found');
+            return back();
+        }
+
+        try {
+            $data->delete();
+            Alert::success('Success!', 'Service deleted successfully');
+            return redirect(route('addServiceName'));
+        } catch (\Exception $e) {
+            Alert::error('Failed!', 'Service delete failed');
+            return back();
+        }
+    }
+
+    // Show provide service page
+    public function provideService()
+    {
+        $service = Service::orderBy('id', 'DESC')->get();
+        $customer = Customer::orderBy('id', 'DESC')->get();
+        return view('service.provideService', ['customerList' => $customer, 'serviceList' => $service]);
+    }
+
+    // Save provided services (multiple rows at once)
+    public function saveProvideService(Request $req)
+    {
+        $req->validate([
+            'customerName' => 'required|integer|exists:customers,id',
+            'serviceName' => 'required|array',
+            'serviceName.*' => 'required|string',
+            'rate' => 'required|array',
+            'rate.*' => 'required|numeric',
+            'qty' => 'required|array',
+            'qty.*' => 'required|integer|min:1',
+            'note' => 'nullable|string',
+        ]);
+
+        $customerId = $req->customerName;
+        $note = $req->note ?? null;
+
+        $names = $req->serviceName;
+        $rates = $req->rate;
+        $qtys = $req->qty;
+
+        try {
+            foreach ($names as $idx => $serviceName) {
+                $rate = isset($rates[$idx]) ? (float)$rates[$idx] : 0;
+                $qty = isset($qtys[$idx]) ? (int)$qtys[$idx] : 1;
+                $amount = $rate * $qty;
+
+                $ps = new ProvideService();
+                $ps->customerName = $customerId;
+                $ps->serviceName = $serviceName;
+                $ps->amount = $amount;
+                // store qty and rate for reference
+                if (\Schema::hasColumn('provide_services', 'qty')) {
+                    $ps->qty = $qty;
+                }
+                if (\Schema::hasColumn('provide_services', 'rate')) {
+                    $ps->rate = $rate;
+                }
+                $ps->note = $note;
+                $ps->save();
+            }
+
+            Alert::success('Success!', 'Service(s) saved successfully');
+            return redirect(route('provideService'));
+        } catch (\Exception $e) {
+            Log::error('saveProvideService failed: ' . $e->getMessage());
+            Alert::error('Failed!', 'Service profile creation failed');
+            return back();
+        }
+    }
+
+    // Provide service list page
+    public function serviceProvideList()
+    {
+        return view('service.serviceList');
+    }
+
+    // Admin report: show provide_services rows where rate is null/0 or qty is null/0
+    public function provideServicesMissingData(\Illuminate\Http\Request $request)
+    {
+        $query = \App\Models\ProvideService::select('provide_services.*', 'customers.name as customer_name')
+            ->leftJoin('customers', 'provide_services.customerName', '=', 'customers.id')
+            ->where(function($q){
+                $q->whereNull('provide_services.rate')
+                  ->orWhere('provide_services.rate', 0)
+                  ->orWhereNull('provide_services.qty')
+                  ->orWhere('provide_services.qty', 0);
+            });
+
+        // date range filter
+        if ($request->filled('start_date')) {
+            $query->whereDate('provide_services.created_at', '>=', $request->input('start_date'));
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('provide_services.created_at', '<=', $request->input('end_date'));
+        }
+        // customer filter
+        if ($request->filled('customer_id')) {
+            $query->where('provide_services.customerName', $request->input('customer_id'));
+        }
+
+        $rows = $query->orderBy('provide_services.id', 'asc')
+            ->paginate(25)
+            ->appends($request->query());
+
+        // load customers list for filter select
+        $customers = \App\Models\Customer::orderBy('name')->get();
+
+        // If AJAX request, return only the table partial HTML
+        if ($request->ajax()) {
+            return view('admin.partials.provide_services_table', ['rows' => $rows])->render();
+        }
+
+        return view('admin.provide_services_missing', ['rows' => $rows, 'customers' => $customers]);
+    }
+
+    // Export CSV for the missing-data report (respects same filters)
+    public function exportProvideServicesMissing(\Illuminate\Http\Request $request)
+    {
+        $query = \App\Models\ProvideService::select('provide_services.*')
+            ->leftJoin('customers', 'provide_services.customerName', '=', 'customers.id')
+            ->where(function($q){
+                $q->whereNull('provide_services.rate')
+                  ->orWhere('provide_services.rate', 0)
+                  ->orWhereNull('provide_services.qty')
+                  ->orWhere('provide_services.qty', 0);
+            });
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('provide_services.created_at', '>=', $request->input('start_date'));
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('provide_services.created_at', '<=', $request->input('end_date'));
+        }
+        if ($request->filled('customer_id')) {
+            $query->where('provide_services.customerName', $request->input('customer_id'));
+        }
+
+        $rows = $query->orderBy('provide_services.id', 'asc')->get();
+
+        $filename = 'provide_services_missing_' . date('Ymd_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $columns = ['id','customerName','customer_name','serviceName','amount','qty','rate','note','created_at'];
+
+        $callback = function() use ($rows, $columns) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, $columns);
+            foreach ($rows as $row) {
+                $customerName = $row->customer_name ?? $row->customerName;
+
+                $data = [
+                    $row->id,
+                    $row->customerName,
+                    $customerName,
+                    $row->serviceName,
+                    $row->amount,
+                    $row->qty,
+                    $row->rate,
+                    $row->note,
+                    $row->created_at,
+                ];
+                fputcsv($out, $data);
+            }
+            fclose($out);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }
+

@@ -2,7 +2,7 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<form action="{{ route('damageProductSave') }}" class="row" method="POST">
+<form action="{{ route('damageProductSave') }}" class="row" method="POST" id="damage-product-form">
     @csrf
     <div class="col-12">
         <div class="row">
@@ -72,6 +72,8 @@
                                 </td>
                                 <td width="9%">
                                     <input type="number" class="form-control" id="qty" name="qty" min="1" step="1" readonly />
+                                    <div id="qty-error" class="text-danger small mt-1" style="display:none;"></div>
+                                    <div id="qty-stock" class="text-muted small mt-1">Current stock: <span id="qty-stock-val">0</span></div>
                                 </td>
                                 <td width="9%">
                                     <input type="number" class="form-control" id="currentStock" name="currentStock" readonly />
@@ -88,7 +90,7 @@
                                 <td width="9%">
                                    
                                     <div class="list-action">
-                                        <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
+                                        <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-remove-row="true" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
                                     </div>
                                 </td>
                             </tr>
@@ -106,7 +108,24 @@
 <script>
     function productSelect(){
         var id = document.getElementById('productName').value;
-        if(!id) return;
+        if(!id){
+            // clear the single product detail row when no product selected
+            var row = document.querySelector('#productDetails tr');
+            if(row){
+                var inputs = row.querySelectorAll('input');
+                inputs.forEach(function(i){ if(i.type === 'number' || i.type === 'text') i.value = ''; });
+                var inDateEl = document.getElementById('inDate'); if(inDateEl) inDateEl.innerText = '-';
+                var qtyStockVal = document.getElementById('qty-stock-val'); if(qtyStockVal) qtyStockVal.innerText = '0';
+                var qtyEl = document.getElementById('qty'); if(qtyEl) { qtyEl.setAttribute('readonly','readonly'); qtyEl.value = ''; }
+                var currentStockEl = document.getElementById('currentStock'); if(currentStockEl) currentStockEl.value = '';
+                var buyEl = document.getElementById('buyingPrice'); if(buyEl) buyEl.value = '';
+                var spEl = document.getElementById('salingPriceWithoutVat'); if(spEl) spEl.value = '';
+                var totalEl = document.getElementById('computedTotal'); if(totalEl) totalEl.value = '';
+                var selectName = document.getElementById('selectProductName'); if(selectName) selectName.value = '';
+                if(window.validateDamageQty) window.validateDamageQty();
+            }
+            return;
+        }
         var url = '{{ url('product/details') }}/' + id;
         // also fetch latest purchase prices for this product (if available)
         var priceUrl = '{{ url('sale/product/details') }}/' + id;
@@ -121,6 +140,9 @@
                     // enable qty input and set max to currentStock
                     var qty = document.getElementById('qty');
                     if(qty){ qty.removeAttribute('readonly'); qty.max = data.currentStock || 0; qty.value = qty.value || 1; }
+                    // update inline stock display
+                    var qtyStockVal = document.getElementById('qty-stock-val'); if(qtyStockVal) qtyStockVal.innerText = data.currentStock || 0;
+                    if(window.validateDamageQty) window.validateDamageQty();
                     computeTotal();
                 }
             }).catch(function(err){ console.error('Failed to fetch product details', err); });
@@ -154,7 +176,7 @@
 
     // bind events
     document.addEventListener('DOMContentLoaded', function(){
-        var qty = document.getElementById('qty'); if(qty) qty.addEventListener('input', computeTotal);
+        var qty = document.getElementById('qty'); if(qty) qty.addEventListener('input', function(e){ computeTotal(); validateQty(); });
         var bp = document.getElementById('buyingPrice'); if(bp) bp.addEventListener('input', computeTotal);
         var sp = document.getElementById('salingPriceWithoutVat'); if(sp) sp.addEventListener('input', computeTotal);
         // ensure product select triggers productSelect when changed
@@ -166,6 +188,99 @@
                 window.productSelect = productSelect;
             }
         }catch(e){ console.warn('binding productSelect failed', e); }
+        // Form submit guard: prevent damage qty > current stock
+        var form = document.getElementById('damage-product-form');
+        if(form){
+            var submitBtn = form.querySelector('button[type="submit"]');
+            var qtyErrorEl = document.getElementById('qty-error');
+
+            function validateQty(){
+                var q = qty ? parseInt(qty.value || 0, 10) : 0;
+                var s = document.getElementById('currentStock') ? parseInt(document.getElementById('currentStock').value || 0, 10) : 0;
+                if(q <= 0){
+                    if(qtyErrorEl) { qtyErrorEl.style.display = 'block'; qtyErrorEl.innerText = 'Please enter a valid quantity.'; }
+                    if(submitBtn) submitBtn.disabled = true;
+                    return false;
+                }
+                if(q > s){
+                    if(qtyErrorEl) { qtyErrorEl.style.display = 'block'; qtyErrorEl.innerText = 'Damage quantity cannot be greater than current stock ('+s+').' ; }
+                    if(submitBtn) submitBtn.disabled = true;
+                    return false;
+                }
+                if(qtyErrorEl) { qtyErrorEl.style.display = 'none'; qtyErrorEl.innerText = ''; }
+                if(submitBtn) submitBtn.disabled = false;
+                return true;
+            }
+            // expose for other handlers
+            window.validateDamageQty = validateQty;
+
+            form.addEventListener('submit', function(e){
+                var qtyEl = document.getElementById('qty');
+                var stockEl = document.getElementById('currentStock');
+                var q = qtyEl ? parseInt(qtyEl.value || 0, 10) : 0;
+                var s = stockEl ? parseInt(stockEl.value || 0, 10) : 0;
+                if(q <= 0){
+                    e.preventDefault();
+                    if(window.Swal && typeof Swal.fire === 'function'){
+                        Swal.fire({icon:'warning', title: 'Invalid quantity', text: 'Please enter a valid damage quantity.'});
+                    } else {
+                        alert('Please enter a valid damage quantity.');
+                    }
+                    return false;
+                }
+                if(q > s){
+                    e.preventDefault();
+                    var msg = 'Damage quantity ('+q+') cannot be greater than current stock ('+s+').';
+                    if(window.Swal && typeof Swal.fire === 'function'){
+                        Swal.fire({icon:'error', title: 'Insufficient stock', text: msg});
+                    } else {
+                        alert(msg);
+                    }
+                    return false;
+                }
+                // show spinner on submit to prevent double submits
+                if(submitBtn){
+                    submitBtn.disabled = true;
+                    submitBtn.dataset.originalHtml = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+                }
+                return true;
+            });
+        }
+
+        // Handle remove-row clicks inside the product details table
+        var productDetails = document.getElementById('productDetails');
+        if(productDetails){
+            productDetails.addEventListener('click', function(evt){
+                var btn = evt.target.closest('[data-remove-row]');
+                if(!btn) return;
+                evt.preventDefault();
+                // find the row
+                var row = btn.closest('tr');
+                if(!row) return;
+                // if more than one row, remove this row
+                var rows = Array.prototype.slice.call(productDetails.querySelectorAll('tr'));
+                if(rows.length > 1){
+                    row.parentNode.removeChild(row);
+                    return;
+                }
+                // otherwise clear the inputs in the row and reset state
+                var inputs = row.querySelectorAll('input');
+                inputs.forEach(function(i){
+                    if(i.type === 'number' || i.type === 'text') i.value = '';
+                });
+                var inDateEl = document.getElementById('inDate'); if(inDateEl) inDateEl.innerText = '-';
+                var qtyStockVal = document.getElementById('qty-stock-val'); if(qtyStockVal) qtyStockVal.innerText = '0';
+                var qtyEl = document.getElementById('qty'); if(qtyEl) { qtyEl.setAttribute('readonly','readonly'); qtyEl.value = ''; }
+                var currentStockEl = document.getElementById('currentStock'); if(currentStockEl) currentStockEl.value = '';
+                var buyEl = document.getElementById('buyingPrice'); if(buyEl) buyEl.value = '';
+                var spEl = document.getElementById('salingPriceWithoutVat'); if(spEl) spEl.value = '';
+                var totalEl = document.getElementById('computedTotal'); if(totalEl) totalEl.value = '';
+                var selectName = document.getElementById('selectProductName'); if(selectName) selectName.value = '';
+                // run validation to disable submit
+                if(window.validateDamageQty) window.validateDamageQty();
+            });
+        }
     });
 </script>
 

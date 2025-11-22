@@ -9,13 +9,13 @@
                 <h4>Provide Service</h4>
             </div>
         </div>
-        <form action="" method="POST">
+        <form action="{{ route('saveProvideService') }}" method="POST">
             @csrf
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="customerName" class="form-label">Customer Name</label>
-                        <select id="customerName" class="form-control" required>
+                        <select id="customerName" name="customerName" class="form-control" required>
                                     <option value="">Select Customer Name</option>
                                     <!--  form option show proccessing -->
                                   @if(!empty($customerList) && count($customerList)>0)
@@ -29,7 +29,7 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="note" class="form-label">Note</label>
-                        <input type="number" class="form-control" placeholder="" id="note" name="note" required />
+                        <input type="text" class="form-control" placeholder="" id="note" name="note" />
                     </div>
                 </div>
                 <div class="col-md-8">
@@ -54,13 +54,23 @@
                             <thead class="bg-white text-uppercase">
                                 <tr>
                                     <th>Service Type</th>
-                                    <th>Service Amount</th>
+                                    <th>Rate</th>
+                                    <th>Qty</th>
+                                    <th>Line Total</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody id="serviceBox">
 
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Grand Total</strong></td>
+                                    <td colspan="2"><strong id="grandTotalDisplay">0.00</strong>
+                                        <input type="hidden" name="grandTotal" id="grandTotal" value="0">
+                                    </td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                     <div id="saveButton" class="d-none mt-2">
@@ -68,8 +78,6 @@
                     </div>
                 </div>
             </div>
-
-            <a href="page-add-product.html" class="btn btn-primary add-list">Create Service</a>
         </form>
     </div>
 </div>
@@ -80,24 +88,54 @@
 
 function serviceSelect(){
     var data = $('#serviceType').val();
-console.log(data)
+    if(!data) return;
+
     $.ajax({
         method: 'get',
         url: '{{url('/')}}/service/details/'+data,
-
         contentType: 'html',
+                success:function(result){
+                    // avoid duplicate adds for same service id
+                    if($('#serialField'+result.id).length){
+                        return;
+                    }
 
-        success:function(result){
-            var serialField = "'#serialField"+result.id+"'";
-            var field = '<tr id="serialField'+result.id+'"><td><input type="text" class="form-control" name="serviceName[]" value="'+result.serviceName+'" id="serviceName" readonly/></td><td><input type="number" class="form-control" value="'+result.rate+'" id="rate" name="rate[]" /></td><td><button type="button" class="badge bg-warning mr-2 rn-dyn-remove" title="delete serial number" onclick="remove('+serialField+')" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button></td></tr>';
-            
-            $('#serviceBox').append(field);
+                    var field = '<tr id="serialField'+result.id+'">'
+                        +'<td><input type="text" class="form-control" name="serviceName[]" value="'+result.serviceName+'" readonly/></td>'
+                        +'<td><input type="number" step="0.01" class="form-control rate-input" value="'+result.rate+'" name="rate[]" /></td>'
+                        +'<td><input type="number" min="1" class="form-control qty-input" value="1" name="qty[]" /></td>'
+                        +'<td><input type="text" readonly class="form-control line-total-input" value="'+(parseFloat(result.rate).toFixed(2))+'" /></td>'
+                        +'<td><button type="button" class="badge bg-warning mr-2" title="delete" onclick="$(\'#serialField'+result.id+'\').remove(); recalcTotals(); if($(\"#serviceBox\").children().length==0){$(\"#saveButton\").addClass(\"d-none\");} "><i class="ri-delete-bin-line mr-0"></i></button></td>'
+                        +'</tr>';
+
+                    $('#serviceBox').append(field);
+                    // show save button when at least one row
+                    $('#saveButton').removeClass('d-none');
+                    recalcTotals();
         },
         error:function(){
-            var field = '<tr><td><input type="text" class="form-control" name="serviceName" value="" id="serviceName" readonly/></td><td><input type="number" class="form-control" value="" id="rent" name="rent" readonly/></td><td><button type="button" class="badge bg-warning mr-2 rn-dyn-remove" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button></td></tr>';
+            // noop on error
         }
     });
 }
+
+function recalcTotals(){
+    var grand = 0;
+    $('#serviceBox').children('tr').each(function(){
+        var rate = parseFloat($(this).find('.rate-input').val()) || 0;
+        var qty = parseInt($(this).find('.qty-input').val()) || 0;
+        var line = rate * qty;
+        $(this).find('.line-total-input').val(line.toFixed(2));
+        grand += line;
+    });
+    $('#grandTotalDisplay').text(grand.toFixed(2));
+    $('#grandTotal').val(grand.toFixed(2));
+}
+
+// delegate input changes for dynamic rows
+$(document).on('input', '#serviceBox .rate-input, #serviceBox .qty-input', function(){
+    recalcTotals();
+});
 
 </script>
 @endsection

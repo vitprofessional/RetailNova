@@ -55,14 +55,19 @@
         </div>
     </div>
     <div class="col-lg-12">
-        <div class="table-responsive rounded mb-3">
-            <table class="data-tables table mb-0 tbl-server-info">
+        <form id="bulkDeleteForm" action="{{ route('services.bulkDelete') }}" method="POST">
+            @csrf
+            <div class="mb-2 d-flex justify-content-end">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete selected services?')">Delete Selected</button>
+            </div>
+            <div class="table-responsive rounded mb-3">
+                <table class="data-tables table mb-0 tbl-server-info">
                 <thead class="bg-white text-uppercase">
                     <tr class="ligth ligth-data">
                         <th>
                             <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input" id="checkbox1" />
-                                <label for="checkbox1" class="mb-0"></label>
+                                <input type="checkbox" class="checkbox-input" id="selectAllServices" />
+                                <label for="selectAllServices" class="mb-0"></label>
                             </div>
                         </th>
                         <th>Service Name</th>
@@ -76,8 +81,8 @@
                     <tr>
                         <td>
                             <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input" id="checkbox2" />
-                                <label for="checkbox2" class="mb-0"></label>
+                                <input type="checkbox" class="checkbox-input service-checkbox" name="selected[]" value="{{ $serviceList->id }}" id="service_{{ $serviceList->id }}" />
+                                <label for="service_{{ $serviceList->id }}" class="mb-0"></label>
                             </div>
                         </td>
                         <td>{{$serviceList -> serviceName}}</td>
@@ -114,9 +119,23 @@
                     @endif
                 </tbody>
             </table>
+        </form>
         </div>
     </div>
 </div>
 @endif
+
+<script>
+    // select all toggle for service list
+    document.addEventListener('DOMContentLoaded', function(){
+        var selectAll = document.getElementById('selectAllServices');
+        if(selectAll){
+            selectAll.addEventListener('change', function(){
+                var checked = this.checked;
+                document.querySelectorAll('.service-checkbox').forEach(function(cb){ cb.checked = checked; });
+            });
+        }
+    });
+</script>
 
 @endsection

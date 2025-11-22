@@ -34,5 +34,9 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive('money', function($expression){
             return "<?php echo \\App\\Support\\Currency::format((int)($expression)); ?>";    
         });
+        // Simple decimal currency directive (two decimals) for amounts
+        Blade::directive('currency', function ($expression) {
+            return "<?php echo number_format($expression, 2); ?>";
+        });
     }
 }
