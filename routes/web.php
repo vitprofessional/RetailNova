@@ -649,6 +649,18 @@ Route::middleware(['posAdmin','auth:admin'])->group(function(){
         serviceController::class,
         'serviceProvideList'
     ])->name('serviceProvideList');
+    Route::delete('provide/service/delete/{id}',[
+        serviceController::class,
+        'delProvideService'
+    ])->name('delProvideService');
+    Route::get('provide/service/view/{id}',[
+        serviceController::class,
+        'provideServiceView'
+    ])->name('provideServiceView');
+    Route::get('provide/service/print/{id}',[
+        serviceController::class,
+        'provideServicePrint'
+    ])->name('provideServicePrint');
 
     // Admin report: list provide_services rows missing rate or qty
     Route::get('admin/provide-services/missing-data', [
@@ -762,5 +774,15 @@ Route::middleware(['posAdmin','auth:admin'])->group(function(){
     Route::get('/audits',[\App\Http\Controllers\AuditController::class,'index'])->name('audits.index');
     Route::get('/audits/export',[\App\Http\Controllers\AuditController::class,'export'])->name('audits.export');
 
-
+    // Bulk delete routes (protected)
+    Route::post('/products/bulk-delete',[productController::class,'bulkDeleteProducts'])->name('products.bulkDelete');
+    Route::post('/brands/bulk-delete',[productController::class,'bulkDeleteBrands'])->name('brands.bulkDelete');
+    Route::post('/categories/bulk-delete',[productController::class,'bulkDeleteCategories'])->name('categories.bulkDelete');
+    Route::post('/units/bulk-delete',[productController::class,'bulkDeleteUnits'])->name('units.bulkDelete');
+    Route::post('/damage-products/bulk-delete',[productController::class,'bulkDeleteDamageProducts'])->name('damageProducts.bulkDelete');
+    Route::post('/purchases/bulk-delete',[purchase::class,'bulkDeletePurchases'])->name('purchases.bulkDelete');
+    Route::post('/sales/bulk-delete',[saleController::class,'bulkDeleteSales'])->name('sales.bulkDelete');
+    Route::post('/provided-services/bulk-delete',[serviceController::class,'bulkDeleteProvidedServices'])->name('providedServices.bulkDelete');
+    Route::post('/provided-services/bulk-print',[serviceController::class,'bulkPrintProvidedServices'])->name('providedServices.bulkPrint');
+    Route::post('/provided-services/bulk-print/pdf',[serviceController::class,'bulkPrintProvidedServicesPdf'])->name('providedServices.bulkPrintPdf');
 });

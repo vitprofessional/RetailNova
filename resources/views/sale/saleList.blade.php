@@ -22,6 +22,7 @@
                     ])
                 </div>
 
+                @include('partials.bulk-actions', ['deleteRoute' => 'sales.bulkDelete', 'entity' => 'Sales'])
                 <div class="rounded mb-2 table-responsive product-table">
                     @php use Carbon\Carbon; @endphp
                     <table id="salesTable" class="data-tables table mb-0 table-bordered">
@@ -29,8 +30,8 @@
                             <tr>
                                 <th class="rn-col-compact">
                                     <div class="checkbox d-inline-block">
-                                        <input type="checkbox" class="checkbox-input" id="checkbox-all" />
-                                        <label for="checkbox-all" class="mb-0"></label>
+                                        <input type="checkbox" class="checkbox-input" id="selectAllSales" />
+                                        <label for="selectAllSales" class="mb-0"></label>
                                     </div>
                                 </th>
                                 <th>Invoice</th>
@@ -63,8 +64,8 @@
                                     <tr data-customer="{{ $sl->customerId ?? '' }}" data-status="{{ $status }}" data-date="{{ $sl->date ?? '' }}">
                                         <td>
                                             <div class="checkbox d-inline-block">
-                                                <input type="checkbox" class="checkbox-input" id="saleBox{{ $sl->id }}" />
-                                                <label for="saleBox{{ $sl->id }}" class="mb-0"></label>
+                                                <input type="checkbox" class="checkbox-input bulk-select" value="{{ $sl->id }}" />
+                                                <label class="mb-0"></label>
                                             </div>
                                         </td>
                                         <td class="rn-ellipsis">{{ $sl->invoice }}</td>
@@ -113,4 +114,7 @@
         </div>
     </div>
 </div>
+@endsection
+@section('scripts')
+@include('partials.bulk-actions-script')
 @endsection

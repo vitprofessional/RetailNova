@@ -138,15 +138,16 @@
             </div>
         </div>
         <div class="table-responsive rounded mb-3">
-            <form id="customer-bulk-delete-form" method="POST" action="{{ route('customers.bulkDelete') }}">
+            @include('partials.bulk-actions', ['deleteRoute' => 'customers.bulkDelete', 'entity' => 'Customers'])
+            <form id="bulkDeleteForm" method="POST" action="{{ route('customers.bulkDelete') }}">
                 @csrf
                 <table class="data-tables table mb-0 tbl-server-info" id="customer-table">
                 <thead class="bg-white text-uppercase">
                     <tr class="ligth ligth-data">
                         <th class="rn-col-compact d-none d-sm-table-cell">
                             <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input" id="select-all-customers">
-                                <label for="select-all-customers" class="mb-0"></label>
+                                <input type="checkbox" class="checkbox-input" id="selectAllCustomers">
+                                <label for="selectAllCustomers" class="mb-0"></label>
                             </div>
                         </th>
                         <th class="text-left">Customer</th>
@@ -163,8 +164,8 @@
                     <tr>
                         <td class="rn-col-compact d-none d-sm-table-cell">
                             <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input row-checkbox" id="select-row-{{ $customerList->id }}" name="selected[]" value="{{ $customerList->id }}">
-                                <label for="select-row-{{ $customerList->id }}" class="mb-0"></label>
+                                <input type="checkbox" class="checkbox-input bulk-select" value="{{ $customerList->id }}">
+                                <label class="mb-0"></label>
                             </div>
                         </td>
                         <td class="text-left">
@@ -202,8 +203,8 @@
                     <tr>
                         <td>
                             <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input" id="checkbox2">
-                                <label for="checkbox2" class="mb-0"></label>
+                                <input type="checkbox" class="checkbox-input bulk-select" value="demo">
+                                <label class="mb-0"></label>
                             </div>
                         </td>
                         <td>
@@ -266,67 +267,5 @@
 </div>
 @endif
 <!-- Page end  -->
-<script>
-    (function(){
-        var selector = '[data-bs-toggle="tooltip"],[data-toggle="tooltip"]';
-        var els = Array.prototype.slice.call(document.querySelectorAll(selector));
-        if (window.bootstrap && bootstrap.Tooltip) {
-            els.forEach(function (el) { new bootstrap.Tooltip(el); });
-        } else if (typeof window.$ !== 'undefined' && typeof window.$.fn.tooltip === 'function') {
-            window.$(els).tooltip();
-        }
-        // Enhance table with DataTables if available
-        // Removed per-global script now handling search functionality.
-    })();
-
-    function filterTable(tableId, query){
-        query = (query || '').toLowerCase();
-        var table = document.getElementById(tableId);
-        if(!table) return;
-        var rows = table.querySelectorAll('tbody tr');
-        rows.forEach(function(tr){
-            var text = tr.innerText.toLowerCase();
-            tr.style.display = text.indexOf(query) > -1 ? '' : 'none';
-        });
-    }
-
-    function copyToClipboard(text){
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text);
-        } else {
-            var el = document.createElement('textarea');
-            el.value = text;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-        }
-    }
-
-    // Bulk delete helpers
-    document.addEventListener('DOMContentLoaded', function(){
-        var selectAll = document.getElementById('select-all-customers');
-        if(selectAll){
-            selectAll.addEventListener('change', function(e){
-                var rows = document.querySelectorAll('.row-checkbox');
-                rows.forEach(function(cb){ cb.checked = selectAll.checked; });
-            });
-        }
-
-        var deleteBtn = document.getElementById('delete-selected-customers');
-        if(deleteBtn){
-            deleteBtn.addEventListener('click', function(e){
-                e.preventDefault();
-                var any = document.querySelectorAll('.row-checkbox:checked').length > 0;
-                if(!any){
-                    alert('Please select at least one customer to delete.');
-                    return;
-                }
-                if(confirm('Are you sure you want to delete selected customers?')){
-                    document.getElementById('customer-bulk-delete-form').submit();
-                }
-            });
-        }
-    });
-</script>
+@include('partials.bulk-actions-script')
 @endsection

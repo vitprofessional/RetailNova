@@ -21,6 +21,7 @@
                         'searchPlaceholder' => 'Search invoice, product, supplier...'
                     ])
                 </div>
+                @include('partials.bulk-actions', ['deleteRoute' => 'purchases.bulkDelete', 'entity' => 'Purchases'])
                 <div class="rounded mb-2 table-responsive product-table">
                     @php
                         $totalGrand = 0.0; $totalPaid = 0.0; $totalDue = 0.0; $totalStock = 0;
@@ -28,7 +29,7 @@
                     <table id="purchaseTable" class="data-tables table table-hover table-bordered mb-0">
                         <thead class="bg-white text-uppercase small">
                             <tr>
-                                <th style="width:34px"> <input type="checkbox" id="selectAll" /></th>
+                                <th style="width:34px"> <input type="checkbox" id="selectAllPurchases" /></th>
                                 <th>Invoice</th>
                                 <th>Product</th>
                                 <th class="text-right">Grand Total</th>
@@ -58,7 +59,7 @@
                                         $totalGrand += $adjustedGrand; $totalPaid += $p; $totalDue += $d; $totalStock += $adjustedStock;
                                     @endphp
                                     <tr>
-                                        <td><input type="checkbox" class="row-select" data-id="{{ $pid }}" /></td>
+                                        <td><input type="checkbox" class="row-select bulk-select" value="{{ $pid }}" data-id="{{ $pid }}" /></td>
                                         <td>{{ $purchase->invoice ?? '-' }}</td>
                                         <td>{{ $purchase->productName ?? '-' }}</td>
                                         <td class="text-right">{{ number_format($adjustedGrand, 2) }}
@@ -150,15 +151,17 @@
                                         pageLength: 25
                                     });
 
-                                    $('#selectAll').on('change', function(){
+                                    $('#selectAllPurchases').on('change', function(){
                                         var checked = $(this).is(':checked');
-                                        $('input.row-select').prop('checked', checked);
+                                        $('input.bulk-select').prop('checked', checked);
+                                        updateBulkPurchaseUI();
                                     });
                                 }
                             });
                         })();
                     </script>
                 @endif
+                @include('partials.bulk-actions-script')
             </div>
         </div>
     </div>

@@ -9,6 +9,7 @@
                 <div class="col-12 p-0 mt-0 mb-4">
                     <h4>Damage Product List</h4>
                 </div>
+                @include('partials.bulk-actions', ['deleteRoute' => 'damageProducts.bulkDelete', 'entity' => 'Damage Records'])
                 <div class="rounded mb-2 table-responsive product-table">
                     <div class="rn-search-box rn-col-compact" style="min-width:240px;">
                         <span class="rn-search-icon"><i class="las la-search"></i></span>
@@ -39,8 +40,8 @@
                             <tr>
                                 <th>
                                     <div class="checkbox d-inline-block">
-                                        <input type="checkbox" class="checkbox-input" id="checkbox1" />
-                                        <label for="checkbox1" class="mb-0"></label>
+                                        <input type="checkbox" class="checkbox-input" id="selectAllDamage" />
+                                        <label for="selectAllDamage" class="mb-0"></label>
                                     </div>
                                 </th>
                                 <th>Reference</th>
@@ -56,8 +57,8 @@
                             <tr data-date="{{ optional($d->date)->format('Y-m-d') }}">
                                 <td>
                                     <div class="checkbox d-inline-block">
-                                        <input type="checkbox" class="checkbox-input" id="checkbox-{{ $d->id }}" />
-                                        <label for="checkbox-{{ $d->id }}" class="mb-0"></label>
+                                        <input type="checkbox" class="checkbox-input bulk-select" value="{{ $d->id }}" />
+                                        <label class="mb-0"></label>
                                     </div>
                                 </td>
                                 <td>{{ $d->reference ?? '-' }}</td>
@@ -107,4 +108,5 @@
         });
     })();
 </script>
+@include('partials.bulk-actions-script')
 @endsection

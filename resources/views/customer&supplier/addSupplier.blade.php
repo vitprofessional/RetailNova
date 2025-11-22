@@ -130,18 +130,16 @@
             </div>
         </div>
         <div class="table-responsive rounded mb-3">
-            <form id="supplier-bulk-delete-form" method="POST" action="{{ route('suppliers.bulkDelete') }}">
+            @include('partials.bulk-actions', ['deleteRoute' => 'suppliers.bulkDelete', 'entity' => 'Suppliers'])
+            <form id="bulkDeleteForm" method="POST" action="{{ route('suppliers.bulkDelete') }}">
                 @csrf
-                <div class="mb-2 d-flex justify-content-end">
-                    <button id="delete-selected-suppliers" type="button" class="btn btn-sm btn-danger mr-3" data-confirm="delete">Delete Selected</button>
-                </div>
                 <table class="data-tables table mb-0 tbl-server-info" id="supplier-table">
                 <thead class="bg-white text-uppercase">
                     <tr class="ligth ligth-data">
                         <th class="rn-col-compact d-none d-sm-table-cell">
                             <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input" id="select-all-suppliers">
-                                <label for="select-all-suppliers" class="mb-0"></label>
+                                <input type="checkbox" class="checkbox-input" id="selectAllSuppliers">
+                                <label for="selectAllSuppliers" class="mb-0"></label>
                             </div>
                         </th>
                         <th class="text-left">Supplier</th>
@@ -158,8 +156,8 @@
                     <tr>
                         <td class="rn-col-compact d-none d-sm-table-cell">
                             <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input row-checkbox" id="select-row-supplier-{{ $supplierList->id }}" name="selected[]" value="{{ $supplierList->id }}">
-                                <label for="select-row-supplier-{{ $supplierList->id }}" class="mb-0"></label>
+                                <input type="checkbox" class="checkbox-input bulk-select" value="{{ $supplierList->id }}">
+                                <label class="mb-0"></label>
                             </div>
                         </td>
                         <td class="text-left"><div class="font-weight-600">{{$supplierList->name}}</div><div class="text-muted small">{{$supplierList->mail}}</div></td>
@@ -187,8 +185,8 @@
                     <tr>
                         <td class="rn-col-compact d-none d-sm-table-cell">
                             <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input" id="checkbox2">
-                                <label for="checkbox2" class="mb-0"></label>
+                                <input type="checkbox" class="checkbox-input bulk-select" value="demo">
+                                <label class="mb-0"></label>
                             </div>
                         </td>
                         <td><div class="font-weight-600">Hasnat Saimun</div><div class="text-muted small">demo@mail.com</div></td>
@@ -219,39 +217,4 @@
 @endif
 <!-- Page end  -->
 @endsection
-<script>
-    (function(){
-        var selector = '[data-bs-toggle="tooltip"],[data-toggle="tooltip"]';
-        var els = Array.prototype.slice.call(document.querySelectorAll(selector));
-        if (window.bootstrap && bootstrap.Tooltip) {
-            els.forEach(function (el) { new bootstrap.Tooltip(el); });
-        } else if (typeof window.$ !== 'undefined' && typeof window.$.fn.tooltip === 'function') {
-            window.$(els).tooltip();
-        }
-    })();
-    function copyToClipboard(text){
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text);
-        } else {
-            var el = document.createElement('textarea');
-            el.value = text;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-        }
-    }
-
-    // Bulk delete helpers for suppliers
-    document.addEventListener('DOMContentLoaded', function(){
-        var selectAll = document.getElementById('select-all-suppliers');
-        if(selectAll){
-            selectAll.addEventListener('change', function(e){
-                var rows = document.querySelectorAll('#supplier-table .row-checkbox');
-                rows.forEach(function(cb){ cb.checked = selectAll.checked; });
-            });
-        }
-
-        // Bulk delete handled by global SweetAlert confirmation when button has `data-confirm`
-    });
-</script>
+@include('partials.bulk-actions-script')

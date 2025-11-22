@@ -17,14 +17,15 @@
                         'searchPlaceholder' => 'Search product, brand, category...'
                     ])
                 </div>
+                @include('partials.bulk-actions', ['deleteRoute' => 'products.bulkDelete', 'entity' => 'Products'])
                 <div class="rounded mb-3 table-responsive product-table">
                     <table id="productTable" class="data-tables table mb-0 table-bordered">
                         <thead class="bg-white text-uppercase">
                             <tr>
                                 <th>
                                     <div class="checkbox d-inline-block">
-                                        <input type="checkbox" class="checkbox-input" id="checkbox1" />
-                                        <label for="checkbox1" class="mb-0"></label>
+                                        <input type="checkbox" class="checkbox-input" id="selectAllProducts" />
+                                        <label for="selectAllProducts" class="mb-0"></label>
                                     </div>
                                 </th>
                                 <th>Product Name</th>
@@ -43,8 +44,8 @@
                             <tr>
                                 <td>
                                     <div class="checkbox d-inline-block">
-                                        <input type="checkbox" class="checkbox-input" id="checkbox2" />
-                                        <label for="checkbox2" class="mb-0"></label>
+                                        <input type="checkbox" class="checkbox-input bulk-select" value="{{$productList->id}}" />
+                                        <label class="mb-0"></label>
                                     </div>
                                 </td>
                                 <td>{{$productList->name}}</td>
@@ -81,10 +82,10 @@
                                     <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit"
                                         href="{{route('editProduct',['id'=>$productList->id])}}"><i class="ri-pencil-line mr-0"></i></a>
 
-                                    <form method="POST" action="{{ route('delProduct',['id'=>$productList->id]) }}" style="display:inline">
+                                    <form method="POST" action="{{ route('delProduct',['id'=>$productList->id]) }}" style="display:inline" onsubmit="return confirm('Delete this product?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="badge bg-warning mr-2" data-confirm="delete" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
+                                        <button type="submit" class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
                                     </form>
                                 </div></td>
                             </tr>
@@ -121,6 +122,8 @@
             el.addEventListener('input', applyProductFilters);
             el.addEventListener('change', applyProductFilters);
         });
+
     })();
 </script>
+@include('partials.bulk-actions-script')
 @endsection

@@ -9,6 +9,7 @@ use App\Models\Customer;
 use Alert;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class serviceController extends Controller
 {
@@ -70,6 +71,88 @@ class serviceController extends Controller
             Log::error('Service bulk delete failed: ' . $e->getMessage());
             Alert::error('Failed!', 'Bulk delete failed');
             return back();
+        }
+    }
+
+    /** Bulk delete provided services */
+    public function bulkDeleteProvidedServices(Request $req){
+        $ids = (array)$req->input('ids', $req->input('selected', []));
+        if(empty($ids)){ return back()->with('error','No provided services selected'); }
+        try{
+            ProvideService::whereIn('id',$ids)->delete();
+            Alert::success('Deleted','Selected provided services deleted');
+        }catch(\Exception $e){
+            \Log::error('bulkDeleteProvidedServices failed: '.$e->getMessage());
+            Alert::error('Error','Failed to delete selected provided services');
+        }
+        return back();
+    }
+
+    /** Bulk print provided services */
+    public function bulkPrintProvidedServices(Request $req)
+    {
+        $ids = (array)$req->input('ids', $req->input('selected', []));
+        if (empty($ids)) {
+            return back()->with('error', 'No provided services selected for printing.');
+        }
+
+        try {
+            // Use the same leftJoin approach as other list methods to ensure customer names are available
+            $services = ProvideService::leftJoin('customers', 'customers.id', '=', 'provide_services.customerName')
+                ->select('provide_services.*', 'customers.name as customer_name')
+                ->whereIn('provide_services.id', $ids)
+                ->orderBy('customer_name')
+                ->orderBy('provide_services.created_at')
+                ->get();
+
+            if ($services->isEmpty()) {
+                return back()->with('error', 'Selected services not found.');
+            }
+
+            // Group services by the resolved customer name
+            $groupedServices = $services->groupBy('customer_name');
+
+            // Load business/store details for header
+            $business = \App\Models\BusinessSetup::first();
+            return view('service.serviceProvideBulkPrint', ['groupedServices' => $groupedServices, 'business' => $business]);
+
+        } catch (\Exception $e) {
+            \Log::error('bulkPrintProvidedServices failed: ' . $e->getMessage());
+            return back()->with('error', 'An error occurred while generating the print view.');
+        }
+    }
+
+    /** Bulk print provided services as PDF (server-side) */
+    public function bulkPrintProvidedServicesPdf(Request $req)
+    {
+        $ids = (array)$req->input('ids', $req->input('selected', []));
+        if (empty($ids)) {
+            return back()->with('error', 'No provided services selected for PDF generation.');
+        }
+
+        try {
+            $services = ProvideService::leftJoin('customers', 'customers.id', '=', 'provide_services.customerName')
+                ->select('provide_services.*', 'customers.name as customer_name')
+                ->whereIn('provide_services.id', $ids)
+                ->orderBy('customer_name')
+                ->orderBy('provide_services.created_at')
+                ->get();
+
+            if ($services->isEmpty()) {
+                return back()->with('error', 'Selected services not found.');
+            }
+
+            $groupedServices = $services->groupBy('customer_name');
+            $business = \App\Models\BusinessSetup::first();
+
+            // Render a PDF-optimized Blade. Dompdf has limited CSS support so use a simpler view.
+            $pdf = Pdf::loadView('service.serviceProvideBulkPrintPdf', ['groupedServices' => $groupedServices, 'business' => $business])
+                ->setPaper('a4', 'portrait');
+
+            return $pdf->stream('provided-services-bulk-print.pdf');
+        } catch (\Exception $e) {
+            \Log::error('bulkPrintProvidedServicesPdf failed: ' . $e->getMessage());
+            return back()->with('error', 'An error occurred while generating the PDF.');
         }
     }
 
@@ -161,7 +244,66 @@ class serviceController extends Controller
     // Provide service list page
     public function serviceProvideList()
     {
-        return view('service.serviceList');
+        // Load provided services with customer names
+        $provideList = ProvideService::leftJoin('customers','customers.id','=','provide_services.customerName')
+            ->select('provide_services.*','customers.name as customer_name')
+            ->orderBy('provide_services.id','DESC')
+            ->get();
+        // Distinct customers and services for filter selects
+        $customerList = Customer::orderBy('name','ASC')->get(['id','name']);
+        $serviceNames = ProvideService::select('serviceName')->distinct()->orderBy('serviceName','ASC')->pluck('serviceName');
+        return view('service.serviceList',[ 
+            'provideList' => $provideList,
+            'customerList' => $customerList,
+            'serviceNames' => $serviceNames,
+        ]);
+    }
+
+    // View single provided service
+    public function provideServiceView($id)
+    {
+        $row = ProvideService::leftJoin('customers','customers.id','=','provide_services.customerName')
+            ->select('provide_services.*','customers.name as customer_name')
+            ->where('provide_services.id',$id)
+            ->first();
+        if(!$row){
+            Alert::error('Failed!','Provided service not found');
+            return redirect()->route('serviceProvideList');
+        }
+        return view('service.serviceProvideView',[ 'row' => $row ]);
+    }
+
+    // Printable view
+    public function provideServicePrint($id)
+    {
+        $row = ProvideService::leftJoin('customers','customers.id','=','provide_services.customerName')
+            ->select('provide_services.*','customers.name as customer_name')
+            ->where('provide_services.id',$id)
+            ->first();
+        if(!$row){
+            Alert::error('Failed!','Provided service not found');
+            return redirect()->route('serviceProvideList');
+        }
+        return view('service.serviceProvidePrint',[ 'row' => $row ]);
+    }
+
+    // Delete a provided service entry
+    public function delProvideService($id)
+    {
+        $row = ProvideService::find($id);
+        if(!$row){
+            Alert::error('Failed!','Provided service not found');
+            return back();
+        }
+        try {
+            $row->delete();
+            Alert::success('Deleted','Provided service deleted successfully');
+            return back();
+        } catch(\Exception $e){
+            \Log::error('delProvideService failed: '.$e->getMessage());
+            Alert::error('Error','Deletion failed');
+            return back();
+        }
     }
 
     // Admin report: show provide_services rows where rate is null/0 or qty is null/0

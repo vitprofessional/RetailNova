@@ -326,4 +326,25 @@ class purchase extends Controller
             return back();
         endif;
     }
+
+        /** Bulk delete purchases (simple hard delete with related cleanup) */
+        public function bulkDeletePurchases(Request $req){
+            $ids = (array)$req->input('ids', $req->input('selected', []));
+            if(empty($ids)){ return back()->with('error','No purchases selected'); }
+            try{
+                foreach($ids as $id){
+                    $purchase = PurchaseProduct::find($id);
+                    if(!$purchase) continue;
+                    ProductStock::where('purchaseId', $id)->delete();
+                    ReturnPurchaseItem::where('purchaseId', $id)->delete();
+                    PurchaseReturn::where('purchaseId', $id)->delete();
+                    $purchase->delete();
+                }
+                Alert::success('Deleted','Selected purchases deleted');
+            }catch(\Exception $e){
+                \Log::error('bulkDeletePurchases failed: '.$e->getMessage());
+                Alert::error('Error','Failed to delete selected purchases');
+            }
+            return back();
+        }
 }

@@ -1,5 +1,3 @@
-
-
 <!doctype html>
 <html lang="en">
   
@@ -1142,7 +1140,6 @@
                 });
             })();
         </script>
+    @yield('scripts')
   </body>
-
-<!-- Mirrored from templates.iqonic.design/eshop/html/backend/index.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 12 Mar 2025 08:07:42 GMT -->
 </html>

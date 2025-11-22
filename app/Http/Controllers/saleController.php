@@ -169,4 +169,31 @@ class saleController extends Controller
             return back();
         }
     }
+
+    /** Bulk delete sales (reverting stock for each sale similar to single delete) */
+    public function bulkDeleteSales(Request $req){
+        $ids = (array)$req->input('ids', $req->input('selected', []));
+        if(empty($ids)){ return back()->with('error','No sales selected'); }
+        $service = new StockService();
+        DB::beginTransaction();
+        try {
+            foreach($ids as $id){
+                $sale = SaleProduct::find($id);
+                if(!$sale) continue;
+                $items = InvoiceItem::where('saleId', $sale->id)->get();
+                foreach ($items as $it) {
+                    $service->increaseStockForSaleReturn((int)$it->purchaseId, (int)$it->qty);
+                }
+                InvoiceItem::where('saleId', $sale->id)->delete();
+                $sale->delete();
+            }
+            DB::commit();
+            Alert::success('Deleted','Selected sales deleted and stock reverted');
+        } catch(\Exception $e){
+            DB::rollBack();
+            \Log::error('bulkDeleteSales failed: '.$e->getMessage());
+            Alert::error('Error','Failed to bulk delete sales');
+        }
+        return back();
+    }
 }

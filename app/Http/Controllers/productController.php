@@ -150,6 +150,77 @@ class productController extends Controller
                 ]);
     }
 
+    /**
+     * Bulk delete products (simple hard delete, no stock reversion beyond deleting related ProductStock rows).
+     */
+    public function bulkDeleteProducts(Request $req){
+        $ids = (array)$req->input('ids', $req->input('selected', []));
+        if(empty($ids)){ return back()->with('error','No products selected'); }
+        try{
+            DB::transaction(function() use ($ids){
+                ProductStock::whereIn('productId',$ids)->delete();
+                Product::whereIn('id',$ids)->delete();
+            });
+            Alert::success('Deleted','Selected products deleted');
+        }catch(\Exception $e){
+            \Log::error('bulkDeleteProducts failed: '.$e->getMessage());
+            Alert::error('Error','Failed to delete selected products');
+        }
+        return back();
+    }
+
+    public function bulkDeleteBrands(Request $req){
+        $ids = (array)$req->input('ids', $req->input('selected', []));
+        if(empty($ids)){ return back()->with('error','No brands selected'); }
+        try{
+            Brand::whereIn('id',$ids)->delete();
+            Alert::success('Deleted','Selected brands deleted');
+        }catch(\Exception $e){
+            \Log::error('bulkDeleteBrands failed: '.$e->getMessage());
+            Alert::error('Error','Failed to delete selected brands');
+        }
+        return back();
+    }
+
+    public function bulkDeleteCategories(Request $req){
+        $ids = (array)$req->input('ids', $req->input('selected', []));
+        if(empty($ids)){ return back()->with('error','No categories selected'); }
+        try{
+            Category::whereIn('id',$ids)->delete();
+            Alert::success('Deleted','Selected categories deleted');
+        }catch(\Exception $e){
+            \Log::error('bulkDeleteCategories failed: '.$e->getMessage());
+            Alert::error('Error','Failed to delete selected categories');
+        }
+        return back();
+    }
+
+    public function bulkDeleteUnits(Request $req){
+        $ids = (array)$req->input('ids', $req->input('selected', []));
+        if(empty($ids)){ return back()->with('error','No units selected'); }
+        try{
+            ProductUnit::whereIn('id',$ids)->delete();
+            Alert::success('Deleted','Selected units deleted');
+        }catch(\Exception $e){
+            \Log::error('bulkDeleteUnits failed: '.$e->getMessage());
+            Alert::error('Error','Failed to delete selected units');
+        }
+        return back();
+    }
+
+    public function bulkDeleteDamageProducts(Request $req){
+        $ids = (array)$req->input('ids', $req->input('selected', []));
+        if(empty($ids)){ return back()->with('error','No damage records selected'); }
+        try{
+            DamageProduct::whereIn('id',$ids)->delete();
+            Alert::success('Deleted','Selected damage records deleted');
+        }catch(\Exception $e){
+            \Log::error('bulkDeleteDamageProducts failed: '.$e->getMessage());
+            Alert::error('Error','Failed to delete selected damage records');
+        }
+        return back();
+    }
+
     
 
     //add bamage product

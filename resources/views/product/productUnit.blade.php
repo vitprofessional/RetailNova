@@ -27,13 +27,14 @@
 
 @if(!isset($profile))
 <div class="thead-start mt-4">
+    @include('partials.bulk-actions', ['deleteRoute' => 'units.bulkDelete', 'entity' => 'Units'])
     <table class=" data-tables    table  table-success table-bordered table-striped-colums">
         <thead class="">
             <tr class=" ">
                 <th>
                     <div class="checkbox d-inline-block">
-                        <input type="checkbox" class="checkbox-input" id="checkbox1">
-                        <label for="checkbox1" class="mb-0"></label>
+                        <input type="checkbox" class="checkbox-input" id="selectAllUnits">
+                        <label for="selectAllUnits" class="mb-0"></label>
                     </div>
                 </th>
                 <th scope="">Product Unit</th>
@@ -46,8 +47,8 @@
             <tr>
                  <td>
                     <div class="checkbox d-inline-block">
-                        <input type="checkbox" class="checkbox-input" id="checkbox2">
-                        <label for="checkbox2" class="mb-0"></label>
+                        <input type="checkbox" class="checkbox-input bulk-select" value="{{$productUnitList->id}}">
+                        <label class="mb-0"></label>
                     </div>
                 </td>
                 <td> {{$productUnitList->name}}</td>
@@ -80,4 +81,7 @@
 @endif
 
 
+@endsection
+@section('scripts')
+@include('partials.bulk-actions-script')
 @endsection
