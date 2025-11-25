@@ -75,7 +75,7 @@
                             <td><input type="number" id="currentStock" class="form-control form-control-sm" value="{{ $stock->currentStock ?? 0 }}" readonly /></td>
                             <td><input type="number" step="0.01" id="buyPrice" class="form-control form-control-sm price" value="{{ $purchase->buyPrice ?? 0 }}" readonly /></td>
                             <td>{{ number_format(($purchase->buyPrice ?? 0) * ($purchase->qty ?? 0), 2, '.', ',') }}</td>
-                            <td><input type="number" name="returnQty" id="returnQty" class="form-control form-control-sm quantity" onkeyup="calculateReturnAmount()" value="" max="{{ $stock->currentStock ?? 0 }}" min="1" step="1" /></td>
+                            <td><input type="number" name="returnQty" id="returnQty" class="form-control form-control-sm quantity" data-onkeyup="calculateReturnAmount()" value="" max="{{ $stock->currentStock ?? 0 }}" min="1" step="1" /></td>
                             <td><input type="number" class="form-control form-control-sm" value="0" id="returnAmount" readonly /></td>
                         </tr>
                         @else

@@ -28,7 +28,7 @@
                                 <div class="form-group">
                                     <label>Select Customer *</label>
                                     <label for="customerName" class="form-label"></label>
-                                <select id="customerName" name="customerId" class="form-control" onchange="actSaleProduct()" required>
+                                <select id="customerName" name="customerId" class="form-control" data-onchange="actSaleProduct()" required>
                                         <option value="">-</option>
                                     <!--  form option show proccessing -->
                                   @if(!empty($customerList) && count($customerList)>0)
@@ -133,13 +133,13 @@
                                             <input type="number" class="form-control" id="totalSaleAmount" name="totalSaleAmount" value="0" readonly  />
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="discountAmount" onkeyup="getDiscountAmount()"  name="discountAmount" value="0"  />
+                                            <input type="number" class="form-control" id="discountAmount" data-onkeyup="getDiscountAmount()"  name="discountAmount" value="0"  />
                                         </td>
                                         <td>
                                             <input type="number" class="form-control" id="grandTotal" name="grandTotal" value="0" readonly />
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="paidAmount" onkeyup="dueSaleCalculate()" name="paidAmount" value="0"    />
+                                            <input type="number" class="form-control" id="paidAmount" data-onkeyup="dueSaleCalculate()" name="paidAmount" value="0"    />
                                         </td>
                                         <td>
                                             <input type="number" class="form-control" id="dueAmount" name="dueAmount" value="0" readonly  />

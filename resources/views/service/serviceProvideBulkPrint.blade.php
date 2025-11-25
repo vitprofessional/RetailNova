@@ -127,7 +127,7 @@
     </div>
     <div class="print-spacer"></div>
     <div class="text-center mb-4 no-print">
-        <button onclick="window.print()" class="btn btn-primary">Print</button>
+    <button data-onclick="window.print()" class="btn btn-primary">Print</button>
         <a href="{{ route('serviceProvideList') }}" class="btn btn-secondary">Back to List</a>
     </div>
 

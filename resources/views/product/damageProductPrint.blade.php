@@ -10,7 +10,7 @@
         h2{margin-bottom:12px}
     </style>
 </head>
-<body onload="window.print()">
+<body data-onload="window.print()">
     <h2>Damage Record #{{ $damage->id }}</h2>
     <table>
         <tr><th>Reference</th><td>{{ $damage->reference ?? '-' }}</td></tr>

@@ -9,7 +9,7 @@
             <a href="{{ route('purchaseList') }}" class="btn btn-secondary">
                 <i class="ri-arrow-left-line"></i> Back to List
             </a>
-            <button onclick="window.print()" class="btn btn-info">
+            <button data-onclick="window.print()" class="btn btn-info">
                 <i class="ri-printer-line"></i> Print
             </button>
             <a href="{{ route('returnPurchase', ['id' => $purchaseId]) }}" class="btn btn-danger">

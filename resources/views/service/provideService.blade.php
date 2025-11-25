@@ -35,7 +35,7 @@
                 <div class="col-md-8">
                     <div class="form-group">
                         <label>Select A Service </label>
-                        <select id="serviceType" class="form-control" name="serviceType" onchange="serviceSelect()" >
+                                                <select id="serviceType" class="form-control" name="serviceType" data-onchange="serviceSelect()" >
                               <option value="">Select Service</option>
                                     <!--  form option show proccessing -->
                                   @if(!empty($serviceList) && count($serviceList)>0)
@@ -47,8 +47,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-12">
+                <div class="row">
                     <div class="mb-3 table-responsive product-table">
                         <table class="table mb-0 table-bordered rounded-0">
                             <thead class="bg-white text-uppercase">
@@ -105,7 +104,7 @@ function serviceSelect(){
                         +'<td><input type="number" step="0.01" class="form-control rate-input" value="'+result.rate+'" name="rate[]" /></td>'
                         +'<td><input type="number" min="1" class="form-control qty-input" value="1" name="qty[]" /></td>'
                         +'<td><input type="text" readonly class="form-control line-total-input" value="'+(parseFloat(result.rate).toFixed(2))+'" /></td>'
-                        +'<td><button type="button" class="badge bg-warning mr-2" title="delete" onclick="$(\'#serialField'+result.id+'\').remove(); recalcTotals(); if($(\"#serviceBox\").children().length==0){$(\"#saveButton\").addClass(\"d-none\");} "><i class="ri-delete-bin-line mr-0"></i></button></td>'
+                            +'<td><button type="button" class="badge bg-warning mr-2" title="delete" data-onclick="removeServiceRow('+result.id+')"><i class="ri-delete-bin-line mr-0"></i></button></td>'
                         +'</tr>';
 
                     $('#serviceBox').append(field);

@@ -178,7 +178,7 @@
                         </td>
                         <td>
                             <a href="tel:{{$customerList->mobile}}" class="text-dark">{{$customerList->mobile}}</a>
-                            <a href="javascript:void(0)" class="badge badge-light ml-2" data-toggle="tooltip" data-bs-toggle="tooltip" title="Copy" onclick="copyToClipboard('{{$customerList->mobile}}')"><i class="ri-file-copy-line"></i></a>
+                            <a href="javascript:void(0)" class="badge badge-light ml-2" data-toggle="tooltip" data-bs-toggle="tooltip" title="Copy" data-onclick="copyToClipboard('{{$customerList->mobile}}')"><i class="ri-file-copy-line"></i></a>
                         </td>
                         <td class="d-none d-lg-table-cell text-left">
                             <div class="rn-ellipsis rn-addr">{{$customerList->full_address ?? $customerList->area}}</div>

@@ -2,7 +2,7 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<form action="{{ route('savePurchase') }}" class="row" method="POST" id="savePurchase" onsubmit="handleFormSubmit(event);" novalidate>
+<form action="{{ route('savePurchase') }}" class="row" method="POST" id="savePurchase" data-onsubmit="handleFormSubmit">
     @csrf
     <div class="col-12">
         <div class="row">
@@ -24,7 +24,7 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="supplierName" class="form-label">Supplier *</label>
-                                    <select id="supplierName" name="supplierName" onchange="actProductList()" class="form-control" required>
+                                    <select id="supplierName" name="supplierName" data-onchange="actProductList()" class="form-control" required>
                                     <option value="">-</option>
                                     <!--  form option show proccessing -->
                                     @if(!empty($supplierList) && count($supplierList)>0)
@@ -163,23 +163,23 @@
                                 <tbody id="discountDetails">
                                     <tr>
                                         <td>
-                                            <select name="discountStatus" id="discountStatus" onchange="discountType()" class="form-control" disabled>
+                                            <select name="discountStatus" id="discountStatus" data-onchange="discountType()" class="form-control" disabled>
                                                 <option value="">-</option>
                                                 <option value="1">Amount</option>
                                                 <option value="2">Parcent</option>
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="discountAmount" onkeyup="discountAmountChange()" name="discountAmount" readonly />
+                                            <input type="number" class="form-control" id="discountAmount" data-onkeyup="discountAmountChange()" name="discountAmount" readonly />
                                         </td>
                                         <td>
-                                            <input type="text" class="form-control" id="discountPercent" onkeyup="discountPercentChange()" name="discountPercent" readonly />
+                                            <input type="text" class="form-control" id="discountPercent" data-onkeyup="discountPercentChange()" name="discountPercent" readonly />
                                         </td>
                                         <td>
                                             <input type="number" class="form-control" id="grandTotal" name="grandTotal" readonly />
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" onkeyup="dueCalculate()" readonly />
+                                            <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" data-onkeyup="dueCalculate()" readonly />
                                         </td>
                                         <td>
                                             <input type="number" class="form-control" id="dueAmount" name="dueAmount" readonly />
@@ -193,7 +193,7 @@
                         </div>
                         <div id="saveButton" class="mt-2">
                             <button class="btn btn-primary btn-sm" type="submit">Save</button>
-                            <button class="btn btn-warning btn-sm" type="button" onclick="debugForm()">Debug</button>
+                            <button class="btn btn-warning btn-sm" type="button" data-onclick="debugForm()">Debug</button>
                         </div>
                     </div>
                 </div>
@@ -224,7 +224,7 @@
                     <button type="button" class="btn btn-success btn-sm rounded-0" id="add-serial">Add Serial</button>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" onclick="resetSerial()" class="btn btn-warning" data-dismiss="modal">Clear</button>
+                    <button type="button" data-onclick="resetSerial()" class="btn btn-warning" data-dismiss="modal">Clear</button>
                     <button type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
                     <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
                 </div>
@@ -425,7 +425,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title fs-5">Creat Brand</h6>
-                <button type="button" class="btn-close"  onclick="closeModel('createBrand','brandForm')" aria-label="Close"></button>
+                <button type="button" class="btn-close"  data-onclick="closeModel('createBrand','brandForm')" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form action="#" method="POST" id="brandForm">
@@ -439,7 +439,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" onclick="closeModel('createBrand','brandForm')">Cancel</button>
+                <button type="button" class="btn btn-light" data-onclick="closeModel('createBrand','brandForm')">Cancel</button>
             </div>
         </div>
     </div>
@@ -451,7 +451,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title fs-5">Creat Category</h6>
-                <button type="button" class="btn-close"  onclick="closeModel('categoryModal','categoryForm')" aria-label="Close"></button>
+                <button type="button" class="btn-close"  data-onclick="closeModel('categoryModal','categoryForm')" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form action="" method="POST" id="categoryForm">
@@ -464,7 +464,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" onclick="closeModel('categoryModal','categoryForm')">Cancel</button>
+                <button type="button" class="btn btn-light" data-onclick="closeModel('categoryModal','categoryForm')">Cancel</button>
             </div>
         </div>
     </div>
@@ -477,7 +477,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title fs-5" >Preoduct Unit</h6>
-                <button type="button" class="btn-close" onclick="closeModel('productUnitModal','productUnitForm')" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-onclick="closeModel('productUnitModal','productUnitForm')" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form action="" method="POST" id="productUnitForm">
@@ -490,7 +490,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" onclick="closeModel('productUnitModal','productUnitForm')">Cancel</button>
+                <button type="button" class="btn btn-light" data-onclick="closeModel('productUnitModal','productUnitForm')">Cancel</button>
             </div>
         </div>
     </div>

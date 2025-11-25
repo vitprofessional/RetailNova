@@ -36,7 +36,7 @@
                             <div class="col-md-4">
                                 <div class="form-group d-flex align-items-center">
                                     <label for="supplierName" class="form-label mr-2">Supplier *</label>
-                                    <select id="supplierName" name="supplierName" onchange="actProductList()" class="form-control" required>
+                                    <select id="supplierName" name="supplierName" data-onchange="actProductList()" class="form-control" required>
                                     <option value="">-</option>
                                     <!--  form option show proccessing -->
                                     @if(!empty($supplierList) && count($supplierList)>0)
@@ -166,20 +166,20 @@
                                     </div>
                                 </td>
                                 <td class="text-center align-middle">
-                                    <input type="number" class="form-control form-control-sm text-center" id="quantity" name="quantity" min="1" step="1" value="{{ $purchaseData->qty ?? '' }}" onkeyup="totalPriceCalculate()" />
+                                    <input type="number" class="form-control form-control-sm text-center" id="quantity" name="quantity" min="1" step="1" value="{{ $purchaseData->qty ?? '' }}" data-onkeyup="totalPriceCalculate()" />
                                 </td>
                                 <td class="text-center align-middle">
                                     <input type="number" class="form-control form-control-sm text-center" id="currentStock" value="{{ $totalStock ?? ($stock->currentStock ?? 0) }}" readonly />
                                     <input type="hidden" name="currentStock" value="{{ $totalStock ?? ($stock->currentStock ?? 0) }}" />
                                 </td>
                                 <td class="align-middle">
-                                    <input type="number" class="form-control form-control-sm text-right" id="buyPrice" name="buyPrice" value="{{ $purchaseData->buyPrice ?? '' }}" onkeyup="totalPriceCalculate()" step="0.01" />
+                                    <input type="number" class="form-control form-control-sm text-right" id="buyPrice" name="buyPrice" value="{{ $purchaseData->buyPrice ?? '' }}" data-onkeyup="totalPriceCalculate()" step="0.01" />
                                 </td>
                                 <td class="align-middle">
-                                    <input type="number" class="form-control form-control-sm text-right" id="salePriceExVat" name="salePriceExVat" value="{{ $purchaseData->salePriceExVat ?? '' }}" onkeyup="priceCalculation()" step="0.01" />
+                                    <input type="number" class="form-control form-control-sm text-right" id="salePriceExVat" name="salePriceExVat" value="{{ $purchaseData->salePriceExVat ?? '' }}" data-onkeyup="priceCalculation()" step="0.01" />
                                 </td>
                                 <td class="align-middle text-center">
-                                    <select name="vatStatus" id="vatStatus" class="form-control form-control-sm" onchange="priceCalculation()">
+                                    <select name="vatStatus" id="vatStatus" class="form-control form-control-sm" data-onchange="priceCalculation()">
                                         <option value="">-</option>
                                         <option value="1" {{ (!empty($purchaseData) && $purchaseData->vatStatus == 1) ? 'selected' : '' }}>Yes</option>
                                         <option value="0" {{ (!empty($purchaseData) && $purchaseData->vatStatus == 0) ? 'selected' : '' }}>No</option>
@@ -189,7 +189,7 @@
                                     <input type="number" class="form-control form-control-sm text-right" id="salePriceInVat" name="salePriceInVat" value="{{ $purchaseData->salePriceInVat ?? '' }}" readonly />
                                 </td>
                                 <td class="align-middle">
-                                    <input type="number" class="form-control form-control-sm text-right" id="profitMargin" name="profitMargin" value="{{ $purchaseData->profit ?? '' }}" onkeyup="profitCalculation()" step="0.01" />
+                                    <input type="number" class="form-control form-control-sm text-right" id="profitMargin" name="profitMargin" value="{{ $purchaseData->profit ?? '' }}" data-onkeyup="profitCalculation()" step="0.01" />
                                 </td>
                                 <td class="align-middle">
                                     <input type="number" class="form-control form-control-sm text-right font-weight-bold" id="totalAmount" name="totalAmount" value="{{ $purchaseData->totalAmount ?? '' }}" readonly />
@@ -226,23 +226,23 @@
                                 <tbody id="discountDetails">
                                     <tr>
                                         <td>
-                                            <select name="discountStatus" id="discountStatus" onchange="discountType()" class="form-control">
+                                            <select name="discountStatus" id="discountStatus" data-onchange="discountType()" class="form-control">
                                                 <option value="">-</option>
                                                 <option value="1" {{ (!empty($purchaseData) && $purchaseData->disType == 1) ? 'selected' : '' }}>Amount</option>
                                                 <option value="2" {{ (!empty($purchaseData) && $purchaseData->disType == 2) ? 'selected' : '' }}>Parcent</option>
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="discountAmount" onkeyup="discountAmountChange()" name="discountAmount" value="{{ $purchaseData->disAmount ?? '' }}"  />
+                                            <input type="number" class="form-control" id="discountAmount" data-onkeyup="discountAmountChange()" name="discountAmount" value="{{ $purchaseData->disAmount ?? '' }}"  />
                                         </td>
                                         <td>
-                                            <input type="text" class="form-control" id="discountPercent" onkeyup="discountPercentChange()" name="discountPercent" value="{{ $purchaseData->disParcent ?? '' }}"  />
+                                            <input type="text" class="form-control" id="discountPercent" data-onkeyup="discountPercentChange()" name="discountPercent" value="{{ $purchaseData->disParcent ?? '' }}"  />
                                         </td>
                                         <td>
                                             <input type="number" class="form-control" id="grandTotal" name="grandTotal" value="{{ $purchaseData->grandTotal ?? '' }}"  />
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="{{ $purchaseData->paidAmount ?? 0 }}" onkeyup="dueCalculate()"  />
+                                            <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="{{ $purchaseData->paidAmount ?? 0 }}" data-onkeyup="dueCalculate()"  />
                                         </td>
                                         <td>
                                             <input type="number" class="form-control" id="dueAmount" name="dueAmount" value="{{ $purchaseData->dueAmount ?? '' }}"  />
@@ -303,7 +303,7 @@
                     <button type="button" class="btn btn-success btn-sm rounded-0" id="add-serial">Add Serial</button>
                 </div>
                     <div class="modal-footer">
-                    <button type="button" onclick="resetSerial()" class="btn btn-warning">Clear</button>
+                    <button type="button" data-onclick="resetSerial()" class="btn btn-warning">Clear</button>
                     <button type="button" class="btn btn-primary" id="save-serials">Save</button>
                     <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
                 </div>
@@ -506,7 +506,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title fs-5">Creat Brand</h6>
-                <button type="button" class="btn-close"  onclick="closeModel('createBrand','brandForm')" aria-label="Close"></button>
+                                        <button type="button" class="btn-close"  data-onclick="closeModel('createBrand','brandForm')" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form action="#" method="POST" id="brandForm">
@@ -520,7 +520,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" onclick="closeModel('createBrand','brandForm')">Cancel</button>
+                                <button type="button" class="btn btn-light" data-onclick="closeModel('createBrand','brandForm')">Cancel</button>
             </div>
         </div>
     </div>
@@ -532,7 +532,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title fs-5">Creat Category</h6>
-                <button type="button" class="btn-close"  onclick="closeModel('categoryModal','categoryForm')" aria-label="Close"></button>
+                <button type="button" class="btn-close"  data-onclick="closeModel('categoryModal','categoryForm')" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form action="" method="POST" id="categoryForm">
@@ -545,7 +545,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" onclick="closeModel('categoryModal','categoryForm')">Cancel</button>
+                <button type="button" class="btn btn-light" data-onclick="closeModel('categoryModal','categoryForm')">Cancel</button>
             </div>
         </div>
     </div>
@@ -558,7 +558,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title fs-5" >Preoduct Unit</h6>
-                <button type="button" class="btn-close" onclick="closeModel('productUnitModal','productUnitForm')" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-onclick="closeModel('productUnitModal','productUnitForm')" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form action="" method="POST" id="productUnitForm">
@@ -571,7 +571,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" onclick="closeModel('productUnitModal','productUnitForm')">Cancel</button>
+                <button type="button" class="btn btn-light" data-onclick="closeModel('productUnitModal','productUnitForm')">Cancel</button>
             </div>
         </div>
     </div>

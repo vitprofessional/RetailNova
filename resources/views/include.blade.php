@@ -383,7 +383,7 @@
                           </ul>
                       </li>
                       <li class=" ">
-                          <a href="#warranty" class="{{ request()->routeIs('rma','serialList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('rma','serialList') ? 'true' : 'false' }}">
+                                  <a href="#warranty" class="{{ request()->routeIs('rma','serialList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('rma','serialList') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash6" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line>
                               </svg>
@@ -392,18 +392,18 @@
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
                           </a>
-                          <ul id="warranty" class="iq-submenu collapse{{ request()->routeIs('rma','serialList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="">
-                                          <a href="">
-                                              <i class="las la-minus"></i><span>RMA</span>
-                                          </a>
-                                  </li>
-                                  <li class="">
-                                          <a href="">
-                                              <i class="las la-minus"></i><span>Serial List</span>
-                                          </a>
-                                  </li>
-                          </ul>
+                                  <ul id="warranty" class="iq-submenu collapse{{ request()->routeIs('rma.*','serialList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
+                          <li class="{{ request()->routeIs('rma.*') ? 'active' : '' }}">
+                              <a href="{{ route('rma.index') }}">
+                                  <i class="las la-minus"></i><span>RMA</span>
+                              </a>
+                          </li>
+                          <li class="{{ request()->routeIs('serialList') ? 'active' : '' }}">
+                              <a href="{{ route('serialList') }}">
+                                  <i class="las la-minus"></i><span>Serial List</span>
+                              </a>
+                          </li>
+                      </ul>
                       </li>
                       <li class=" ">
                           <a href="#account" class="{{ request()->routeIs('addAccount','accountList','accountReport') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addAccount','accountList','accountReport') ? 'true' : 'false' }}">

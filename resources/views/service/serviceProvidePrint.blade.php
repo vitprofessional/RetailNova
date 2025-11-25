@@ -12,7 +12,7 @@
         .meta{font-size:12px;color:#555;margin-top:8px}
     </style>
 </head>
-<body onload="window.print()">
+<body data-onload="window.print()">
     <h2>Provided Service #{{ $row->id }}</h2>
     <table>
         <tr><th>Customer</th><td>{{ $row->customer_name ?? 'Customer #'.$row->customerName }}</td></tr>

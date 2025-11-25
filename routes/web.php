@@ -662,6 +662,28 @@ Route::middleware(['posAdmin','auth:admin'])->group(function(){
         'provideServicePrint'
     ])->name('provideServicePrint');
 
+    // Warranty pages (RMA and Serials)
+    // Protect RMA routes for admin users
+    Route::middleware(['posAdmin','auth:admin'])->group(function(){
+        Route::get('/warranty/rma', [\App\Http\Controllers\RmaController::class, 'index'])->name('rma.index');
+        Route::get('/warranty/rma/create', [\App\Http\Controllers\RmaController::class, 'create'])->name('rma.create');
+        Route::post('/warranty/rma', [\App\Http\Controllers\RmaController::class, 'store'])->name('rma.store');
+        Route::get('/warranty/rma/{id}/edit', [\App\Http\Controllers\RmaController::class, 'edit'])->name('rma.edit');
+        Route::put('/warranty/rma/{id}', [\App\Http\Controllers\RmaController::class, 'update'])->name('rma.update');
+        Route::delete('/warranty/rma/{id}', [\App\Http\Controllers\RmaController::class, 'destroy'])->name('rma.destroy');
+        // RMA export
+        Route::get('/warranty/rma/export', [\App\Http\Controllers\RmaController::class, 'export'])->name('rma.export');
+    });
+
+    // Serial list is public to authenticated users; protect export and ajax lookup where appropriate
+    Route::get('/warranty/serials', [\App\Http\Controllers\WarrantyController::class, 'serialList'])->name('serialList');
+    Route::middleware(['posAdmin','auth:admin'])->group(function(){
+        Route::get('/warranty/serials/export', [\App\Http\Controllers\WarrantyController::class, 'exportSerials'])->name('serials.export');
+    });
+
+    // AJAX endpoint for serial lookup (authenticated)
+    Route::get('/ajax/serials', [\App\Http\Controllers\WarrantyController::class, 'ajaxSerials'])->name('ajax.serials')->middleware('auth');
+
     // Admin report: list provide_services rows missing rate or qty
     Route::get('admin/provide-services/missing-data', [
         serviceController::class,

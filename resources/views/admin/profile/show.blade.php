@@ -9,7 +9,7 @@
         @endif
         <div class="row">
             <div class="col-md-3 text-center">
-                <img src="{{ $avatarUrl ?? asset('/public/eshop/') . '/assets/images/user/1.png' }}" class="img-fluid rounded" alt="avatar" onerror="this.onerror=null;this.src='{{ asset('/public/eshop/') . '/assets/images/user/1.png' }}'">
+                <img src="{{ $avatarUrl ?? asset('/public/eshop/') . '/assets/images/user/1.png' }}" class="img-fluid rounded" alt="avatar" data-onerror="this.onerror=null;this.src='{{ asset('/public/eshop/') . '/assets/images/user/1.png' }}'">
             </div>
             <div class="col-md-9">
                 <table class="table table-borderless">

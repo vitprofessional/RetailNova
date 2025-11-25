@@ -58,7 +58,7 @@
         <form id="bulkDeleteForm" action="{{ route('services.bulkDelete') }}" method="POST">
             @csrf
             <div class="mb-2 d-flex justify-content-end">
-                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete selected services?')">Delete Selected</button>
+                <button type="submit" class="btn btn-danger btn-sm" data-onclick="confirm('Delete selected services?')">Delete Selected</button>
             </div>
             <div class="table-responsive rounded mb-3">
                 <table class="data-tables table mb-0 tbl-server-info">

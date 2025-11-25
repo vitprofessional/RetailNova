@@ -82,7 +82,7 @@
                                     <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit"
                                         href="{{route('editProduct',['id'=>$productList->id])}}"><i class="ri-pencil-line mr-0"></i></a>
 
-                                    <form method="POST" action="{{ route('delProduct',['id'=>$productList->id]) }}" style="display:inline" onsubmit="return confirm('Delete this product?');">
+                                    <form method="POST" action="{{ route('delProduct',['id'=>$productList->id]) }}" style="display:inline" data-onsubmit="confirm" data-confirm="Delete this product?">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>

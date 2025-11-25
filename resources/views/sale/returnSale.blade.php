@@ -82,7 +82,7 @@
                             <td><input type="number" step="0.01" id="salePrice{{$sl}}" class="form-control form-control-sm price" value="{{ $item->salePrice }}" readonly /></td>
                             <td>{{ number_format($item->totalSale ?? 0, 2, '.', ',') }}</td>
                             <td><input type="checkbox" /></td>
-                            <td><input type="number" name="totalQty[]" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" onkeyup="returnQtyCalculate('avlQty{{$sl}}','rtnqty{{$sl}}','salePrice{{$sl}}','returnAmount{{$sl}}')" value="" min="0" step="1" /></td>
+                            <td><input type="number" name="totalQty[]" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" data-onkeyup="returnQtyCalculate('avlQty{{$sl}}','rtnqty{{$sl}}','salePrice{{$sl}}','returnAmount{{$sl}}')" value="" min="0" step="1" /></td>
                             <td><input type="number" class="form-control form-control-sm" value="0" id="returnAmount{{$sl}}" /></td>
                             <td></td>
                         </tr>
@@ -118,7 +118,7 @@
             <div class="col-6">
                 <div class="input-group mb-3">
                     <span class="input-group-text rounded-0 p-0 px-2 bg-light">Adjust Amount</span>
-                    <input type="number" name="adjustAmount" id="adjustAmount" onchange="adjustDue('grandTotal','adjustAmount')" class="form-control" value="0" @if($invoice->curDue == 0) readonly @endif>
+                    <input type="number" name="adjustAmount" id="adjustAmount" data-onchange="adjustDue('grandTotal','adjustAmount')" class="form-control" value="0" @if($invoice->curDue == 0) readonly @endif>
                 </div>
             </div>
             
