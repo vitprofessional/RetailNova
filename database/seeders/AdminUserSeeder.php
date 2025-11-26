@@ -14,18 +14,21 @@ class AdminUserSeeder extends Seeder
         $email = 'virtualitprofessional@gmail.com';
         $password = '11223344';
 
-        AdminUser::updateOrCreate(
-            ['mail' => $email],
-            [
-                'fullName' => 'Admin User',
-                'sureName' => 'Admin',
-                'storeName' => 'RetailNova',
-                'mail' => $email,
-                'contactNumber' => '0000000000',
-                'password' => Hash::make($password),
-                'businessId' => 1,
-                'role' => 'superadmin'
-            ]
-        );
+        $data = [
+            'fullName' => 'Admin User',
+            'sureName' => 'Admin',
+            'storeName' => 'RetailNova',
+            'mail' => $email,
+            'contactNumber' => '0000000000',
+            'password' => Hash::make($password),
+            'businessId' => 1,
+        ];
+
+        // Only include the role field if the column exists (some installations may not have it)
+        if (\Illuminate\Support\Facades\Schema::hasColumn('admin_users', 'role')) {
+            $data['role'] = 'superadmin';
+        }
+
+        AdminUser::updateOrCreate(['mail' => $email], $data);
     }
 }

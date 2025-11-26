@@ -6,7 +6,6 @@
 
     @cannot('viewAudits')
         <div class="alert alert-danger">You are not authorized to view audits.</div>
-        @php(return)
     @endcannot
 
     <form method="GET" action="{{ route('audits.index') }}" class="card p-3 mb-3">

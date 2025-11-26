@@ -44,10 +44,11 @@
                                     <input type="text" class="form-control" id="invoice" name="invoiceData" value="{{ $generatedInvoice ?? '' }}" />
                                 </div>
                             </div>
-                            <div class="col-md-7">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="productName" class="form-label">Product *</label>
-                                    <select id="productName" name="productName" class="form-control js-product-select" required>
+                                    <!-- productAdd is used to pick a product to append as a purchase row -->
+                                    <select id="productName" name="productAdd" class="form-control js-product-select">
                                     <!--  form option show proccessing -->
                                         <option value="">Select</option>
                                     @if(!empty($productList) && count($productList)>0)
@@ -65,6 +66,9 @@
 
                             <div class="col-md-2 mt-4 p-0">
                                 <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#newProduct"><i class="las la-plus mr-2"></i>New Product</button>
+                            </div>
+                            <div class="col-md-2 mt-4 p-0">
+                                <button type="button" id="addProductRow" class="btn btn-primary btn-sm">Add To List</button>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
@@ -98,42 +102,51 @@
                             </tr>
                         </thead>
                         <tbody id="productDetails">
-                            <tr>
-                                <td width="20%">
-                                    <input type="text" class="form-control" name="selectProductName" value="" id="selectProductName" readonly />
-                                </td>
-                                <td width="8%">
-                                    -
-                                </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="quantity" name="quantity" min="1" step="1" readonly />
-                                </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="currentStock" name="currentStock" readonly />
-                                </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="buyPrice" name="buyPrice" readonly />
-                                </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="salePriceExVat" name="salePriceExVat" readonly />
-                                </td>
-                                <td width="9%">
-                                    <select name="vatStatus" id="vatStatus" class="form-control" readonly>
-                                        <option value="">-</option>
-                                    </select>
-                                </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="salePriceInVat" name="salePriceInVat" readonly />
-                                </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="profitMargin" name="profitMargin" readonly />
-                                </td>
-                                <td width="9%">
-                                    <input type="number" class="form-control" id="totalAmount" name="totalAmount" readonly />
-                                </td>
-                            </tr>
-
+                            <!-- purchase rows will be appended here -->
                         </tbody>
+                    </table>
+                    <!-- Row template (used by JS) -->
+                    <template id="purchase-row-template">
+                        <tr class="product-row" data-idx="__IDX__">
+                            <td width="20%">
+                                <input type="hidden" name="productName[]" value="__PRODUCT_ID__" />
+                                <input type="text" class="form-control" name="selectProductName[]" value="__PRODUCT_NAME__" readonly />
+                            </td>
+                            <td width="8%">
+                                <button type="button" class="btn btn-sm btn-outline-secondary open-serials" data-idx="__IDX__">Serials</button>
+                            </td>
+                            <td width="9%">
+                                <input type="number" class="form-control quantity" id="quantity__IDX__" name="quantity[]" min="1" step="1" value="1" />
+                            </td>
+                            <td width="9%">
+                                <input type="number" class="form-control current-stock" id="currentStock__IDX__" name="currentStock[]" readonly />
+                            </td>
+                            <td width="9%">
+                                <input type="number" class="form-control" id="buyPrice__IDX__" name="buyPrice[]" />
+                            </td>
+                            <td width="9%">
+                                <input type="number" class="form-control sale-price" id="salePriceExVat__IDX__" name="salePriceExVat[]" />
+                            </td>
+                            <td width="9%">
+                                <select name="vatStatus[]" id="vatStatus__IDX__" class="form-control">
+                                    <option value="">-</option>
+                                </select>
+                            </td>
+                            <td width="9%">
+                                <input type="number" class="form-control" id="salePriceInVat__IDX__" name="salePriceInVat[]" readonly />
+                            </td>
+                            <td width="9%">
+                                <input type="number" class="form-control" id="profitMargin__IDX__" name="profitMargin[]" readonly />
+                            </td>
+                            <td width="9%">
+                                <input type="number" class="form-control" id="totalAmount__IDX__" name="totalAmount[]" readonly />
+                            </td>
+                            <td width="4%">
+                                <button type="button" class="btn btn-danger btn-sm remove-row">Remove</button>
+                            </td>
+                        </tr>
+                    </template>
+                </div>
                     </table>
                 </div>
             </div>

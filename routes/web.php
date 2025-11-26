@@ -106,8 +106,8 @@ Route::get('/ajax/public/customer/{id}/products', [
     JqueryController::class,
     'getProductsForCustomerPublic'
 ])->name('ajax.customer.products.public');
-// Require legacy session sync (`posAdmin`) and authenticate via admin guard
-Route::middleware(['posAdmin','auth:admin'])->group(function(){
+// Require legacy session sync (SuperAdmin) and authenticate via admin guard
+Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group(function(){
 
     // Admin profile management
     Route::get('/admin/profile', [
@@ -664,7 +664,7 @@ Route::middleware(['posAdmin','auth:admin'])->group(function(){
 
     // Warranty pages (RMA and Serials)
     // Protect RMA routes for admin users
-    Route::middleware(['posAdmin','auth:admin'])->group(function(){
+    Route::middleware([\App\Http\Middleware\SuperAdmin::class,'auth:admin'])->group(function(){
         Route::get('/warranty/rma', [\App\Http\Controllers\RmaController::class, 'index'])->name('rma.index');
         Route::get('/warranty/rma/create', [\App\Http\Controllers\RmaController::class, 'create'])->name('rma.create');
         Route::post('/warranty/rma', [\App\Http\Controllers\RmaController::class, 'store'])->name('rma.store');
@@ -677,7 +677,7 @@ Route::middleware(['posAdmin','auth:admin'])->group(function(){
 
     // Serial list is public to authenticated users; protect export and ajax lookup where appropriate
     Route::get('/warranty/serials', [\App\Http\Controllers\WarrantyController::class, 'serialList'])->name('serialList');
-    Route::middleware(['posAdmin','auth:admin'])->group(function(){
+    Route::middleware([\App\Http\Middleware\SuperAdmin::class,'auth:admin'])->group(function(){
         Route::get('/warranty/serials/export', [\App\Http\Controllers\WarrantyController::class, 'exportSerials'])->name('serials.export');
     });
 
@@ -688,12 +688,12 @@ Route::middleware(['posAdmin','auth:admin'])->group(function(){
     Route::get('admin/provide-services/missing-data', [
         serviceController::class,
         'provideServicesMissingData'
-    ])->name('admin.provideServices.missing')->middleware(['posAdmin','auth:admin']);
+    ])->name('admin.provideServices.missing')->middleware([\App\Http\Middleware\SuperAdmin::class,'auth:admin']);
 
     Route::get('admin/provide-services/missing-data/export', [
         serviceController::class,
         'exportProvideServicesMissing'
-    ])->name('admin.provideServices.missing.export')->middleware(['posAdmin','auth:admin']);
+    ])->name('admin.provideServices.missing.export')->middleware([\App\Http\Middleware\SuperAdmin::class,'auth:admin']);
 
     //account------------------------
     Route::get('/add/account',[

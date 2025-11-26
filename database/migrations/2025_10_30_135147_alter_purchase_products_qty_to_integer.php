@@ -13,9 +13,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('purchase_products', function (Blueprint $table) {
-            // First, convert any decimal values to integers and handle null/empty values
-            DB::statement('UPDATE purchase_products SET qty = FLOOR(CAST(COALESCE(NULLIF(qty, ""), "0") AS DECIMAL(10,2))) WHERE qty IS NOT NULL');
-            
+            // First, convert any decimal values to integers and handle null/empty values.
+            // Use a DB-driver aware statement because SQLite doesn't provide FLOOR()
+            $driver = DB::getDriverName();
+            if ($driver === 'sqlite') {
+                DB::statement("UPDATE purchase_products SET qty = CAST(COALESCE(NULLIF(qty, ''), '0') AS INTEGER) WHERE qty IS NOT NULL");
+            } else {
+                DB::statement("UPDATE purchase_products SET qty = FLOOR(CAST(COALESCE(NULLIF(qty, ''), '0') AS DECIMAL(10,2))) WHERE qty IS NOT NULL");
+            }
+
             // Then change the column type to integer
             $table->integer('qty')->nullable()->change();
         });

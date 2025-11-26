@@ -9,8 +9,15 @@ return new class extends Migration {
     public function up(): void
     {
         // Normalize numeric columns (stored as strings) before altering type
-        DB::statement("UPDATE customers SET accReceivable = CASE WHEN accReceivable REGEXP '^[0-9]+$' THEN accReceivable ELSE '0' END");
-        DB::statement("UPDATE customers SET accPayable = CASE WHEN accPayable REGEXP '^[0-9]+$' THEN accPayable ELSE '0' END");
+        $driver = DB::connection()->getDriverName();
+        if ($driver === 'sqlite') {
+            // SQLite doesn't support REGEXP by default; use GLOB as an alternative
+            DB::statement("UPDATE customers SET accReceivable = CASE WHEN accReceivable GLOB '[0-9]*' THEN accReceivable ELSE '0' END");
+            DB::statement("UPDATE customers SET accPayable = CASE WHEN accPayable GLOB '[0-9]*' THEN accPayable ELSE '0' END");
+        } else {
+            DB::statement("UPDATE customers SET accReceivable = CASE WHEN accReceivable REGEXP '^[0-9]+$' THEN accReceivable ELSE '0' END");
+            DB::statement("UPDATE customers SET accPayable = CASE WHEN accPayable REGEXP '^[0-9]+$' THEN accPayable ELSE '0' END");
+        }
 
         Schema::table('customers', function (Blueprint $table) {
             $table->unsignedBigInteger('accReceivable')->default(0)->change();

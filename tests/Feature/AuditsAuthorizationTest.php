@@ -24,7 +24,8 @@ class AuditsAuthorizationTest extends TestCase
             'role' => 'staff'
         ]);
 
-        $this->actingAs($admin, 'admin')
+        $this->withSession(['pos' => true])
+            ->actingAs($admin, 'admin')
             ->get(route('audits.index'))
             ->assertStatus(403);
     }
@@ -42,7 +43,8 @@ class AuditsAuthorizationTest extends TestCase
             'role' => 'superadmin'
         ]);
 
-        $this->actingAs($admin, 'admin')
+        $this->withSession(['pos' => true])
+            ->actingAs($admin, 'admin')
             ->get(route('audits.index'))
             ->assertStatus(200);
     }

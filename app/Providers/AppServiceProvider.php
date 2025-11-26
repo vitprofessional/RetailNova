@@ -26,7 +26,16 @@ class AppServiceProvider extends ServiceProvider
        
         
         view()->composer('*',function($view){
-            $businessTable = AdminUser::all();
+            // Avoid querying the database during early bootstrap (migrations/tests)
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('admin_users')) {
+                    $businessTable = AdminUser::all();
+                } else {
+                    $businessTable = collect();
+                }
+            } catch (\Exception $e) {
+                $businessTable = collect();
+            }
             $view->with('config',$businessTable);
         });
 
