@@ -276,58 +276,65 @@
 
 @endsection
 
-<script>
-$(document).on('click','#saveBrand', function(){
-    var name = $('#brandName').val();
-    $.ajax({
-        method: 'get',
-        url: '{{ route('createBrand') }}',
-        data: { name: name },
-        contentType: 'html',
-        success: function(result) {
-            $('#createBrand').modal('hide');
-            document.getElementById('brandForm').reset();
-            $('#brand').html(result.data);
-        },
-    });
-});
+@section('scripts')
+    @parent
+    <script>
+    window.__jqOnReady(function(){
+        try{
+            $(document).on('click','#saveBrand', function(){
+                var name = $('#brandName').val();
+                $.ajax({
+                    method: 'get',
+                    url: '{{ route('createBrand') }}',
+                    data: { name: name },
+                    contentType: 'html',
+                    success: function(result) {
+                        $('#createBrand').modal('hide');
+                        document.getElementById('brandForm').reset();
+                        $('#brand').html(result.data);
+                    },
+                });
+            });
 
-$(document).on('click','#add-category', function(){
-    var name = $('#categoryName').val();
-    $.ajax({
-        method: 'get',
-        url: '{{ route('createCategory') }}',
-        data: { name: name },
-        contentType: 'html',
-        success: function(result) {
-            $('#categoryModal').modal('hide');
-            document.getElementById('categoryForm').reset();
-            $('#categoryList').html(result.data);
-        },
-    });
-});
+            $(document).on('click','#add-category', function(){
+                var name = $('#categoryName').val();
+                $.ajax({
+                    method: 'get',
+                    url: '{{ route('createCategory') }}',
+                    data: { name: name },
+                    contentType: 'html',
+                    success: function(result) {
+                        $('#categoryModal').modal('hide');
+                        document.getElementById('categoryForm').reset();
+                        $('#categoryList').html(result.data);
+                    },
+                });
+            });
 
-$(document).on('click','#add-productUnit', function(){
-    var name = $('#productUnitName').val();
-    $.ajax({
-        method: 'get',
-        url: '{{ route('createProductUnit') }}',
-        data: { name: name },
-        contentType: 'html',
-        success: function(result) {
-            $('#productUnitModal').modal('hide');
-            document.getElementById('productUnitForm').reset();
-            $('#unitName').html(result.data);
-        },
+            $(document).on('click','#add-productUnit', function(){
+                var name = $('#productUnitName').val();
+                $.ajax({
+                    method: 'get',
+                    url: '{{ route('createProductUnit') }}',
+                    data: { name: name },
+                    contentType: 'html',
+                    success: function(result) {
+                        $('#productUnitModal').modal('hide');
+                        document.getElementById('productUnitForm').reset();
+                        $('#unitName').html(result.data);
+                    },
+                });
+            });
+        }catch(e){ console.warn('newProduct scripts failed to init', e); }
     });
-});
-</script>
-<style>
-/* Make appended buttons match select height across Bootstrap 4/5 */
-.input-group.input-append-equal > .btn {
-    align-self: stretch;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-</style>
+    </script>
+    <style>
+    /* Make appended buttons match select height across Bootstrap 4/5 */
+    .input-group.input-append-equal > .btn {
+        align-self: stretch;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    </style>
+@endsection
                                 

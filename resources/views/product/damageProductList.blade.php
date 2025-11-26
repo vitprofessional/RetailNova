@@ -86,7 +86,8 @@
 </div>
 @endsection
 @section('scripts')
-<script>
+    @parent
+    <script>
     // Initialize DataTable for damage list if DataTables is available
     (function(){
         window.__jqOnReady(function(){
@@ -107,6 +108,6 @@
             }catch(e){ console.warn('DataTable init failed', e); }
         });
     })();
-</script>
-@include('partials.bulk-actions-script')
+    </script>
+    @include('partials.bulk-actions-script')
 @endsection

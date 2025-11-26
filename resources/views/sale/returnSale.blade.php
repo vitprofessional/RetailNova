@@ -149,4 +149,7 @@
     </div>
 </form>
 @endsection
-@include('customScript')
+
+@section('scripts')
+    @include('customScript')
+@endsection

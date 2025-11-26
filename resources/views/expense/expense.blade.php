@@ -139,29 +139,26 @@
     </div>
 </div>
 
-<script>
-    $(document).on('click','#saveExpense', function(){
-
-        var name = $('#expenseName').val();
-        $.ajax({
-            method: 'get',
-
-            url: '{{ route('createExpense') }}',
-
-            data: { name: name, },
-
-            contentType: 'html',
-
-            success: function(result) {
-                console.log("message: ", result.message);
-                // console.log("data: ", result.data);
-                $('#createExpense').modal('hide');
-                document.getElementById("expenseForm").reset();
-                $('#expense').html(result.data);
-            },
-
+@section('scripts')
+    @parent
+    <script>
+        window.__jqOnReady(function(){
+            try{
+                $(document).on('click','#saveExpense', function(){
+                    var name = $('#expenseName').val();
+                    $.ajax({
+                        method: 'get',
+                        url: '{{ route('createExpense') }}',
+                        data: { name: name },
+                        contentType: 'html',
+                        success: function(result) {
+                            $('#createExpense').modal('hide');
+                            document.getElementById("expenseForm").reset();
+                            $('#expense').html(result.data);
+                        },
+                    });
+                });
+            }catch(e){ console.warn('expense save handler failed', e); }
         });
-    })
-</script>
-
+    </script>
 @endsection

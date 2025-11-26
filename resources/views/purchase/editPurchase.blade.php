@@ -419,7 +419,6 @@
                                 <label for="brandName" class="form-label"></label>
                                 <select id="brandName" class="form-control" >
                                     <!--  form option show proccessing -->
-                                    <option value="">Select</option>
                                     @if(!empty($brandList) && count($brandList)>0)
                                         @foreach($brandList as $brandData)
                                         <option value="{{$brandData->id}}">{{$brandData->name}}</option>
@@ -584,4 +583,7 @@
 
 @endsection
 
-@include('customScript')
+@section('scripts')
+    @parent
+    @include('customScript')
+@endsection

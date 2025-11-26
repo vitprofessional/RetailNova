@@ -105,7 +105,9 @@
     </div>
 </form>
 
-<script>
+@section('scripts')
+    @parent
+    <script>
     function productSelect(){
         var id = document.getElementById('productName').value;
         if(!id){
@@ -282,6 +284,5 @@
             });
         }
     });
-</script>
-
+    </script>
 @endsection

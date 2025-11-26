@@ -244,4 +244,7 @@
 
 <!-- end_model -->
 @endsection
-@include('customScript')
+
+@section('scripts')
+    @include('customScript')
+@endsection

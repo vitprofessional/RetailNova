@@ -54,43 +54,44 @@
         </div>
     </div>
 </div>
-<script>
-    // wire the datalist selection to set hidden product_serial_id via AJAX lookup
-    $(function(){
-        var $input = $('#serialInput');
-        var $hidden = $('#product_serial_id');
-        var timer = null;
-        $input.on('input', function(){
-            var v = $(this).val();
-            // clear hidden id unless set by click
-            $hidden.val('');
-            if(timer) clearTimeout(timer);
-            timer = setTimeout(function(){
-                if(!v) return;
-                $.get('{{ url('/ajax/serials') }}', { q: v }, function(res){
-                    var list = $('#serialsList'); list.empty();
-                    if(res && res.length){
-                        res.forEach(function(it){
-                            var opt = $('<option/>').attr('data-id', it.id).val(it.serialNumber);
-                            list.append(opt);
+@section('scripts')
+    @parent
+    <script>
+        // wire the datalist selection to set hidden product_serial_id via AJAX lookup
+        window.__jqOnReady(function(){
+            try{
+                var $input = $('#serialInput');
+                var $hidden = $('#product_serial_id');
+                var timer = null;
+                $input.on('input', function(){
+                    var v = $(this).val();
+                    $hidden.val('');
+                    if(timer) clearTimeout(timer);
+                    timer = setTimeout(function(){
+                        if(!v) return;
+                        $.get('{{ url('/ajax/serials') }}', { q: v }, function(res){
+                            var list = $('#serialsList'); list.empty();
+                            if(res && res.length){
+                                res.forEach(function(it){
+                                    var opt = $('<option/>').attr('data-id', it.id).val(it.serialNumber);
+                                    list.append(opt);
+                                });
+                            }
                         });
-                    }
+                    }, 250);
                 });
-            }, 250);
-        });
 
-        // when a value is selected from datalist, resolve to id via ajax lookup
-        $input.on('change', function(){
-            var v = $(this).val();
-            if(!v) return;
-            $.get('{{ url('/ajax/serials') }}', { q: v }, function(res){
-                if(res && res.length){
-                    // if exact match found, set the first id
-                    var found = res.find(function(x){ return x.serialNumber === v; }) || res[0];
-                    if(found) $hidden.val(found.id);
-                }
-            });
+                $input.on('change', function(){
+                    var v = $(this).val();
+                    if(!v) return;
+                    $.get('{{ url('/ajax/serials') }}', { q: v }, function(res){
+                        if(res && res.length){
+                            var found = res.find(function(x){ return x.serialNumber === v; }) || res[0];
+                            if(found) $hidden.val(found.id);
+                        }
+                    });
+                });
+            }catch(e){ console.warn('rma_create script failed', e); }
         });
-    });
-</script>
+    </script>
 @endsection

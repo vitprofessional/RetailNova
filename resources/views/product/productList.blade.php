@@ -100,7 +100,8 @@
 @endsection
 
 @section('scripts')
-<script>
+    @parent
+    <script>
     (function(){
         function applyProductFilters(){
             var brand = document.getElementById('filterBrand') ? document.getElementById('filterBrand').value.toLowerCase() : '';

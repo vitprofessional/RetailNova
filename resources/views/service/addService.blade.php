@@ -125,17 +125,20 @@
 </div>
 @endif
 
-<script>
-    // select all toggle for service list
-    document.addEventListener('DOMContentLoaded', function(){
-        var selectAll = document.getElementById('selectAllServices');
-        if(selectAll){
-            selectAll.addEventListener('change', function(){
-                var checked = this.checked;
-                document.querySelectorAll('.service-checkbox').forEach(function(cb){ cb.checked = checked; });
-            });
-        }
-    });
-</script>
+@endsection
 
+@section('scripts')
+    @parent
+    <script>
+        // select all toggle for service list
+        document.addEventListener('DOMContentLoaded', function(){
+            var selectAll = document.getElementById('selectAllServices');
+            if(selectAll){
+                selectAll.addEventListener('change', function(){
+                    var checked = this.checked;
+                    document.querySelectorAll('.service-checkbox').forEach(function(cb){ cb.checked = checked; });
+                });
+            }
+        });
+    </script>
 @endsection

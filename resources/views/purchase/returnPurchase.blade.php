@@ -127,30 +127,36 @@
     </div>
 </form>
 
-<script>
-function calculateReturnAmount() {
-    const returnQty = document.getElementById('returnQty').value || 0;
-    const buyPrice = document.getElementById('buyPrice').value || 0;
-    const currentStock = document.getElementById('currentStock').value || 0;
-    
-    // Ensure return quantity doesn't exceed current stock and is integer
-    if (parseInt(returnQty) > parseInt(currentStock)) {
-        alert('Return quantity cannot exceed current stock (' + currentStock + ')');
-        document.getElementById('returnQty').value = currentStock;
-        return;
-    }
-    
-    // Ensure quantity is integer
-    if (returnQty % 1 !== 0) {
-        alert('Stock quantity must be a whole number');
-        document.getElementById('returnQty').value = Math.floor(returnQty);
-        return;
-    }
-    
-    const returnAmount = parseInt(returnQty) * parseFloat(buyPrice);
-    document.getElementById('returnAmount').value = returnAmount.toFixed(2);
-    document.getElementById('grandTotal').value = returnAmount.toFixed(2);
-}
-</script>
 @endsection
-@include('customScript')
+
+@section('scripts')
+    @parent
+    <script>
+    function calculateReturnAmount() {
+        const returnQtyEl = document.getElementById('returnQty');
+        const returnQty = parseInt(returnQtyEl.value || 0, 10);
+        const buyPrice = parseFloat(document.getElementById('buyPrice').value || 0);
+        const currentStock = parseInt(document.getElementById('currentStock').value || 0, 10);
+
+        if (isNaN(returnQty) || returnQty <= 0) {
+            returnQtyEl.value = '';
+            document.getElementById('returnAmount').value = '0.00';
+            document.getElementById('grandTotal').value = '0.00';
+            return;
+        }
+
+        // Ensure return quantity doesn't exceed current stock
+        if (returnQty > currentStock) {
+            alert('Return quantity cannot exceed current stock (' + currentStock + ')');
+            returnQtyEl.value = currentStock;
+        }
+
+        const safeQty = Math.min(returnQty, currentStock);
+        const returnAmount = safeQty * (isNaN(buyPrice) ? 0 : buyPrice);
+        document.getElementById('returnAmount').value = returnAmount.toFixed(2);
+        document.getElementById('grandTotal').value = returnAmount.toFixed(2);
+    }
+    </script>
+
+    @include('customScript')
+@endsection

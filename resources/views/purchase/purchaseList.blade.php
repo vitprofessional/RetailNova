@@ -127,39 +127,42 @@
                     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
                     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 
-                    <script>
-                        (function(){
-                            if (!window.jQuery) return;
-                            $(function(){
-                                var $table = $('#purchaseTable');
-                                if ($table.length && !$.fn.dataTable.isDataTable($table[0])){
-                                    $table.DataTable({
-                                        dom: 'Bfrtip',
-                                        buttons: [
-                                            { extend: 'copy', className: 'btn btn-outline-secondary btn-sm' },
-                                            { extend: 'csv', className: 'btn btn-outline-secondary btn-sm' },
-                                            { extend: 'excel', className: 'btn btn-outline-secondary btn-sm' },
-                                            { extend: 'pdf', className: 'btn btn-outline-secondary btn-sm' },
-                                            { extend: 'print', className: 'btn btn-outline-secondary btn-sm' }
-                                        ],
-                                        order: [[3, 'desc']],
-                                        responsive: true,
-                                        columnDefs: [
-                                            { targets: [3,4,5,6], className: 'dt-body-right' },
-                                            { orderable: false, targets: [0,8] }
-                                        ],
-                                        pageLength: 25
-                                    });
+                    @section('scripts')
+                        @parent
+                        <script>
+                            // Initialize DataTable after jQuery is available
+                            window.__jqOnReady(function(){
+                                try{
+                                    var $table = $('#purchaseTable');
+                                    if ($table.length && !$.fn.dataTable.isDataTable($table[0])){
+                                        $table.DataTable({
+                                            dom: 'Bfrtip',
+                                            buttons: [
+                                                { extend: 'copy', className: 'btn btn-outline-secondary btn-sm' },
+                                                { extend: 'csv', className: 'btn btn-outline-secondary btn-sm' },
+                                                { extend: 'excel', className: 'btn btn-outline-secondary btn-sm' },
+                                                { extend: 'pdf', className: 'btn btn-outline-secondary btn-sm' },
+                                                { extend: 'print', className: 'btn btn-outline-secondary btn-sm' }
+                                            ],
+                                            order: [[3, 'desc']],
+                                            responsive: true,
+                                            columnDefs: [
+                                                { targets: [3,4,5,6], className: 'dt-body-right' },
+                                                { orderable: false, targets: [0,8] }
+                                            ],
+                                            pageLength: 25
+                                        });
 
-                                    $('#selectAllPurchases').on('change', function(){
-                                        var checked = $(this).is(':checked');
-                                        $('input.bulk-select').prop('checked', checked);
-                                        updateBulkPurchaseUI();
-                                    });
-                                }
+                                        $('#selectAllPurchases').on('change', function(){
+                                            var checked = $(this).is(':checked');
+                                            $('input.bulk-select').prop('checked', checked);
+                                            if(typeof updateBulkPurchaseUI === 'function') updateBulkPurchaseUI();
+                                        });
+                                    }
+                                }catch(e){ console.warn('purchase table init failed', e); }
                             });
-                        })();
-                    </script>
+                        </script>
+                    @endsection
                 @endif
                 @include('partials.bulk-actions-script')
             </div>

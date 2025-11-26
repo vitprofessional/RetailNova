@@ -1,317 +1,49 @@
 <script>
 /* RN custom script - guarded initialization to avoid errors when jQuery loads after this file */
 
+console.log('RN customScript loaded');
+
+document.addEventListener('DOMContentLoaded', function(){
+    try{
+        console.log('RN diagnostics: DOMContentLoaded');
+        var qty = document.getElementById('quantity');
+        var buy = document.getElementById('buyPrice');
+        var sale = document.getElementById('salePriceExVat');
+        console.log('RN diagnostics: elements presence', { quantity: !!qty, buyPrice: !!buy, salePriceExVat: !!sale });
+        if(qty){ qty.addEventListener('input', function(){ console.log('RN diag: quantity input', this.value); }); }
+        if(buy){ buy.addEventListener('input', function(){ console.log('RN diag: buyPrice input', this.value); }); }
+        if(sale){ sale.addEventListener('input', function(){ console.log('RN diag: salePrice input', this.value); }); }
+        console.log('RN diagnostics: product rows', document.querySelectorAll('tr.product-row').length);
+        console.log('RN diagnostics: purchase-row-template present', !!document.getElementById('purchase-row-template'));
+        var addBtnDiag = document.getElementById('addProductRow');
+        console.log('RN diagnostics: addProductRow present', !!addBtnDiag);
+        if(addBtnDiag){ addBtnDiag.addEventListener('click', function(){ console.log('RN diag: addProductRow clicked'); }); }
+        console.log('RN diagnostics: functions', { calculateSaleDetails: typeof window.calculateSaleDetails, recalcPurchaseRow: typeof window.recalcPurchaseRow, updateTotalsClientSide: typeof window.updateTotalsClientSide });
+    }catch(e){ console.warn('RN diagnostics error', e); }
+});
+
+// Capture-phase click logger to catch clicks before other handlers
+document.addEventListener('click', function(e){
+    try{
+        var t = e.target || e.srcElement;
+        if(!t) return;
+        var info = { id: t.id||null, cls: t.className||null, tag: t.tagName||null, text: (t.innerText||t.value||'').trim().slice(0,80) };
+        if(info.id === 'addProductRow' || (info.cls && info.cls.indexOf('addProductRow')!==-1) || info.text.indexOf('Add To List')!==-1){
+            console.log('RN capture click detected', info);
+        }
+    }catch(e){}
+}, true);
+
 // Minimal helpers that do not require jQuery at load time
 window.updateSaleErrorSummary = function(){
     try{
         var container = document.getElementById('saleErrorSummary');
         if(!container) return;
         var lines = document.querySelectorAll('.invalid-feedback.sale-error');
-        var errors = [];
-        lines.forEach(function(el, i){
-            var txt = el.textContent.trim();
-            var row = el.closest('tr');
-            var product = '';
-            if(row){
-                var tds = row.getElementsByTagName('td');
-                if(tds && tds[1]) product = tds[1].textContent.trim();
-            }
-            if(!product) product = 'Line '+(i+1);
-            errors.push(product+': '+txt);
-        });
-        container.innerHTML = errors.length? errors.map(function(s){ return '<div>'+s+'</div>'; }).join('\n') : '';
-    }catch(e){ console.warn('updateSaleErrorSummary', e); }
+    }catch(e){ console.error('updateSaleErrorSummary error', e); }
 };
 
-// Ensure `actProductList` exists so inline onchange handlers won't throw when called
-window.actProductList = function(){
-    try{
-        var sup = document.getElementById('supplierName');
-        var prod = document.getElementById('productName');
-        if(!sup || !prod) return;
-        var val = sup.value || '';
-        if(!val){
-            // show explicit placeholder when supplier not selected
-            try{
-                if(window._productNameDefaultOptions === undefined){ window._productNameDefaultOptions = prod.innerHTML; }
-                prod.innerHTML = '<option value="">Select supplier first</option>';
-            }catch(e){}
-            prod.selectedIndex = 0;
-            prod.setAttribute('disabled','disabled');
-            var row = document.querySelector('#productDetails tr');
-            if(row){
-                var inputs = row.querySelectorAll('input');
-                inputs.forEach(function(i){ if(i.type==='number' || i.type==='text') i.value = ''; });
-                var selects = row.querySelectorAll('select'); selects.forEach(function(s){ s.selectedIndex = 0; });
-            }
-        } else {
-            // restore the original (server-rendered) product options when supplier selected
-            try{ if(window._productNameDefaultOptions !== undefined) prod.innerHTML = window._productNameDefaultOptions; }catch(e){}
-            // Enable the product dropdown and keep all server-rendered options (no supplier filtering)
-            prod.removeAttribute('disabled');
-            try{ prod.selectedIndex = 0; }catch(e){}
-            if(typeof window.productSelect === 'function'){
-                try{ window.productSelect(); }catch(e){}
-            }
-        }
-    }catch(e){ console.warn('actProductList', e); }
-};
-
-// Calculate total and profit for the single-row purchase table
-function recalcPurchaseRow(){
-    try{
-        var qtyEl = document.getElementById('quantity');
-        var buyEl = document.getElementById('buyPrice');
-        var saleEl = document.getElementById('salePriceExVat');
-        var totalEl = document.getElementById('totalAmount');
-        var profitEl = document.getElementById('profitMargin');
-        if(!qtyEl || !buyEl || !totalEl) return;
-        var qty = parseFloat(qtyEl.value || 0) || 0;
-        var buy = parseFloat(buyEl.value || 0) || 0;
-        var sale = saleEl ? parseFloat(saleEl.value || 0) || 0 : 0;
-        var unit = (sale > 0) ? sale : buy;
-        var total = (unit * qty) || 0;
-        totalEl.value = total ? (Math.round((total + Number.EPSILON) * 100) / 100) : '';
-        // profit: only meaningful when sale price is provided
-        if(profitEl){
-            if(buy > 0 && sale > 0){
-                var profitValue = (sale * qty) - (buy * qty);
-                var profitPercent = ((profitValue / (buy * qty)) * 100) || 0;
-                profitEl.value = Number(profitPercent.toFixed(2));
-            } else {
-                // clear profit if insufficient data
-                profitEl.value = '';
-            }
-        }
-    }catch(e){ console.warn('recalcPurchaseRow error', e); }
-}
-
-// Update the Other Details area (discount, grand total, due) based on current totals
-function updateOtherDetails(){
-    try{
-        var totalEl = document.getElementById('totalAmount');
-        var grandEl = document.getElementById('grandTotal');
-        var discountStatusEl = document.getElementById('discountStatus');
-        var discountAmountEl = document.getElementById('discountAmount');
-        var discountPercentEl = document.getElementById('discountPercent');
-        var paidEl = document.getElementById('paidAmount');
-        var dueEl = document.getElementById('dueAmount');
-
-        var base = parseFloat(totalEl ? (totalEl.value || 0) : 0) || 0;
-        var disType = discountStatusEl ? discountStatusEl.value : '';
-        var disAmount = discountAmountEl ? (parseFloat(discountAmountEl.value || 0) || 0) : 0;
-        var disPercent = discountPercentEl ? (parseFloat(discountPercentEl.value || 0) || 0) : 0;
-
-        var discount = 0;
-        if(disType == '1'){
-            // amount
-            discount = disAmount;
-        } else if(disType == '2'){
-            discount = (base * disPercent / 100) || 0;
-        }
-
-        var grand = Math.max(0, base - discount);
-        if(grandEl) grandEl.value = Number(grand.toFixed(2));
-
-        var paid = paidEl ? (parseFloat(paidEl.value || 0) || 0) : 0;
-        var due = Math.max(0, grand - paid);
-        if(dueEl) dueEl.value = Number(due.toFixed(2));
-    }catch(e){ console.warn('updateOtherDetails error', e); }
-}
-
-function discountType(){
-    try{ updateOtherDetails(); }catch(e){}
-}
-
-function discountAmountChange(){
-    try{
-        // when discount amount changes, clear percent and recalc
-        var percent = document.getElementById('discountPercent'); if(percent) percent.value = '';
-        updateOtherDetails();
-    }catch(e){ console.warn(e); }
-}
-
-function discountPercentChange(){
-    try{
-        // when percent changes, clear amount
-        var amt = document.getElementById('discountAmount'); if(amt) amt.value = '';
-        updateOtherDetails();
-    }catch(e){ console.warn(e); }
-}
-
-function dueCalculate(){
-    try{ updateOtherDetails(); }catch(e){ }
-}
-
-// Helper registry for fallback calls
-window.RNHandlers = window.RNHandlers || {};
-window.RNHandlers.register = function(name, fn){ if(typeof name === 'string' && typeof fn === 'function') window.RNHandlers[name] = fn; };
-
-// Lightweight jQuery-ready shim: queue `$(fn)` calls until real jQuery loads.
-if(typeof window.$ === 'undefined' && typeof window.jQuery === 'undefined'){
-    (function(){
-        var queued = [];
-        function $stub(arg){
-            if(typeof arg === 'function'){
-                queued.push(arg);
-                return;
-            }
-            // minimal jQuery-like object for chaining (no DOM manipulation)
-            return {
-                length: 0,
-                on: function(){ return this; },
-                off: function(){ return this; },
-                val: function(v){ if(arguments.length) return this; return undefined; },
-                html: function(){ return this; },
-                text: function(){ return this; },
-                append: function(){ return this; },
-                find: function(){ return this; },
-                closest: function(){ return this; },
-                prop: function(){ return this; },
-                data: function(){ return undefined; },
-                each: function(){ return this; }
-            };
-        }
-        $stub._runQueued = function(realJq){ try{ queued.forEach(function(fn){ try{ realJq(fn); }catch(e){ console.error('queued ready handler error', e); } }); }catch(e){/*ignore*/} };
-        window.$ = window.jQuery = $stub;
-        // store queued for later inspection
-        window._queuedJqReadyHandlers = queued;
-    })();
-}
-
-// Provide a safe global `remove` helper (DOM-only) so inline onclick="remove('#id')" works
-window.remove = function(sel){
-    try{
-        if(!sel) return;
-        if(typeof sel === 'string'){
-            var id = sel.replace(/^#/, '');
-            var el = document.getElementById(id) || document.querySelector(sel);
-            if(el) el.remove();
-        } else if(sel && sel.nodeType){ sel.remove(); }
-    }catch(e){ console.warn('remove helper error', e); }
-};
-
-// Core functions (define now; they use jQuery when invoked)
-function num(v){ if (v === null || v === undefined) return 0; const s = String(v).trim(); if(!s) return 0; return Number(String(s).replace(/,/g,'')) || 0; }
-
-function resolveValue(arg){
-    try{
-        if (!arg && arg !== 0) return 0;
-        if (typeof arg === 'object' && arg !== null){ if (arg.value !== undefined) return arg.value; if (arg.val && typeof arg.val === 'function') return arg.val(); }
-        var el = document.getElementById(arg);
-        if (el) return el.value;
-        var q = document.querySelector(arg);
-        if (q) return q.value;
-    }catch(e){ console.warn('resolveValue error', e); }
-    return 0;
-}
-
-function resolveElement(arg){
-    try{
-        if (!arg && arg !== 0) return null;
-        var el = document.getElementById(arg);
-        if (el) return el;
-        var q = document.querySelector(arg);
-        if (q) return q;
-    }catch(e){ console.warn('resolveElement error', e); }
-    return null;
-}
-
-// calculateSaleDetails: defined as a global function (uses jQuery when executed)
-function calculateSaleDetails(pid, proField, pf, bp, sp, ts, tp, qd, pm, pt) {
-    try{
-        var $ = window.jQuery;
-        var buyPrice   = num(resolveValue(bp));
-        var salePrice  = num(resolveValue(sp));
-        var qty        = num(resolveValue(qd));
-        var totalPurchase = buyPrice * qty;
-        var totalSale     = salePrice * qty;
-        var profitValue   = totalSale - totalPurchase;
-        var profitPercent = totalPurchase > 0 ? Number(((profitValue / totalPurchase) * 100).toFixed(2)) : 0;
-        if ($) {
-            if(ts) $('#' + ts).html(totalSale);
-            if(tp) $('#' + tp).html(totalPurchase);
-            if(pm) $('#' + pm).html(profitPercent);
-            if(pt) $('#' + pt).html(profitValue);
-        } else {
-            try{ if(ts) document.getElementById(ts).innerHTML = totalSale; }catch(_){}
-            try{ if(tp) document.getElementById(tp).innerHTML = totalPurchase; }catch(_){}
-            try{ if(pm) document.getElementById(pm).innerHTML = profitPercent; }catch(_){}
-            try{ if(pt) document.getElementById(pt).innerHTML = profitValue; }catch(_){}
-        }
-        // debounce server call if jQuery present
-        if ($) {
-            window._saleDebounceTimers = window._saleDebounceTimers || {};
-            var timerKey = String(qd || pid) + '_calc';
-            if (window._saleDebounceTimers[timerKey]) clearTimeout(window._saleDebounceTimers[timerKey]);
-            window._saleDebounceTimers[timerKey] = setTimeout(function(){
-                var items = [];
-                $('.product-row').each(function () { var price = parseFloat($(this).find('.sale-price').val()) || 0; var quantity = parseFloat($(this).find('.quantity').val()) || 0; items.push({ price: price, quantity: quantity }); });
-                $.get('{{ route("calculate.grand.total") }}', { items: items, purchaseId: pid }, function (response) {
-                    const serverGrandTotal = num(response.grandTotal || response.total || 0);
-                    const currentStock = parseInt(response.currentStock) || 0;
-                    const discountAmount = num($("#discountAmount").val());
-                    const paidAmount     = num($("#paidAmount").val());
-                    const gTotal    = Math.max(0, serverGrandTotal - discountAmount);
-                    const dueAmount = Math.max(0, gTotal - paidAmount);
-                    $('#grandTotal').val(gTotal);
-                    $('#totalSaleAmount').val(serverGrandTotal);
-                    $('#dueAmount').val(dueAmount);
-                    $('#curDue').val(dueAmount);
-                    var $qtyEl = $('#' + qd);
-                    if (qty > currentStock) {
-                        if ($qtyEl.length) {
-                            if ($qtyEl.next('.invalid-feedback.sale-error').length === 0) {
-                                $qtyEl.after('<div class="invalid-feedback sale-error">Only '+currentStock+' units available for the selected purchase row</div>');
-                            } else {
-                                $qtyEl.next('.invalid-feedback.sale-error').text('Only '+currentStock+' units available for the selected purchase row');
-                            }
-                            $qtyEl.addClass('is-invalid');
-                            $qtyEl.closest('tr').addClass('table-danger');
-                        }
-                        $('form[action="{{ route('saveSale') }}"] button[type=submit]').prop('disabled', true);
-                    } else {
-                        if ($qtyEl.length) {
-                            $qtyEl.removeClass('is-invalid');
-                            $qtyEl.next('.invalid-feedback.sale-error').remove();
-                            $qtyEl.closest('tr').removeClass('table-danger');
-                        }
-                        if ($('.invalid-feedback.sale-error').length === 0) {
-                            $('form[action="{{ route('saveSale') }}"] button[type=submit]').prop('disabled', false);
-                        }
-                    }
-                    delete window._saleDebounceTimers[timerKey];
-                }).fail(function(){ delete window._saleDebounceTimers[timerKey]; });
-            }, 300);
-        }
-    }catch(e){ console.warn('calculateSaleDetails error', e); }
-}
-
-// purchaseData simplified implementation (uses jQuery when available)
-function purchaseData(pid,proField,pf,bp,sp,ts,tp,qd,pm,pt){
-    try{
-        var $ = window.jQuery;
-        var pData = 0;
-        if($){ pData = parseInt($('#'+pf).val()) || 0; }
-        if(!pData) return;
-        if($){
-            $.get('{{ url('/') }}/purchase/details/'+pData, function(result){
-                var buyPrice = parseFloat(result.buyPrice) || 0;
-                var salePrice = parseFloat(result.salePrice) || 0;
-                var $qtyEl = $('#'+qd);
-                var qty = $qtyEl.length? parseInt($qtyEl.val()) || 0 : 0;
-                var currentStock = parseInt(result.currentStock) || 0;
-                if(qty > currentStock){ if($qtyEl.length){ if ($qtyEl.next('.invalid-feedback.sale-error').length === 0) $qtyEl.after('<div class="invalid-feedback sale-error">Only '+currentStock+' units available for the selected purchase row</div>'); else $qtyEl.next('.invalid-feedback.sale-error').text('Only '+currentStock+' units available for the selected purchase row'); $qtyEl.addClass('is-invalid'); $qtyEl.closest('tr').addClass('table-danger'); } showToast('Error','Only '+currentStock+' units available for the selected purchase row','error'); $('form[action="{{ route('saveSale') }}"] button[type=submit]').prop('disabled', true); }
-                else { if($qtyEl.length){ $qtyEl.removeClass('is-invalid'); $qtyEl.next('.invalid-feedback.sale-error').remove(); $qtyEl.closest('tr').removeClass('table-danger'); } if($('.invalid-feedback.sale-error').length===0) $('form[action="{{ route('saveSale') }}"] button[type=submit]').prop('disabled', false); }
-                var totalPurchase = parseInt(buyPrice * qty) || 0;
-                var totalSale = parseInt(salePrice * qty) || 0;
-                var profitValue = totalSale - totalPurchase;
-                var profitPercent = totalPurchase>0? Number(((profitValue/totalPurchase)*100).toFixed(2)):0;
-                try{ if(ts) $('#'+ts).html(totalSale); if(tp) $('#'+tp).html(totalPurchase); if(sp) $('#'+sp).val(salePrice); if(bp) $('#'+bp).val(buyPrice); if(pm) $('#'+pm).html(profitPercent); if(pt) $('#'+pt).html(profitValue); }catch(_){ }
-            });
-        }
-    }catch(e){ console.warn('purchaseData error', e); }
-}
+@include('scripts.purchase-scripts')
 
 // Fill product details into the single-row purchase table (used on Add Purchase page)
 function fillPurchaseProductDetails(productId){
@@ -328,49 +60,37 @@ function fillPurchaseProductDetails(productId){
         }
 
         var ajaxUrl = '{{ url("product/details") }}/' + productId;
-        // try using jQuery if available
-        if(window.jQuery){
-            $.get(ajaxUrl, function(data){
-                try{
-                    var row = document.querySelector('#productDetails tr');
-                    if(!row) return;
-                    var set = function(id, val){ var el = document.getElementById(id); if(el) el.value = (val===undefined||val===null)?'':val; };
-                    set('selectProductName', data.productName || data.name || '');
-                    set('currentStock', data.currentStock || 0);
-                    set('buyPrice', data.buyPrice || data.buyingPrice || '');
-                    set('salePriceExVat', data.salePrice || data.salePriceExVat || '');
-                    try{ var vat = (data.vatStatus!==undefined? data.vatStatus : (data.vat || '')); var vatEl = document.getElementById('vatStatus'); if(vatEl) { for(var i=0;i<vatEl.options.length;i++){ if(vatEl.options[i].value == vat){ vatEl.selectedIndex = i; break; } } } }catch(_){ }
-                    // enable qty
-                    var qty = document.getElementById('quantity'); if(qty){ qty.removeAttribute('readonly'); qty.value = qty.value || 1; }
-                    // compute total if buyPrice/salePrice present
-                    var buy = parseFloat(document.getElementById('buyPrice')?.value || 0);
-                    var sale = parseFloat(document.getElementById('salePriceExVat')?.value || 0);
-                    var qv = parseFloat(document.getElementById('quantity')?.value || 0);
-                    var total = ((sale>0?sale:buy) * (qv || 0)) || 0;
-                    var totalEl = document.getElementById('totalAmount'); if(totalEl) totalEl.value = total || '';
-                }catch(e){ console.warn('fillPurchaseProductDetails (jQuery) handler', e); }
-            }).fail(function(err){ console.warn('product/details fetch failed', err); });
-            return;
-        }
 
-        // fallback to fetch API
-        fetch(ajaxUrl, {headers: {'X-Requested-With': 'XMLHttpRequest','Accept':'application/json'}, credentials: 'same-origin'})
-            .then(function(res){ if(!res.ok) return {}; return res.json(); })
-            .then(function(data){ try{
-                var row = document.querySelector('#productDetails tr'); if(!row) return;
+        function applyData(data){
+            try{
+                var row = document.querySelector('#productDetails tr');
+                if(!row) return;
                 var set = function(id, val){ var el = document.getElementById(id); if(el) el.value = (val===undefined||val===null)?'':val; };
                 set('selectProductName', data.productName || data.name || '');
                 set('currentStock', data.currentStock || 0);
                 set('buyPrice', data.buyPrice || data.buyingPrice || '');
                 set('salePriceExVat', data.salePrice || data.salePriceExVat || '');
                 try{ var vat = (data.vatStatus!==undefined? data.vatStatus : (data.vat || '')); var vatEl = document.getElementById('vatStatus'); if(vatEl) { for(var i=0;i<vatEl.options.length;i++){ if(vatEl.options[i].value == vat){ vatEl.selectedIndex = i; break; } } } }catch(_){ }
+                // enable qty
                 var qty = document.getElementById('quantity'); if(qty){ qty.removeAttribute('readonly'); qty.value = qty.value || 1; }
+                // compute total if buyPrice/salePrice present
                 var buy = parseFloat(document.getElementById('buyPrice')?.value || 0);
                 var sale = parseFloat(document.getElementById('salePriceExVat')?.value || 0);
                 var qv = parseFloat(document.getElementById('quantity')?.value || 0);
                 var total = ((sale>0?sale:buy) * (qv || 0)) || 0;
                 var totalEl = document.getElementById('totalAmount'); if(totalEl) totalEl.value = total || '';
-            }catch(e){ console.warn('fillPurchaseProductDetails (fetch) handler', e); } }).catch(function(err){ console.warn('product/details fetch failed', err); });
+            }catch(e){ console.warn('fillPurchaseProductDetails applyData error', e); }
+        }
+
+        // Prefer jQuery if available, otherwise use fetch
+        if(window.jQuery && typeof window.jQuery.get === 'function'){
+            window.jQuery.get(ajaxUrl, function(data){ applyData(data); }).fail(function(err){ console.warn('product/details fetch failed', err); });
+        } else {
+            fetch(ajaxUrl, {headers: {'X-Requested-With': 'XMLHttpRequest','Accept':'application/json'}, credentials: 'same-origin'})
+                .then(function(res){ if(!res.ok) return {}; return res.json(); })
+                .then(function(data){ applyData(data); })
+                .catch(function(err){ console.warn('product/details fetch failed', err); });
+        }
     }catch(e){ console.warn('fillPurchaseProductDetails error', e); }
 }
 
@@ -575,8 +295,21 @@ document.addEventListener('DOMContentLoaded', function(){
             });
         });
 
-        // register RNHandlers for global functions
-        ['remove','removeServiceRow','removeSerialField','purchaseData','calculateSaleDetails','totalPriceCalculate','priceCalculation','profitCalculation','discountType','discountAmountChange','discountPercentChange','dueCalculate','serviceSelect','actProductList','actSaleProduct','productSelect','saleProductSelect'].forEach(function(n){ if(typeof window[n] === 'function') window.RNHandlers.register(n, window[n]); });
+        @include('scripts.product-scripts')
+
+        // register RNHandlers for global functions (deduplicated, idempotent)
+        (function(){
+            var names = ['remove','removeServiceRow','removeSerialField','purchaseData','calculateSaleDetails','totalPriceCalculate','priceCalculation','profitCalculation','discountType','discountAmountChange','discountPercentChange','dueCalculate','serviceSelect','actProductList','actSaleProduct','productSelect','saleProductSelect'];
+            if(!window.RNHandlers || typeof window.RNHandlers.register !== 'function') return;
+            names.forEach(function(n){
+                try{
+                    if(typeof window[n] !== 'function') return;
+                    // avoid re-registering the same function reference
+                    if(window.RNHandlers[n] && window.RNHandlers[n] === window[n]) return;
+                    window.RNHandlers.register(n, window[n]);
+                }catch(e){ /* ignore individual registration errors */ }
+            });
+        })();
     }
 
     if (typeof jQuery === 'undefined'){
@@ -689,10 +422,138 @@ document.addEventListener('click', function(e){
                     var r = document.createElement('div'); r.className='row'; r.innerHTML = '<div class="col-10 mb-3"><input class="form-control" name="serialNumber[]" value="" /></div>'; box.appendChild(r);
                 }
             }
-            $('#serialModal').modal('show');
+            // Show modal: prefer Bootstrap's JS API, fall back to jQuery, otherwise toggle classes
+            try{
+                if(window.bootstrap && window.bootstrap.Modal){
+                    try{ var inst = new window.bootstrap.Modal(modal); inst.show(); }
+                    catch(e){ /* ignore */ }
+                } else if(window.jQuery){
+                    try{ $('#serialModal').modal('show'); }catch(e){}
+                } else {
+                    modal.classList.add('show'); modal.style.display = 'block';
+                }
+            }catch(e){ console.warn('show serial modal failed', e); }
         }
     }catch(e){ console.warn('row click handler', e); }
 });
+
+// Vanilla delegated handlers for dynamic elements (mirror jQuery delegated bindings)
+(function(){
+    // product-row inputs: quantity / sale-price -> recalc per-row
+    document.addEventListener('input', function(e){
+        try{
+            var t = e.target;
+            if(!t) return;
+            // single-row purchase inputs
+            if(t.matches && (t.matches('#quantity') || t.matches('#buyPrice') || t.matches('#salePriceExVat'))){
+                try{ recalcPurchaseRow(); }catch(_){}
+            }
+
+            // multi-row product inputs
+            var row = t.closest && t.closest('.product-row');
+            if(row && (t.matches('.quantity') || t.matches('.sale-price') || t.classList && t.classList.contains('sale-price'))){
+                try{
+                    var rowId = row.id || row.getAttribute('data-idx') || '';
+                    var pfEl = row.querySelector('select[name="purchaseData[]"]'); var pf = pfEl ? pfEl.id : '';
+                    var bp = (row.querySelector('input[id^="buyPrice"]')||{}).id || '';
+                    var sp = (row.querySelector('input.sale-price')||row.querySelector('input[id^="salePrice"]')||{}).id || '';
+                    var qd = (row.querySelector('input.quantity')||{}).id || '';
+                    var ts = (row.querySelector('[id^="totalSale"]')||{}).id || '';
+                    var tp = (row.querySelector('[id^="totalPurchase"]')||{}).id || '';
+                    var pm = (row.querySelector('[id^="profitMargin"]')||{}).id || '';
+                    var pt = (row.querySelector('[id^="profitTotal"]')||{}).id || '';
+                    calculateSaleDetails(0, rowId, pf, bp, sp, ts, tp, qd, pm, pt);
+                }catch(err){ console.warn('delegated product-row input handler', err); }
+            }
+        }catch(err){ /* ignore */ }
+    }, true);
+
+    // delegated change handlers
+    document.addEventListener('change', function(e){
+        try{
+            var t = e.target;
+            if(!t) return;
+            // purchaseData select changed
+            if(t.matches && t.matches('select[name="purchaseData[]"]')){
+                try{
+                    var id = t.id || '';
+                    var m = id.match(/purchaseData(\d+)/);
+                    if(m){
+                        var pid = m[1];
+                        var proField = 'productField'+pid;
+                        var pf = 'purchaseData'+pid;
+                        var bp = 'buyPrice'+pid;
+                        var sp = 'salePrice'+pid;
+                        var ts = 'totalSale'+pid;
+                        var tp = 'totalPurchase'+pid;
+                        var qd = 'qty'+pid;
+                        var pm = 'profitMargin'+pid;
+                        var pt = 'profitTotal'+pid;
+                        try{ purchaseData(pid, proField, pf, bp, sp, ts, tp, qd, pm, pt); }catch(e){}
+                    }
+                }catch(e){ console.warn('purchaseData delegated change failed', e); }
+            }
+
+            // product select (js-product-select) - works for dynamic elements
+            if(t.matches && t.matches('.js-product-select')){
+                try{ fillPurchaseProductDetails(t.value); }catch(e){}
+            }
+
+            // supplier/customer change
+            if(t.matches && t.matches('#supplierName')){ try{ if(typeof window.actProductList === 'function') window.actProductList(); }catch(e){} }
+            if(t.matches && t.matches('#customerName')){ try{ if(typeof window.actSaleProduct === 'function') window.actSaleProduct(); }catch(e){} }
+        }catch(err){ /* ignore */ }
+    }, true);
+
+    // small modal save buttons: saveBrand, add-category, add-productUnit
+    document.addEventListener('click', function(e){
+        try{
+            var btn = e.target.closest && e.target.closest('#saveBrand, #add-category, #add-productUnit');
+            if(!btn) return;
+            e.preventDefault();
+            if(btn.id === 'saveBrand'){
+                var nameEl = document.getElementById('NewBrand') || document.getElementById('brandName') || document.getElementById('brandNameModal');
+                var name = nameEl ? (nameEl.value || '') : '';
+                if(!name) return;
+                var url = '{{ route('createBrand') }}';
+                // prefer jQuery
+                if(window.jQuery && typeof window.jQuery.get === 'function'){
+                    window.jQuery.get(url, { name: name }, function(result){ try{ closeModel('createBrand','brandForm'); var forms = document.querySelectorAll('#brandForm'); forms.forEach(function(f){ try{ f.reset(); }catch(_){} }); var targets = document.querySelectorAll('#brand, #brandName, select[name="brand"]'); targets.forEach(function(t){ try{ t.innerHTML = result.data; }catch(_){} }); }catch(e){}});
+                } else {
+                    fetch(url + '?name=' + encodeURIComponent(name), { credentials: 'same-origin', headers: {'X-Requested-With':'XMLHttpRequest'} })
+                        .then(function(r){ return r.json ? r.json() : {}; })
+                        .then(function(result){ try{ closeModel('createBrand','brandForm'); var forms = document.querySelectorAll('#brandForm'); forms.forEach(function(f){ try{ f.reset(); }catch(_){} }); var targets = document.querySelectorAll('#brand, #brandName, select[name="brand"]'); targets.forEach(function(t){ try{ t.innerHTML = result.data; }catch(_){} }); }catch(e){} });
+                }
+            }
+            if(btn.id === 'add-category'){
+                var nameEl = document.getElementById('NewCategory') || document.getElementById('categoryName');
+                var name = nameEl ? (nameEl.value || '') : '';
+                if(!name) return;
+                var url = '{{ route('createCategory') }}';
+                if(window.jQuery && typeof window.jQuery.get === 'function'){
+                    window.jQuery.get(url, { name: name }, function(result){ try{ closeModel('categoryModal','categoryForm'); var forms = document.querySelectorAll('#categoryForm'); forms.forEach(function(f){ try{ f.reset(); }catch(_){} }); var targets = document.querySelectorAll('#categoryList, #categoryName, select[name="category"]'); targets.forEach(function(t){ try{ t.innerHTML = result.data; }catch(_){} }); }catch(e){} });
+                } else {
+                    fetch(url + '?name=' + encodeURIComponent(name), { credentials: 'same-origin', headers: {'X-Requested-With':'XMLHttpRequest'} })
+                        .then(function(r){ return r.json ? r.json() : {}; })
+                        .then(function(result){ try{ closeModel('categoryModal','categoryForm'); var forms = document.querySelectorAll('#categoryForm'); forms.forEach(function(f){ try{ f.reset(); }catch(_){} }); var targets = document.querySelectorAll('#categoryList, #categoryName, select[name="category"]'); targets.forEach(function(t){ try{ t.innerHTML = result.data; }catch(_){} }); }catch(e){} });
+                }
+            }
+            if(btn.id === 'add-productUnit'){
+                var nameEl = document.getElementById('productUnitName');
+                var name = nameEl ? (nameEl.value || '') : '';
+                if(!name) return;
+                var url = '{{ route('createProductUnit') }}';
+                if(window.jQuery && typeof window.jQuery.get === 'function'){
+                    window.jQuery.get(url, { name: name }, function(result){ try{ closeModel('productUnitModal','productUnitForm'); var forms = document.querySelectorAll('#productUnitForm'); forms.forEach(function(f){ try{ f.reset(); }catch(_){} }); var targets = document.querySelectorAll('#unit, #unitName, select[name="unitName"]'); targets.forEach(function(t){ try{ t.innerHTML = result.data; }catch(_){} }); }catch(e){} });
+                } else {
+                    fetch(url + '?name=' + encodeURIComponent(name), { credentials: 'same-origin', headers: {'X-Requested-With':'XMLHttpRequest'} })
+                        .then(function(r){ return r.json ? r.json() : {}; })
+                        .then(function(result){ try{ closeModel('productUnitModal','productUnitForm'); var forms = document.querySelectorAll('#productUnitForm'); forms.forEach(function(f){ try{ f.reset(); }catch(_){} }); var targets = document.querySelectorAll('#unit, #unitName, select[name="unitName"]'); targets.forEach(function(t){ try{ t.innerHTML = result.data; }catch(_){} }); }catch(e){} });
+                }
+            }
+        }catch(e){ console.warn('vanilla delegated small-modal handlers failed', e); }
+    }, true);
+})();
 
 // When serial modal is hidden, copy serial inputs back into the row as hidden inputs
 if(window.jQuery){

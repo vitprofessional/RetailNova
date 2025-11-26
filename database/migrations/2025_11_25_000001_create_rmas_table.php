@@ -8,7 +8,8 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('rmas', function (Blueprint $table) {
+        if (!Schema::hasTable('rmas')) {
+            Schema::create('rmas', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('customer_id')->nullable()->index();
             $table->unsignedBigInteger('product_serial_id')->nullable()->index();
@@ -21,7 +22,8 @@ return new class extends Migration
 
             $table->foreign('customer_id')->references('id')->on('customers')->onDelete('set null');
             $table->foreign('product_serial_id')->references('id')->on('product_serials')->onDelete('set null');
-        });
+            });
+        }
     }
 
     public function down()

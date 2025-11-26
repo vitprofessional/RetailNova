@@ -83,58 +83,59 @@
 
 
 
-<script>
+@section('scripts')
+    @parent
+    <script>
+    window.__jqOnReady(function(){
+        try{
+            // service row helpers
+            function serviceSelect(){
+                var data = $('#serviceType').val();
+                if(!data) return;
 
-function serviceSelect(){
-    var data = $('#serviceType').val();
-    if(!data) return;
-
-    $.ajax({
-        method: 'get',
-        url: '{{url('/')}}/service/details/'+data,
-        contentType: 'html',
-                success:function(result){
-                    // avoid duplicate adds for same service id
-                    if($('#serialField'+result.id).length){
-                        return;
-                    }
-
-                    var field = '<tr id="serialField'+result.id+'">'
-                        +'<td><input type="text" class="form-control" name="serviceName[]" value="'+result.serviceName+'" readonly/></td>'
-                        +'<td><input type="number" step="0.01" class="form-control rate-input" value="'+result.rate+'" name="rate[]" /></td>'
-                        +'<td><input type="number" min="1" class="form-control qty-input" value="1" name="qty[]" /></td>'
-                        +'<td><input type="text" readonly class="form-control line-total-input" value="'+(parseFloat(result.rate).toFixed(2))+'" /></td>'
+                $.ajax({
+                    method: 'get',
+                    url: '{{url('/')}}/service/details/'+data,
+                    contentType: 'html',
+                    success:function(result){
+                        if($('#serialField'+result.id).length){ return; }
+                        var field = '<tr id="serialField'+result.id+'">'
+                            +'<td><input type="text" class="form-control" name="serviceName[]" value="'+result.serviceName+'" readonly/></td>'
+                            +'<td><input type="number" step="0.01" class="form-control rate-input" value="'+result.rate+'" name="rate[]" /></td>'
+                            +'<td><input type="number" min="1" class="form-control qty-input" value="1" name="qty[]" /></td>'
+                            +'<td><input type="text" readonly class="form-control line-total-input" value="'+(parseFloat(result.rate).toFixed(2))+'" /></td>'
                             +'<td><button type="button" class="badge bg-warning mr-2" title="delete" data-onclick="removeServiceRow('+result.id+')"><i class="ri-delete-bin-line mr-0"></i></button></td>'
-                        +'</tr>';
+                            +'</tr>';
 
-                    $('#serviceBox').append(field);
-                    // show save button when at least one row
-                    $('#saveButton').removeClass('d-none');
-                    recalcTotals();
-        },
-        error:function(){
-            // noop on error
-        }
+                        $('#serviceBox').append(field);
+                        $('#saveButton').removeClass('d-none');
+                        recalcTotals();
+                    },
+                    error:function(){ /* noop */ }
+                });
+            }
+
+            function recalcTotals(){
+                var grand = 0;
+                $('#serviceBox').children('tr').each(function(){
+                    var rate = parseFloat($(this).find('.rate-input').val()) || 0;
+                    var qty = parseInt($(this).find('.qty-input').val()) || 0;
+                    var line = rate * qty;
+                    $(this).find('.line-total-input').val(line.toFixed(2));
+                    grand += line;
+                });
+                $('#grandTotalDisplay').text(grand.toFixed(2));
+                $('#grandTotal').val(grand.toFixed(2));
+            }
+
+            // expose serviceSelect globally for inline handlers
+            window.serviceSelect = serviceSelect;
+
+            // delegate input changes for dynamic rows
+            $(document).on('input', '#serviceBox .rate-input, #serviceBox .qty-input', function(){
+                recalcTotals();
+            });
+        }catch(e){ console.warn('provideService scripts init failed', e); }
     });
-}
-
-function recalcTotals(){
-    var grand = 0;
-    $('#serviceBox').children('tr').each(function(){
-        var rate = parseFloat($(this).find('.rate-input').val()) || 0;
-        var qty = parseInt($(this).find('.qty-input').val()) || 0;
-        var line = rate * qty;
-        $(this).find('.line-total-input').val(line.toFixed(2));
-        grand += line;
-    });
-    $('#grandTotalDisplay').text(grand.toFixed(2));
-    $('#grandTotal').val(grand.toFixed(2));
-}
-
-// delegate input changes for dynamic rows
-$(document).on('input', '#serviceBox .rate-input, #serviceBox .qty-input', function(){
-    recalcTotals();
-});
-
-</script>
+    </script>
 @endsection

@@ -516,4 +516,6 @@
 
 @endsection
 
-@include('customScript')
+@section('scripts')
+    @include('customScript')
+@endsection

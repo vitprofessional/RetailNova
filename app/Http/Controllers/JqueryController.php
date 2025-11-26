@@ -52,35 +52,40 @@ class JqueryController extends Controller
     }
 
     public function getSaleProductDetails($id){
-        $getData = PurchaseProduct::where(['productId'=>$id])
-        ->join('suppliers','purchase_products.supplier','suppliers.id')
-        ->join('product_stocks','product_stocks.purchaseId','purchase_products.id')
-        ->select(
-            'purchase_products.id as purchaseId',
-            'purchase_products.supplier',
-            'purchase_products.buyPrice',
-            'purchase_products.salePriceExVat',
-            'purchase_products.salePriceInVat',
-            'purchase_products.vatStatus',
-            'purchase_products.created_at',
-            'purchase_products.created_at as purchaseDate',
-            'suppliers.name as supplierName',
-            'suppliers.mail as supplierMail',
-            'suppliers.mobile as supplierMobile',
-            'product_stocks.currentStock',
-        )->orderBy('purchaseId','desc')->get();
+        try {
+            $getData = PurchaseProduct::where('productId', $id)
+                ->join('suppliers','purchase_products.supplier','suppliers.id')
+                ->join('product_stocks','product_stocks.purchaseId','purchase_products.id')
+                ->select(
+                    'purchase_products.id as purchaseId',
+                    'purchase_products.supplier',
+                    'purchase_products.buyPrice',
+                    'purchase_products.salePriceExVat',
+                    'purchase_products.salePriceInVat',
+                    'purchase_products.vatStatus',
+                    'purchase_products.created_at',
+                    'purchase_products.created_at as purchaseDate',
+                    'suppliers.name as supplierName',
+                    'suppliers.mail as supplierMail',
+                    'suppliers.mobile as supplierMobile',
+                    'product_stocks.currentStock'
+                )->orderBy('purchaseId','desc')->get();
 
-        //purchase product
-        if($getData->count()>0):
-            $product        = Product::find($id);
-            $productName    = $product->name;
-            $salePrice      = $getData->first()->salePriceExVat;
-            $buyPrice       = $getData->first()->buyPrice;
+            if($getData->count() > 0){
+                $product = Product::find($id);
+                $productName = $product ? $product->name : '';
+                $first = $getData->first();
+                $salePrice = isset($first->salePriceExVat) ? $first->salePriceExVat : '';
+                $buyPrice = isset($first->buyPrice) ? $first->buyPrice : '';
 
-            return ['productName' => $productName, 'id'=>$getData->first()->purchaseId, 'getData' => $getData, 'buyPrice'=> $buyPrice, 'salePrice'=>$salePrice];
-        else:
+                return ['productName' => $productName, 'id' => $first->purchaseId, 'getData' => $getData, 'buyPrice'=> $buyPrice, 'salePrice'=>$salePrice];
+            }
+
             return ['productName' => "", 'id'=>$id, 'getData' => null, 'buyPrice'=>'', 'salePrice'=>''];
-        endif;
+        } catch (\Exception $e) {
+            \Log::error('getSaleProductDetails error: '.$e->getMessage(), ['id' => $id, 'trace' => $e->getTraceAsString()]);
+            return ['productName' => "", 'id'=>$id, 'getData' => null, 'buyPrice'=>'', 'salePrice'=>''];
+        }
     }
 
     /**
