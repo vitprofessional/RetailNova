@@ -13,89 +13,45 @@ function calculateSaleDetails(pid, proField, pf, bp, sp, ts, tp, qd, pm, pt) {
         var totalSale     = salePrice * qty;
         var profitValue   = totalSale - totalPurchase;
         var profitPercent = totalPurchase > 0 ? Number(((profitValue / totalPurchase) * 100).toFixed(2)) : 0;
+
+        // VAT handling: try per-row vat percent, then global, default 10%
+        var vatPercent = 10;
+        try{
+            var rowEl = null;
+            if(typeof pf === 'string' && pf){ rowEl = document.getElementById(pf); }
+            if(!rowEl) rowEl = document.querySelector('.product-row');
+            var perEl = rowEl ? (rowEl.querySelector('.vat-percent') || rowEl.querySelector('[id^="vatStatus"]')) : null;
+            if(!perEl) perEl = document.getElementById('vatPercent') || document.querySelector('.vat-percent-global');
+            if(perEl){ var v = parseFloat(perEl.value); if(!isNaN(v)) vatPercent = v; else { if(perEl.value === '' || perEl.value === null){ try{ perEl.value = 10; }catch(_){} } } }
+        }catch(e){}
+
+        // include-VAT flag: per-row .include-vat checkbox or global #includeVat
+        var includeVat = false;
+        try{
+            var incEl = null;
+            if(typeof pf === 'string' && pf){ var rowEl2 = document.getElementById(pf); if(rowEl2) incEl = rowEl2.querySelector('.include-vat'); }
+            if(!incEl) incEl = document.querySelector('.product-row .include-vat') || document.getElementById('includeVat');
+            if(incEl){ if(incEl.type === 'checkbox' || incEl.type === 'radio') includeVat = !!incEl.checked; else includeVat = (String(incEl.value) === '1' || String(incEl.value).toLowerCase() === 'yes' || String(incEl.value).toLowerCase() === 'true'); }
+        }catch(e){}
+
+        var totalSaleShown = includeVat ? (totalSale * (1 + (vatPercent/100))) : totalSale;
+
         if ($) {
-            if(ts) $('#' + ts).html(totalSale);
+            if(ts) $('#' + ts).html(totalSaleShown);
             if(tp) $('#' + tp).html(totalPurchase);
             if(pm) $('#' + pm).html(profitPercent);
             if(pt) $('#' + pt).html(profitValue);
         } else {
-            try{ if(ts) document.getElementById(ts).innerHTML = totalSale; }catch(_){ }
+            try{ if(ts) document.getElementById(ts).innerHTML = totalSaleShown; }catch(_){ }
             try{ if(tp) document.getElementById(tp).innerHTML = totalPurchase; }catch(_){ }
             try{ if(pm) document.getElementById(pm).innerHTML = profitPercent; }catch(_){ }
             try{ if(pt) document.getElementById(pt).innerHTML = profitValue; }catch(_){ }
         }
-        // Update local aggregated totals immediately (client-side, without server)
+        // Client-side VAT-aware behavior (Option A): update per-row and aggregate totals locally
         try{
             if(typeof updateTotalsClientSide === 'function') updateTotalsClientSide();
-        }catch(e){}
-
-        // debounce server call (build items without jQuery; use fetch fallback)
-        window._saleDebounceTimers = window._saleDebounceTimers || {};
-        var timerKey = String(qd || pid) + '_calc';
-        if (window._saleDebounceTimers[timerKey]) clearTimeout(window._saleDebounceTimers[timerKey]);
-        window._saleDebounceTimers[timerKey] = setTimeout(function(){
-            try{
-                var items = [];
-                var rows = document.querySelectorAll('.product-row');
-                rows.forEach(function(r){
-                    try{
-                        var priceEl = r.querySelector('.sale-price');
-                        var qtyElRow = r.querySelector('.quantity');
-                        var price = parseFloat(priceEl ? (priceEl.value || 0) : 0) || 0;
-                        var quantity = parseFloat(qtyElRow ? (qtyElRow.value || 0) : 0) || 0;
-                        items.push({ price: price, quantity: quantity });
-                    }catch(e){}
-                });
-
-                // Build URL with encoded items for GET fallback (server previously accepted GET)
-                var url = '{{ route("calculate.grand.total") }}';
-                var params = 'purchaseId=' + encodeURIComponent(pid || '') + '&items=' + encodeURIComponent(JSON.stringify(items));
-
-                var handleResponse = function(response){
-                    try{
-                        const serverGrandTotal = num(response.grandTotal || response.total || 0);
-                        const currentStock = parseInt(response.currentStock) || 0;
-                        const discountAmount = num((document.getElementById('discountAmount')||{value:0}).value);
-                        const paidAmount     = num((document.getElementById('paidAmount')||{value:0}).value);
-                        const gTotal    = Math.max(0, serverGrandTotal - discountAmount);
-                        const dueAmount = Math.max(0, gTotal - paidAmount);
-                        var setVal = function(id, v){ var el = document.getElementById(id); if(el) el.value = v; };
-                        setVal('grandTotal', gTotal);
-                        setVal('totalSaleAmount', serverGrandTotal);
-                        setVal('dueAmount', dueAmount);
-                        setVal('curDue', dueAmount);
-
-                        var qtyEl = document.getElementById(qd);
-                        if (qty > currentStock) {
-                            if (qtyEl) {
-                                // show inline error
-                                var next = qtyEl.nextElementSibling;
-                                if(!next || !next.classList || !next.classList.contains('invalid-feedback')){
-                                    var div = document.createElement('div'); div.className = 'invalid-feedback sale-error'; div.textContent = 'Only '+currentStock+' units available for the selected purchase row'; qtyEl.parentNode.insertBefore(div, qtyEl.nextSibling);
-                                } else { next.textContent = 'Only '+currentStock+' units available for the selected purchase row'; }
-                                qtyEl.classList.add('is-invalid');
-                                var tr = qtyEl.closest('tr'); if(tr) tr.classList.add('table-danger');
-                            }
-                            // disable submit
-                            try{ var form = document.querySelector('form[action="{{ route('saveSale') }}"]'); if(form){ var btn = form.querySelector('button[type=submit]'); if(btn) btn.disabled = true; } }catch(e){}
-                        } else {
-                            if(qtyEl){ qtyEl.classList.remove('is-invalid'); if(qtyEl.nextElementSibling && qtyEl.nextElementSibling.classList && qtyEl.nextElementSibling.classList.contains('invalid-feedback')) qtyEl.nextElementSibling.remove(); var tr = qtyEl.closest('tr'); if(tr) tr.classList.remove('table-danger'); }
-                            var any = document.querySelectorAll('.invalid-feedback.sale-error'); if(!any || any.length === 0){ try{ var form = document.querySelector('form[action="{{ route('saveSale') }}"]'); if(form){ var btn = form.querySelector('button[type=submit]'); if(btn) btn.disabled = false; } }catch(e){} }
-                        }
-                    }catch(e){ console.warn('handleResponse error', e); }
-                };
-
-                // Prefer jQuery if present for the GET request (server expects previous signature), otherwise use fetch
-                if(window.jQuery && typeof window.jQuery.get === 'function'){
-                    window.jQuery.get(url, { items: items, purchaseId: pid }, function(response){ handleResponse(response); }).fail(function(){ /* ignored */ }).always(function(){ delete window._saleDebounceTimers[timerKey]; });
-                } else {
-                    fetch(url + '?' + params, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                        .then(function(res){ return res.json ? res.json() : {}; })
-                        .then(function(resp){ handleResponse(resp); delete window._saleDebounceTimers[timerKey]; })
-                        .catch(function(){ delete window._saleDebounceTimers[timerKey]; });
-                }
-            }catch(e){ try{ delete window._saleDebounceTimers[timerKey]; }catch(_){} }
-        }, 300);
+            if(typeof window.recalcFinancials === 'function') window.recalcFinancials();
+        }catch(e){ console.warn('calculateSaleDetails local wrapper error', e); }
     }catch(e){ console.warn('calculateSaleDetails error', e); }
 }
 
@@ -104,27 +60,27 @@ function updateTotalsClientSide(){
     try{
         if(window.__RNDEBUG) console.debug('updateTotalsClientSide running');
         var rows = document.querySelectorAll('tr.product-row');
-        var totalSale = 0;
+        var totalPurchase = 0;
         rows.forEach(function(r){
             try{
-                // prefer explicit total element if present, otherwise compute from sale-price * qty
-                var tsEl = r.querySelector('[id^="totalSale"], [id^="totalAmount"]');
+                // prefer explicit total element if present, otherwise compute from buy-price * qty
+                var tsEl = r.querySelector('[id^="totalAmount"]');
                 var rowTotal = 0;
                 if(tsEl){
                     var txt = tsEl.value || tsEl.innerHTML || '0';
                     rowTotal = Number(String(txt).replace(/,/g,'')) || 0;
                 } else {
-                    var price = num((r.querySelector('.sale-price')||{}).value || 0);
+                    var buy = num((r.querySelector('[id^="buyPrice"], .buy-price')||{}).value || 0);
                     var qty = num((r.querySelector('.quantity')||{}).value || 0);
-                    rowTotal = price * qty;
+                    rowTotal = buy * qty;
                 }
-                totalSale += rowTotal;
+                totalPurchase += rowTotal;
             }catch(e){}
         });
-        var totalSaleEl = document.getElementById('totalSaleAmount'); if(totalSaleEl) totalSaleEl.value = totalSale;
+        var totalSaleEl = document.getElementById('totalSaleAmount'); if(totalSaleEl) totalSaleEl.value = totalPurchase;
         var discountAmount = num((document.getElementById('discountAmount')||{value:0}).value);
         var paidAmount = num((document.getElementById('paidAmount')||{value:0}).value);
-        var gTotal = Math.max(0, totalSale - discountAmount);
+        var gTotal = Math.max(0, totalPurchase - discountAmount);
         var due = Math.max(0, gTotal - paidAmount);
         var grandEl = document.getElementById('grandTotal'); if(grandEl) grandEl.value = gTotal;
         var dueEl = document.getElementById('dueAmount'); if(dueEl) dueEl.value = due;
@@ -221,7 +177,8 @@ function fillPurchaseProductDetails(productId){
                 var buy = parseFloat(document.getElementById('buyPrice')?.value || 0);
                 var sale = parseFloat(document.getElementById('salePriceExVat')?.value || 0);
                 var qv = parseFloat(document.getElementById('quantity')?.value || 0);
-                var total = ((sale>0?sale:buy) * (qv || 0)) || 0;
+                // total (purchase cost) should be based only on buy price
+                var total = (buy * (qv || 0)) || 0;
                 var totalEl = document.getElementById('totalAmount'); if(totalEl) totalEl.value = total || '';
             }catch(e){ console.warn('fillPurchaseProductDetails applyData error', e); }
         }
@@ -243,26 +200,70 @@ function fillPurchaseProductDetails(productId){
 
     function resolveValue(idOrEl){ try{ if(!idOrEl) return ''; if(typeof idOrEl === 'string'){ var el = document.getElementById(idOrEl); if(el){ return ('value' in el)? el.value : el.innerHTML; } return idOrEl; } if(idOrEl && 'value' in idOrEl) return idOrEl.value; return ''; }catch(e){ return ''; } }
 
-    // Single-row recalculation (Add/Edit Purchase pages)
-    function recalcPurchaseRow(){ try{ if(window.__RNDEBUG) console.debug('recalcPurchaseRow called'); var qty = num((document.getElementById('quantity')||{value:0}).value); var buy = num((document.getElementById('buyPrice')||{value:0}).value); var sale = num((document.getElementById('salePriceExVat')||{value:0}).value); var unit = (sale>0? sale : buy); var total = (unit * qty) || 0; var totalEl = document.getElementById('totalAmount'); if(totalEl) totalEl.value = (total? total : ''); }catch(e){ console.warn('recalcPurchaseRow', e); } }
+    // Single-row recalculation is provided by the central `customScript.blade.php` implementation.
+    // A legacy lightweight recalc function was intentionally removed to avoid clobbering
+    // the more robust `recalcPurchaseRow(ctx)` used for multi-row handling.
 
     // Price/profit helpers used by inline handlers
     function priceCalculation(){ try{ var sale = num((document.getElementById('salePriceExVat')||{value:0}).value); var buy = num((document.getElementById('buyPrice')||{value:0}).value); var profitEl = document.getElementById('profitMargin'); if(profitEl && buy>0){ var p = (((sale - buy)/buy)*100); profitEl.value = Number(p.toFixed(2)); } recalcPurchaseRow(); }catch(e){ console.warn('priceCalculation', e); } }
 
     function profitCalculation(){ try{ var pm = num((document.getElementById('profitMargin')||{value:0}).value); var buy = num((document.getElementById('buyPrice')||{value:0}).value); if(buy>0){ var sale = buy * (1 + (pm/100)); var spEl = document.getElementById('salePriceExVat'); if(spEl) spEl.value = Number(sale.toFixed(2)); } recalcPurchaseRow(); }catch(e){ console.warn('profitCalculation', e); } }
 
-    function totalPriceCalculate(){ try{ recalcPurchaseRow(); // keep name for compatibility with inline handlers
-        // also update any grand totals if present
-        if(typeof window.calculateSaleDetails === 'function') try{ window.calculateSaleDetails(0); }catch(e){} }catch(e){ console.warn('totalPriceCalculate', e); } }
+    function totalPriceCalculate(){
+        try{
+            // Keep compatibility name but delegate to central recalculation.
+            recalcPurchaseRow();
+            if(typeof updateTotalsClientSide === 'function') updateTotalsClientSide();
+            if(typeof window.recalcFinancials === 'function') window.recalcFinancials();
+        }catch(e){ console.warn('totalPriceCalculate', e); }
+    }
 
     // Discount and due calculations (Add/Edit Purchase pages)
-    function discountType(){ try{ var status = (document.getElementById('discountStatus')||{}).value || ''; var dam = document.getElementById('discountAmount'); var dper = document.getElementById('discountPercent'); if(status === 'percent'){ if(dam) dam.setAttribute('readonly','readonly'); if(dper) dper.removeAttribute('readonly'); } else if(status === 'amount'){ if(dper) dper.setAttribute('readonly','readonly'); if(dam) dam.removeAttribute('readonly'); } else { if(dper) dper.setAttribute('readonly','readonly'); if(dam) dam.setAttribute('readonly','readonly'); } }catch(e){ console.warn('discountType', e); } }
+    function discountType(){
+        try{
+            // Support both legacy string values ('percent'/'amount') and numeric values (1=Amount,2=Percent)
+            var status = (document.getElementById('discountStatus')||{}).value || '';
+            var dam = document.getElementById('discountAmount');
+            var dper = document.getElementById('discountPercent');
+            var isPercent = (status === 'percent' || String(status) === '2');
+            var isAmount = (status === 'amount' || String(status) === '1');
+            if(isPercent){ if(dam) dam.setAttribute('readonly','readonly'); if(dper) dper.removeAttribute('readonly'); }
+            else if(isAmount){ if(dper) dper.setAttribute('readonly','readonly'); if(dam) dam.removeAttribute('readonly'); }
+            else { if(dper) dper.setAttribute('readonly','readonly'); if(dam) dam.setAttribute('readonly','readonly'); }
+        }catch(e){ console.warn('discountType', e); }
+    }
 
-    function discountAmountChange(){ try{ var dam = num((document.getElementById('discountAmount')||{value:0}).value); var total = num((document.getElementById('totalSaleAmount')||{value:0}).value); var dper = document.getElementById('discountPercent'); if(total>0 && dper){ var perc = (dam/total)*100; dper.value = Number(perc.toFixed(2)); } dueCalculate(); }catch(e){ console.warn('discountAmountChange', e); } }
+    function discountAmountChange(){
+        try{
+            // Mirror logic in customScript: compute percent from current base total (sum of row totals)
+            var discountAmountEl = document.getElementById('discountAmount');
+            var discountPercentEl = document.getElementById('discountPercent');
+            var base = 0;
+            try{ var totalInputs = Array.prototype.slice.call(document.querySelectorAll('input[id^="totalAmount"], input.total-amount')); totalInputs.forEach(function(inp){ base += num(inp.value || 0); }); }catch(_){ base = 0; }
+            var dam = discountAmountEl ? num(discountAmountEl.value || 0) : 0;
+            if(discountPercentEl && base > 0){ discountPercentEl.value = Number(((dam / base) * 100).toFixed(2)); }
+            if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else dueCalculate();
+        }catch(e){ console.warn('discountAmountChange', e); }
+    }
 
-    function discountPercentChange(){ try{ var per = num((document.getElementById('discountPercent')||{value:0}).value); var total = num((document.getElementById('totalSaleAmount')||{value:0}).value); var damEl = document.getElementById('discountAmount'); if(total>0 && damEl){ var amt = (per/100)*total; damEl.value = Number(amt.toFixed(2)); } dueCalculate(); }catch(e){ console.warn('discountPercentChange', e); } }
+    function discountPercentChange(){
+        try{
+            var discountAmountEl = document.getElementById('discountAmount');
+            var discountPercentEl = document.getElementById('discountPercent');
+            var base = 0;
+            try{ var totalInputs = Array.prototype.slice.call(document.querySelectorAll('input[id^="totalAmount"], input.total-amount')); totalInputs.forEach(function(inp){ base += num(inp.value || 0); }); }catch(_){ base = 0; }
+            var per = discountPercentEl ? num(discountPercentEl.value || 0) : 0;
+            if(discountAmountEl && base > 0){ discountAmountEl.value = Number(((per/100) * base).toFixed(2)); }
+            if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else dueCalculate();
+        }catch(e){ console.warn('discountPercentChange', e); }
+    }
 
-    function dueCalculate(){ try{ var total = num((document.getElementById('totalSaleAmount')||{value:0}).value); var dam = num((document.getElementById('discountAmount')||{value:0}).value); var paid = num((document.getElementById('paidAmount')||{value:0}).value); var gTotal = Math.max(0, total - dam); var due = Math.max(0, gTotal - paid); var dueEl = document.getElementById('dueAmount'); if(dueEl) dueEl.value = due; var curEl = document.getElementById('curDue'); if(curEl) curEl.value = due; var grandEl = document.getElementById('grandTotal'); if(grandEl) grandEl.value = gTotal; }catch(e){ console.warn('dueCalculate', e); } }
+    function dueCalculate(){
+        try{
+            // Legacy wrapper – delegate to the centralized function which computes base from Buy Price × Qty
+            if(typeof window.recalcFinancials === 'function') return window.recalcFinancials();
+        }catch(e){ console.warn('dueCalculate wrapper error', e); }
+    }
 
     // expose compatibility names for RNHandlers registration
     window.totalPriceCalculate = window.totalPriceCalculate || totalPriceCalculate;
@@ -273,9 +274,9 @@ function fillPurchaseProductDetails(productId){
     window.discountPercentChange = window.discountPercentChange || discountPercentChange;
     window.dueCalculate = window.dueCalculate || dueCalculate;
 
-    // Ensure key helpers are reachable as globals and bind single-row listeners defensively
+    // ensure key helpers are reachable as globals and bind single-row listeners defensively
     try{
-        window.recalcPurchaseRow = window.recalcPurchaseRow || recalcPurchaseRow;
+        if(typeof recalcPurchaseRow === 'function'){ window.recalcPurchaseRow = window.recalcPurchaseRow || recalcPurchaseRow; }
         window.calculateSaleDetails = window.calculateSaleDetails || calculateSaleDetails;
         window.purchaseData = window.purchaseData || purchaseData;
         window.fillPurchaseProductDetails = window.fillPurchaseProductDetails || fillPurchaseProductDetails;
@@ -354,7 +355,9 @@ window.addPurchaseRow = function(productId){
                 var ids = getIds();
 
                 if(qtyEl){ qtyEl.addEventListener('input', function(){ try{ if(window.__RNDEBUG) console.debug('row qty input', rowIdx, this.value); calculateSaleDetails(0, row.id||('productField'+rowIdx), ids.pf, ids.bp, ids.sp, ids.ts, ids.tp, ids.qd, ids.pm, ids.pt); }catch(e){} }); }
-                if(saleEl){ saleEl.addEventListener('input', function(){ try{ calculateSaleDetails(0, row.id||('productField'+rowIdx), ids.pf, ids.bp, ids.sp, ids.ts, ids.tp, ids.qd, ids.pm, ids.pt); }catch(e){} }); }
+                // Sale price input should not trigger server-side grand total recalculation on Purchase pages.
+                // Only update the per-row calculation (totals/profit) so Grand Total/Due remains based on Buy Price × Qty.
+                if(saleEl){ saleEl.addEventListener('input', function(){ try{ recalcPurchaseRow(this); }catch(e){} }); }
                 if(purchaseSelect){ purchaseSelect.addEventListener('change', function(){
                     try{
                         // recompute ids as some attributes may be set server-side
@@ -384,7 +387,8 @@ window.addPurchaseRow = function(productId){
                 var buyVal = parseFloat(buy ? buy.value : 0) || 0;
                 var saleVal = parseFloat(sale ? sale.value : 0) || 0;
                 var unit = (saleVal>0? saleVal : buyVal);
-                var total = (unit * qty) || 0;
+                // total (purchase cost) should be based only on buy price
+                var total = (buyVal * qty) || 0;
                 var totalEl = row.querySelector('#totalAmount'+idx) || row.querySelector('#totalAmount__IDX__'.replace('__IDX__', idx)); if(totalEl) totalEl.value = total || '';
                 var profitEl = row.querySelector('#profitMargin'+idx) || row.querySelector('#profitMargin__IDX__'.replace('__IDX__', idx)); if(profitEl){ if(buyVal>0 && saleVal>0){ var profitPercent = (((saleVal*qty) - (buyVal*qty)) / (buyVal*qty) * 100) || 0; profitEl.value = Number(profitPercent.toFixed(2)); } }
             }catch(e){ console.warn('fillRow error', e); }

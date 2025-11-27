@@ -1,572 +1,403 @@
 <script>
 /* RN custom script - guarded initialization to avoid errors when jQuery loads after this file */
 
-console.log('RN customScript loaded');
+// Debug toggle (temporary): enable with `window.__RNDEBUG = true` or `enableRNDebug()`
+window.__RNDEBUG = window.__RNDEBUG || false;
+window.enableRNDebug = function(){ window.__RNDEBUG = true; console.warn('RNDEBUG enabled'); };
+window.disableRNDebug = function(){ window.__RNDEBUG = false; console.warn('RNDEBUG disabled'); };
 
-document.addEventListener('DOMContentLoaded', function(){
+// Lightweight toast helper: use existing `showToast` if present, otherwise provide a minimal fallback
+if(typeof window.showToast !== 'function'){
+    window.showToast = function(title, text, icon){
+        try{
+            // Prefer SweetAlert if available
+            if(window.Swal || window.swal){
+                var s = window.Swal || window.swal;
+                try{ s.fire ? s.fire({ title: title, text: text, icon: icon || 'info', timer: 2500, toast: true, position: 'top-end', showConfirmButton:false }) : s({ title: title, text: text }); }catch(e){ try{ s({ title: title, text: text }); }catch(_){} }
+                return;
+            }
+            // Prefer Bootstrap 5 toasts if available
+            if(window.bootstrap && document){
+                try{
+                    var container = document.getElementById('rn-toast-container');
+                    if(!container){ container = document.createElement('div'); container.id = 'rn-toast-container'; container.style.position = 'fixed'; container.style.top = '1rem'; container.style.right = '1rem'; container.style.zIndex = '1080'; document.body.appendChild(container); }
+                    var toast = document.createElement('div'); toast.className = 'toast'; toast.setAttribute('role','alert'); toast.setAttribute('aria-live','assertive'); toast.setAttribute('aria-atomic','true');
+                    toast.innerHTML = '<div class="toast-header"><strong class="me-auto">'+(title||'')+'</strong><small></small><button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"></button></div><div class="toast-body">'+(text||'')+'</div>';
+                    container.appendChild(toast);
+                    try{ var bToast = new bootstrap.Toast(toast, { delay: 2500 }); bToast.show(); }catch(e){ toast.style.display='block'; setTimeout(function(){ try{ toast.parentNode.removeChild(toast); }catch(_){} },2500); }
+                    return;
+                }catch(e){}
+            }
+            // Fallback: simple alert non-blocking via console + small on-page message
+            console.log('Toast:', title, text);
+            try{ var el = document.createElement('div'); el.style.position='fixed'; el.style.top='1rem'; el.style.right='1rem'; el.style.background='#222'; el.style.color='#fff'; el.style.padding='8px 12px'; el.style.borderRadius='4px'; el.style.zIndex='1080'; el.textContent = (title? title + ': ' : '') + (text || ''); document.body.appendChild(el); setTimeout(function(){ try{ el.parentNode.removeChild(el); }catch(_){} },2500); }catch(e){}
+        }catch(e){ /* ignore */ }
+    };
+}
+
+// Core helper: parse numeric input safely
+function numVal(v){ if(v === null || v === undefined) return 0; var s = String(v).trim(); if(!s) return 0; return Number(s.replace(/,/g,'')) || 0; }
+
+// Recalculate a single purchase row (works for single-row and multi-row tables)
+function recalcPurchaseRow(ctx){
     try{
-        console.log('RN diagnostics: DOMContentLoaded');
-        var qty = document.getElementById('quantity');
-        var buy = document.getElementById('buyPrice');
-        var sale = document.getElementById('salePriceExVat');
-        console.log('RN diagnostics: elements presence', { quantity: !!qty, buyPrice: !!buy, salePriceExVat: !!sale });
-        if(qty){ qty.addEventListener('input', function(){ console.log('RN diag: quantity input', this.value); }); }
-        if(buy){ buy.addEventListener('input', function(){ console.log('RN diag: buyPrice input', this.value); }); }
-        if(sale){ sale.addEventListener('input', function(){ console.log('RN diag: salePrice input', this.value); }); }
-        console.log('RN diagnostics: product rows', document.querySelectorAll('tr.product-row').length);
-        console.log('RN diagnostics: purchase-row-template present', !!document.getElementById('purchase-row-template'));
-        var addBtnDiag = document.getElementById('addProductRow');
-        console.log('RN diagnostics: addProductRow present', !!addBtnDiag);
-        if(addBtnDiag){ addBtnDiag.addEventListener('click', function(){ console.log('RN diag: addProductRow clicked'); }); }
-        console.log('RN diagnostics: functions', { calculateSaleDetails: typeof window.calculateSaleDetails, recalcPurchaseRow: typeof window.recalcPurchaseRow, updateTotalsClientSide: typeof window.updateTotalsClientSide });
-    }catch(e){ console.warn('RN diagnostics error', e); }
+        if(window.__RNDEBUG) console.debug('recalcPurchaseRow start', ctx && ctx.target? ctx.target : ctx);
+        var el = ctx && ctx.target ? ctx.target : ctx;
+        if(!el) el = document;
+        var row = (el && el.closest) ? (el.closest('tr.product-row') || el.closest('tr')) : document.querySelector('tr.product-row') || document;
+
+        var qtyEl = row.querySelector('.quantity') || document.getElementById('quantity');
+        var buyEl = row.querySelector('[id^="buyPrice"]') || row.querySelector('.buy-price') || document.getElementById('buyPrice');
+        var saleEl = row.querySelector('[id^="salePriceExVat"]') || row.querySelector('.sale-price') || document.getElementById('salePriceExVat');
+        var totalEl = row.querySelector('[id^="totalAmount"]') || row.querySelector('.total-amount') || document.getElementById('totalAmount');
+        var profitEl = row.querySelector('[id^="profitMargin"]') || row.querySelector('.profit-margin') || document.getElementById('profitMargin');
+
+        if(!qtyEl || !buyEl || !totalEl) return;
+        var qty = numVal(qtyEl.value);
+        var buy = numVal(buyEl.value);
+        var sale = saleEl ? numVal(saleEl.value) : 0;
+        // Totals are calculated from Buy Price only per new requirement
+        var total = (buy * qty) || 0;
+        totalEl.value = total ? (Math.round((total + Number.EPSILON) * 100) / 100) : '';
+        totalEl.classList.add('total-amount');
+
+        if(profitEl){
+            if(buy > 0 && sale > 0){
+                var profitValue = (sale * qty) - (buy * qty);
+                var profitPercent = ((profitValue / (buy * qty)) * 100) || 0;
+                profitEl.value = Number(profitPercent.toFixed(2));
+            } else {
+                profitEl.value = '';
+            }
+        }
+
+        // Update aggregated totals after row recalc
+        updateOtherDetails();
+        if(window.__RNDEBUG) console.debug('recalcPurchaseRow end', { qty: qty, buy: buy, sale: sale, total: total });
+    }catch(e){ console.warn('recalcPurchaseRow error', e); }
+}
+
+// Update grand total, discount, due and related fields
+function updateOtherDetails(){
+    try{
+        // Delegate to central financial recalculation
+        if(typeof window.recalcFinancials === 'function'){ window.recalcFinancials(); return; }
+    }catch(e){ console.warn('updateOtherDetails error', e); }
+}
+
+// Central financial recalculation: sums buy-price totals, applies discount and paid, updates grand/due fields
+window.recalcFinancials = function(){
+    try{
+        if(window.__RNDEBUG) console.debug('recalcFinancials start');
+        var totalInputs = Array.prototype.slice.call(document.querySelectorAll('input[id^="totalAmount"], input.total-amount'));
+        var base = 0; totalInputs.forEach(function(inp){ base += numVal(inp.value); });
+
+        var discountStatusEl = document.getElementById('discountStatus');
+        var discountAmountEl = document.getElementById('discountAmount');
+        var discountPercentEl = document.getElementById('discountPercent');
+        var paidEl = document.getElementById('paidAmount');
+
+        var disType = discountStatusEl ? discountStatusEl.value : '';
+        var disAmount = discountAmountEl ? numVal(discountAmountEl.value) : 0;
+        var disPercent = discountPercentEl ? numVal(discountPercentEl.value) : 0;
+        var discount = 0;
+        if(disType == '1'){
+            discount = disAmount;
+        } else if(disType == '2'){
+            discount = (base * disPercent / 100) || 0;
+            // ensure discountAmount displays computed amount for clarity
+            if(discountAmountEl) discountAmountEl.value = Number(discount.toFixed(2));
+        }
+
+        var grand = Math.max(0, base - discount);
+        var totalSaleEl = document.getElementById('totalSaleAmount'); if(totalSaleEl) totalSaleEl.value = Number(base.toFixed(2));
+        var grandEl = document.getElementById('grandTotal'); if(grandEl) grandEl.value = Number(grand.toFixed(2));
+
+        var paid = paidEl ? numVal(paidEl.value) : 0;
+        var due = Math.max(0, grand - paid);
+        var dueEl = document.getElementById('dueAmount'); if(dueEl) dueEl.value = Number(due.toFixed(2));
+        var totalDueEl = document.getElementById('totalDue'); if(totalDueEl) totalDueEl.value = Number(due.toFixed(2));
+        var curDueEl = document.getElementById('curDue'); if(curDueEl) curDueEl.value = Number(due.toFixed(2));
+        if(window.__RNDEBUG) console.debug('recalcFinancials end', { base: base, discount: discount, grand: grand, paid: paid, due: due });
+    }catch(e){ console.warn('recalcFinancials error', e); }
+};
+
+function discountType(){ try{ updateOtherDetails(); }catch(e){} }
+
+function discountAmountChange(){
+    try{
+        var discountAmountEl = document.getElementById('discountAmount');
+        var discountPercentEl = document.getElementById('discountPercent');
+        var base = 0;
+        try{ var totalInputs = Array.prototype.slice.call(document.querySelectorAll('input[id^="totalAmount"], input.total-amount')); totalInputs.forEach(function(inp){ base += numVal(inp.value); }); }catch(_){ base = 0; }
+        var dam = discountAmountEl ? numVal(discountAmountEl.value) : 0;
+        if(discountPercentEl && base > 0){ discountPercentEl.value = Number(((dam / base) * 100).toFixed(2)); }
+        // Recalculate financials after manual discount amount change
+        if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else updateOtherDetails();
+    }catch(e){ console.warn(e); }
+}
+
+function discountPercentChange(){
+    try{
+        var discountAmountEl = document.getElementById('discountAmount');
+        var discountPercentEl = document.getElementById('discountPercent');
+        var base = 0;
+        try{ var totalInputs = Array.prototype.slice.call(document.querySelectorAll('input[id^="totalAmount"], input.total-amount')); totalInputs.forEach(function(inp){ base += numVal(inp.value); }); }catch(_){ base = 0; }
+        var per = discountPercentEl ? numVal(discountPercentEl.value) : 0;
+        if(discountAmountEl && base > 0){ discountAmountEl.value = Number(((per/100) * base).toFixed(2)); }
+        // Recalculate financials after discount percent change
+        if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else updateOtherDetails();
+    }catch(e){ console.warn(e); }
+}
+
+function dueCalculate(){ try{ updateOtherDetails(); }catch(e){} }
+
+// Wire native delegated handlers for row inputs (works with dynamic rows)
+document.addEventListener('input', function(e){
+    try{
+        var t = e.target;
+        if(!t) return;
+        // Single-row fields
+        if(t.matches && (t.matches('#quantity') || t.matches('#buyPrice') || t.matches('#salePriceExVat'))){ recalcPurchaseRow(t); }
+
+        // Per-row fields
+        var row = t.closest && t.closest('.product-row');
+        if(row && (t.matches('.quantity') || t.matches('[id^="buyPrice"]') || t.matches('.sale-price') || t.matches('[id^="salePriceExVat"]'))){ recalcPurchaseRow(t); }
+    }catch(e){}
+}, true);
+
+// VAT include handler: if an input with class 'include-vat' toggles or a field with class 'vat-percent' changes,
+// compute sale price ex VAT when necessary. Assumes per-row vat inputs may exist.
+document.addEventListener('change', function(e){
+    try{
+        var t = e.target; if(!t) return;
+        if(t.matches && (t.matches('.include-vat') || t.matches('.vat-percent'))){
+            var row = t.closest && t.closest('.product-row');
+            if(!row) row = document;
+            var saleInc = row.querySelector('.sale-price-inc') || row.querySelector('#salePriceIncVat') || null;
+            var saleEx = row.querySelector('.sale-price') || row.querySelector('[id^="salePriceExVat"]') || null;
+            var vatEl = row.querySelector('.vat-percent') || row.querySelector('[id^="vatStatus"]') || null;
+
+            // If the include-vat checkbox was toggled, enable/disable the vat input
+            if(t.matches('.include-vat')){
+                try{ if(vatEl) vatEl.disabled = !t.checked; }catch(e){}
+            }
+
+            // determine whether this row (or global) is configured to include VAT
+            var includeFlag = false;
+            try{
+                var incEl = row.querySelector('.include-vat');
+                if(!incEl) incEl = document.getElementById('includeVat');
+                includeFlag = incEl ? !!incEl.checked : false;
+            }catch(e){ includeFlag = false; }
+
+            var vat = vatEl ? numVal(vatEl.value) : 0;
+            // Only convert inclusive price to exclusive when include flag is set and vat > 0
+            if(includeFlag && saleInc && saleEx && vat>0){
+                var inc = numVal(saleInc.value);
+                var ex = inc / (1 + vat/100);
+                saleEx.value = Number(ex.toFixed(2));
+                recalcPurchaseRow(row);
+            } else {
+                // ensure row recalculation runs to keep totals consistent when toggling include-vat off
+                recalcPurchaseRow(row);
+            }
+        }
+    }catch(e){ }
+}, true);
+
+// (Real-time inclusive-price input handler removed — VAT conversion handled on change events only)
+
+// Generic AJAX form handler for modal forms (supplier/product etc.)
+document.addEventListener('submit', function(e){
+    try{
+        var f = e.target;
+        if(!f || !f.matches || !f.matches('form[data-ajax="true"]')) return;
+        e.preventDefault();
+        var action = f.getAttribute('action') || window.location.href;
+        var method = (f.getAttribute('method') || 'POST').toUpperCase();
+        var formData = new FormData(f);
+        var url = action;
+        var opts = { method: method, credentials: 'same-origin', headers: {'X-Requested-With':'XMLHttpRequest'} };
+        // If GET, serialize FormData to query string (fetch doesn't support body for GET reliably)
+        if(method === 'GET'){
+            var params = new URLSearchParams();
+            formData.forEach(function(v,k){ params.append(k, v); });
+            url = action + (action.indexOf('?') === -1 ? '?' : '&') + params.toString();
+        } else {
+            opts.body = formData;
+        }
+        fetch(url, opts).then(function(res){ return res.json ? res.json() : {}; }).then(function(result){
+            // On success, if the form has data-target attribute, update that element's innerHTML
+            try{
+                var tgt = f.getAttribute('data-target');
+                if(tgt && result && result.data){
+                    var nodes = document.querySelectorAll(tgt);
+                    nodes.forEach(function(n){ try{ n.innerHTML = result.data; }catch(e){} });
+                }
+                // close modal if bootstrap/jQuery present — fallback to manual cleanup
+                var modalId = f.getAttribute('data-modal-id');
+                if(modalId){
+                    try{
+                        var closeModalById = function(id){
+                            var modal = document.getElementById(id);
+                            if(!modal) return;
+                            // Bootstrap 5 API
+                            if(window.bootstrap && bootstrap.Modal){
+                                try{
+                                    var inst = bootstrap.Modal.getInstance(modal);
+                                    if(inst) inst.hide();
+                                    else { var tmp = new bootstrap.Modal(modal); tmp.hide(); }
+                                }catch(e){}
+                            }
+                            // jQuery / Bootstrap 4
+                            if(window.jQuery && window.jQuery(modal) && typeof window.jQuery(modal).modal === 'function'){
+                                try{ window.jQuery('#'+id).modal('hide'); }catch(e){}
+                            }
+                            // Manual fallback: remove visible classes and backdrop
+                            try{
+                                modal.classList.remove('show');
+                                modal.style.display = 'none';
+                                modal.setAttribute('aria-hidden','true');
+                                modal.removeAttribute('aria-modal');
+                                // remove any backdrops
+                                Array.prototype.slice.call(document.querySelectorAll('.modal-backdrop')).forEach(function(b){ if(b && b.parentNode) b.parentNode.removeChild(b); });
+                                document.body.classList.remove('modal-open');
+                                document.body.style.paddingRight = '';
+                            }catch(e){}
+                        };
+                        // After close, attempt to sync serials from modal back to the row
+                        var trySync = function(id){ try{ if(typeof window.syncSerialsFromModal === 'function'){ window.syncSerialsFromModal(id); } }catch(e){} };
+                        // support multiple ids separated by spaces
+                        modalId.split(/\s+/).forEach(function(id){ if(id){ closeModalById(id); trySync(id); } });
+                    }catch(err){ console.warn('modal close failed', err); }
+                }
+                // reset form
+                try{ f.reset(); }catch(e){}
+            }catch(err){ console.warn('ajax-form result handling', err); }
+        }).catch(function(err){ console.warn('ajax form submit failed', err); });
+    }catch(e){}
 });
 
-// Capture-phase click logger to catch clicks before other handlers
+// Re-use existing jQuery handlers included in other script fragments — ensure they still run
+// (the rest of legacy handlers are included below)
+// Existing delegated and jQuery-based handlers remain in the included script fragments
+
+// Keep including other smaller script fragments as before
+@include('scripts.purchase-scripts')
+@include('scripts.product-scripts')
+
+// Ensure initial wiring for non-jQuery environment
+document.addEventListener('DOMContentLoaded', function(){
+    try{
+        // initial recalc to populate totals if any values are present
+        Array.prototype.slice.call(document.querySelectorAll('input.quantity, input[id^="buyPrice"], input[id^="salePriceExVat"]')).forEach(function(i){ try{ recalcPurchaseRow(i); }catch(e){} });
+        // wire simple listeners to single-row controls
+        var qty = document.getElementById('quantity'); if(qty) qty.addEventListener('input', recalcPurchaseRow);
+        var buy = document.getElementById('buyPrice'); if(buy) buy.addEventListener('input', recalcPurchaseRow);
+        var sale = document.getElementById('salePriceExVat'); if(sale) sale.addEventListener('input', recalcPurchaseRow);
+        var discountStatus = document.getElementById('discountStatus'); if(discountStatus) discountStatus.addEventListener('change', discountType);
+        var discountAmount = document.getElementById('discountAmount'); if(discountAmount) discountAmount.addEventListener('input', discountAmountChange);
+        var discountPercent = document.getElementById('discountPercent'); if(discountPercent) discountPercent.addEventListener('input', discountPercentChange);
+        var paidAmount = document.getElementById('paidAmount'); if(paidAmount) paidAmount.addEventListener('input', function(){ try{ if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else dueCalculate(); }catch(e){} });
+        // wire Add To List button for multi-row purchases
+        try{
+            var addBtn = document.getElementById('addProductRow');
+            if(addBtn){
+                addBtn.addEventListener('click', function(ev){
+                    try{
+                        if(window.__RNDEBUG) console.debug('addProductRow click');
+                        // prefer explicit select with .js-product-select
+                        var sel = document.querySelector('.js-product-select');
+                        if(!sel) sel = document.getElementById('productName');
+                        if(!sel){
+                            try{ showToast && showToast('Error','Product select not found','error'); }catch(_){ alert('Product select not found'); }
+                            return;
+                        }
+                        var pid = sel.value || sel.options && sel.options[sel.selectedIndex] && sel.options[sel.selectedIndex].value;
+                        if(!pid){ try{ showToast && showToast('Warning','Please select a product first','warning'); }catch(_){ alert('Please select a product first'); } return; }
+                        if(typeof addPurchaseRow === 'function'){
+                            addPurchaseRow(pid);
+                        } else {
+                            try{ window.addPurchaseRow(pid); }catch(e){ console.warn('addPurchaseRow not available', e); }
+                        }
+                    }catch(e){ console.warn('addProductRow click', e); }
+                });
+            }
+        }catch(e){ console.warn('failed to bind addProductRow', e); }
+    }catch(e){ /* ignore */ }
+});
+
+// If jQuery is present, also bind delegated handlers so older inline code/events still trigger
+try{
+    if(window.jQuery){
+        (function($){
+            $(function(){
+                try{
+                    $(document).on('input change', '#buyPrice, [id^="buyPrice"], .buy-price', function(){ try{ recalcPurchaseRow(this); }catch(e){ console.warn('jq buyPrice handler', e); } });
+                    $(document).on('input change', '#salePriceExVat, [id^="salePriceExVat"], .sale-price', function(){ try{ recalcPurchaseRow(this); }catch(e){ console.warn('jq salePrice handler', e); } });
+                    $(document).on('input change', '#quantity, .quantity', function(){ try{ recalcPurchaseRow(this); }catch(e){ console.warn('jq quantity handler', e); } });
+                    // Ensure paid amount changes also trigger the central financial recalculation
+                    $(document).on('input change', '#paidAmount', function(){ try{ if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else if(typeof dueCalculate === 'function') dueCalculate(); }catch(e){ console.warn('jq paidAmount handler', e); } });
+                    // Keep legacy price/profit helpers callable
+                    $(document).on('input change', '#salePriceExVat, #buyPrice, .sale-price, .buy-price', function(){ try{ if(typeof priceCalculation === 'function') priceCalculation(); }catch(e){} });
+                }catch(e){ console.warn('jQuery init handlers failed', e); }
+            });
+        })(window.jQuery);
+    }
+}catch(e){ /* ignore */ }
+// Synchronize serials entered in a modal back into the corresponding product row's hidden inputs
+window.syncSerialsFromModal = function(modalId){
+    try{
+        if(!modalId) return;
+        var modal = document.getElementById(modalId);
+        if(!modal) return;
+        // the Add Purchase page sets modal.setAttribute('data-current-idx', idx) when opening the serial modal
+        var idx = modal.getAttribute('data-current-idx') || modal.getAttribute('data-idx') || modal.getAttribute('data-row-index');
+        // If not present, try to find inputs inside modal named serialNumber[] (legacy)
+        var serialEls = Array.prototype.slice.call(modal.querySelectorAll('#serialNumberBox input[name="serialNumber[]"], input[name^="serial"]'));
+        if(!serialEls.length) return;
+
+        // locate the target row by data-idx (template uses data-idx) or fallback to first .product-row
+        var targetRow = null;
+        if(idx){ targetRow = document.querySelector('tr.product-row[data-idx="'+idx+'"]') || document.querySelector('tr[data-idx="'+idx+'"]'); }
+        if(!targetRow) targetRow = document.querySelector('tr.product-row') || null;
+        if(!targetRow) return;
+
+        // remove any existing hidden serial inputs for that row to avoid duplicates
+        try{ Array.prototype.slice.call(targetRow.querySelectorAll('input[type="hidden"][data-serial]')).forEach(function(h){ h.parentNode.removeChild(h); }); }catch(e){}
+
+        // add hidden inputs using the same naming convention used elsewhere: serialNumber[idx][] and mark with data-serial
+        var added = 0;
+        serialEls.forEach(function(si){
+            try{
+                var v = (si.value || si.getAttribute('value') || '').trim();
+                if(!v) return;
+                var h = document.createElement('input'); h.type = 'hidden'; h.name = 'serialNumber['+ (idx || '0') +'][]'; h.value = v; h.setAttribute('data-serial','1');
+                targetRow.appendChild(h);
+                added++;
+            }catch(e){ /* ignore individual failures */ }
+        });
+
+        // notify user if any serials were synced
+        try{ if(added > 0){ showToast('Serials saved', 'Saved '+added+' serial(s) for row '+ (idx || ''), 'success'); } }catch(e){}
+    }catch(e){ console.warn('syncSerialsFromModal error', e); }
+};
+
+// Bind Save button inside serial modal to sync serials immediately when clicked
 document.addEventListener('click', function(e){
     try{
-        var t = e.target || e.srcElement;
+        var t = e.target;
         if(!t) return;
-        var info = { id: t.id||null, cls: t.className||null, tag: t.tagName||null, text: (t.innerText||t.value||'').trim().slice(0,80) };
-        if(info.id === 'addProductRow' || (info.cls && info.cls.indexOf('addProductRow')!==-1) || info.text.indexOf('Add To List')!==-1){
-            console.log('RN capture click detected', info);
+        if(t.matches && t.matches('#saveSerials')){
+            // determine modal ancestor id
+            var modal = t.closest && t.closest('.modal');
+            var id = modal && modal.id ? modal.id : t.getAttribute('data-modal-id');
+            if(id && typeof window.syncSerialsFromModal === 'function'){
+                try{ window.syncSerialsFromModal(id); }catch(er){ console.warn('saveSerials sync failed', er); }
+            }
         }
     }catch(e){}
 }, true);
 
-// Minimal helpers that do not require jQuery at load time
-window.updateSaleErrorSummary = function(){
-    try{
-        var container = document.getElementById('saleErrorSummary');
-        if(!container) return;
-        var lines = document.querySelectorAll('.invalid-feedback.sale-error');
-    }catch(e){ console.error('updateSaleErrorSummary error', e); }
-};
-
-@include('scripts.purchase-scripts')
-
-// Fill product details into the single-row purchase table (used on Add Purchase page)
-function fillPurchaseProductDetails(productId){
-    try{
-        if(!productId) {
-            // clear row
-            var row = document.querySelector('#productDetails tr');
-            if(row){
-                var inputs = row.querySelectorAll('input');
-                inputs.forEach(function(i){ if(i.type==='number' || i.type==='text') i.value = ''; });
-                var selects = row.querySelectorAll('select'); selects.forEach(function(s){ s.selectedIndex = 0; });
-            }
-            return;
-        }
-
-        var ajaxUrl = '{{ url("product/details") }}/' + productId;
-
-        function applyData(data){
-            try{
-                var row = document.querySelector('#productDetails tr');
-                if(!row) return;
-                var set = function(id, val){ var el = document.getElementById(id); if(el) el.value = (val===undefined||val===null)?'':val; };
-                set('selectProductName', data.productName || data.name || '');
-                set('currentStock', data.currentStock || 0);
-                set('buyPrice', data.buyPrice || data.buyingPrice || '');
-                set('salePriceExVat', data.salePrice || data.salePriceExVat || '');
-                try{ var vat = (data.vatStatus!==undefined? data.vatStatus : (data.vat || '')); var vatEl = document.getElementById('vatStatus'); if(vatEl) { for(var i=0;i<vatEl.options.length;i++){ if(vatEl.options[i].value == vat){ vatEl.selectedIndex = i; break; } } } }catch(_){ }
-                // enable qty
-                var qty = document.getElementById('quantity'); if(qty){ qty.removeAttribute('readonly'); qty.value = qty.value || 1; }
-                // compute total if buyPrice/salePrice present
-                var buy = parseFloat(document.getElementById('buyPrice')?.value || 0);
-                var sale = parseFloat(document.getElementById('salePriceExVat')?.value || 0);
-                var qv = parseFloat(document.getElementById('quantity')?.value || 0);
-                var total = ((sale>0?sale:buy) * (qv || 0)) || 0;
-                var totalEl = document.getElementById('totalAmount'); if(totalEl) totalEl.value = total || '';
-            }catch(e){ console.warn('fillPurchaseProductDetails applyData error', e); }
-        }
-
-        // Prefer jQuery if available, otherwise use fetch
-        if(window.jQuery && typeof window.jQuery.get === 'function'){
-            window.jQuery.get(ajaxUrl, function(data){ applyData(data); }).fail(function(err){ console.warn('product/details fetch failed', err); });
-        } else {
-            fetch(ajaxUrl, {headers: {'X-Requested-With': 'XMLHttpRequest','Accept':'application/json'}, credentials: 'same-origin'})
-                .then(function(res){ if(!res.ok) return {}; return res.json(); })
-                .then(function(data){ applyData(data); })
-                .catch(function(err){ console.warn('product/details fetch failed', err); });
-        }
-    }catch(e){ console.warn('fillPurchaseProductDetails error', e); }
-}
-
-function showToast(title, text, icon){
-    if(window.Swal && typeof Swal.fire === 'function'){
-        Swal.fire({ title: title || '', text: text || '', icon: icon || 'success', timer: 2000, showConfirmButton: false });
-    } else if(window.swal){ try{ window.swal(title || '', text || '', icon || 'success'); } catch(e){ alert((title?title+' - ':'')+(text||'')); } }
-    else { alert((title?title+' - ':'')+(text||'')); }
-}
-
-// Global handler caller usable both with and without jQuery
-window._callHandlerSpec = function(spec, el, evt){
-    if(!spec) return true;
-    try{
-        var raw = String(spec).trim();
-        var m = raw.match(/^([a-zA-Z0-9_.$]+)\s*(?:\((.*)\))?$/);
-        if(!m) return true;
-        var name = m[1];
-        var argsRaw = (m[2]||'').trim();
-        var args = [];
-        if(argsRaw){
-            try{ args = JSON.parse('[' + argsRaw.replace(/'/g,'"') + ']'); }
-            catch(e){ args = argsRaw.split(',').map(function(s){ return s.trim().replace(/^['\"]|['\"]$/g,''); }); }
-        }
-        var obj = window, fn = null; var parts = name.split('.');
-        for(var i=0;i<parts.length;i++){
-            if(obj === undefined || obj === null) break;
-            if(i === parts.length-1){ fn = obj[parts[i]]; }
-            else { obj = obj[parts[i]]; }
-        }
-        if(typeof fn === 'function'){
-            return fn.apply(el, args.concat([evt]));
-        }
-        if(window.RNHandlers && window.RNHandlers[name] && typeof window.RNHandlers[name] === 'function'){
-            return window.RNHandlers[name].apply(el, args.concat([evt]));
-        }
-    }catch(err){ console.error('global handler call error', err); }
-    return true;
-};
-
-// Process any `data-onload` attributes when DOM is ready (works without jQuery)
-(function(){
-    function run(){
-        try{
-            var els = document.querySelectorAll('[data-onload]');
-            els.forEach(function(el){
-                var spec = el.getAttribute('data-onload');
-                if(spec) window._callHandlerSpec(spec, el, null);
-            });
-            // Attach `data-onerror` handlers for elements (e.g. images)
-            var errEls = document.querySelectorAll('[data-onerror]');
-            errEls.forEach(function(el){
-                try{
-                    var spec = el.getAttribute('data-onerror');
-                    if(!spec) return;
-                    // assign to the element's onerror so it fires when resource fails
-                    el.onerror = function(evt){
-                        try{ window._callHandlerSpec(spec, el, evt); }catch(e){ console.error('data-onerror call failed', e); }
-                    };
-                }catch(e){ console.error('attach data-onerror error', e); }
-            });
-            // Attach native change handlers for any product selects so Add Purchase works without jQuery
-            try{
-                var psel = document.querySelectorAll('.js-product-select');
-                psel.forEach(function(s){ s.addEventListener('change', function(){ try{ window.fillPurchaseProductDetails(this.value); }catch(e){ console.warn('fillPurchaseProductDetails call failed', e); } }); });
-            }catch(e){ /* ignore */ }
-            // Native delegated handlers for `data-on*` attributes (works without jQuery)
-            try{
-                ['click','change','keyup','input'].forEach(function(evtName){
-                    document.addEventListener(evtName, function(e){
-                        try{
-                            var target = e.target;
-                            while(target && target.nodeType !== 1) target = target.parentNode;
-                            if(!target) return;
-                            var el = target.closest('[data-on' + evtName + ']');
-                            if(!el) return;
-                            var spec = el.getAttribute('data-on' + evtName);
-                            if(!spec) return;
-                            var res = window._callHandlerSpec(spec, el, e);
-                            if(res === false){ e.preventDefault(); e.stopImmediatePropagation(); return false; }
-                        }catch(err){ console.error('native data-on'+evtName+' handler error', err); }
-                    }, false);
-                });
-            }catch(e){ /* ignore */ }
-        }catch(e){ console.error('data-onload processing error', e); }
-    }
-    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
-})();
-
-// Ensure initial supplier/product state and wire native input listeners for the purchase row
-document.addEventListener('DOMContentLoaded', function(){
-    try{ 
-        // capture original product options so we can restore them after showing a placeholder
-        var prodEl = document.getElementById('productName');
-        if(prodEl && !window._productNameDefaultOptions){ window._productNameDefaultOptions = prodEl.innerHTML; }
-        if(typeof window.actProductList === 'function') window.actProductList(); 
-    }catch(e){}
-    try{
-        var qty = document.getElementById('quantity'); if(qty) qty.addEventListener('input', recalcPurchaseRow);
-        var buy = document.getElementById('buyPrice'); if(buy) buy.addEventListener('input', recalcPurchaseRow);
-        var sale = document.getElementById('salePriceExVat'); if(sale) sale.addEventListener('input', recalcPurchaseRow);
-        // other details listeners
-        var discountStatus = document.getElementById('discountStatus'); if(discountStatus) discountStatus.addEventListener('change', discountType);
-        var discountAmount = document.getElementById('discountAmount'); if(discountAmount) discountAmount.addEventListener('input', discountAmountChange);
-        var discountPercent = document.getElementById('discountPercent'); if(discountPercent) discountPercent.addEventListener('input', discountPercentChange);
-        var paidAmount = document.getElementById('paidAmount'); if(paidAmount) paidAmount.addEventListener('input', dueCalculate);
-    }catch(e){ /* ignore */ }
-    try{
-        // Add button for adding selected product to purchase rows
-        var addBtn = document.getElementById('addProductRow');
-        if(addBtn){
-            addBtn.addEventListener('click', function(){
-                try{
-                    var sel = document.getElementById('productName');
-                    if(!sel) return;
-                    var id = sel.value;
-                    if(!id){ showToast('Error','Please select a product to add','error'); return; }
-                    window.addPurchaseRow(id);
-                }catch(e){ console.warn('addProductRow click', e); }
-            });
-        }
-    }catch(e){}
-});
-
-// Initialize jQuery-dependent bindings when jQuery becomes available
-(function waitForjQuery(){
-    function init(){
-        var $ = window.jQuery;
-        if(!$) return;
-
-        // If earlier a stub queued ready callbacks, run them now via real jQuery
-        try{
-            if(window._queuedJqReadyHandlers && Array.isArray(window._queuedJqReadyHandlers) && window._queuedJqReadyHandlers.length){
-                window._queuedJqReadyHandlers.forEach(function(fn){ try{ $(fn); }catch(e){ console.error('flushing queued ready handler failed', e); } });
-                window._queuedJqReadyHandlers = [];
-            }
-        }catch(e){ /* ignore */ }
-        // jQuery delegated change for .js-product-select (if not already bound)
-        try{ $(document).on('change', '.js-product-select', function(){ try{ var id = $(this).val(); window.fillPurchaseProductDetails(id); }catch(e){ console.warn('js-product-select change handler failed', e); } }); }catch(e){ /* ignore */ }
-
-        // jQuery input handlers for immediate recalculation
-        try{ $(document).on('input', '#quantity, #buyPrice, #salePriceExVat', function(){ try{ recalcPurchaseRow(); }catch(e){} }); }catch(e){ /* ignore */ }
-        // jQuery handlers for other details
-        try{ $(document).on('change', '#discountStatus', function(){ try{ discountType(); }catch(e){} }); }catch(e){}
-        try{ $(document).on('input', '#discountAmount', function(){ try{ discountAmountChange(); }catch(e){} }); }catch(e){}
-        try{ $(document).on('input', '#discountPercent', function(){ try{ discountPercentChange(); }catch(e){} }); }catch(e){}
-        try{ $(document).on('input', '#paidAmount', function(){ try{ dueCalculate(); }catch(e){} }); }catch(e){}
-
-        // Re-bind delegated behavior and handlers
-        $(document).on('click','#saveBrand', function(){ var name = $('#NewBrand').val(); $.get('{{ route('createBrand') }}', { name: name }, function(result){ $('#createBrand').modal('hide'); document.getElementById('brandForm').reset(); $('#brandName').html(result.data); }); });
-
-        $(document).on('click','#add-category', function(){ var name = $('#NewCategory').val(); $.get('{{ route('createCategory') }}', { name: name }, function(result){ $('#categoryModal').modal('hide'); document.getElementById('categoryForm').reset(); $('#categoryName').html(result.data); }); });
-
-        $(document).on('click','#add-productUnit', function(){ var name = $('#productUnitName').val(); $.get('{{ route('createProductUnit') }}', { name: name }, function(result){ $('#productUnitModal').modal('hide'); document.getElementById('productUnitForm').reset(); $('#unit').html(result.data); }); });
-
-        // product row input handlers
-        $(document).on('input', '.product-row .quantity, .product-row .sale-price', function(){ var $row = $(this).closest('.product-row'); if(!$row.length) return; var rowId = $row.attr('id'); var purchaseSelect = $row.find('select[name="purchaseData[]"]'); var pf = purchaseSelect.attr('id'); var bp = $row.find('input[id^="buyPrice"]').attr('id'); var sp = $row.find('input.sale-price').attr('id'); var qtyEl = $row.find('input.quantity').attr('id'); var ts = $row.find('[id^="totalSale"]').attr('id'); var tp = $row.find('[id^="totalPurchase"]').attr('id'); var pm = $row.find('[id^="profitMargin"]').attr('id'); var pt = $row.find('[id^="profitTotal"]').attr('id'); calculateSaleDetails(0, rowId, pf, bp, sp, ts, tp, qtyEl, pm, pt); });
-
-        $(document).on('change', 'select[name="purchaseData[]"]', function(){ try{ var id = $(this).attr('id')||''; var m = id.match(/purchaseData(\d+)/); if(m){ var pid=m[1]; var proField='productField'+pid; var pf='purchaseData'+pid; var bp='buyPrice'+pid; var sp='salePrice'+pid; var ts='totalSale'+pid; var tp='totalPurchase'+pid; var qd='qty'+pid; var pm='profitMargin'+pid; var pt='profitTotal'+pid; purchaseData(pid, proField, pf, bp, sp, ts, tp, qd, pm, pt); } }catch(e){console.error(e);} });
-
-        // other delegated handlers
-        $(document).on('change', '#supplierName', function(){ if(typeof window.actProductList === 'function') window.actProductList(); });
-        $(document).on('change', '#customerName', function(){ if(typeof window.actSaleProduct === 'function') window.actSaleProduct(); });
-        // product select on Add Purchase / Edit Purchase pages
-        $(document).on('change', '.js-product-select', function(){ try{ var id = $(this).val(); window.fillPurchaseProductDetails(id); }catch(e){ console.warn('js-product-select change handler failed', e); } });
-
-        // Generic delegated handler for forms that declare `data-onsubmit`.
-        // Supports `data-onsubmit="confirm"` with `data-confirm` message,
-        // or a handler name registered via `window.RNHandlers`.
-        $(document).on('submit', 'form[data-onsubmit]', function(e){
-            try{
-                var $f = $(this);
-                var handler = $f.data('onsubmit');
-                if(!handler) return true;
-                if(handler === 'confirm'){
-                    var msg = $f.data('confirm') || 'Are you sure?';
-                    if(!confirm(msg)){
-                        e.preventDefault();
-                        return false;
-                    }
-                    return true;
-                }
-                var fn = window.RNHandlers && window.RNHandlers[handler] ? window.RNHandlers[handler] : (window[handler] || null);
-                if(typeof fn === 'function'){
-                    var res = fn.call(this, e);
-                    if(res === false){ e.preventDefault(); return false; }
-                }
-            }catch(err){ console.error('form data-onsubmit handler error', err); }
-        });
-
-        // Use the global `window._callHandlerSpec` (defined earlier) for handler parsing and invocation
-
-        // Delegate click/change/keyup/input from `data-on*` attributes
-        ['click','change','keyup','input'].forEach(function(evtName){
-            $(document).on(evtName, '[data-on' + evtName + ']', function(e){
-                try{
-                    var spec = $(this).attr('data-on' + evtName);
-                    if(!spec) return;
-                        var res = window._callHandlerSpec(spec, this, e);
-                    if(res === false){ e.preventDefault(); e.stopImmediatePropagation(); return false; }
-                }catch(err){ console.error('data-on'+evtName+' handler error', err); }
-            });
-        });
-
-        @include('scripts.product-scripts')
-
-        // register RNHandlers for global functions (deduplicated, idempotent)
-        (function(){
-            var names = ['remove','removeServiceRow','removeSerialField','purchaseData','calculateSaleDetails','totalPriceCalculate','priceCalculation','profitCalculation','discountType','discountAmountChange','discountPercentChange','dueCalculate','serviceSelect','actProductList','actSaleProduct','productSelect','saleProductSelect'];
-            if(!window.RNHandlers || typeof window.RNHandlers.register !== 'function') return;
-            names.forEach(function(n){
-                try{
-                    if(typeof window[n] !== 'function') return;
-                    // avoid re-registering the same function reference
-                    if(window.RNHandlers[n] && window.RNHandlers[n] === window[n]) return;
-                    window.RNHandlers.register(n, window[n]);
-                }catch(e){ /* ignore individual registration errors */ }
-            });
-        })();
-    }
-
-    if (typeof jQuery === 'undefined'){
-        var h = setInterval(function(){ if(typeof jQuery !== 'undefined'){ clearInterval(h); init(); } }, 50);
-    } else { init(); }
-})();
-
-// Lightweight multi-row purchase helpers
-window._purchaseRowCounter = window._purchaseRowCounter || 0;
-window.addPurchaseRow = function(productId){
-    try{
-        // prevent duplicates: if productId already exists in productName[] hidden inputs, skip
-        try{
-            var existingInputs = document.querySelectorAll('input[name="productName[]"]');
-            for(var ei=0; ei<existingInputs.length; ei++){
-                if(String(existingInputs[ei].value) === String(productId)){
-                    showToast('Warning','Product already added to the list','warning');
-                    // clear top selector
-                    try{ var selc = document.getElementById('productName'); if(selc) selc.selectedIndex = 0; }catch(_){ }
-                    return;
-                }
-            }
-        }catch(_){ }
-        window._purchaseRowCounter = (window._purchaseRowCounter || 0) + 1;
-        var idx = window._purchaseRowCounter;
-        var template = document.getElementById('purchase-row-template');
-        if(!template) return;
-        var html = template.innerHTML.replace(/__IDX__/g, idx).replace(/__PRODUCT_ID__/g, productId).replace(/__PRODUCT_NAME__/g, 'Loading...');
-        var tbody = document.getElementById('productDetails');
-        var tmp = document.createElement('tbody'); tmp.innerHTML = html.trim();
-        var tr = tmp.querySelector('tr');
-        if(!tr) return;
-        // append row
-        tbody.appendChild(tr);
-
-        // fetch product details and populate row fields
-        var url = '{{ url("product/details") }}/' + productId;
-        var fillRow = function(data){
-            try{
-                var row = document.querySelector('tr.product-row[data-idx="'+idx+'"]');
-                if(!row) return;
-                var setByName = function(name, val){ var el = row.querySelector('[name="'+name+'"]'); if(el){ el.value = (val===undefined||val===null)?'':val; } };
-                // product name text input
-                var nameInput = row.querySelector('input[name="selectProductName[]"]'); if(nameInput) nameInput.value = data.productName || data.name || '';
-                // current stock
-                var cur = row.querySelector('#currentStock'+idx+'') || row.querySelector('#currentStock__IDX__'.replace('__IDX__', idx));
-                if(cur) cur.value = (data.currentStock || 0);
-                var buy = row.querySelector('#buyPrice'+idx) || row.querySelector('#buyPrice__IDX__'.replace('__IDX__', idx)); if(buy) buy.value = (data.buyPrice || data.buyingPrice || '');
-                var sale = row.querySelector('#salePriceExVat'+idx) || row.querySelector('#salePriceExVat__IDX__'.replace('__IDX__', idx)); if(sale) sale.value = (data.salePrice || data.salePriceExVat || '');
-                // vat status select
-                try{
-                    var vat = (data.vatStatus!==undefined? data.vatStatus : (data.vat || ''));
-                    var vatEl = row.querySelector('#vatStatus'+idx) || row.querySelector('#vatStatus__IDX__'.replace('__IDX__', idx));
-                    if(vatEl){ for(var i=0;i<vatEl.options.length;i++){ if(vatEl.options[i].value == vat){ vatEl.selectedIndex = i; break; } } }
-                }catch(_){ }
-                // recalc total for the row
-                var qtyEl = row.querySelector('.quantity'); if(qtyEl && (!qtyEl.value || qtyEl.value==0)) qtyEl.value = 1;
-                var qty = parseFloat(row.querySelector('.quantity').value || 0) || 0;
-                var buyVal = parseFloat(buy ? buy.value : 0) || 0;
-                var saleVal = parseFloat(sale ? sale.value : 0) || 0;
-                var unit = (saleVal>0? saleVal : buyVal);
-                var total = (unit * qty) || 0;
-                var totalEl = row.querySelector('#totalAmount'+idx) || row.querySelector('#totalAmount__IDX__'.replace('__IDX__', idx)); if(totalEl) totalEl.value = total || '';
-                var profitEl = row.querySelector('#profitMargin'+idx) || row.querySelector('#profitMargin__IDX__'.replace('__IDX__', idx)); if(profitEl){ if(buyVal>0 && saleVal>0){ var profitPercent = (((saleVal*qty) - (buyVal*qty)) / (buyVal*qty) * 100) || 0; profitEl.value = Number(profitPercent.toFixed(2)); } }
-            }catch(e){ console.warn('fillRow error', e); }
-        };
-
-        // Use jQuery if available
-        if(window.jQuery){
-            $.get(url, function(data){ fillRow(data); }).fail(function(){ showToast('Error','Failed to load product details','error'); });
-        } else {
-            fetch(url, {headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}, credentials:'same-origin'}).then(function(res){ if(!res.ok) return {}; return res.json(); }).then(function(data){ fillRow(data); }).catch(function(){ showToast('Error','Failed to load product details','error'); });
-        }
-        // enable discounts area when at least one row exists
-        try{ var ds = document.getElementById('discountStatus'); if(ds) ds.removeAttribute('disabled'); var dam = document.getElementById('discountAmount'); if(dam) dam.removeAttribute('readonly'); var dper = document.getElementById('discountPercent'); if(dper) dper.removeAttribute('readonly'); var paid = document.getElementById('paidAmount'); if(paid) paid.removeAttribute('readonly'); var note = document.getElementById('specialNote'); if(note) note.removeAttribute('readonly'); }catch(e){}
-        // clear the top product select so user can add another easily
-        try{ var sel = document.getElementById('productName'); if(sel) sel.selectedIndex = 0; }catch(e){}
-    }catch(e){ console.warn('addPurchaseRow error', e); }
-};
-
-// remove row handler (delegated binding exists; provide helper)
-document.addEventListener('click', function(e){
-    try{
-        var target = e.target;
-        if(!target) return;
-        if(target && target.id === 'add-serial'){
-            var box = document.getElementById('serialNumberBox'); if(!box) return;
-            var r = document.createElement('div'); r.className='row'; r.innerHTML = '<div class="col-10 mb-3"><input class="form-control" name="serialNumber[]" value="" /></div>'; box.appendChild(r); return;
-        }
-        if(target && target.classList && target.classList.contains('remove-row')){
-            var tr = target.closest('tr'); if(tr) tr.remove();
-        }
-        // open serial modal
-        if(target && target.classList && target.classList.contains('open-serials')){
-            var idx = target.getAttribute('data-idx');
-            if(!idx) return;
-            var modal = document.getElementById('serialModal');
-            if(!modal) return;
-            // set a data attribute to know which row's serials we're editing
-            modal.setAttribute('data-current-idx', idx);
-            // clear modal inputs and populate with any existing hidden serial inputs from the row
-            var box = document.getElementById('serialNumberBox'); if(box) box.innerHTML = '';
-            var row = document.querySelector('tr.product-row[data-idx="'+idx+'"]');
-            if(row){
-                // find existing hidden serial inputs with name starting with serialNumber[idx]
-                var existing = row.querySelectorAll('input[type="hidden"][data-serial]');
-                if(existing && existing.length>0){
-                    existing.forEach(function(h){ var r = document.createElement('div'); r.className='row'; r.innerHTML = '<div class="col-10 mb-3"><input class="form-control" name="serialNumber[]" value="'+(h.value||'')+'" /></div>'; box.appendChild(r); });
-                } else {
-                    var r = document.createElement('div'); r.className='row'; r.innerHTML = '<div class="col-10 mb-3"><input class="form-control" name="serialNumber[]" value="" /></div>'; box.appendChild(r);
-                }
-            }
-            // Show modal: prefer Bootstrap's JS API, fall back to jQuery, otherwise toggle classes
-            try{
-                if(window.bootstrap && window.bootstrap.Modal){
-                    try{ var inst = new window.bootstrap.Modal(modal); inst.show(); }
-                    catch(e){ /* ignore */ }
-                } else if(window.jQuery){
-                    try{ $('#serialModal').modal('show'); }catch(e){}
-                } else {
-                    modal.classList.add('show'); modal.style.display = 'block';
-                }
-            }catch(e){ console.warn('show serial modal failed', e); }
-        }
-    }catch(e){ console.warn('row click handler', e); }
-});
-
-// Vanilla delegated handlers for dynamic elements (mirror jQuery delegated bindings)
-(function(){
-    // product-row inputs: quantity / sale-price -> recalc per-row
-    document.addEventListener('input', function(e){
-        try{
-            var t = e.target;
-            if(!t) return;
-            // single-row purchase inputs
-            if(t.matches && (t.matches('#quantity') || t.matches('#buyPrice') || t.matches('#salePriceExVat'))){
-                try{ recalcPurchaseRow(); }catch(_){}
-            }
-
-            // multi-row product inputs
-            var row = t.closest && t.closest('.product-row');
-            if(row && (t.matches('.quantity') || t.matches('.sale-price') || t.classList && t.classList.contains('sale-price'))){
-                try{
-                    var rowId = row.id || row.getAttribute('data-idx') || '';
-                    var pfEl = row.querySelector('select[name="purchaseData[]"]'); var pf = pfEl ? pfEl.id : '';
-                    var bp = (row.querySelector('input[id^="buyPrice"]')||{}).id || '';
-                    var sp = (row.querySelector('input.sale-price')||row.querySelector('input[id^="salePrice"]')||{}).id || '';
-                    var qd = (row.querySelector('input.quantity')||{}).id || '';
-                    var ts = (row.querySelector('[id^="totalSale"]')||{}).id || '';
-                    var tp = (row.querySelector('[id^="totalPurchase"]')||{}).id || '';
-                    var pm = (row.querySelector('[id^="profitMargin"]')||{}).id || '';
-                    var pt = (row.querySelector('[id^="profitTotal"]')||{}).id || '';
-                    calculateSaleDetails(0, rowId, pf, bp, sp, ts, tp, qd, pm, pt);
-                }catch(err){ console.warn('delegated product-row input handler', err); }
-            }
-        }catch(err){ /* ignore */ }
-    }, true);
-
-    // delegated change handlers
-    document.addEventListener('change', function(e){
-        try{
-            var t = e.target;
-            if(!t) return;
-            // purchaseData select changed
-            if(t.matches && t.matches('select[name="purchaseData[]"]')){
-                try{
-                    var id = t.id || '';
-                    var m = id.match(/purchaseData(\d+)/);
-                    if(m){
-                        var pid = m[1];
-                        var proField = 'productField'+pid;
-                        var pf = 'purchaseData'+pid;
-                        var bp = 'buyPrice'+pid;
-                        var sp = 'salePrice'+pid;
-                        var ts = 'totalSale'+pid;
-                        var tp = 'totalPurchase'+pid;
-                        var qd = 'qty'+pid;
-                        var pm = 'profitMargin'+pid;
-                        var pt = 'profitTotal'+pid;
-                        try{ purchaseData(pid, proField, pf, bp, sp, ts, tp, qd, pm, pt); }catch(e){}
-                    }
-                }catch(e){ console.warn('purchaseData delegated change failed', e); }
-            }
-
-            // product select (js-product-select) - works for dynamic elements
-            if(t.matches && t.matches('.js-product-select')){
-                try{ fillPurchaseProductDetails(t.value); }catch(e){}
-            }
-
-            // supplier/customer change
-            if(t.matches && t.matches('#supplierName')){ try{ if(typeof window.actProductList === 'function') window.actProductList(); }catch(e){} }
-            if(t.matches && t.matches('#customerName')){ try{ if(typeof window.actSaleProduct === 'function') window.actSaleProduct(); }catch(e){} }
-        }catch(err){ /* ignore */ }
-    }, true);
-
-    // small modal save buttons: saveBrand, add-category, add-productUnit
-    document.addEventListener('click', function(e){
-        try{
-            var btn = e.target.closest && e.target.closest('#saveBrand, #add-category, #add-productUnit');
-            if(!btn) return;
-            e.preventDefault();
-            if(btn.id === 'saveBrand'){
-                var nameEl = document.getElementById('NewBrand') || document.getElementById('brandName') || document.getElementById('brandNameModal');
-                var name = nameEl ? (nameEl.value || '') : '';
-                if(!name) return;
-                var url = '{{ route('createBrand') }}';
-                // prefer jQuery
-                if(window.jQuery && typeof window.jQuery.get === 'function'){
-                    window.jQuery.get(url, { name: name }, function(result){ try{ closeModel('createBrand','brandForm'); var forms = document.querySelectorAll('#brandForm'); forms.forEach(function(f){ try{ f.reset(); }catch(_){} }); var targets = document.querySelectorAll('#brand, #brandName, select[name="brand"]'); targets.forEach(function(t){ try{ t.innerHTML = result.data; }catch(_){} }); }catch(e){}});
-                } else {
-                    fetch(url + '?name=' + encodeURIComponent(name), { credentials: 'same-origin', headers: {'X-Requested-With':'XMLHttpRequest'} })
-                        .then(function(r){ return r.json ? r.json() : {}; })
-                        .then(function(result){ try{ closeModel('createBrand','brandForm'); var forms = document.querySelectorAll('#brandForm'); forms.forEach(function(f){ try{ f.reset(); }catch(_){} }); var targets = document.querySelectorAll('#brand, #brandName, select[name="brand"]'); targets.forEach(function(t){ try{ t.innerHTML = result.data; }catch(_){} }); }catch(e){} });
-                }
-            }
-            if(btn.id === 'add-category'){
-                var nameEl = document.getElementById('NewCategory') || document.getElementById('categoryName');
-                var name = nameEl ? (nameEl.value || '') : '';
-                if(!name) return;
-                var url = '{{ route('createCategory') }}';
-                if(window.jQuery && typeof window.jQuery.get === 'function'){
-                    window.jQuery.get(url, { name: name }, function(result){ try{ closeModel('categoryModal','categoryForm'); var forms = document.querySelectorAll('#categoryForm'); forms.forEach(function(f){ try{ f.reset(); }catch(_){} }); var targets = document.querySelectorAll('#categoryList, #categoryName, select[name="category"]'); targets.forEach(function(t){ try{ t.innerHTML = result.data; }catch(_){} }); }catch(e){} });
-                } else {
-                    fetch(url + '?name=' + encodeURIComponent(name), { credentials: 'same-origin', headers: {'X-Requested-With':'XMLHttpRequest'} })
-                        .then(function(r){ return r.json ? r.json() : {}; })
-                        .then(function(result){ try{ closeModel('categoryModal','categoryForm'); var forms = document.querySelectorAll('#categoryForm'); forms.forEach(function(f){ try{ f.reset(); }catch(_){} }); var targets = document.querySelectorAll('#categoryList, #categoryName, select[name="category"]'); targets.forEach(function(t){ try{ t.innerHTML = result.data; }catch(_){} }); }catch(e){} });
-                }
-            }
-            if(btn.id === 'add-productUnit'){
-                var nameEl = document.getElementById('productUnitName');
-                var name = nameEl ? (nameEl.value || '') : '';
-                if(!name) return;
-                var url = '{{ route('createProductUnit') }}';
-                if(window.jQuery && typeof window.jQuery.get === 'function'){
-                    window.jQuery.get(url, { name: name }, function(result){ try{ closeModel('productUnitModal','productUnitForm'); var forms = document.querySelectorAll('#productUnitForm'); forms.forEach(function(f){ try{ f.reset(); }catch(_){} }); var targets = document.querySelectorAll('#unit, #unitName, select[name="unitName"]'); targets.forEach(function(t){ try{ t.innerHTML = result.data; }catch(_){} }); }catch(e){} });
-                } else {
-                    fetch(url + '?name=' + encodeURIComponent(name), { credentials: 'same-origin', headers: {'X-Requested-With':'XMLHttpRequest'} })
-                        .then(function(r){ return r.json ? r.json() : {}; })
-                        .then(function(result){ try{ closeModel('productUnitModal','productUnitForm'); var forms = document.querySelectorAll('#productUnitForm'); forms.forEach(function(f){ try{ f.reset(); }catch(_){} }); var targets = document.querySelectorAll('#unit, #unitName, select[name="unitName"]'); targets.forEach(function(t){ try{ t.innerHTML = result.data; }catch(_){} }); }catch(e){} });
-                }
-            }
-        }catch(e){ console.warn('vanilla delegated small-modal handlers failed', e); }
-    }, true);
-})();
-
-// When serial modal is hidden, copy serial inputs back into the row as hidden inputs
-if(window.jQuery){
-    $(document).on('hidden.bs.modal', '#serialModal', function(){
-        try{
-            var modal = document.getElementById('serialModal'); if(!modal) return;
-            var idx = modal.getAttribute('data-current-idx'); if(!idx) return;
-            var row = document.querySelector('tr.product-row[data-idx="'+idx+'"]'); if(!row) return;
-            // remove old hidden serial inputs
-            var olds = row.querySelectorAll('input[type="hidden"][data-serial]'); olds.forEach(function(o){ o.remove(); });
-            var inputs = document.querySelectorAll('#serialNumberBox input[name="serialNumber[]"]');
-            inputs.forEach(function(inp){ var v = inp.value.trim(); if(v==='') return; var h = document.createElement('input'); h.type='hidden'; h.name = 'serialNumber['+idx+'][]'; h.value = v; h.setAttribute('data-serial','1'); row.appendChild(h); });
-        }catch(e){ console.warn('serial modal hide handler', e); }
-    });
-}
 </script>

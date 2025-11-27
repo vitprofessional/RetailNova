@@ -208,13 +208,13 @@
                 <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="#" method="POST" id="brandForm">
+                <form action="{{ route('createBrand') }}" method="GET" id="brandForm" data-ajax="true" data-target="#brand" data-modal-id="createBrand">
                     @csrf
                     <div class="mb-3">
                         <label for="brandName" class="form-label">Brand Name</label>
-                        <input type="text" class="form-control" id="brandName" name="brandName" placeholder="Enter brand name" />
+                        <input type="text" class="form-control" id="brandName" name="name" placeholder="Enter brand name" />
                     </div>
-                    <button type="button" class="btn btn-primary" id="saveBrand">Save</button>
+                    <button type="submit" class="btn btn-primary" id="saveBrand">Save</button>
                 </form>
             </div>
             <div class="modal-footer">
@@ -233,13 +233,13 @@
                 <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="" method="POST" id="categoryForm">
+                <form action="{{ route('createCategory') }}" method="GET" id="categoryForm" data-ajax="true" data-target="#categoryList" data-modal-id="categoryModal">
                     @csrf
                     <div class="mb-3">
                         <label for="categoryName" class="form-label">Category</label>
-                        <input type="text" class="form-control" id="categoryName" name="categoryName" placeholder="Enter Category name" />
+                        <input type="text" class="form-control" id="categoryName" name="name" placeholder="Enter Category name" />
                     </div>
-                    <button type="button" class="btn btn-primary" id="add-category">Save</button>
+                    <button type="submit" class="btn btn-primary" id="add-category">Save</button>
                 </form>
             </div>
             <div class="modal-footer">
@@ -258,13 +258,13 @@
                 <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="" method="POST" id="productUnitForm">
+                <form action="{{ route('createProductUnit') }}" method="GET" id="productUnitForm" data-ajax="true" data-target="#unitName" data-modal-id="productUnitModal">
                     @csrf
                     <div class="mb-3">
                         <label for="productUnitName" class="form-label">Product Unit</label>
-                        <input type="text" class="form-control" id="productUnitName" name="productUnitName" placeholder="Enter Product Unit name" />
+                        <input type="text" class="form-control" id="productUnitName" name="name" placeholder="Enter Product Unit name" />
                     </div>
-                    <button type="button" class="btn btn-primary" id="add-productUnit">Save</button>
+                    <button type="submit" class="btn btn-primary" id="add-productUnit">Save</button>
                 </form>
             </div>
             <div class="modal-footer">
@@ -279,54 +279,7 @@
 @section('scripts')
     @parent
     <script>
-    window.__jqOnReady(function(){
-        try{
-            $(document).on('click','#saveBrand', function(){
-                var name = $('#brandName').val();
-                $.ajax({
-                    method: 'get',
-                    url: '{{ route('createBrand') }}',
-                    data: { name: name },
-                    contentType: 'html',
-                    success: function(result) {
-                        $('#createBrand').modal('hide');
-                        document.getElementById('brandForm').reset();
-                        $('#brand').html(result.data);
-                    },
-                });
-            });
-
-            $(document).on('click','#add-category', function(){
-                var name = $('#categoryName').val();
-                $.ajax({
-                    method: 'get',
-                    url: '{{ route('createCategory') }}',
-                    data: { name: name },
-                    contentType: 'html',
-                    success: function(result) {
-                        $('#categoryModal').modal('hide');
-                        document.getElementById('categoryForm').reset();
-                        $('#categoryList').html(result.data);
-                    },
-                });
-            });
-
-            $(document).on('click','#add-productUnit', function(){
-                var name = $('#productUnitName').val();
-                $.ajax({
-                    method: 'get',
-                    url: '{{ route('createProductUnit') }}',
-                    data: { name: name },
-                    contentType: 'html',
-                    success: function(result) {
-                        $('#productUnitModal').modal('hide');
-                        document.getElementById('productUnitForm').reset();
-                        $('#unitName').html(result.data);
-                    },
-                });
-            });
-        }catch(e){ console.warn('newProduct scripts failed to init', e); }
-    });
+    // Legacy click handlers removed. Forms are submitted via data-ajax handler in `customScript`.
     </script>
     <style>
     /* Make appended buttons match select height across Bootstrap 4/5 */

@@ -128,12 +128,17 @@
                                 <input type="number" class="form-control sale-price" id="salePriceExVat__IDX__" name="salePriceExVat[]" />
                             </td>
                             <td width="9%">
-                                <select name="vatStatus[]" id="vatStatus__IDX__" class="form-control">
-                                    <option value="">-</option>
-                                </select>
+                                <div class="d-flex align-items-center">
+                                    <div class="form-check mr-2">
+                                        <input type="checkbox" class="form-check-input include-vat" id="includeVat__IDX__" />
+                                        <label class="form-check-label" for="includeVat__IDX__">Yes</label>
+                                    </div>
+                                    <!-- Removed dropdown; use numeric vatPercent input instead -->
+                                    <input type="number" name="vatPercent[]" class="form-control vat-percent" value="10" step="0.01" style="margin-top:0; width:100px;" disabled />
+                                </div>
                             </td>
                             <td width="9%">
-                                <input type="number" class="form-control" id="salePriceInVat__IDX__" name="salePriceInVat[]" readonly />
+                                <input type="number" class="form-control sale-price-inc" id="salePriceInVat__IDX__" name="salePriceInVat[]" readonly />
                             </td>
                             <td width="9%">
                                 <input type="number" class="form-control" id="profitMargin__IDX__" name="profitMargin[]" readonly />
@@ -160,6 +165,20 @@
                         <div class="header-title">
                             <h6 class="card-title">Other Details</h6>
                         </div>
+                        <div class="row mb-3">
+                            <div class="col-md-2">
+                                <div class="form-group form-check">
+                                    <input type="checkbox" id="includeVat" class="form-check-input" />
+                                    <label for="includeVat" class="form-check-label">Include VAT?</label>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="vatPercent" class="form-label">VAT (%)</label>
+                                    <input type="number" id="vatPercent" class="form-control" value="10" min="0" max="100" step="0.01" />
+                                </div>
+                            </div>
+                        </div>
                         <div class="mb-3 table-responsive product-table">
                             <table class="table mb-0 table-bordered rounded-0">
                                 <thead class="bg-white text-uppercase">
@@ -176,29 +195,30 @@
                                 <tbody id="discountDetails">
                                     <tr>
                                         <td>
-                                            <select name="discountStatus" id="discountStatus" data-onchange="discountType()" class="form-control" disabled>
+                                            <select name="discountStatus" id="discountStatus" data-onchange="discountType()" class="form-control">
                                                 <option value="">-</option>
                                                 <option value="1">Amount</option>
                                                 <option value="2">Parcent</option>
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="discountAmount" data-onkeyup="discountAmountChange()" name="discountAmount" readonly />
+                                            <input type="number" class="form-control" id="discountAmount" data-onkeyup="discountAmountChange()" name="discountAmount" />
                                         </td>
                                         <td>
-                                            <input type="text" class="form-control" id="discountPercent" data-onkeyup="discountPercentChange()" name="discountPercent" readonly />
+                                            <input type="text" class="form-control" id="discountPercent" data-onkeyup="discountPercentChange()" name="discountPercent" />
                                         </td>
                                         <td>
                                             <input type="number" class="form-control" id="grandTotal" name="grandTotal" readonly />
+                                            <small class="text-muted">Grand total is calculated from Buy Price × Qty. Sale Price affects profit only.</small>
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" data-onkeyup="dueCalculate()" readonly />
+                                            <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" data-onkeyup="dueCalculate()" />
                                         </td>
                                         <td>
                                             <input type="number" class="form-control" id="dueAmount" name="dueAmount" readonly />
                                         </td>
                                         <td>
-                                            <textarea class="form-control" id="specialNote" name="specialNote" readonly></textarea>
+                                            <textarea class="form-control" id="specialNote" name="specialNote"></textarea>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -238,7 +258,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" data-onclick="resetSerial()" class="btn btn-warning" data-dismiss="modal">Clear</button>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+                    <button type="button" id="saveSerials" class="btn btn-primary" data-dismiss="modal">Save</button>
                     <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
                 </div>
             </div>
@@ -259,7 +279,7 @@
             <div class="modal-body">
                     <div class="card-body">
                 <div class="row">
-                    <form action="#" method="POST" id="supplierForm">
+                    <form action="{{ route('createSupplier') }}" method="GET" id="supplierForm" data-ajax="true" data-target="#supplierName" data-modal-id="supplier">
                         @csrf
                         <div class="row">
                             <div class="col-md-4">
@@ -272,14 +292,14 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Email *</label>
-                                    <input type="email" id="userMail" class="form-control" placeholder="Enter Email" name="mail"    required />
+                                    <input type="email" id="userMail" class="form-control" placeholder="Enter Email" name="email"    required />
                                     <div class="help-block with-errors"></div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Phone Number *</label>
-                                    <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" required />
+                                    <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="phoneNumber" required />
                                     <div class="help-block with-errors"></div>
                                 </div>
                             </div>
@@ -312,7 +332,8 @@
                                 </div>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-primary mr-2" id="add-supplier">Add Supplier</button>
+                        <input type="hidden" name="openingBalance" value="0" />
+                        <button type="submit" class="btn btn-primary mr-2" id="add-supplier">Add Supplier</button>
                         <button type="reset" class="btn btn-danger">Reset</button>
                     </form>
                 </div>
@@ -336,20 +357,20 @@
                     <div class="card-body">
 
                 <div class="row">
-                    <form action="#" method="POST" id="productForm">
+                    <form action="{{ route('createProduct') }}" method="GET" id="productForm" data-ajax="true" data-target="#productName" data-modal-id="newProduct">
                     @csrf
                     <div class="row align-items-center">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Product Name *</label>
-                                <input type="text" class="form-control" placeholder="Enter Name" id="productNameModal" name="productName" required />
+                                <input type="text" class="form-control" placeholder="Enter Name" id="productNameModal" name="fullName" required />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Brand Name *</label>
                                 <label for="brandName" class="form-label"></label>
-                                <select id="brandName" class="form-control" >
+                                <select id="brandName" class="form-control" name="brand">
                                     <!--  form option show proccessing -->
                                     <option value="">Select</option>
                                     @if(!empty($brandList) && count($brandList)>0)
@@ -367,7 +388,7 @@
                             <div class="form-group">
                                 <label>Product Category</label>
                                 <label for="categoryName" class="form-label"></label>
-                                <select id="categoryName" class="form-control" >
+                                <select id="categoryName" class="form-control" name="category">
                                  
                                   <!--  form option show proccessing -->
                                     <option value="">Select</option>
@@ -386,7 +407,7 @@
                             <div class="form-group">
                                 <label>Product Unit</label>
                                 <label for="unit" class="form-label"></label>
-                                <select id="unit" class="form-control" >
+                                <select id="unit" class="form-control" name="unitName">
                                  
                                   <!--  form option show proccessing -->
                                     <option value="">Select</option>
@@ -404,23 +425,23 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="quantityName" class="form-label">Alert Quantity</label>
-                                <input type="text" class="form-control" placeholder="Optional" id="quantityName"  />
+                                <input type="text" class="form-control" placeholder="Optional" id="quantityName" name="quantity" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="detailsName" class="form-label">Deatils</label>
-                                <input type="text" class="form-control" id="detailsName" placeholder="Optional"  />
+                                <input type="text" class="form-control" id="detailsName" name="details" placeholder="Optional"  />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="barCodeNum" class="form-label">Barcode</label>
-                                <input type="text" class="form-control" id="barCodeNum" placeholder="Optional"/>
+                                <input type="text" class="form-control" id="barCodeNum" name="barCode" placeholder="Optional"/>
                             </div>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-primary mt-4 mr-2" id="add-product"> Add Product</button>
+                    <button type="submit" class="btn btn-primary mt-4 mr-2" id="add-product"> Add Product</button>
                     <button type="reset" class="btn btn-danger mt-4 mr-2">Reset</button>
                 </form>
                 </div>
@@ -441,14 +462,13 @@
                 <button type="button" class="btn-close"  data-onclick="closeModel('createBrand','brandForm')" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="#" method="POST" id="brandForm">
+                <form action="{{ route('createBrand') }}" method="GET" id="brandForm" data-ajax="true" data-target="#brandName" data-modal-id="createBrand">
                     @csrf
                     <div class="mb-3">
                         <label for="NewBrand" class="form-label">Brand Name</label>
-                        <input type="text" class="form-control" id="NewBrand" name="NewBrand" placeholder="Enter brand name" />
+                        <input type="text" class="form-control" id="NewBrand" name="name" placeholder="Enter brand name" />
                     </div>
-                  
-                <button type="button" class="btn btn-primary" id="saveBrand">Save</button>
+                <button type="submit" class="btn btn-primary" id="saveBrand">Save</button>
                 </form>
             </div>
             <div class="modal-footer">
@@ -467,13 +487,13 @@
                 <button type="button" class="btn-close"  data-onclick="closeModel('categoryModal','categoryForm')" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="" method="POST" id="categoryForm">
+                <form action="{{ route('createCategory') }}" method="GET" id="categoryForm" data-ajax="true" data-target="#categoryName" data-modal-id="categoryModal">
                     @csrf
                 <div class="mb-3">
                     <label for="NewCategory" class="form-label">Category</label>
-                    <input type="text" class="form-control" id="NewCategory" name="NewCategory" placeholder="Enter Category name" />
+                    <input type="text" class="form-control" id="NewCategory" name="name" placeholder="Enter Category name" />
                 </div>
-                <button type="button" class="btn btn-primary" id="add-category">Save</button>
+                <button type="submit" class="btn btn-primary" id="add-category">Save</button>
                 </form>
             </div>
             <div class="modal-footer">
@@ -493,13 +513,13 @@
                 <button type="button" class="btn-close" data-onclick="closeModel('productUnitModal','productUnitForm')" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="" method="POST" id="productUnitForm">
+                <form action="{{ route('createProductUnit') }}" method="GET" id="productUnitForm" data-ajax="true" data-target="#unit" data-modal-id="productUnitModal">
                     @csrf
                 <div class="mb-3">
                     <label for="productUnitName" class="form-label">Product Unit</label>
-                    <input type="text" class="form-control" id="productUnitName" name="productUnitName" placeholder="Enter Product Unit name" />
+                    <input type="text" class="form-control" id="productUnitName" name="name" placeholder="Enter Product Unit name" />
                 </div>
-                <button type="button" class="btn btn-primary" id="add-productUnit">Save</button>
+                <button type="submit" class="btn btn-primary" id="add-productUnit">Save</button>
                 </form>
             </div>
             <div class="modal-footer">
