@@ -1,12 +1,10 @@
 <!doctype html>
 <html lang="en">
-  
-<!-- Mirrored from templates.iqonic.design/eshop/html/backend/index.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 12 Mar 2025 08:07:13 GMT -->
 <head>
     <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Retail Nova | @yield('backTitle')</title>
+    <title>@yield('title', isset($pageTitle) ? $pageTitle : config('app.name', 'Retail Nova'))</title>
     
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{asset('/public/eshop/')}}/assets/images/favicon.ico" />

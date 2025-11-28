@@ -27,28 +27,38 @@ class JqueryController extends Controller
     public function getProductDetails($id){
         $getData = Product::find($id);
 
-        if($getData):
-            $stockHistory       = ProductStock::where(['productId'=>$getData->id])->get();
-            if(!empty($stockHistory)):
-                $currentStock   = $stockHistory->sum('currentStock');
-            else:
-                $currentStock   = 0;
-            endif;
+        if ($getData) {
+            // total current stock across all stock records for this product
+            $stockHistory = ProductStock::where(['productId' => $getData->id])->get();
+            $currentStock = $stockHistory ? $stockHistory->sum('currentStock') : 0;
 
-            // Get brand information
+            // brand information
             $brand = Brand::find($getData->brand);
             $brandName = $brand ? $brand->name : '';
-
-            // $purchaseHistory = ProductPurchase::where(['productId'=>$getData->id])->get();
-
             $productName = $getData->name;
             $productWithBrand = $productName . ($brandName ? ' - ' . $brandName : '');
-            // $buyingPrice = $getData->purchasePrice;
-            // $productName = $getData->name;
-            return ['productName' => $productWithBrand, 'currentStock' => $currentStock, 'message'=>'Success ! Form successfully subjmit.','id'=> $getData->id];
-        else:
-            return ['productName' => "",'currentStock' =>"", 'message'=>'Error ! There is an error. Please try agin.','id'=>''];
-        endif;    
+
+            // Attempt to return the most-recent purchase row for this product so the frontend
+            // can pre-fill buy/sale prices and VAT status. Fall back to empty values when
+            // no purchase rows exist.
+            $lastPurchase = PurchaseProduct::where('productName', $getData->id)->orderBy('id', 'desc')->first();
+
+            $buyPrice = $lastPurchase ? ($lastPurchase->buyPrice ?? '') : '';
+            $salePrice = $lastPurchase ? ($lastPurchase->salePriceExVat ?? '') : '';
+            $vatStatus = $lastPurchase ? ($lastPurchase->vatStatus ?? '') : '';
+
+            return [
+                'productName'  => $productWithBrand,
+                'currentStock' => $currentStock,
+                'buyPrice'     => $buyPrice,
+                'salePrice'    => $salePrice,
+                'vatStatus'    => $vatStatus,
+                'message'      => 'Success',
+                'id'           => $getData->id
+            ];
+        }
+
+        return ['productName' => '', 'currentStock' => 0, 'buyPrice' => '', 'salePrice' => '', 'vatStatus' => '', 'message' => 'Not found', 'id' => ''];
     }
 
     public function getSaleProductDetails($id){
@@ -179,7 +189,11 @@ class JqueryController extends Controller
                         $purchase->productName      = $pId;
                         $purchase->supplier         = $requ->supplierName;
                         $purchase->purchase_date    = $requ->purchaseDate;
-                        $purchase->invoice          = $requ->get('invoiceData') ? $requ->get('invoiceData') . '-' . substr(uniqid(), -6) : null;
+                        // Keep the invoice value identical for the whole purchase.
+                        // Do not append a per-row suffix — a single invoice string is sufficient.
+                        // If your DB schema enforces a unique constraint on `invoice`, remove it
+                        // or adjust the schema to allow multiple rows with the same invoice.
+                        $purchase->invoice          = $requ->get('invoiceData') ? $requ->get('invoiceData') : null;
                         $purchase->reference        = $requ->get('refData');
                         $purchase->qty              = $qty;
                         $purchase->buyPrice         = isset($buyPrices[$idx]) ? $buyPrices[$idx] : null;
@@ -238,9 +252,10 @@ class JqueryController extends Controller
                     $purchase->productName      = $pName;
                     $purchase->supplier         = $requ->supplierName;
                     $purchase->purchase_date    = $requ->purchaseDate;
-                    // For multi-row purchases, invoice field in schema is unique. Append a short suffix
-                    // so each row has a distinct invoice value while preserving the provided invoiceData.
-                    $purchase->invoice          = $requ->get('invoiceData') ? $requ->get('invoiceData') . '-' . substr(uniqid(), -6) : null;
+                    // Store the provided invoice string unchanged so rows share the same invoice
+                    // for the overall purchase. If a unique DB constraint exists, remove or
+                    // update it to allow same invoice for multiple product rows in a purchase.
+                    $purchase->invoice          = $requ->get('invoiceData') ? $requ->get('invoiceData') : null;
                     $purchase->reference        = $requ->get('refData');
                     $purchase->qty              = $newQty;
                     $tmp = isset($buyPrices[$idx]) ? $buyPrices[$idx] : $purchase->buyPrice;
@@ -332,15 +347,14 @@ class JqueryController extends Controller
                     $qty = isset($quantities[$idx]) ? (int)$quantities[$idx] : 0;
                     if(!$prodId || $qty <= 0) continue; // skip invalid rows
 
-                    // optional duplicate prevention per-row
-                    $existing = PurchaseProduct::where(['productName'=>$prodId, 'qty'=>$qty, 'supplier'=>$requ->supplierName, 'purchase_date'=>$requ->purchaseDate])->first();
-                    if($existing) continue;
+                    // Duplicate prevention removed: always create a purchase row for each submitted line.
 
                     $purchase = new PurchaseProduct();
                     $purchase->productName      = $prodId;
                     $purchase->supplier         = $requ->supplierName;
                     $purchase->purchase_date    = $requ->purchaseDate;
-                    $purchase->invoice          = $requ->get('invoiceData') ? $requ->get('invoiceData') . '-' . substr(uniqid(), -6) : null;
+                    // For create: assign the provided invoice value directly (no per-row suffix)
+                    $purchase->invoice          = $requ->get('invoiceData') ? $requ->get('invoiceData') : null;
                     $purchase->reference        = $requ->get('refData');
                     $purchase->qty              = $qty;
                     $tmp = isset($buyPrices[$idx]) ? $buyPrices[$idx] : null;

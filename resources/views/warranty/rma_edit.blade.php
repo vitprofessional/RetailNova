@@ -1,5 +1,6 @@
 @extends('include')
 
+@section('title')Edit RMA #{{ $rma->id }}@endsection
 @section('backTitle')Edit RMA @endsection
 @section('container')
 <div class="col-12">
@@ -18,6 +19,7 @@
                                 <option value="{{ $c->id }}" @if($rma->customer_id == $c->id) selected @endif>{{ $c->name }}</option>
                             @endforeach
                         </select>
+                        @error('customer_id')<small class="text-danger">{{ $message }}</small>@enderror
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Serial</label>
@@ -40,10 +42,12 @@
                     <div class="col-12 mt-2">
                         <label class="form-label">Reason</label>
                         <input name="reason" value="{{ $rma->reason }}" class="form-control form-control-sm" />
+                        @error('reason')<small class="text-danger">{{ $message }}</small>@enderror
                     </div>
                     <div class="col-12 mt-2">
                         <label class="form-label">Notes</label>
                         <textarea name="notes" class="form-control form-control-sm" rows="4">{{ $rma->notes }}</textarea>
+                        @error('notes')<small class="text-danger">{{ $message }}</small>@enderror
                     </div>
                     <div class="col-12 mt-3">
                         <button class="btn btn-primary">Save</button>

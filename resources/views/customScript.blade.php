@@ -71,6 +71,33 @@ function recalcPurchaseRow(ctx){
             }
         }
 
+        // Compute and set Sale Price (Inc. VAT) for this row using per-row VAT controls only
+        try{
+            var saleIncEl = row.querySelector('.sale-price-inc') || row.querySelector('[id^="salePriceInVat"]');
+            var vatEl = row.querySelector('.vat-percent') || row.querySelector('[id^="vatStatus"]');
+            var incEl = row.querySelector('.include-vat');
+            var vatPct = vatEl ? numVal(vatEl.value) : 0;
+            var includeFlag = false; if(incEl){ if(incEl.type === 'checkbox') includeFlag = !!incEl.checked; else includeFlag = (String(incEl.value) === '1' || String(incEl.value).toLowerCase() === 'yes' || String(incEl.value).toLowerCase() === 'true'); }
+            if(saleIncEl){
+                var saleIncVal = sale;
+                if(includeFlag && vatPct > 0){ saleIncVal = Number((sale * (1 + (vatPct/100))).toFixed(2)); }
+                try{ if('value' in saleIncEl) saleIncEl.value = saleIncVal; else saleIncEl.innerHTML = saleIncVal; }catch(_){ }
+            }
+            // Compute per-row VAT amount and display it as plain text under the VAT input (per user's request)
+            try{
+                var rowVatEl = row.querySelector('.row-vat-amount') || document.getElementById('rowVat__' + (row.getAttribute && row.getAttribute('data-idx') || '0'));
+                var badgeEl = row.querySelector('.vat-badge') || document.getElementById('vatBadge__' + (row.getAttribute && row.getAttribute('data-idx') || '0'));
+                var vatAmount = 0;
+                if(includeFlag && vatPct > 0 && sale > 0 && qty > 0){ vatAmount = sale * qty * (vatPct/100); }
+                if(rowVatEl){ rowVatEl.textContent = vatAmount ? ('VAT: ' + Number(vatAmount.toFixed(2))) : ''; }
+                // Visual highlight and badge
+                try{
+                    if(includeFlag){ row.classList.add('vat-enabled'); if(badgeEl){ badgeEl.style.display = 'inline-block'; badgeEl.title = vatPct ? ('VAT included: ' + vatPct + '%') : 'VAT included'; } }
+                    else { row.classList.remove('vat-enabled'); if(badgeEl){ badgeEl.style.display = 'none'; badgeEl.title = ''; } }
+                }catch(e){}
+            }catch(e){ /* ignore per-row VAT text failures */ }
+        }catch(e){ /* ignore VAT display errors */ }
+
         // Update aggregated totals after row recalc
         updateOtherDetails();
         if(window.__RNDEBUG) console.debug('recalcPurchaseRow end', { qty: qty, buy: buy, sale: sale, total: total });
@@ -192,6 +219,12 @@ document.addEventListener('change', function(e){
             }catch(e){ includeFlag = false; }
 
             var vat = vatEl ? numVal(vatEl.value) : 0;
+            // Visual highlight + badge for include-vat
+            try{
+                var badge = row.querySelector('.vat-badge') || document.getElementById('vatBadge__' + (row.getAttribute && row.getAttribute('data-idx') || '0'));
+                if(includeFlag){ row.classList.add('vat-enabled'); if(badge){ badge.style.display='inline-block'; badge.title = vat ? ('VAT included: '+vat+'%') : 'VAT included'; } }
+                else { row.classList.remove('vat-enabled'); if(badge){ badge.style.display='none'; badge.title = ''; } }
+            }catch(e){}
             // Only convert inclusive price to exclusive when include flag is set and vat > 0
             if(includeFlag && saleInc && saleEx && vat>0){
                 var inc = numVal(saleInc.value);
@@ -325,6 +358,44 @@ document.addEventListener('DOMContentLoaded', function(){
                 });
             }
         }catch(e){ console.warn('failed to bind addProductRow', e); }
+    }catch(e){ /* ignore */ }
+});
+
+// Supplier -> product enabling: keep original product options hidden and enable when supplier selected
+document.addEventListener('DOMContentLoaded', function(){
+    try{
+        var productSelect = document.querySelector('.js-product-select');
+        if(productSelect){
+            // Save original options contained within special markers if present
+            var html = '';
+            var start = document.documentElement.innerHTML.indexOf('<!--product-options-start-->');
+            if(start !== -1){
+                // Fallback: try to extract between markers within the select element text
+                // But simplest: capture any options rendered inside the select now (excluding the placeholder)
+                html = '';
+                Array.prototype.slice.call(productSelect.querySelectorAll('option')).forEach(function(o){ if(o.value) html += o.outerHTML; });
+            }
+            productSelect.dataset.origOptions = html;
+            // Replace current options with the supplier-prompt and disable
+            productSelect.innerHTML = '<option value="">Please select a Supplier First</option>';
+            productSelect.disabled = true;
+        }
+
+        var supplier = document.getElementById('supplierName');
+        if(supplier && productSelect){
+            supplier.addEventListener('change', function(){
+                try{
+                    if(this.value){
+                        // restore original options
+                        if(productSelect.dataset.origOptions && productSelect.dataset.origOptions.length>0) productSelect.innerHTML = productSelect.dataset.origOptions;
+                        productSelect.disabled = false;
+                    } else {
+                        productSelect.innerHTML = '<option value="">Please select a Supplier First</option>';
+                        productSelect.disabled = true;
+                    }
+                }catch(e){ console.warn('supplier change handler', e); }
+            });
+        }
     }catch(e){ /* ignore */ }
 });
 

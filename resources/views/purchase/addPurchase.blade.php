@@ -1,4 +1,15 @@
 @extends('include') @section('backTitle') purchase @endsection @section('container')
+@php
+    // Load currency symbol from BusinessSetup or default to BDT '৳'
+    $__businessSetup = \App\Models\BusinessSetup::orderBy('id','desc')->first();
+    $currencySymbol = ($__businessSetup && $__businessSetup->currencySymbol) ? $__businessSetup->currencySymbol : '৳';
+@endphp
+<style>
+    /* Visual highlight when VAT is enabled for a row */
+    tr.product-row.vat-enabled{ background-color: #fffbe6; }
+    .vat-badge{ display:inline-block; margin-left:6px; padding:2px 6px; font-size:11px; border-radius:3px; background:#17a2b8; color:#fff; }
+    .row-vat-amount{ margin-top:4px; font-size:11px; color:#6c757d; }
+</style>
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -18,7 +29,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="date" class="form-label">Date *</label>
-                                    <input type="date" class="form-control" id="date" name="purchaseDate" required />
+                                    <input type="date" class="form-control" id="date" name="purchaseDate" value="{{ old('purchaseDate', date('Y-m-d')) }}" required />
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -41,24 +52,28 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="invoice" class="form-label">Invoice *</label>
-                                    <input type="text" class="form-control" id="invoice" name="invoiceData" value="{{ $generatedInvoice ?? '' }}" />
+                                    <input type="text" class="form-control" id="invoice" name="invoiceData" value="{{ $generatedInvoice ?? '' }}" readonly placeholder="Auto-generated invoice" />
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="productName" class="form-label">Product *</label>
-                                    <!-- productAdd is used to pick a product to append as a purchase row -->
+                                    <!-- productAdd is used to pick a product to append as a purchase row. Disabled until supplier selected. -->
                                     <select id="productName" name="productAdd" class="form-control js-product-select">
-                                    <!--  form option show proccessing -->
-                                        <option value="">Select</option>
+                                        <option value="">Please select a Supplier First</option>
                                     @if(!empty($productList) && count($productList)>0)
-                                    @foreach($productList as $productData)
                                         @php
-                                            $brand = \App\Models\Brand::find($productData->brand);
-                                            $brandName = $brand ? ' - ' . $brand->name : '';
+                                            // Render product options into a data container so JS can restore them when supplier is chosen
+                                            $productOptions = '';
                                         @endphp
-                                        <option value="{{$productData->id}}">{{$productData->name}}{{$brandName}}</option>
-                                    @endforeach
+                                        @foreach($productList as $productData)
+                                            @php
+                                                $brand = \App\Models\Brand::find($productData->brand);
+                                                $brandName = $brand ? ' - ' . $brand->name : '';
+                                                $productOptions .= '<option value="'. $productData->id .'">'. htmlspecialchars($productData->name . $brandName) .'</option>';
+                                            @endphp
+                                        @endforeach
+                                        {!! '<!--product-options-start-->' . $productOptions . '<!--product-options-end-->' !!}
                                     @endif
                                     </select>
                                 </div>
@@ -73,7 +88,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="reference" class="form-label">Reference *</label>
-                                    <input type="text" class="form-control" id="reference" name="refData" />
+                                    <input type="text" class="form-control" id="reference" name="refData" value="N/A" placeholder="N/A (you can change)" />
                                 </div>
                             </div>
                         </div>
@@ -87,18 +102,18 @@
             <div class="card-body">
                 <div class="mb-3 table-responsive product-table">
                     <table class="table mb-0 table-bordered rounded-0">
-                        <thead class="bg-white text-uppercase">
+                                <thead class="bg-white text-uppercase">
                             <tr>
                                 <th>Product Name</th>
                                 <th>Serial</th>
                                 <th>Purchase Qty</th>
                                 <th>Current Stock</th>
-                                <th>Buy Price</th>
-                                <th>Sale Price(Ex. Vat)</th>
+                                <th>Buy Price ({{ $currencySymbol }})</th>
+                                <th>Sale Price (Ex. VAT) ({{ $currencySymbol }})</th>
                                 <th>Vat Include</th>
-                                <th>Sale Price(Inc. Vat)</th>
+                                <th>Sale Price (Inc. VAT) ({{ $currencySymbol }})</th>
                                 <th>Profit %</th>
-                                <th>Total Price</th>
+                                <th>Total Price ({{ $currencySymbol }})</th>
                             </tr>
                         </thead>
                         <tbody id="productDetails">
@@ -116,43 +131,45 @@
                                 <button type="button" class="btn btn-sm btn-outline-secondary open-serials" data-idx="__IDX__">Serials</button>
                             </td>
                             <td width="9%">
-                                <input type="number" class="form-control quantity" id="quantity__IDX__" name="quantity[]" min="1" step="1" value="1" />
+                                <input type="number" class="form-control quantity" id="quantity__IDX__" name="quantity[]" min="1" step="1" placeholder="Qty" />
                             </td>
                             <td width="9%">
                                 <input type="number" class="form-control current-stock" id="currentStock__IDX__" name="currentStock[]" readonly />
                             </td>
                             <td width="9%">
-                                <input type="number" class="form-control" id="buyPrice__IDX__" name="buyPrice[]" />
+                                <input type="number" class="form-control" id="buyPrice__IDX__" name="buyPrice[]" placeholder="Buy price" />
                             </td>
                             <td width="9%">
-                                <input type="number" class="form-control sale-price" id="salePriceExVat__IDX__" name="salePriceExVat[]" />
+                                <input type="number" class="form-control sale-price" id="salePriceExVat__IDX__" name="salePriceExVat[]" placeholder="Sale price (Ex. VAT)" />
                             </td>
                             <td width="9%">
-                                <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center">
                                     <div class="form-check mr-2">
                                         <input type="checkbox" class="form-check-input include-vat" id="includeVat__IDX__" />
                                         <label class="form-check-label" for="includeVat__IDX__">Yes</label>
                                     </div>
-                                    <!-- Removed dropdown; use numeric vatPercent input instead -->
-                                    <input type="number" name="vatPercent[]" class="form-control vat-percent" value="10" step="0.01" style="margin-top:0; width:100px;" disabled />
+                                    <span class="vat-badge" id="vatBadge__IDX__" style="display:none" title="">VAT</span>
+                                    <!-- Numeric VAT percent per-row. A small readonly text below shows the computed VAT amount for this row. -->
+                                    <div style="display:flex; flex-direction:column;">
+                                        <input type="number" name="vatPercent[]" class="form-control vat-percent" step="0.01" style="margin-top:0; width:100px;" disabled placeholder="%" />
+                                        <div class="small text-muted row-vat-amount" id="rowVat__IDX__"></div>
+                                    </div>
                                 </div>
                             </td>
                             <td width="9%">
-                                <input type="number" class="form-control sale-price-inc" id="salePriceInVat__IDX__" name="salePriceInVat[]" readonly />
+                                <input type="number" class="form-control sale-price-inc" id="salePriceInVat__IDX__" name="salePriceInVat[]" readonly placeholder="Inc. VAT" />
                             </td>
                             <td width="9%">
-                                <input type="number" class="form-control" id="profitMargin__IDX__" name="profitMargin[]" readonly />
+                                <input type="number" class="form-control" id="profitMargin__IDX__" name="profitMargin[]" readonly placeholder="%" />
                             </td>
                             <td width="9%">
-                                <input type="number" class="form-control" id="totalAmount__IDX__" name="totalAmount[]" readonly />
+                                <input type="number" class="form-control" id="totalAmount__IDX__" name="totalAmount[]" readonly placeholder="Total" />
                             </td>
                             <td width="4%">
                                 <button type="button" class="btn btn-danger btn-sm remove-row">Remove</button>
                             </td>
                         </tr>
                     </template>
-                </div>
-                    </table>
                 </div>
             </div>
         </div>
@@ -166,29 +183,18 @@
                             <h6 class="card-title">Other Details</h6>
                         </div>
                         <div class="row mb-3">
-                            <div class="col-md-2">
-                                <div class="form-group form-check">
-                                    <input type="checkbox" id="includeVat" class="form-check-input" />
-                                    <label for="includeVat" class="form-check-label">Include VAT?</label>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="form-group">
-                                    <label for="vatPercent" class="form-label">VAT (%)</label>
-                                    <input type="number" id="vatPercent" class="form-control" value="10" min="0" max="100" step="0.01" />
-                                </div>
-                            </div>
+                            <!-- Global VAT controls removed: VAT is now managed per-row via the 'Vat Include' column and 'VAT %' input on each product row. -->
                         </div>
                         <div class="mb-3 table-responsive product-table">
                             <table class="table mb-0 table-bordered rounded-0">
                                 <thead class="bg-white text-uppercase">
                                     <tr>
                                         <th>Discount Type</th>
-                                        <th>Discount Amount</th>
+                                        <th>Discount Amount ({{ $currencySymbol }})</th>
                                         <th>Discount Parcent</th>
-                                        <th>Grand Total</th>
-                                        <th>Paid Amount</th>
-                                        <th>Due Amount</th>
+                                        <th>Grand Total ({{ $currencySymbol }})</th>
+                                        <th>Paid Amount ({{ $currencySymbol }})</th>
+                                        <th>Due Amount ({{ $currencySymbol }})</th>
                                         <th>Special Note</th>
                                     </tr>
                                 </thead>
@@ -243,23 +249,30 @@
                     <h6 class="modal-title fs-5">New Serial</h6>
                     <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="resetSerial">
+                    <div class="modal-body" id="resetSerial">
                     <div class="p-0">
                         <label for="serialNumber" class="form-label">Serial Number</label>
                     </div>
                     <div id="serialNumberBox">
-                        <div class="row">
-                            <div class="col-10 mb-3">
-                                <input type="" class="form-control" name="serialNumber[]" placeholder="Enter serial number" />
+                        <div class="serial-input-row d-flex mb-3 align-items-center">
+                            <input type="text" class="form-control flex-grow-1" name="serialNumber[]" placeholder="Enter serial number" style="margin-right:12px;" />
+                            <div class="d-flex">
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-serial">Remove</button>
+                                <button type="button" class="btn btn-sm btn-outline-info auto-gen-serial-row" style="margin-left:6px;">Auto</button>
                             </div>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-success btn-sm rounded-0" id="add-serial">Add Serial</button>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" data-onclick="resetSerial()" class="btn btn-warning" data-dismiss="modal">Clear</button>
-                    <button type="button" id="saveSerials" class="btn btn-primary" data-dismiss="modal">Save</button>
-                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                <div class="modal-footer d-flex justify-content-between align-items-center">
+                    <div>
+                        <button type="button" class="btn btn-success btn-sm rounded-0" id="add-serial">Add Serial</button>
+                        <button type="button" class="btn btn-info btn-sm rounded-0" id="autoGenerateSerials" style="margin-left:8px;">Auto Generate Serials</button>
+                    </div>
+                    <div>
+                        <button type="button" data-onclick="resetSerial()" class="btn btn-warning" data-dismiss="modal">Clear</button>
+                        <button type="button" id="saveSerials" class="btn btn-primary" data-dismiss="modal">Save</button>
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                    </div>
                 </div>
             </div>
         </div>

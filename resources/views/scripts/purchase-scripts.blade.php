@@ -14,23 +14,25 @@ function calculateSaleDetails(pid, proField, pf, bp, sp, ts, tp, qd, pm, pt) {
         var profitValue   = totalSale - totalPurchase;
         var profitPercent = totalPurchase > 0 ? Number(((profitValue / totalPurchase) * 100).toFixed(2)) : 0;
 
-        // VAT handling: try per-row vat percent, then global, default 10%
-        var vatPercent = 10;
+        // VAT handling: use per-row vat percent only. Do NOT fall back to global inputs.
+        // Default to 0% when not present so totals in the other-details table are not affected
+        // by a global VAT toggle.
+        var vatPercent = 0;
         try{
             var rowEl = null;
             if(typeof pf === 'string' && pf){ rowEl = document.getElementById(pf); }
-            if(!rowEl) rowEl = document.querySelector('.product-row');
+            if(!rowEl) rowEl = document.querySelector('tr.product-row[data-idx="' + (rowEl ? rowEl.getAttribute('data-idx') : '') + '"]') || document.querySelector('.product-row');
             var perEl = rowEl ? (rowEl.querySelector('.vat-percent') || rowEl.querySelector('[id^="vatStatus"]')) : null;
-            if(!perEl) perEl = document.getElementById('vatPercent') || document.querySelector('.vat-percent-global');
-            if(perEl){ var v = parseFloat(perEl.value); if(!isNaN(v)) vatPercent = v; else { if(perEl.value === '' || perEl.value === null){ try{ perEl.value = 10; }catch(_){} } } }
+            if(perEl){ var v = parseFloat(perEl.value); if(!isNaN(v)) vatPercent = v; }
         }catch(e){}
 
-        // include-VAT flag: per-row .include-vat checkbox or global #includeVat
+        // include-VAT flag: only consider the per-row `.include-vat` checkbox. Do not use the
+        // global `#includeVat` control so the other-details table remains independent.
         var includeVat = false;
         try{
             var incEl = null;
             if(typeof pf === 'string' && pf){ var rowEl2 = document.getElementById(pf); if(rowEl2) incEl = rowEl2.querySelector('.include-vat'); }
-            if(!incEl) incEl = document.querySelector('.product-row .include-vat') || document.getElementById('includeVat');
+            if(!incEl) incEl = document.querySelector('tr.product-row[data-idx] .include-vat') || document.querySelector('.product-row .include-vat');
             if(incEl){ if(incEl.type === 'checkbox' || incEl.type === 'radio') includeVat = !!incEl.checked; else includeVat = (String(incEl.value) === '1' || String(incEl.value).toLowerCase() === 'yes' || String(incEl.value).toLowerCase() === 'true'); }
         }catch(e){}
 
@@ -129,7 +131,13 @@ function purchaseData(pid,proField,pf,bp,sp,ts,tp,qd,pm,pt){
                 var profitValue = totalSale - totalPurchase;
                 var profitPercent = totalPurchase>0? Number(((profitValue/totalPurchase)*100).toFixed(2)):0;
 
-                try{ if(ts) { var el = document.getElementById(ts); if(el) el.innerHTML = totalSale; } if(tp){ var el2 = document.getElementById(tp); if(el2) el2.innerHTML = totalPurchase; } if(sp) { var el3 = document.getElementById(sp); if(el3) el3.value = salePrice; } if(bp){ var el4 = document.getElementById(bp); if(el4) el4.value = buyPrice; } if(pm){ var el5 = document.getElementById(pm); if(el5) el5.innerHTML = profitPercent; } if(pt){ var el6 = document.getElementById(pt); if(el6) el6.innerHTML = profitValue; } }catch(_){ }
+                try{ 
+                    if(ts) { var el = document.getElementById(ts); if(el) el.innerHTML = totalSale; }
+                    if(tp){ var el2 = document.getElementById(tp); if(el2) el2.innerHTML = totalPurchase; }
+                    // Intentionally do NOT auto-fill sale/buy price inputs. Leave these fields for the user to enter.
+                    if(pm){ var el5 = document.getElementById(pm); if(el5) el5.innerHTML = profitPercent; }
+                    if(pt){ var el6 = document.getElementById(pt); if(el6) el6.innerHTML = profitValue; }
+                }catch(_){ }
             }catch(e){ console.warn('purchaseData handleResult error', e); }
         };
 
@@ -168,11 +176,23 @@ function fillPurchaseProductDetails(productId){
                 var set = function(id, val){ var el = document.getElementById(id); if(el) el.value = (val===undefined||val===null)?'':val; };
                 set('selectProductName', data.productName || data.name || '');
                 set('currentStock', data.currentStock || 0);
-                set('buyPrice', data.buyPrice || data.buyingPrice || '');
-                set('salePriceExVat', data.salePrice || data.salePriceExVat || '');
+                // Do NOT auto-fill buyPrice or salePriceExVat here; user will enter prices manually.
+                // Compute and set Sale Price (Inc. VAT) for single-row form when available.
+                // Use only the returned `vatStatus` from the product details; do not use the
+                // global `#vatPercent` or global include checkbox so other details remain independent.
+                try{
+                    var sp = parseFloat(data.salePrice || data.salePriceExVat || 0) || 0;
+                    var vat = (data.vatStatus !== undefined ? data.vatStatus : (data.vat || ''));
+                    var vatPercent = 0;
+                    if(vat !== '' && !isNaN(parseFloat(vat))) vatPercent = parseFloat(vat);
+                    var include = false;
+                    if(vat === '1' || String(vat).toLowerCase() === 'yes' || String(vat).toLowerCase() === 'true') include = true;
+                    var spInc = include ? Number((sp * (1 + (vatPercent/100))).toFixed(2)) : sp;
+                    var spIncEl = document.getElementById('salePriceInVat'); if(spIncEl) spIncEl.value = spInc;
+                }catch(e){}
                 try{ var vat = (data.vatStatus!==undefined? data.vatStatus : (data.vat || '')); var vatEl = document.getElementById('vatStatus'); if(vatEl) { for(var i=0;i<vatEl.options.length;i++){ if(vatEl.options[i].value == vat){ vatEl.selectedIndex = i; break; } } } }catch(_){ }
                 // enable qty
-                var qty = document.getElementById('quantity'); if(qty){ qty.removeAttribute('readonly'); qty.value = qty.value || 1; }
+                var qty = document.getElementById('quantity'); if(qty){ qty.removeAttribute('readonly'); }
                 // compute total if buyPrice/salePrice present
                 var buy = parseFloat(document.getElementById('buyPrice')?.value || 0);
                 var sale = parseFloat(document.getElementById('salePriceExVat')?.value || 0);
@@ -358,6 +378,11 @@ window.addPurchaseRow = function(productId){
                 // Sale price input should not trigger server-side grand total recalculation on Purchase pages.
                 // Only update the per-row calculation (totals/profit) so Grand Total/Due remains based on Buy Price × Qty.
                 if(saleEl){ saleEl.addEventListener('input', function(){ try{ recalcPurchaseRow(this); }catch(e){} }); }
+                // wire VAT controls per-row so toggling VAT immediately updates Inc-VAT and totals
+                var vatChk = row.querySelector('.include-vat');
+                var vatPct = row.querySelector('.vat-percent');
+                if(vatChk){ vatChk.addEventListener('change', function(){ try{ recalcPurchaseRow(this); }catch(e){} }); }
+                if(vatPct){ vatPct.addEventListener('input', function(){ try{ recalcPurchaseRow(this); }catch(e){} }); }
                 if(purchaseSelect){ purchaseSelect.addEventListener('change', function(){
                     try{
                         // recompute ids as some attributes may be set server-side
@@ -379,10 +404,23 @@ window.addPurchaseRow = function(productId){
                 if(!row) return;
                 var nameInput = row.querySelector('input[name="selectProductName[]"]'); if(nameInput) nameInput.value = data.productName || data.name || '';
                 var cur = row.querySelector('#currentStock'+idx) || row.querySelector('#currentStock__IDX__'.replace('__IDX__', idx)); if(cur) cur.value = (data.currentStock || 0);
-                var buy = row.querySelector('#buyPrice'+idx) || row.querySelector('#buyPrice__IDX__'.replace('__IDX__', idx)); if(buy) buy.value = (data.buyPrice || data.buyingPrice || '');
-                var sale = row.querySelector('#salePriceExVat'+idx) || row.querySelector('#salePriceExVat__IDX__'.replace('__IDX__', idx)); if(sale) sale.value = (data.salePrice || data.salePriceExVat || '');
+                var buy = row.querySelector('#buyPrice'+idx) || row.querySelector('#buyPrice__IDX__'.replace('__IDX__', idx));
+                var sale = row.querySelector('#salePriceExVat'+idx) || row.querySelector('#salePriceExVat__IDX__'.replace('__IDX__', idx));
+                // Intentionally do not set buy.value or sale.value from AJAX result. Prices should be entered by user to avoid accidental overrides.
+                // compute sale price including VAT for this row using per-row VAT only
+                try{
+                    var saleVal = parseFloat(sale ? sale.value : 0) || 0;
+                    var vat = (data.vatStatus !== undefined ? data.vatStatus : (data.vat || ''));
+                    var vatPercent = 0;
+                    if(vat !== '' && !isNaN(parseFloat(vat))) vatPercent = parseFloat(vat);
+                    var includeEl = row.querySelector('.include-vat');
+                    var include = false; if(includeEl){ if(includeEl.type === 'checkbox') include = !!includeEl.checked; else include = (String(includeEl.value) === '1' || String(includeEl.value).toLowerCase() === 'yes' || String(includeEl.value).toLowerCase() === 'true'); }
+                    var saleInc = include ? Number((saleVal * (1 + (vatPercent/100))).toFixed(2)) : saleVal;
+                    var spIncEl = row.querySelector('#salePriceInVat'+idx) || row.querySelector('#salePriceInVat__IDX__'.replace('__IDX__', idx)) || row.querySelector('.sale-price-inc');
+                    if(spIncEl){ if('value' in spIncEl) spIncEl.value = saleInc; else spIncEl.innerHTML = saleInc; }
+                }catch(e){}
                 try{ var vat = (data.vatStatus!==undefined? data.vatStatus : (data.vat || '')); var vatEl = row.querySelector('#vatStatus'+idx) || row.querySelector('#vatStatus__IDX__'.replace('__IDX__', idx)); if(vatEl){ for(var i=0;i<vatEl.options.length;i++){ if(vatEl.options[i].value == vat){ vatEl.selectedIndex = i; break; } } } }catch(_){ }
-                var qtyEl = row.querySelector('.quantity'); if(qtyEl && (!qtyEl.value || qtyEl.value==0)) qtyEl.value = 1;
+                var qtyEl = row.querySelector('.quantity'); if(qtyEl) { /* leave blank by default; do not auto-fill */ }
                 var qty = parseFloat(row.querySelector('.quantity').value || 0) || 0;
                 var buyVal = parseFloat(buy ? buy.value : 0) || 0;
                 var saleVal = parseFloat(sale ? sale.value : 0) || 0;
@@ -409,17 +447,141 @@ window.addPurchaseRow = function(productId){
     }catch(e){ console.warn('addPurchaseRow error', e); }
 };
 
+// Helper: create a serial input row (input + per-row Remove + per-row Auto-generate)
+function createSerialRow(value){
+    try{
+        // Use a simple flex layout to avoid grid column wrapping issues inside modal bodies
+        var wrap = document.createElement('div'); wrap.className = 'serial-input-row d-flex mb-3 align-items-center';
+        // input (flex-grow)
+        var inp = document.createElement('input'); inp.className = 'form-control flex-grow-1'; inp.name = 'serialNumber[]'; inp.value = value || ''; inp.placeholder = 'Enter serial number';
+        inp.style.marginRight = '12px';
+        // buttons container
+        var btnGroup = document.createElement('div'); btnGroup.className = 'd-flex';
+        var btnRemove = document.createElement('button'); btnRemove.type='button'; btnRemove.className='btn btn-sm btn-outline-danger remove-serial'; btnRemove.textContent='Remove';
+        var btnAuto = document.createElement('button'); btnAuto.type='button'; btnAuto.className='btn btn-sm btn-outline-info auto-gen-serial-row'; btnAuto.textContent='Auto'; btnAuto.style.marginLeft='6px';
+        btnGroup.appendChild(btnRemove); btnGroup.appendChild(btnAuto);
+        wrap.appendChild(inp); wrap.appendChild(btnGroup);
+        return wrap;
+    }catch(e){
+        console.warn('createSerialRow error', e);
+        var r = document.createElement('div'); r.className='serial-input-row d-flex mb-3';
+        r.innerHTML = '<input class="form-control flex-grow-1" name="serialNumber[]" value="'+(value||'')+'" style="margin-right:12px;" /><div class="d-flex"><button type="button" class="btn btn-sm btn-outline-danger remove-serial">Remove</button><button type="button" class="btn btn-sm btn-outline-info auto-gen-serial-row" style="margin-left:6px;">Auto</button></div>';
+        return r;
+    }
+}
+
+// Helper: build a short product code from product name
+function buildProductCode(name){
+    try{
+        if(!name) return '';
+        // take up to first 4 initials from words or uppercase letters
+        var parts = String(name).trim().split(/[^A-Za-z0-9]+/).filter(Boolean);
+        if(parts.length === 0) return '';
+        var initials = '';
+        for(var i=0;i<parts.length && initials.length<4;i++){
+            initials += parts[i].charAt(0).toUpperCase();
+        }
+        if(initials.length < 2){ initials = (String(name).replace(/[^A-Za-z0-9]/g,'').slice(0,3) || initials).toUpperCase(); }
+        return initials;
+    }catch(e){ return '';} 
+}
+
 // remove row handler (delegated binding exists; provide helper)
 document.addEventListener('click', function(e){
     try{
         var target = e.target;
         if(!target) return;
+        // per-row remove serial input button
+        if(target && target.classList && target.classList.contains('remove-serial')){
+            try{ var serialRow = target.closest('.serial-input-row') || target.closest('.row'); if(serialRow) serialRow.parentNode.removeChild(serialRow); }catch(e){}
+            return;
+        }
+
+        // per-row auto-generate single serial input
+        if(target && target.classList && target.classList.contains('auto-gen-serial-row')){
+            try{
+                var serialRow = target.closest('.serial-input-row') || target.closest('.row');
+                if(!serialRow) return;
+                var inp = serialRow.querySelector('input[name="serialNumber[]"]');
+                var modal = document.getElementById('serialModal');
+                var idx = modal ? modal.getAttribute('data-current-idx') : '';
+                        // Professional serial format: <PROD>-YYYYMMDD-<ROW>-<NNNN>
+                        var row = document.querySelector('tr.product-row[data-idx="'+(idx||'')+'"]');
+                        var prodName = '';
+                        try{ if(row) prodName = (row.querySelector('input[name="selectProductName[]"]')||{}).value || ''; }catch(e){}
+                        var prodCode = buildProductCode(prodName) || ('P'+(idx||'0'));
+                        var dt = new Date();
+                        var ymd = dt.getFullYear().toString() + String(dt.getMonth()+1).padStart(2,'0') + String(dt.getDate()).padStart(2,'0');
+                        var rnd = Math.floor(Math.random()*9999)+1;
+                        var seq = String(rnd).padStart(4,'0');
+                        var code = (prodCode + '-' + ymd + '-' + (idx||'0') + '-' + seq).toUpperCase();
+                        if(inp) inp.value = code;
+            }catch(e){}
+            return;
+        }
+
         if(target && target.id === 'add-serial'){
             var box = document.getElementById('serialNumberBox'); if(!box) return;
-            var r = document.createElement('div'); r.className='row'; r.innerHTML = '<div class="col-10 mb-3"><input class="form-control" name="serialNumber[]" value="" /></div>'; box.appendChild(r); return;
+            var r = createSerialRow(''); box.appendChild(r); return;
+        }
+        if(target && target.id === 'autoGenerateSerials'){
+            var modal = document.getElementById('serialModal'); if(!modal) return;
+            var idx = modal.getAttribute('data-current-idx'); if(!idx) { alert('Row not found'); return; }
+            var row = document.querySelector('tr.product-row[data-idx="'+idx+'"]');
+            if(!row){ alert('Product row not found'); return; }
+            var qtyEl = row.querySelector('.quantity');
+            var qty = qtyEl ? (parseInt(qtyEl.value) || 0) : 0;
+            if(qty <= 0){ try{ showToast && showToast('Warning','Please enter a valid quantity for this row before auto-generating serials','warning'); }catch(e){ alert('Please enter a valid quantity for this row before auto-generating serials'); } return; }
+            // generate serials and populate modal inputs
+            var box = document.getElementById('serialNumberBox'); if(!box) return; box.innerHTML = '';
+            // Use professional uppercase format: <PROD>-YYYYMMDD-<ROW>-<SEQ>
+            var prodName = '';
+            try{ prodName = (row.querySelector('input[name="selectProductName[]"]')||{}).value || ''; }catch(e){}
+            var prodCode = buildProductCode(prodName) || ('P'+idx);
+            var dt = new Date();
+            var ymd = dt.getFullYear().toString() + String(dt.getMonth()+1).padStart(2,'0') + String(dt.getDate()).padStart(2,'0');
+            for(var i=1;i<=qty;i++){
+                try{
+                    var code = (prodCode + '-' + ymd + '-' + idx + '-' + String(i).padStart(4,'0')).toUpperCase();
+                    var r = createSerialRow(code);
+                    box.appendChild(r);
+                }catch(e){}
+            }
+            return;
         }
         if(target && target.classList && target.classList.contains('remove-row')){
-            var tr = target.closest('tr'); if(tr) tr.remove();
+            var tr = target.closest('tr');
+            if(!tr) return;
+
+            var doRemove = function(){
+                try{ tr.remove(); }catch(e){}
+                try{ if(typeof updateTotalsClientSide === 'function') updateTotalsClientSide(); }catch(e){}
+                try{ if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); }catch(e){}
+                try{
+                    var rows = document.querySelectorAll('tr.product-row');
+                    if(!rows || rows.length === 0){
+                        var ds = document.getElementById('discountStatus'); if(ds) ds.setAttribute('disabled','disabled');
+                        var dam = document.getElementById('discountAmount'); if(dam) dam.setAttribute('readonly','readonly');
+                        var dper = document.getElementById('discountPercent'); if(dper) dper.setAttribute('readonly','readonly');
+                        var paid = document.getElementById('paidAmount'); if(paid) paid.setAttribute('readonly','readonly');
+                        var note = document.getElementById('specialNote'); if(note) note.setAttribute('readonly','readonly');
+                    }
+                }catch(e){}
+            };
+
+            // Prefer SweetAlert2 (Swal.fire) or older swal if available, otherwise fallback to confirm()
+            try{
+                if(window.Swal && typeof window.Swal.fire === 'function'){
+                    window.Swal.fire({ title: 'Remove row', text: 'Are you sure you want to remove this product row?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Remove', cancelButtonText: 'Cancel' })
+                        .then(function(result){ if(result && result.isConfirmed){ doRemove(); } });
+                } else if(window.swal && typeof window.swal === 'function'){
+                    // some versions expose swal as a function returning a promise
+                    try{ window.swal({ title: 'Remove row', text: 'Are you sure you want to remove this product row?', icon: 'warning', buttons: true }).then(function(ok){ if(ok) doRemove(); }); }
+                    catch(e){ if(confirm('Remove this row?')) doRemove(); }
+                } else {
+                    if(confirm('Remove this row?')) doRemove();
+                }
+            }catch(e){ if(confirm('Remove this row?')) doRemove(); }
         }
         // open serial modal
         if(target && target.classList && target.classList.contains('open-serials')){
@@ -436,9 +598,9 @@ document.addEventListener('click', function(e){
                 // find existing hidden serial inputs with name starting with serialNumber[idx]
                 var existing = row.querySelectorAll('input[type="hidden"][data-serial]');
                 if(existing && existing.length>0){
-                    existing.forEach(function(h){ var r = document.createElement('div'); r.className='row'; r.innerHTML = '<div class="col-10 mb-3"><input class="form-control" name="serialNumber[]" value="'+(h.value||'')+'" /></div>'; box.appendChild(r); });
+                    existing.forEach(function(h){ box.appendChild(createSerialRow(h.value||'')); });
                 } else {
-                    var r = document.createElement('div'); r.className='row'; r.innerHTML = '<div class="col-10 mb-3"><input class="form-control" name="serialNumber[]" value="" /></div>'; box.appendChild(r);
+                    box.appendChild(createSerialRow(''));
                 }
             }
             // Show modal: prefer Bootstrap's JS API, fall back to jQuery, otherwise toggle classes
@@ -470,3 +632,41 @@ if(window.jQuery){
         }catch(e){ console.warn('serial modal hide handler', e); }
     });
 }
+
+// Client-side validation for Add Purchase form
+(function(){
+    try{
+        var onDom = function(){
+            var form = document.getElementById('savePurchase');
+            if(!form) return;
+            form.addEventListener('submit', function(e){
+                try{
+                    // Ensure supplier selected
+                    var supplier = document.getElementById('supplierName');
+                    if(!supplier || !supplier.value){ e.preventDefault(); alert('Please select a Supplier before saving the purchase.'); supplier && supplier.focus(); return false; }
+
+                    // Ensure at least one product row exists
+                    var rows = document.querySelectorAll('tr.product-row');
+                    if(!rows || rows.length === 0){ e.preventDefault(); alert('Please add at least one product to the purchase.'); return false; }
+
+                    // Validate each row
+                    for(var i=0;i<rows.length;i++){
+                        var r = rows[i];
+                        var prod = r.querySelector('input[name="productName[]"]');
+                        var qty = r.querySelector('.quantity');
+                        var buy = r.querySelector('[id^="buyPrice"]') || r.querySelector('input[name="buyPrice[]"]');
+                        var rowNum = i+1;
+                        if(!prod || !prod.value){ e.preventDefault(); alert('Row '+rowNum+': product not set. Please select a product.'); prod && prod.focus(); return false; }
+                        var qv = qty ? Number(qty.value) : 0;
+                        if(!qty || isNaN(qv) || qv <= 0){ e.preventDefault(); alert('Row '+rowNum+': please enter a valid quantity (>0).'); qty && qty.focus(); return false; }
+                        if(!buy || buy.value === '' || isNaN(Number(buy.value))){ e.preventDefault(); alert('Row '+rowNum+': please enter the Buy Price.'); buy && buy.focus(); return false; }
+                    }
+
+                    // All client checks passed; allow submit to proceed
+                    return true;
+                }catch(err){ console.warn('Purchase form validation error', err); }
+            });
+        };
+        if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onDom); else onDom();
+    }catch(e){ console.warn('purchase form validation setup failed', e); }
+})();

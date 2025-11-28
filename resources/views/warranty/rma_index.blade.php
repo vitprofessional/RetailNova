@@ -1,5 +1,6 @@
 @extends('include')
 
+@section('title','Warranty - RMA list')
 @section('backTitle')Warranty - RMA list @endsection
 @section('container')
 <div class="col-12">

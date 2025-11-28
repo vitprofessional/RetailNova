@@ -20,11 +20,9 @@ return new class extends Migration {
             throw new \RuntimeException('Duplicate invoices detected; resolve before applying unique indexes.');
         }
 
-        Schema::table('purchase_products', function (Blueprint $table) {
-            if (!self::indexExists('purchase_products','purchase_products_invoice_unique')) {
-                $table->unique('invoice','purchase_products_invoice_unique');
-            }
-        });
+        // Do not create a unique index on purchase_products.invoice because purchase rows
+        // may intentionally share a single invoice across multiple product lines.
+        // Keep unique index creation for sales (sale_products) only.
         Schema::table('sale_products', function (Blueprint $table) {
             if (!self::indexExists('sale_products','sale_products_invoice_unique')) {
                 $table->unique('invoice','sale_products_invoice_unique');
@@ -34,11 +32,8 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('purchase_products', function (Blueprint $table) {
-            if (self::indexExists('purchase_products','purchase_products_invoice_unique')) {
-                $table->dropUnique('purchase_products_invoice_unique');
-            }
-        });
+        // Only remove the sale_products unique invoice index in rollback. We do not
+        // touch purchase_products here as the project allows shared invoices per purchase.
         Schema::table('sale_products', function (Blueprint $table) {
             if (self::indexExists('sale_products','sale_products_invoice_unique')) {
                 $table->dropUnique('sale_products_invoice_unique');

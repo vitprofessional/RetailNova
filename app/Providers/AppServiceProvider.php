@@ -47,5 +47,61 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive('currency', function ($expression) {
             return "<?php echo number_format($expression, 2); ?>";
         });
+
+        // Share a computed page title (route-based) with all views. Views may override
+        // by defining `@section('title', 'Custom')` in the template.
+        try {
+            if (!app()->runningInConsole()) {
+                view()->composer('*', function ($view) {
+                    $routeName = null;
+                    try {
+                        $routeName = \Illuminate\Support\Facades\Route::currentRouteName();
+                    } catch (\Throwable $e) {
+                        $routeName = null;
+                    }
+
+                    $titles = config('page-titles', []);
+                    $page = null;
+
+                    if ($routeName && !empty($titles['routes'][$routeName])) {
+                        $page = $titles['routes'][$routeName];
+                    }
+
+                    // patterns: fnmatch against request path
+                    if (!$page && !empty($titles['patterns']) && request()) {
+                        $path = ltrim(request()->path(), '/');
+                        foreach ($titles['patterns'] as $pattern => $t) {
+                            if (@fnmatch($pattern, $path)) { $page = $t; break; }
+                        }
+                    }
+
+                    // fallback: humanize route name or path
+                    if (!$page) {
+                        if ($routeName) {
+                            // Replace dots/underscores/hyphens with spaces and split camelCase
+                            $human = preg_replace('/[._-]+/', ' ', $routeName);
+                            $human = preg_replace('/([a-z])([A-Z])/', '$1 $2', $human);
+                            $human = preg_replace('/\s+/', ' ', trim($human));
+                            $page = ucwords(strtolower($human));
+                        } else {
+                            $p = trim(request() ? request()->path() : '', '/');
+                            if ($p === '') {
+                                $page = 'Dashboard';
+                            } else {
+                                $human = preg_replace('/[\/_-]+/', ' ', $p);
+                                $human = preg_replace('/([a-z])([A-Z])/', '$1 $2', $human);
+                                $human = preg_replace('/\s+/', ' ', trim($human));
+                                $page = ucwords(strtolower($human));
+                            }
+                        }
+                    }
+
+                    $brand = config('app.name', 'Retail Nova');
+                    $view->with('pageTitle', $brand . ' | ' . $page);
+                });
+            }
+        } catch (\Throwable $e) {
+            // if anything fails during boot (migrations, tests) do not crash
+        }
     }
 }

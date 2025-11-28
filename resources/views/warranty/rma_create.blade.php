@@ -1,5 +1,6 @@
 @extends('include')
 
+@section('title','New RMA')
 @section('backTitle')New RMA @endsection
 @section('container')
 <div class="col-12">
@@ -17,16 +18,17 @@
                                 <option value="{{ $c->id }}">{{ $c->name }}</option>
                             @endforeach
                         </select>
+                        @error('customer_id')<small class="text-danger">{{ $message }}</small>@enderror
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Serial</label>
-                        <input list="serialsList" id="serialInput" class="form-control form-control-sm" placeholder="Type to search serial..." />
+                        <input list="serialsList" name="serial_display" id="serialInput" class="form-control form-control-sm" value="{{ old('serial_display') }}" placeholder="Type to search serial..." />
                         <datalist id="serialsList">
                             @foreach($serials as $s)
                                 <option data-id="{{ $s->id }}" value="{{ $s->serialNumber ?? $s->serial ?? $s->serial_number }}"></option>
                             @endforeach
                         </datalist>
-                        <input type="hidden" name="product_serial_id" id="product_serial_id" />
+                        <input type="hidden" name="product_serial_id" id="product_serial_id" value="{{ old('product_serial_id') }}" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Status</label>
@@ -40,10 +42,12 @@
                     <div class="col-12 mt-2">
                         <label class="form-label">Reason</label>
                         <input name="reason" class="form-control form-control-sm" />
+                        @error('reason')<small class="text-danger">{{ $message }}</small>@enderror
                     </div>
                     <div class="col-12 mt-2">
                         <label class="form-label">Notes</label>
                         <textarea name="notes" class="form-control form-control-sm" rows="4"></textarea>
+                        @error('notes')<small class="text-danger">{{ $message }}</small>@enderror
                     </div>
                     <div class="col-12 mt-3">
                         <button class="btn btn-primary">Create</button>
@@ -54,44 +58,98 @@
         </div>
     </div>
 </div>
+@endsection
 @section('scripts')
     @parent
     <script>
-        // wire the datalist selection to set hidden product_serial_id via AJAX lookup
-        window.__jqOnReady(function(){
+        (function(){
+            // Robust serial input handling: prefer local datalist lookup, fallback to AJAX/fetch.
             try{
-                var $input = $('#serialInput');
-                var $hidden = $('#product_serial_id');
-                var timer = null;
-                $input.on('input', function(){
-                    var v = $(this).val();
-                    $hidden.val('');
-                    if(timer) clearTimeout(timer);
-                    timer = setTimeout(function(){
-                        if(!v) return;
-                        $.get('{{ url('/ajax/serials') }}', { q: v }, function(res){
-                            var list = $('#serialsList'); list.empty();
-                            if(res && res.length){
-                                res.forEach(function(it){
-                                    var opt = $('<option/>').attr('data-id', it.id).val(it.serialNumber);
-                                    list.append(opt);
-                                });
-                            }
-                        });
-                    }, 250);
-                });
+                var serialInput = document.getElementById('serialInput');
+                var serialHidden = document.getElementById('product_serial_id');
+                var datalist = document.getElementById('serialsList');
+                var debounceTimer = null;
 
-                $input.on('change', function(){
-                    var v = $(this).val();
-                    if(!v) return;
-                    $.get('{{ url('/ajax/serials') }}', { q: v }, function(res){
-                        if(res && res.length){
-                            var found = res.find(function(x){ return x.serialNumber === v; }) || res[0];
-                            if(found) $hidden.val(found.id);
+                function clearHidden(){ if(serialHidden) serialHidden.value = ''; }
+
+                function setHiddenFromDatalist(value){
+                    if(!datalist) return false;
+                    var opts = datalist.querySelectorAll('option');
+                    for(var i=0;i<opts.length;i++){
+                        if(opts[i].value === value){
+                            var id = opts[i].getAttribute('data-id') || opts[i].getAttribute('data-id');
+                            if(id && serialHidden) serialHidden.value = id;
+                            return true;
                         }
+                    }
+                    return false;
+                }
+
+                function fetchSerials(q){
+                    var url = '{{ url('/ajax/serials') }}?q=' + encodeURIComponent(q);
+                    // prefer fetch
+                    return fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                        .then(function(res){ if(!res.ok) throw new Error('Network response not ok'); return res.json(); });
+                }
+
+                function populateDatalist(items){
+                    if(!datalist) return;
+                    // remove existing options
+                    while(datalist.firstChild) datalist.removeChild(datalist.firstChild);
+                    items.forEach(function(it){
+                        var opt = document.createElement('option');
+                        opt.value = it.serialNumber || it.serial || it.serial_number || '';
+                        opt.setAttribute('data-id', it.id || '');
+                        datalist.appendChild(opt);
                     });
-                });
-            }catch(e){ console.warn('rma_create script failed', e); }
-        });
+                }
+
+                function onInput(){
+                    var v = serialInput.value || '';
+                    clearHidden();
+                    if(debounceTimer) clearTimeout(debounceTimer);
+                    if(!v) return;
+                    // If we can find exact match in datalist, use it immediately
+                    if(setHiddenFromDatalist(v)) return;
+
+                    debounceTimer = setTimeout(function(){
+                        fetchSerials(v).then(function(res){
+                            if(Array.isArray(res) && res.length){
+                                populateDatalist(res);
+                                // try again to set hidden from freshly populated datalist
+                                setHiddenFromDatalist(v);
+                            }
+                        }).catch(function(e){ console.warn('serial lookup failed', e); });
+                    }, 250);
+                }
+
+                function onChange(){
+                    var v = serialInput.value || '';
+                    if(!v) return;
+                    if(setHiddenFromDatalist(v)) return;
+                    fetchSerials(v).then(function(res){
+                        if(Array.isArray(res) && res.length){
+                            // if exact match exists, set id; otherwise pick first
+                            var found = res.find(function(x){ return (x.serialNumber || x.serial || x.serial_number) === v; }) || res[0];
+                            if(found && serialHidden) serialHidden.value = found.id;
+                            populateDatalist(res);
+                        }
+                    }).catch(function(e){ console.warn('serial lookup failed', e); });
+                }
+
+                // restore hidden + text value from old() after validation redirect
+                try{
+                    var oldHidden = "{{ old('product_serial_id') }}";
+                    var oldSerialText = "{{ old('serial_display') }}";
+                    if(oldHidden && serialHidden) serialHidden.value = oldHidden;
+                    if(oldSerialText && serialInput) serialInput.value = oldSerialText;
+                }catch(e){}
+
+                if(serialInput){
+                    serialInput.addEventListener('input', onInput, { passive: true });
+                    serialInput.addEventListener('change', onChange);
+                }
+            }catch(err){ console.warn('rma_create script failed', err); }
+        })();
     </script>
 @endsection

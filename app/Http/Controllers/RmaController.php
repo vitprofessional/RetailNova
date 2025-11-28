@@ -36,15 +36,22 @@ class RmaController extends Controller
 
     public function store(Request $request)
     {
+        $validStatuses = ['open','in_progress','resolved','closed'];
         $data = $request->validate([
             'customer_id' => 'nullable|exists:customers,id',
             'product_serial_id' => 'nullable|exists:product_serials,id',
             'reason' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
-            'status' => 'nullable|string',
+            'status' => ['nullable','string','in:' . implode(',', $validStatuses)],
         ]);
 
         $data['created_by'] = Auth::id() ?: null;
+
+        // If status is resolved/closed but no resolved_at provided, set resolved_at now
+        if (isset($data['status']) && in_array($data['status'], ['resolved','closed']) && empty($data['resolved_at'])) {
+            $data['resolved_at'] = now();
+        }
+
         $rma = Rma::create($data);
 
         return redirect()->route('rma.index')->with('success', 'RMA created');
@@ -61,14 +68,20 @@ class RmaController extends Controller
     public function update(Request $request, $id)
     {
         $rma = Rma::findOrFail($id);
+        $validStatuses = ['open','in_progress','resolved','closed'];
         $data = $request->validate([
             'customer_id' => 'nullable|exists:customers,id',
             'product_serial_id' => 'nullable|exists:product_serials,id',
             'reason' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
-            'status' => 'nullable|string',
+            'status' => ['nullable','string','in:' . implode(',', $validStatuses)],
             'resolved_at' => 'nullable|date',
         ]);
+
+        // If status moved to resolved/closed and resolved_at isn't set, mark resolved_at
+        if (isset($data['status']) && in_array($data['status'], ['resolved','closed']) && empty($data['resolved_at'])) {
+            $data['resolved_at'] = now();
+        }
 
         $rma->update($data);
         return redirect()->route('rma.index')->with('success', 'RMA updated');
