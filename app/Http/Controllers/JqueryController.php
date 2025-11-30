@@ -164,16 +164,65 @@ class JqueryController extends Controller
      */
     public function getProductsForCustomerPublic($customerId)
     {
-        // For now return all products; we keep the response identical to the
-        // authenticated version for simplicity.
-        $products = Product::orderBy('name','asc')->get();
+        // Return ALL purchase rows so the sale product dropdown can list each
+        // purchase separately (even when the same product was purchased from
+        // the same supplier multiple times). This helps users pick the exact
+        // purchase row (purchase_products.id) and ensures stock and pricing
+        // are accurate per purchase.
+        $rows = \App\Models\PurchaseProduct::join('suppliers','purchase_products.supplier','suppliers.id')
+            ->join('products','purchase_products.productName','products.id')
+            ->leftJoin('product_stocks','product_stocks.purchaseId','purchase_products.id')
+            ->select(
+                'purchase_products.id as purchaseId',
+                'products.id as productId',
+                'products.name as productName',
+                'purchase_products.buyPrice',
+                'purchase_products.salePriceExVat',
+                'suppliers.name as supplierName',
+                'product_stocks.currentStock as currentStock')
+            ->orderBy('purchase_products.id','desc')
+            ->get();
 
         $options = '<option value="">Select</option>';
-        foreach ($products as $p) {
-            $options .= '<option value="'.$p->id.'">'.htmlspecialchars($p->name).'</option>';
+        foreach ($rows as $r) {
+            // Use a purchase-specific value prefix so the frontend can detect
+            // that this option represents a purchase row rather than a product id.
+            $val = 'purchase_' . $r->purchaseId;
+            $label = htmlspecialchars($r->productName . ' — ' . ($r->supplierName ?: 'Unknown') . ' (Stock: ' . ($r->currentStock ?: 0) . ')');
+            $options .= '<option value="'.$val.'" data-purchase-id="'.$r->purchaseId.'">'.$label.'</option>';
         }
 
         return response()->json(['data' => $options]);
+    }
+
+    /**
+     * Public endpoint to return a single purchase row by purchase id.
+     * Used when the product dropdown option targets a specific purchase record.
+     */
+    public function getPurchaseDetailsPublic($id)
+    {
+        try{
+            $p = PurchaseProduct::where('purchase_products.id', $id)
+                ->join('products','purchase_products.productName','products.id')
+                ->join('suppliers','purchase_products.supplier','suppliers.id')
+                ->leftJoin('product_stocks','product_stocks.purchaseId','purchase_products.id')
+                ->select(
+                    'purchase_products.id as purchaseId',
+                    'products.id as productId',
+                    'products.name as productName',
+                    'purchase_products.buyPrice',
+                    'purchase_products.salePriceExVat',
+                    'purchase_products.vatStatus',
+                    'suppliers.name as supplierName',
+                    'product_stocks.currentStock as currentStock'
+                )->first();
+
+            if(!$p) return response()->json(['status'=>'ok','getData'=>[]]);
+            return response()->json(['status'=>'ok','getData'=>[$p]]);
+        }catch(\Throwable $e){
+            \Log::warning('getPurchaseDetailsPublic error: '.$e->getMessage(), ['id'=>$id]);
+            return response()->json(['status'=>'error','getData'=>[]],500);
+        }
     }
     /**
      * Public variant of getProductDetails used by sale/damage pages to avoid auth redirects.

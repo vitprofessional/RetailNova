@@ -112,7 +112,7 @@
                             </tr>
                         </thead>
                         <tbody id="productDetails">
-                            <tr>
+                            <tr class="product-row" data-idx="{{ $purchaseData->id ?? 0 }}" data-purchase-id="{{ $purchaseData->id ?? '' }}" data-current-stock="{{ $totalStock ?? ($stock->currentStock ?? 0) }}">
                                 <td>
                                     @php
                                         $selectedProduct = $productList->firstWhere('id', $purchaseData->productName);
@@ -147,7 +147,7 @@
                                 </td>
                                 <td>
                                     <div class="mb-2">
-                                        <button type="button" class="btn btn-outline-success btn-sm" data-toggle="modal" data-target="#serialModal">Add / View</button>
+                                        <button type="button" class="btn btn-outline-success btn-sm" data-toggle="modal" data-target="#serialModal" data-purchase-id="{{ $purchaseData->id ?? '' }}">Add / View</button>
                                     </div>
                                     <div>
                                         @if(!empty($serials) && $serials->count() > 0)
@@ -179,14 +179,20 @@
                                     <input type="number" class="form-control form-control-sm text-right" id="salePriceExVat" name="salePriceExVat" value="{{ $purchaseData->salePriceExVat ?? '' }}" data-onkeyup="priceCalculation()" step="0.01" />
                                 </td>
                                 <td class="align-middle text-center">
-                                    <select name="vatStatus" id="vatStatus" class="form-control form-control-sm" data-onchange="priceCalculation()">
-                                        <option value="">-</option>
-                                        <option value="1" {{ (!empty($purchaseData) && $purchaseData->vatStatus == 1) ? 'selected' : '' }}>Yes</option>
-                                        <option value="0" {{ (!empty($purchaseData) && $purchaseData->vatStatus == 0) ? 'selected' : '' }}>No</option>
-                                    </select>
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="form-check mr-2">
+                                            <input type="checkbox" class="form-check-input include-vat" id="includeVat_edit" {{ (isset($purchaseData) && $purchaseData->vatStatus) ? 'checked' : '' }} />
+                                            <label class="form-check-label" for="includeVat_edit">Yes</label>
+                                        </div>
+                                        <span class="vat-badge" id="vatBadge_edit" style="display:{{ (isset($purchaseData) && $purchaseData->vatStatus) ? 'inline-block' : 'none' }}" title="VAT">VAT</span>
+                                        <div style="display:flex; flex-direction:column; margin-left:8px;">
+                                            <input type="number" name="vatPercent[]" class="form-control vat-percent form-control-sm" step="0.01" style="width:100px;" value="{{ $purchaseData->vatStatus ? ($purchaseData->vatPercent ?? 10) : 10 }}" {{ (isset($purchaseData) && $purchaseData->vatStatus) ? '' : 'disabled' }} />
+                                            <div class="small text-muted row-vat-amount" id="rowVat_edit"></div>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="align-middle">
-                                    <input type="number" class="form-control form-control-sm text-right" id="salePriceInVat" name="salePriceInVat" value="{{ $purchaseData->salePriceInVat ?? '' }}" readonly />
+                                    <input type="number" class="form-control form-control-sm text-right sale-price-inc" id="salePriceInVat" name="salePriceInVat" value="{{ $purchaseData->salePriceInVat ?? '' }}" readonly />
                                 </td>
                                 <td class="align-middle">
                                     <input type="number" class="form-control form-control-sm text-right" id="profitMargin" name="profitMargin" value="{{ $purchaseData->profit ?? '' }}" data-onkeyup="profitCalculation()" step="0.01" />
@@ -294,17 +300,24 @@
                         <label for="serialNumber" class="form-label">Add Serial Number(s)</label>
                     </div>
                     <div id="serialNumberBox">
-                        <div class="row">
-                            <div class="col-10 mb-3">
-                                <input type="text" class="form-control" name="serialNumber[]" placeholder="Enter serial number" />
+                        <div class="serial-input-row d-flex mb-3 align-items-center">
+                            <input type="text" class="form-control flex-grow-1" name="serialNumber[]" placeholder="Enter serial number" style="margin-right:12px;" />
+                            <div class="d-flex">
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-serial">Remove</button>
+                                <button type="button" class="btn btn-sm btn-outline-info auto-gen-serial-row" style="margin-left:6px;">Auto</button>
                             </div>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-success btn-sm rounded-0" id="add-serial">Add Serial</button>
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <button type="button" class="btn btn-success btn-sm rounded-0" id="add-serial">Add Serial</button>
+                            <button type="button" class="btn btn-info btn-sm rounded-0" id="autoGenerateSerials" style="margin-left:8px;">Auto Generate Serials</button>
+                        </div>
+                    </div>
                 </div>
                     <div class="modal-footer">
                     <button type="button" data-onclick="resetSerial()" class="btn btn-warning">Clear</button>
-                    <button type="button" class="btn btn-primary" id="save-serials">Save</button>
+                    <button type="button" class="btn btn-primary" id="saveSerials">Save</button>
                     <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
                 </div>
             </div>
@@ -316,6 +329,90 @@
 
 
 <!-- Page end  -->
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    try{
+        // Wire inputs to centralized recalculation where available
+        var qty = document.getElementById('quantity'); if(qty) qty.addEventListener('input', function(e){ try{ if(typeof recalcPurchaseRow === 'function') recalcPurchaseRow(e); }catch(_){} });
+        var buy = document.getElementById('buyPrice'); if(buy) buy.addEventListener('input', function(e){ try{ if(typeof recalcPurchaseRow === 'function') recalcPurchaseRow(e); }catch(_){} });
+        var sale = document.getElementById('salePriceExVat'); if(sale) sale.addEventListener('input', function(e){ try{ if(typeof recalcPurchaseRow === 'function') recalcPurchaseRow(e); }catch(_){} });
+        var vat = document.getElementById('vatStatus'); if(vat) vat.addEventListener('change', function(e){ try{ if(typeof recalcPurchaseRow === 'function') recalcPurchaseRow(e); }catch(_){} });
+
+        // When serial modal opens, set data-current-idx so global syncSerialsFromModal can find the row
+        var serialButtons = document.querySelectorAll('[data-target="#serialModal"][data-purchase-id]');
+        serialButtons.forEach(function(btn){ btn.addEventListener('click', function(){ try{ var modal = document.getElementById('serialModal'); if(modal) modal.setAttribute('data-current-idx', btn.getAttribute('data-purchase-id') || ''); }catch(e){} }); });
+
+        // Form submit UX: disable save button and show saving text
+        var form = document.getElementById('savePurchase');
+        if(form){
+            form.addEventListener('submit', function(ev){ try{ var b = form.querySelector('button[type="submit"]'); if(b){ b.disabled = true; b.setAttribute('data-old', b.innerHTML); b.innerHTML = 'Saving...'; } }catch(e){} });
+        }
+
+        // If saveSerials button clicked inside modal, trigger sync (global handler expects #saveSerials)
+        var saveSerialsBtn = document.getElementById('saveSerials');
+        if(saveSerialsBtn){ saveSerialsBtn.addEventListener('click', function(){ try{ if(typeof syncSerialsFromModal === 'function'){ var modal = document.getElementById('serialModal'); var id = modal && modal.id ? modal.id : null; syncSerialsFromModal(modal && modal.getAttribute('data-current-idx') ? modal.getAttribute('data-current-idx') : modal.id); } }catch(e){ console.warn('saveSerials click', e); } }); }
+
+        // --- Product select enabling parity with Add Purchase ---
+        try{
+            var productSelect = document.getElementById('productName');
+            var supplierSelect = document.getElementById('supplierName');
+            if(productSelect){
+                // store original options so we can restore them when a supplier is chosen
+                if(!productSelect.dataset.origOptions) productSelect.dataset.origOptions = productSelect.innerHTML;
+                // if supplier not selected initially, disable product select and show placeholder
+                if(supplierSelect && (!supplierSelect.value || supplierSelect.value === '')){
+                    productSelect.innerHTML = '<option value="">Please select a Supplier First</option>';
+                    productSelect.disabled = true;
+                }
+                // when supplier changes, try to fetch supplier-filtered product options (public AJAX)
+                if(supplierSelect){
+                    // template URL (blade route helper) — we'll replace __ID__ with the supplier id
+                    var productsUrlTemplate = '{!! route("ajax.customer.products.public", ["id" => "__ID__"]) !!}';
+                    supplierSelect.addEventListener('change', function(){
+                        try{
+                            var sid = supplierSelect.value || '';
+                            if(sid !== ''){
+                                productSelect.disabled = false;
+                                // try fetch supplier-specific options
+                                (function(sidLocal){
+                                    try{
+                                        var url = productsUrlTemplate.replace('__ID__', encodeURIComponent(sidLocal));
+                                        fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                                            .then(function(resp){
+                                                if(!resp.ok) throw new Error('Network response not ok');
+                                                var ct = resp.headers.get('content-type') || '';
+                                                if(ct.indexOf('application/json') !== -1){
+                                                    // if JSON returned, try to extract html property if present
+                                                    return resp.json().then(function(j){ return j.html || j.options || ''; });
+                                                }
+                                                return resp.text();
+                                            })
+                                            .then(function(body){
+                                                if(!body || body.trim() === ''){
+                                                    // fallback to original options if server returned nothing
+                                                    if(productSelect.dataset.origOptions) productSelect.innerHTML = productSelect.dataset.origOptions;
+                                                }else{
+                                                    productSelect.innerHTML = body;
+                                                }
+                                            })
+                                            .catch(function(e){
+                                                console.warn('Failed to load products for supplier', e);
+                                                if(productSelect.dataset.origOptions) productSelect.innerHTML = productSelect.dataset.origOptions;
+                                            });
+                                    }catch(e){}
+                                })(sid);
+                            }else{
+                                productSelect.disabled = true;
+                                productSelect.innerHTML = '<option value="">Please select a Supplier First</option>';
+                            }
+                        }catch(er){}
+                    });
+                }
+            }
+        }catch(e){}
+    }catch(e){ console.warn('editPurchase init failed', e); }
+});
+</script>
 <!-- new supplier Modal -->
 <div class="modal fade" id="supplier" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="supplier" aria-hidden="true">
     <div class="modal-dialog">

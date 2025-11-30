@@ -17,6 +17,7 @@
                data-newsale="{{ route('newsale') }}"
                data-products-template="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}"
                data-purchase-template="{{ route('ajax.sale.product.purchaseDetails.public', ['id' => '__ID__']) }}"
+               data-purchase-by-id-template="{{ route('ajax.purchase.details.public', ['id' => '__ID__']) }}"
                data-product-details-template="{{ route('ajax.product.details.public', ['id' => '__ID__']) }}"></div>
         <div class="row">
             <div class="col-md-12 col-12">

@@ -106,6 +106,11 @@ Route::get('/ajax/public/customer/{id}/products', [
     JqueryController::class,
     'getProductsForCustomerPublic'
 ])->name('ajax.customer.products.public');
+// Public purchase details by purchase id (returns a single purchase row)
+Route::get('/ajax/public/purchase/{id}/details', [
+    JqueryController::class,
+    'getPurchaseDetailsPublic'
+])->name('ajax.purchase.details.public');
 // Public product details for dynamic pages (returns JSON)
 Route::get('/ajax/public/product/details/{id}', [
     JqueryController::class,
