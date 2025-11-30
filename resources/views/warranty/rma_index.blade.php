@@ -62,6 +62,7 @@
                             <td>{{ $r->status }}</td>
                             <td>{{ optional($r->created_at)->format('Y-m-d') }}</td>
                             <td class="text-right">
+                                <a href="{{ route('rma.show', $r->id) }}" class="btn btn-sm btn-outline-info">View</a>
                                 <a href="{{ route('rma.edit', $r->id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
                                 <form method="POST" action="{{ route('rma.destroy', $r->id) }}" style="display:inline-block;" data-onsubmit="confirm" data-confirm="Delete this RMA?">
                                     @csrf

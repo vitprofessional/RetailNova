@@ -6,12 +6,18 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<form action="{{ route('saveSale') }}" class="row" method="POST">
+<form action="{{ route('saveSale') }}" id="saveSaleForm" class="row" method="POST" data-action-template="/sale/save/data">
     @csrf
     @php
     $randomInvoiceNumber = 'INV-' . strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
     @endphp
     <div class="col-12">
+        <!-- Route seed container for robust JS URL construction -->
+           <div id="rn-route-seeds"
+               data-newsale="{{ route('newsale') }}"
+               data-products-template="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}"
+               data-purchase-template="{{ route('ajax.sale.product.purchaseDetails.public', ['id' => '__ID__']) }}"
+               data-product-details-template="{{ route('ajax.product.details.public', ['id' => '__ID__']) }}"></div>
         <div class="row">
             <div class="col-md-12 col-12">
                 <div class="card">
@@ -28,7 +34,8 @@
                                 <div class="form-group">
                                     <label>Select Customer *</label>
                                     <label for="customerName" class="form-label"></label>
-                                <select id="customerName" name="customerId" class="form-control" data-onchange="actSaleProduct()" required>
+                                <select id="customerName" name="customerId" class="form-control" data-onchange="actSaleProduct()" required
+                                    data-products-url="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}">
                                         <option value="">-</option>
                                     <!--  form option show proccessing -->
                                   @if(!empty($customerList) && count($customerList)>0)
@@ -58,7 +65,8 @@
                             <div class="col-6">
                                 <div class="form-group">
                                 <label>Select Product*</label>
-                                <select id="productName" name="productName" class="form-control js-sale-product-select" required disabled >
+                                <select id="productName" name="productName" class="form-control js-sale-product-select" required disabled 
+                                    data-purchase-url="{{ route('getSaleProductDetails', ['id' => '__ID__']) }}">
                                    <!--  form option show proccessing -->
                                             <option value="">Select</option>
                                   @if(!empty($productList) && count($productList)>0)

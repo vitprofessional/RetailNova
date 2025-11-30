@@ -128,11 +128,17 @@
             }
             return;
         }
-        var url = '{{ url('product/details') }}/' + id;
+        var base = window.RN_BASE || '{{ url('/') }}';
+        var url = base + '/ajax/public/product/details/' + id;
         // also fetch latest purchase prices for this product (if available)
-        var priceUrl = '{{ url('sale/product/details') }}/' + id;
+        var priceUrl = base + '/ajax/public/sale/product/' + id + '/purchase-details';
         fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest','Accept':'application/json'}, credentials: 'same-origin'})
-            .then(function(res){ if(!res.ok){ console.error('product/details not ok', res.status); return {}; } return res.json(); })
+            .then(function(res){ return res.text(); })
+            .then(function(txt){
+                var first = (txt||'').trim().charAt(0);
+                if(first === '<'){ console.warn('damageProduct: product details HTML/redirect'); return {}; }
+                try{ return JSON.parse(txt); }catch(e){ console.warn('damageProduct: product details parse fail'); return {}; }
+            })
             .then(function(data){
                 if(data){
                     document.getElementById('selectProductName').value = data.productName || '';
@@ -151,7 +157,12 @@
 
         // fetch price details separately and set price fields if present
         fetch(priceUrl, {headers: {'X-Requested-With': 'XMLHttpRequest','Accept':'application/json'}, credentials: 'same-origin'})
-            .then(function(res){ if(!res.ok){ console.error('sale/product/details not ok', res.status); return {}; } return res.json(); })
+            .then(function(res){ return res.text(); })
+            .then(function(txt){
+                var first = (txt||'').trim().charAt(0);
+                if(first === '<'){ console.warn('damageProduct: price details HTML/redirect'); return {}; }
+                try{ return JSON.parse(txt); }catch(e){ console.warn('damageProduct: price details parse fail'); return {}; }
+            })
             .then(function(p){
                 if(p){
                     // p.getData may contain purchase rows; prefer first purchaseDate if available

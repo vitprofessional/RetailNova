@@ -94,6 +94,37 @@ class RmaController extends Controller
         return redirect()->route('rma.index')->with('success', 'RMA deleted');
     }
 
+    public function show($id)
+    {
+        $rma = Rma::with([
+            'customer',
+            'productSerial.product',
+            'productSerial.purchase.supplier',
+        ])->findOrFail($id);
+
+        $customer = $rma->customer;
+        $serial = $rma->productSerial;
+        $product = optional($serial)->product;
+        $purchase = optional($serial)->purchase;
+
+        // Fallback: if the serial is not linked to a purchase, infer the latest
+        // purchase for the product so supplier details can still be shown.
+        $supplierInferred = false;
+        if (!$purchase && $product) {
+            $purchase = \App\Models\PurchaseProduct::where('productName', $product->id)
+                ->orderBy('id', 'desc')
+                ->with('supplier')
+                ->first();
+            if ($purchase) {
+                $supplierInferred = true;
+            }
+        }
+
+        $supplier = optional($purchase)->supplier;
+
+        return view('warranty.rma_show', compact('rma','customer','serial','product','purchase','supplier','supplierInferred'));
+    }
+
     /**
      * Export RMA list as CSV (respects current filters).
      */

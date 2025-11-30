@@ -99,6 +99,46 @@ class JqueryController extends Controller
     }
 
     /**
+     * Public variant of getSaleProductDetails returning a simplified JSON payload.
+     * Exposed to avoid auth guard redirects breaking the new sale page dynamic load.
+     */
+    public function getSaleProductDetailsPublic($id)
+    {
+        try {
+            // In our schema, `purchase_products.productName` stores the Product ID
+            $rows = PurchaseProduct::where('productName', $id)
+                ->join('suppliers','purchase_products.supplier','suppliers.id')
+                ->join('product_stocks','product_stocks.purchaseId','purchase_products.id')
+                ->select(
+                    'purchase_products.id as purchaseId',
+                    'purchase_products.buyPrice',
+                    'purchase_products.salePriceExVat',
+                    'purchase_products.vatStatus',
+                    'suppliers.name as supplierName',
+                    'product_stocks.currentStock'
+                )->orderBy('purchaseId','desc')->get();
+            if($rows->count() === 0){
+                return response()->json(['status'=>'ok','getData'=>[]]);
+            }
+            $product = Product::find($id);
+            $pname = $product ? $product->name : '';
+            // Ensure each row includes productName for UI table rendering
+            $rows = $rows->map(function($r) use ($pname){
+                $r->productName = $pname;
+                return $r;
+            });
+            return response()->json([
+                'status' => 'ok',
+                'productName' => $pname,
+                'getData' => $rows
+            ]);
+        } catch (\Throwable $e) {
+            \Log::warning('getSaleProductDetailsPublic error: '.$e->getMessage(), ['id'=>$id]);
+            return response()->json(['status'=>'error','getData'=>[]], 500);
+        }
+    }
+
+    /**
      * Return product <option> HTML for a customer. For now this returns all products
      * (customer-specific filtering can be added later). This endpoint is consumed
      * by the sale page when a customer is selected so the product dropdown is
@@ -134,6 +174,41 @@ class JqueryController extends Controller
         }
 
         return response()->json(['data' => $options]);
+    }
+    /**
+     * Public variant of getProductDetails used by sale/damage pages to avoid auth redirects.
+     */
+    public function getProductDetailsPublic($id)
+    {
+        $getData = Product::find($id);
+
+        if ($getData) {
+            $stockHistory = ProductStock::where(['productId' => $getData->id])->get();
+            $currentStock = $stockHistory ? $stockHistory->sum('currentStock') : 0;
+
+            $brand = Brand::find($getData->brand);
+            $brandName = $brand ? $brand->name : '';
+            $productName = $getData->name;
+            $productWithBrand = $productName . ($brandName ? ' - ' . $brandName : '');
+
+            $lastPurchase = PurchaseProduct::where('productName', $getData->id)->orderBy('id', 'desc')->first();
+
+            $buyPrice = $lastPurchase ? ($lastPurchase->buyPrice ?? '') : '';
+            $salePrice = $lastPurchase ? ($lastPurchase->salePriceExVat ?? '') : '';
+            $purchaseDate = optional($lastPurchase)->created_at;
+
+            return response()->json([
+                'productName'  => $productWithBrand,
+                'currentStock' => $currentStock,
+                'buyPrice'     => $buyPrice,
+                'salePrice'    => $salePrice,
+                'purchaseDate' => $purchaseDate ? $purchaseDate->format('Y-m-d') : null,
+                'message'      => 'Success',
+                'id'           => $getData->id
+            ]);
+        }
+
+        return response()->json(['productName' => '', 'currentStock' => 0, 'buyPrice' => '', 'salePrice' => '', 'purchaseDate'=>null, 'message' => 'Not found', 'id' => '']);
     }
     public function getPurchaseDetails($id){
         $getData = PurchaseProduct::find($id);

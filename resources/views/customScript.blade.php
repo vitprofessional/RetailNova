@@ -1,8 +1,13 @@
 <script>
 /* RN custom script - guarded initialization to avoid errors when jQuery loads after this file */
+// Base URL helper to avoid 404s when app runs in subfolders
+window.RN_BASE = window.RN_BASE || "{{ url('/') }}";
+if(window.RN_BASE && window.RN_BASE.endsWith('/')){ try{ window.RN_BASE = window.RN_BASE.replace(/\/+$/,''); }catch(e){} }
 
 // Debug toggle (temporary): enable with `window.__RNDEBUG = true` or `enableRNDebug()`
 window.__RNDEBUG = window.__RNDEBUG || false;
+// Temporarily enable sale debug to trace redirects in subfolder deployments
+window.__SALEDEBUG = (typeof window.__SALEDEBUG !== 'undefined') ? window.__SALEDEBUG : true;
 window.enableRNDebug = function(){ window.__RNDEBUG = true; console.warn('RNDEBUG enabled'); };
 window.disableRNDebug = function(){ window.__RNDEBUG = false; console.warn('RNDEBUG disabled'); };
 
@@ -319,6 +324,7 @@ document.addEventListener('submit', function(e){
 // Keep including other smaller script fragments as before
 @include('scripts.purchase-scripts')
 @include('scripts.product-scripts')
+@include('scripts.sale-scripts')
 
 // Ensure initial wiring for non-jQuery environment
 document.addEventListener('DOMContentLoaded', function(){

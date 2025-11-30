@@ -143,7 +143,8 @@ return [
     |
     */
 
-    'path' => env('SESSION_PATH', '/'),
+    // Default cookie path set to subfolder to prevent session loss on refresh under /RetailNova
+    'path' => env('SESSION_PATH', '/RetailNova'),
 
     /*
     |--------------------------------------------------------------------------

@@ -13,4 +13,14 @@ class ProductSerial extends Model
     ];
 
     // keep default table name 'product_serials'
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'productId');
+    }
+
+    public function purchase()
+    {
+        return $this->belongsTo(PurchaseProduct::class, 'purchaseId');
+    }
 }

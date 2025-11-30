@@ -106,6 +106,16 @@ Route::get('/ajax/public/customer/{id}/products', [
     JqueryController::class,
     'getProductsForCustomerPublic'
 ])->name('ajax.customer.products.public');
+// Public product details for dynamic pages (returns JSON)
+Route::get('/ajax/public/product/details/{id}', [
+    JqueryController::class,
+    'getProductDetailsPublic'
+])->name('ajax.product.details.public');
+// Public AJAX endpoint for sale purchase details (read-only) to avoid guard redirects during dynamic row append
+Route::get('/ajax/public/sale/product/{id}/purchase-details', [
+    JqueryController::class,
+    'getSaleProductDetailsPublic'
+])->name('ajax.sale.product.purchaseDetails.public');
 // Require legacy session sync (SuperAdmin) and authenticate via admin guard
 Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group(function(){
 
@@ -457,7 +467,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     Route::get('/new/sale',[
         saleController::class,
         'newsale'
-    ])->name('newsale');
+    ])->name('newsale')->middleware([\App\Http\Middleware\DebugSession::class]);
 
     
     Route::get('Sale/list',[
@@ -668,6 +678,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         Route::get('/warranty/rma', [\App\Http\Controllers\RmaController::class, 'index'])->name('rma.index');
         Route::get('/warranty/rma/create', [\App\Http\Controllers\RmaController::class, 'create'])->name('rma.create');
         Route::post('/warranty/rma', [\App\Http\Controllers\RmaController::class, 'store'])->name('rma.store');
+        Route::get('/warranty/rma/{id}', [\App\Http\Controllers\RmaController::class, 'show'])->name('rma.show');
         Route::get('/warranty/rma/{id}/edit', [\App\Http\Controllers\RmaController::class, 'edit'])->name('rma.edit');
         Route::put('/warranty/rma/{id}', [\App\Http\Controllers\RmaController::class, 'update'])->name('rma.update');
         Route::delete('/warranty/rma/{id}', [\App\Http\Controllers\RmaController::class, 'destroy'])->name('rma.destroy');

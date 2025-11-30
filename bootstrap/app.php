@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         \App\Console\Commands\ScanDuplicates::class,
         \App\Console\Commands\CheckSaleInvoiceDuplicates::class,
+        \App\Console\Commands\BackfillSerialPurchase::class,
     ])
     ->withProviders([
         \App\Providers\AuthServiceProvider::class,
