@@ -420,8 +420,10 @@ window.addPurchaseRow = function(productId){
                     if(spIncEl){ if('value' in spIncEl) spIncEl.value = saleInc; else spIncEl.innerHTML = saleInc; }
                 }catch(e){}
                 try{ var vat = (data.vatStatus!==undefined? data.vatStatus : (data.vat || '')); var vatEl = row.querySelector('#vatStatus'+idx) || row.querySelector('#vatStatus__IDX__'.replace('__IDX__', idx)); if(vatEl){ for(var i=0;i<vatEl.options.length;i++){ if(vatEl.options[i].value == vat){ vatEl.selectedIndex = i; break; } } } }catch(_){ }
-                var qtyEl = row.querySelector('.quantity'); if(qtyEl) { /* leave blank by default; do not auto-fill */ }
-                var qty = parseFloat(row.querySelector('.quantity').value || 0) || 0;
+                var qtyEl = row.querySelector('.quantity') || row.querySelector('input[name="quantity"]') || row.querySelector('#quantity');
+                if(qtyEl) { /* leave blank by default; do not auto-fill */ }
+                var qty = 0;
+                try{ qty = qtyEl ? (parseFloat(String(qtyEl.value || '').replace(/,/g,'')) || 0) : 0; }catch(e){ qty = 0; }
                 var buyVal = parseFloat(buy ? buy.value : 0) || 0;
                 var saleVal = parseFloat(sale ? sale.value : 0) || 0;
                 var unit = (saleVal>0? saleVal : buyVal);
@@ -529,8 +531,9 @@ document.addEventListener('click', function(e){
             var idx = modal.getAttribute('data-current-idx'); if(!idx) { alert('Row not found'); return; }
             var row = document.querySelector('tr.product-row[data-idx="'+idx+'"]');
             if(!row){ alert('Product row not found'); return; }
-            var qtyEl = row.querySelector('.quantity');
-            var qty = qtyEl ? (parseInt(qtyEl.value) || 0) : 0;
+            var qtyEl = row.querySelector('.quantity') || row.querySelector('input[name="quantity"]') || row.querySelector('#quantity');
+            var qty = 0;
+            try{ qty = qtyEl ? (parseInt(String(qtyEl.value || '').replace(/,/g,'')) || 0) : 0; }catch(e){ qty = 0; }
             if(qty <= 0){ try{ showToast && showToast('Warning','Please enter a valid quantity for this row before auto-generating serials','warning'); }catch(e){ alert('Please enter a valid quantity for this row before auto-generating serials'); } return; }
             // generate serials and populate modal inputs
             var box = document.getElementById('serialNumberBox'); if(!box) return; box.innerHTML = '';
@@ -652,11 +655,22 @@ if(window.jQuery){
                     // Validate each row
                     for(var i=0;i<rows.length;i++){
                         var r = rows[i];
-                        var prod = r.querySelector('input[name="productName[]"]');
-                        var qty = r.querySelector('.quantity');
-                        var buy = r.querySelector('[id^="buyPrice"]') || r.querySelector('input[name="buyPrice[]"]');
+                        // Support multiple templates: per-row product hidden (`productName[]`), per-row display (`selectProductName[]`),
+                        // or single-row edit form using top-level `productName` select/input.
+                        var prod = r.querySelector('input[name="productName[]"], input[name="selectProductName[]"], select[name="productName"], input[name="productName"]');
+                        // if row doesn't have a per-row product input, fall back to top-level product selector
+                        if(!prod){ prod = document.querySelector('select[name="productName"], input[name="productName"]'); }
+                        var qty = r.querySelector('.quantity') || r.querySelector('input[name="quantity"]') || document.querySelector('input[name="quantity"]');
+                        var buy = r.querySelector('[id^="buyPrice"]') || r.querySelector('input[name="buyPrice[]"]') || document.querySelector('input[name="buyPrice"]');
                         var rowNum = i+1;
-                        if(!prod || !prod.value){ e.preventDefault(); alert('Row '+rowNum+': product not set. Please select a product.'); prod && prod.focus(); return false; }
+                        // determine a usable product value: support select/input value or plain text display
+                        var prodValue = '';
+                        try{
+                            if(!prod){ prodValue = ''; }
+                            else if(('value' in prod) && prod.value !== undefined){ prodValue = String(prod.value).trim(); }
+                            else { prodValue = (prod.textContent || prod.innerText || '').trim(); }
+                        }catch(e){ prodValue = ''; }
+                        if(!prodValue){ e.preventDefault(); alert('Row '+rowNum+': product not set. Please select a product.'); try{ if(prod && prod.focus) prod.focus(); }catch(_){} return false; }
                         var qv = qty ? Number(qty.value) : 0;
                         if(!qty || isNaN(qv) || qv <= 0){ e.preventDefault(); alert('Row '+rowNum+': please enter a valid quantity (>0).'); qty && qty.focus(); return false; }
                         if(!buy || buy.value === '' || isNaN(Number(buy.value))){ e.preventDefault(); alert('Row '+rowNum+': please enter the Buy Price.'); buy && buy.focus(); return false; }

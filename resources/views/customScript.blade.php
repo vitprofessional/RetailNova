@@ -444,13 +444,30 @@ window.syncSerialsFromModal = function(modalId){
         // remove any existing hidden serial inputs for that row to avoid duplicates
         try{ Array.prototype.slice.call(targetRow.querySelectorAll('input[type="hidden"][data-serial]')).forEach(function(h){ h.parentNode.removeChild(h); }); }catch(e){}
 
-        // add hidden inputs using the same naming convention used elsewhere: serialNumber[idx][] and mark with data-serial
+        // add hidden inputs. For the single-purchase Edit page we need a flat `serialNumber[]` array
+        // because the update controller expects a flat list. For multi-row Add Purchase keep
+        // the nested `serialNumber[rowIdx][]` convention so each row's serials are grouped.
         var added = 0;
+        var isSinglePurchase = false;
+        try{
+            // presence of a top-level `purchaseId` field indicates the Edit Purchase form
+            if(document.querySelector('input[name="purchaseId"]')) isSinglePurchase = true;
+            // also consider rows that carry `data-purchase-id` (edit template)
+            if(targetRow && targetRow.getAttribute && targetRow.getAttribute('data-purchase-id')) isSinglePurchase = true;
+        }catch(e){}
+
         serialEls.forEach(function(si){
             try{
                 var v = (si.value || si.getAttribute('value') || '').trim();
                 if(!v) return;
-                var h = document.createElement('input'); h.type = 'hidden'; h.name = 'serialNumber['+ (idx || '0') +'][]'; h.value = v; h.setAttribute('data-serial','1');
+                var h = document.createElement('input');
+                h.type = 'hidden';
+                if(isSinglePurchase){
+                    h.name = 'serialNumber[]';
+                } else {
+                    h.name = 'serialNumber['+ (idx || '0') +'][]';
+                }
+                h.value = v; h.setAttribute('data-serial','1');
                 targetRow.appendChild(h);
                 added++;
             }catch(e){ /* ignore individual failures */ }
