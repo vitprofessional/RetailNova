@@ -122,6 +122,35 @@
                         try{
                             productSel.innerHTML = (data && data.data) ? data.data : '<option value="">Select</option>';
                             productSel.disabled = false;
+                            // If there are out-of-stock items returned, populate modal data and show note/button
+                            try{
+                                var outNote = byId('outOfStockNote');
+                                var outBtn = byId('outOfStockBtn');
+                                var outList = byId('outOfStockList');
+                                var outArr = (data && data.outOfStock) ? data.outOfStock : [];
+                                if(outNote){ outNote.textContent = outArr.length > 0 ? (outArr.length + ' product(s) out of stock') : ''; }
+                                if(outBtn){ outBtn.style.display = outArr.length > 0 ? 'inline-block' : 'none'; }
+                                if(outList){
+                                    if(outArr.length === 0){ outList.innerHTML = '<p class="text-muted">No out-of-stock items.</p>'; }
+                                    else {
+                                        var html = '<div class="list-group">';
+                                        outArr.forEach(function(it){
+                                            var pd = it.purchaseDate ? (' ['+it.purchaseDate+']') : '';
+                                            var viewLink = it.productId ? (adjustForSubfolder('/product/edit/' + encodeURIComponent(it.productId))) : '#';
+                                            html += '<div class="list-group-item d-flex justify-content-between align-items-center">'+
+                                                '<div><strong>'+ (it.productName || '') +'</strong> — '+ (it.supplierName || 'Unknown') + pd +
+                                                ' <span class="badge bg-secondary ms-2">Stock: '+ (it.currentStock || 0) +'</span></div>' +
+                                                '<div>' +
+                                                    (it.productId ? '<a class="btn btn-sm btn-outline-primary me-2" href="'+viewLink+'" target="_blank">View</a>' : '') +
+                                                    '<button style="display:none;" class="btn btn-sm btn-outline-success add-backorder" data-purchase-id="'+(it.purchaseId||'')+'">Add as backorder</button>' +
+                                                '</div>' +
+                                                '</div>';
+                                        });
+                                        html += '</div>';
+                                        outList.innerHTML = html;
+                                    }
+                                }
+                            }catch(e){}
                         }catch(e){ productSel.disabled = false; }
                     }).catch(function(err){ console.warn('products fetch error', err); productSel.disabled = false; });
             });
@@ -181,7 +210,26 @@
                     try{
                         var row = existing.closest('tr');
                         var qtyEl = row.querySelector('.qty');
-                        if(qtyEl){ qtyEl.value = (parseInt(qtyEl.value||0,10) || 0) + 1; recalcRow(row, p.currentStock || 0); recalcTotals(); showToast && showToast('Updated','Increased quantity for existing row','success'); return; }
+                        var currentStock = parseInt(p.currentStock || 0, 10);
+                        if(qtyEl){
+                            var newQty = (parseInt(qtyEl.value||0,10) || 0) + 1;
+                            if(currentStock <= 0){
+                                // show friendly UI message and do not add
+                                try{ var errBox = byId('saleErrorSummary'); if(errBox) errBox.innerHTML = '<div class="alert alert-warning mb-0">Product "'+(p.productName||'')+'" is out of stock and cannot be added.</div>'; setTimeout(function(){ try{ errBox.innerHTML=''; }catch(_){} },4000); }catch(e){}
+                                showToast && showToast('Out of stock','Product "'+(p.productName||'')+'" has no stock','error');
+                                return;
+                            }
+                            if(newQty > currentStock){
+                                try{ var errBox2 = byId('saleErrorSummary'); if(errBox2) errBox2.innerHTML = '<div class="alert alert-danger mb-0">Cannot increase quantity beyond available stock ('+currentStock+').</div>'; setTimeout(function(){ try{ errBox2.innerHTML=''; }catch(_){} },4000); }catch(e){}
+                                showToast && showToast('Low stock','Cannot increase quantity beyond available stock','error');
+                                return;
+                            }
+                            qtyEl.value = newQty;
+                            recalcRow(row, p.currentStock || 0);
+                            recalcTotals();
+                            showToast && showToast('Updated','Increased quantity for existing row','success');
+                            return;
+                        }
                     }catch(e){ /* fallback to adding a new row */ }
                 }
             }
@@ -206,10 +254,27 @@
                 '<td><input type="number" class="form-control totalPurchase" readonly></td>'+
                 '<td><input type="text" class="form-control profitMargin" readonly></td>'+
                 '<td><input type="number" class="form-control profitTotal" readonly></td>';
+            // If this row was created as a backorder, mark it and include hidden marker for server
+            try{
+                if(p && p.__backorder){
+                    tr.classList.add('backorder-row');
+                    var nameCell = tr.children[1];
+                    if(nameCell){ nameCell.innerHTML = nameCell.innerHTML + ' <span class="badge bg-warning text-dark backorder-badge ms-2">Backorder</span>'; }
+                    var hin = document.createElement('input'); hin.type = 'hidden'; hin.name = 'backorder[]'; hin.value = purchaseId || '';
+                    tr.appendChild(hin);
+                }
+            }catch(e){}
+            // Prevent adding when there's no stock
+            var stockAvailable = parseInt(p.currentStock || 0, 10);
+            if(stockAvailable <= 0){
+                try{ var errBox3 = byId('saleErrorSummary'); if(errBox3) errBox3.innerHTML = '<div class="alert alert-warning mb-0">Product "'+(p.productName||'')+'" is out of stock and cannot be added.</div>'; setTimeout(function(){ try{ errBox3.innerHTML=''; }catch(_){} },4000); }catch(e){}
+                showToast && showToast('Out of stock','Product "'+(p.productName||'')+'" has no stock','error');
+                return;
+            }
             tbody.appendChild(tr);
 
             // Attach current stock as attribute for validation
-            try{ tr.setAttribute('data-current-stock', (p.currentStock || 0)); }catch(e){}
+            try{ tr.setAttribute('data-current-stock', stockAvailable); }catch(e){}
 
             var qtyEl = tr.querySelector('.qty');
             var saleEl = tr.querySelector('.salePrice');
@@ -319,6 +384,110 @@
             }catch(e){ /* ignore display errors */ }
         }catch(e){ console.warn('recalcTotals error', e); }
     }
+    // Delegated handler for 'Add as backorder' buttons in out-of-stock modal
+    document.addEventListener('click', function(ev){
+        try{
+            var btn = ev.target.closest && ev.target.closest('.add-backorder');
+            if(!btn) return;
+            var purchaseId = btn.getAttribute('data-purchase-id'); if(!purchaseId) return;
+            // Fetch the purchase row details then force-add as backorder by overriding stock
+            var tplById = ROUTES.purchaseByIdTpl || '';
+            var url = tplById ? tplById.replace('__ID__', encodeURIComponent(purchaseId)) : (ROUTES.base + '/ajax/public/purchase/'+encodeURIComponent(purchaseId)+'/details');
+            url = safeFinalizeUrl(url);
+            fetch(url, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
+                .then(function(res){
+                    var ct = res.headers.get('content-type') || '';
+                    if(res.redirected || res.status === 302 || res.status === 401 || res.status === 403) throw new Error('unauthorized');
+                    if(ct.indexOf('application/json') === -1) throw new Error('invalid-response');
+                    return res.json();
+                }).then(function(json){
+                        try{
+                            if(!json || !json.getData || !json.getData.length) { showToast && showToast('Not found','Purchase row not found','error'); return; }
+                            var p = json.getData[0];
+                            // mark as backorder by forcing available stock high so appendSaleRow will allow adding
+                            p.currentStock = 999999;
+                            p.__backorder = true;
+                            // If this purchase row already exists in the table, mark it as backorder instead of adding a duplicate
+                            var tbody = document.getElementById('productDetails');
+                            var existing = tbody && tbody.querySelector('input[name="purchaseData[]"][value="'+(p.purchaseId || p.id || '')+'"]');
+                            if(existing){
+                                try{
+                                    var row = existing.closest('tr');
+                                    if(row){
+                                        // add hidden backorder input if not present
+                                        if(!row.querySelector('input[name="backorder[]"]')){
+                                            var hin = document.createElement('input'); hin.type = 'hidden'; hin.name = 'backorder[]'; hin.value = (p.purchaseId || p.id || ''); row.appendChild(hin);
+                                        }
+                                        // add visual badge
+                                        try{ var nameCell = row.children[1]; if(nameCell && nameCell.querySelector('.badge.backorder-badge')===null){ nameCell.innerHTML = nameCell.innerHTML + ' <span class="badge bg-warning text-dark backorder-badge ms-2">Backorder</span>'; } }catch(e){}
+                                        row.classList.add('backorder-row');
+                                        recalcTotals();
+                                        // close modal
+                                        try{ var modalEl = document.getElementById('outOfStockModal'); if(modalEl){ if(typeof bootstrap !== 'undefined' && bootstrap.Modal){ try{ var m = (typeof bootstrap.Modal.getInstance === 'function') ? bootstrap.Modal.getInstance(modalEl) : null; if(!m){ m = new bootstrap.Modal(modalEl); } m.hide(); }catch(be){ try{ var m2 = new bootstrap.Modal(modalEl); m2.hide(); }catch(_){ if(window.jQuery){ $('#outOfStockModal').modal('hide'); } } } } else if(window.jQuery){ $('#outOfStockModal').modal('hide'); } } }catch(e){}
+                                        showToast && showToast('Backorder marked','Existing row marked as backorder','success');
+                                        return;
+                                    }
+                                }catch(e){}
+                            }
+                            // otherwise append a new backorder row
+                            appendSaleRow(p);
+                            recalcTotals();
+                            // close modal if using Bootstrap 5/4 or jQuery fallback
+                            try{ var modalEl = document.getElementById('outOfStockModal'); if(modalEl){ if(typeof bootstrap !== 'undefined' && bootstrap.Modal){ try{ var m = (typeof bootstrap.Modal.getInstance === 'function') ? bootstrap.Modal.getInstance(modalEl) : null; if(!m){ m = new bootstrap.Modal(modalEl); } m.hide(); }catch(be){ try{ var m2 = new bootstrap.Modal(modalEl); m2.hide(); }catch(_){ if(window.jQuery){ $('#outOfStockModal').modal('hide'); } } } } else if(window.jQuery){ $('#outOfStockModal').modal('hide'); } } }catch(e){}
+                            showToast && showToast('Backorder added','Item added as backorder','success');
+                        }catch(e){ console.warn('backorder add failed', e); showToast && showToast('Error','Could not add backorder','error'); }
+                    }).catch(function(e){ console.warn('fetch purchase by id failed', e); showToast && showToast('Error','Could not fetch purchase details','error'); });
+        }catch(e){ console.warn('add-backorder handler error', e); }
+    });
+
+    // Fallback handler to open the out-of-stock modal when the View button is clicked
+    document.addEventListener('click', function(ev){
+        try{
+            var btn = ev.target.closest && ev.target.closest('#outOfStockBtn');
+            if(!btn) return;
+            var modalEl = document.getElementById('outOfStockModal'); if(!modalEl) return;
+                try{
+                if(typeof bootstrap !== 'undefined' && bootstrap.Modal){
+                    try{ var inst = (typeof bootstrap.Modal.getInstance === 'function') ? bootstrap.Modal.getInstance(modalEl) : null; if(!inst){ inst = new bootstrap.Modal(modalEl); } inst.show(); }catch(be){ try{ var inst2 = new bootstrap.Modal(modalEl); inst2.show(); }catch(_){ if(window.jQuery && typeof window.jQuery.fn.modal === 'function'){ $('#outOfStockModal').modal('show'); } else { modalEl.classList.add('show'); modalEl.style.display = 'block'; modalEl.setAttribute('aria-hidden','false'); var backdrops = document.getElementsByClassName('modal-backdrop'); if(backdrops.length === 0){ var db = document.createElement('div'); db.className = 'modal-backdrop fade show'; document.body.appendChild(db); } } } }
+                } else if(window.jQuery && typeof window.jQuery.fn.modal === 'function'){
+                    $('#outOfStockModal').modal('show');
+                } else {
+                    // Minimal fallback: toggle classes and attributes so modal becomes visible
+                    modalEl.classList.add('show');
+                    modalEl.style.display = 'block';
+                    modalEl.setAttribute('aria-hidden','false');
+                    var backdrops = document.getElementsByClassName('modal-backdrop');
+                    if(backdrops.length === 0){
+                        var db = document.createElement('div'); db.className = 'modal-backdrop fade show'; document.body.appendChild(db);
+                    }
+                }
+            }catch(e){ console.warn('open outOfStockModal failed', e); }
+        }catch(e){ console.warn('outOfStockBtn click handler error', e); }
+    });
+
+    // Delegated handler to support modal dismiss buttons (data-bs-dismiss or data-dismiss)
+    document.addEventListener('click', function(ev){
+        try{
+            var btn = ev.target.closest && (ev.target.closest('[data-bs-dismiss="modal"]') || ev.target.closest('[data-dismiss="modal"]'));
+            if(!btn) return;
+            // find the nearest modal container
+            var modalEl = btn.closest && btn.closest('.modal');
+            if(!modalEl) return;
+            // hide via Bootstrap API when available, else jQuery, else DOM fallback
+            try{
+                if(typeof bootstrap !== 'undefined' && bootstrap.Modal){
+                    try{ var inst = (typeof bootstrap.Modal.getInstance === 'function') ? bootstrap.Modal.getInstance(modalEl) : null; if(!inst){ inst = new bootstrap.Modal(modalEl); } inst.hide(); }catch(be){ try{ var inst2 = new bootstrap.Modal(modalEl); inst2.hide(); }catch(_){ if(window.jQuery && typeof window.jQuery.fn.modal === 'function'){ $(modalEl).modal('hide'); } else { modalEl.classList.remove('show'); modalEl.style.display = 'none'; var backdrops = document.getElementsByClassName('modal-backdrop'); if(backdrops.length){ backdrops[0].parentNode.removeChild(backdrops[0]); } } } }
+                } else if(window.jQuery && typeof window.jQuery.fn.modal === 'function'){
+                    $(modalEl).modal('hide');
+                } else {
+                    modalEl.classList.remove('show');
+                    modalEl.style.display = 'none';
+                    var backdrops = document.getElementsByClassName('modal-backdrop');
+                    if(backdrops.length){ backdrops[0].parentNode.removeChild(backdrops[0]); }
+                }
+            }catch(e){ console.warn('modal dismiss handler failed', e); }
+        }catch(e){ console.warn('modal dismiss delegated handler error', e); }
+    });
 })();
 
 // Helper injected after IIFE: adjust URL for subfolder deployments like /RetailNova

@@ -83,7 +83,9 @@
 
 
 
-@section('scripts')
+    @endsection
+
+    @section('scripts')
     @parent
     <script>
     window.__jqOnReady(function(){

@@ -49,6 +49,10 @@
                                 <div class="small mt-1">
                                     <span id="prevDueDisplay" class="badge bg-warning text-dark">Previous Due: 0.00</span>
                                 </div>
+                                <div class="d-flex small mt-1 align-items-center">
+                                    <span id="outOfStockNote" class="text-muted small me-2">&nbsp;</span>
+                                    <button id="outOfStockBtn" type="button" class="btn btn-outline-secondary btn-sm" style="display:none;" data-toggle="modal" data-target="#outOfStockModal">View out-of-stock</button>
+                                </div>
                             </div>
                             <div class="col-md-2 mt-3 p-0">
                                 <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#customerModal"><i class="las la-plus mr-2"></i>add customer</button>
@@ -258,6 +262,25 @@
 </div>
 
 <!-- end_model -->
+<!-- Out of Stock Modal -->
+<div class="modal fade" id="outOfStockModal" tabindex="-1" aria-labelledby="outOfStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="outOfStockModalLabel">Out of Stock Items</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="outOfStockList">
+                    <p class="text-muted">No out-of-stock items.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')

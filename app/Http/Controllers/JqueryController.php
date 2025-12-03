@@ -185,17 +185,33 @@ class JqueryController extends Controller
             ->get();
 
         $options = '<option value="">Select</option>';
+            $outOfStock = [];
             foreach ($rows as $r) {
-            // Use a purchase-specific value prefix so the frontend can detect
-            // that this option represents a purchase row rather than a product id.
-            $val = 'purchase_' . $r->purchaseId;
-            $datePart = '';
-            try{ if(!empty($r->purchaseDate)) $datePart = ' ['. \Carbon\Carbon::parse($r->purchaseDate)->format('Y-m-d') .']'; }catch(\Exception $e){}
-            $label = htmlspecialchars($r->productName . ' — ' . ($r->supplierName ?: 'Unknown') . ' (Stock: ' . ($r->currentStock ?: 0) . ')' . $datePart);
-            $options .= '<option value="'.$val.'" data-purchase-id="'.$r->purchaseId.'">'.$label.'</option>';
+                $val = 'purchase_' . $r->purchaseId;
+                $datePart = '';
+                try{ if(!empty($r->purchaseDate)) $datePart = ' ['. \Carbon\Carbon::parse($r->purchaseDate)->format('Y-m-d') .']'; }catch(\Exception $e){}
+                $stock = intval($r->currentStock ?: 0);
+                // If out of stock, add to separate list and do not include in options
+                if($stock <= 0){
+                    $outOfStock[] = [
+                        'purchaseId' => $r->purchaseId,
+                        'productId' => $r->productId ?? null,
+                        'productName' => $r->productName,
+                        'supplierName' => $r->supplierName,
+                        'currentStock' => $stock,
+                        'purchaseDate' => !empty($r->purchaseDate) ? \Carbon\Carbon::parse($r->purchaseDate)->format('Y-m-d') : null,
+                    ];
+                    continue;
+                }
+                $label = htmlspecialchars($r->productName . ' — ' . ($r->supplierName ?: 'Unknown') . ' (Stock: ' . $stock . ')' . $datePart);
+                $titleAttr = ' title="Stock: ' . $stock . '"';
+                $options .= '<option value="'.$val.'" data-purchase-id="'.$r->purchaseId.'" data-current-stock="'.$stock.'"'.$titleAttr.'>'.$label.'</option>';
         }
 
-        return response()->json(['data' => $options]);
+        return response()->json([
+            'data' => $options,
+            'outOfStock' => $outOfStock,
+        ]);
     }
 
     /**
@@ -663,10 +679,18 @@ class JqueryController extends Controller
                     throw new \Exception('Failed to save sale');
                 }
 
+                $backorders = $requ->backorder ?? [];
+                if(!is_array($backorders)) $backorders = [$backorders];
+
                 if(count($items)>0){
                     foreach($items as $index => $item){
                         $invoice = new InvoiceItem();
                         $invoice->purchaseId = $requ->purchaseData[$index];
+                        // if this purchase was marked as a backorder by the client, set flag
+                        $isBackorder = false;
+                        try{ $pidCheck = (string)($requ->purchaseData[$index] ?? ''); $isBackorder = in_array($pidCheck, array_map('strval', $backorders), true); }catch(
+                        Exception $_){ $isBackorder = false; }
+                        if($isBackorder){ $invoice->isBackorder = true; }
                         $invoice->saleId = $sales->id;
                         $invoice->qty = $item;
                         $invoice->salePrice = $requ->salePrice[$index];
@@ -687,13 +711,15 @@ class JqueryController extends Controller
                             throw new \Exception('Failed to save invoice item');
                         }
 
-                        // Use StockService to safely decrease stock for this purchase row (sale-specific)
+                        // Only decrease stock for non-backorder rows
                         $purchaseId = (int)$requ->purchaseData[$index];
                         $qty = (int)$item;
-                        $ok = $stockService->decreaseStockForSale($purchaseId, $qty);
-                        // decreaseStockForSale returns false if stock insufficient or not found
-                        if(!$ok){
-                            throw new \Exception('Insufficient stock or invalid purchaseId: '.$purchaseId);
+                        if(!$isBackorder){
+                            $ok = $stockService->decreaseStockForSale($purchaseId, $qty);
+                            // decreaseStockForSale returns false if stock insufficient or not found
+                            if(!$ok){
+                                throw new \Exception('Insufficient stock or invalid purchaseId: '.$purchaseId);
+                            }
                         }
                     }
                 }

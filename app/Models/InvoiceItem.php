@@ -12,7 +12,7 @@ class InvoiceItem extends Model implements AuditableContract
     use Auditable;
     protected $fillable = [
         'saleId', 'purchaseId', 'qty', 'salePrice', 'buyPrice', 
-        'totalSale', 'totalPurchase', 'profitTotal', 'profitMargin'
+        'totalSale', 'totalPurchase', 'profitTotal', 'profitMargin', 'isBackorder'
     ];
 
     protected $casts = [
@@ -23,6 +23,7 @@ class InvoiceItem extends Model implements AuditableContract
         'totalPurchase' => 'decimal:2',
         'profitTotal' => 'decimal:2',
         'profitMargin' => 'decimal:2',
+        'isBackorder' => 'boolean',
     ];
 
     protected $auditExclude = [
