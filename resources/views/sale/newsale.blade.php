@@ -46,6 +46,9 @@
                                     @endif
                                 </select>
                                 </div>
+                                <div class="small mt-1">
+                                    <span id="prevDueDisplay" class="badge bg-warning text-dark">Previous Due: 0.00</span>
+                                </div>
                             </div>
                             <div class="col-md-2 mt-3 p-0">
                                 <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#customerModal"><i class="las la-plus mr-2"></i>add customer</button>
@@ -166,6 +169,9 @@
                         <div class="d-md-flex  mt-2">
                             <div id="saleErrorSummary" class="me-3" style="flex:1"></div>
                             <button class="btn btn-primary btn-sm" type="submit">Save</button>
+                        </div>
+                        <div class="mt-2">
+                            <span id="totalOutstandingDisplay" class="badge bg-danger">Total Outstanding: 0.00</span>
                         </div>
                     </div>
                 </div>

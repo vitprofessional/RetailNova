@@ -73,14 +73,29 @@
                 if(window.__SALEDEBUG) console.debug('[SALE] Form action set to:', url);
             }
         }catch(e){ }
-        // Wire payment inputs to recalc totals
+        // Wire payment inputs to recalc totals (direct and delegated for reliability)
         try{
             var dam = byId('discountAmount'); if(dam) dam.addEventListener('input', function(){ try{ recalcTotals(); }catch(e){} });
             var paid = byId('paidAmount'); if(paid) paid.addEventListener('input', function(){ try{ recalcTotals(); }catch(e){} });
         }catch(e){ }
+        // Delegated fallback: ensure dynamically-added discount/paid inputs trigger recalculation
+        try{
+            document.addEventListener('input', function(ev){ try{ var t = ev.target; if(!t) return; if(t.id === 'discountAmount' || t.id === 'paidAmount'){ try{ recalcTotals(); }catch(e){} } }catch(e){} }, true);
+            document.addEventListener('change', function(ev){ try{ var t = ev.target; if(!t) return; if(t.id === 'discountAmount' || t.id === 'paidAmount'){ try{ recalcTotals(); }catch(e){} } }catch(e){} }, true);
+            document.addEventListener('keyup', function(ev){ try{ var t = ev.target; if(!t) return; if(t.id === 'discountAmount'){ try{ recalcTotals(); }catch(e){} } }catch(e){} }, true);
+        }catch(e){ }
                 if(customerSel){
             customerSel.addEventListener('change', function(){
                 var cid = this.value;
+                        // Fetch and display customer's previous due
+                        try{
+                            var prevTpl = ROUTES.base + '/ajax/public/customer/'+encodeURIComponent(cid)+'/previous-due';
+                            prevTpl = safeFinalizeUrl(prevTpl);
+                            fetch(prevTpl, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
+                                .then(function(res){ if(res.status >= 400) throw new Error('prevDue fetch failed'); return res.json(); })
+                                .then(function(json){ try{ var v = (json && json.prevDue) ? json.prevDue : '0.00'; var prevEl = byId('prevDue'); if(prevEl) prevEl.value = v; var disp = byId('prevDueDisplay'); if(disp) disp.textContent = 'Previous Due: ' + v; }catch(e){} })
+                                .catch(function(e){ if(window.__SALEDEBUG) console.warn('prevDue fetch error', e); var prevEl = byId('prevDue'); if(prevEl) prevEl.value = 0; var disp = byId('prevDueDisplay'); if(disp) disp.textContent = 'Previous Due: 0.00'; });
+                        }catch(e){ /* ignore prev due fetch errors */ }
                 if(!cid){ productSel.innerHTML = '<option value="">Select</option>'; productSel.disabled = true; return; }
                 var tpl = ROUTES.productsTpl || customerSel.getAttribute('data-products-url') || '';
                     var url = tpl ? tpl.replace('__ID__', encodeURIComponent(cid)) : (ROUTES.base + '/ajax/public/customer/'+encodeURIComponent(cid)+'/products');
@@ -296,6 +311,12 @@
             var grandEl = byId('grandTotal'); if(grandEl) grandEl.value = Number(grand.toFixed(2));
             var dueEl = byId('dueAmount'); if(dueEl) dueEl.value = Number(due.toFixed(2));
             var curDueEl = byId('curDue'); if(curDueEl) curDueEl.value = Number(curDue.toFixed(2));
+            // Update visible total outstanding: previous due + current due
+            try{
+                var prev = num(byId('prevDue') && byId('prevDue').value);
+                var totalOutstanding = Number((prev + curDue).toFixed(2));
+                var outEl = byId('totalOutstandingDisplay'); if(outEl) outEl.textContent = 'Total Outstanding: ' + Number(totalOutstanding.toFixed(2));
+            }catch(e){ /* ignore display errors */ }
         }catch(e){ console.warn('recalcTotals error', e); }
     }
 })();

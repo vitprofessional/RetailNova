@@ -31,6 +31,7 @@
                             <tr>
                                 <th style="width:34px"> <input type="checkbox" id="selectAllPurchases" /></th>
                                 <th>Invoice</th>
+                                <th>Purchase Date</th>
                                 <th>Product</th>
                                 <th class="text-right">Grand Total</th>
                                 <th class="text-right">Paid</th>
@@ -61,6 +62,7 @@
                                     <tr>
                                         <td><input type="checkbox" class="row-select bulk-select" value="{{ $pid }}" data-id="{{ $pid }}" /></td>
                                         <td>{{ $purchase->invoice ?? '-' }}</td>
+                                        <td>{{ !empty($purchase->purchase_date) ? \Carbon\Carbon::parse($purchase->purchase_date)->format('Y-m-d') : '-' }}</td>
                                         <td>{{ $purchase->productName ?? '-' }}</td>
                                         <td class="text-right">{{ number_format($adjustedGrand, 2) }}
                                             @if($returnedAmount > 0)
@@ -91,14 +93,14 @@
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="9" class="text-center">No purchase records found</td>
+                                    <td colspan="10" class="text-center">No purchase records found</td>
                                 </tr>
                             @endif
                         </tbody>
                         @if(!empty($purchaseList) && $purchaseList->count()>0)
                         <tfoot class="bg-light small">
                             <tr>
-                                <th colspan="3" class="text-right">Totals</th>
+                                <th colspan="4" class="text-right">Totals</th>
                                 <th class="text-right">{{ number_format($totalGrand,2) }}</th>
                                 <th class="text-right">{{ number_format($totalPaid,2) }}</th>
                                 <th class="text-right">{{ number_format($totalDue,2) }}</th>
@@ -144,11 +146,11 @@
                                                 { extend: 'pdf', className: 'btn btn-outline-secondary btn-sm' },
                                                 { extend: 'print', className: 'btn btn-outline-secondary btn-sm' }
                                             ],
-                                            order: [[3, 'desc']],
+                                            order: [[4, 'desc']],
                                             responsive: true,
                                             columnDefs: [
-                                                { targets: [3,4,5,6], className: 'dt-body-right' },
-                                                { orderable: false, targets: [0,8] }
+                                                { targets: [4,5,6,7], className: 'dt-body-right' },
+                                                { orderable: false, targets: [0,9] }
                                             ],
                                             pageLength: 25
                                         });

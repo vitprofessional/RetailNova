@@ -121,7 +121,10 @@ function updateOtherDetails(){
 window.recalcFinancials = function(){
     try{
         if(window.__RNDEBUG) console.debug('recalcFinancials start');
-        var totalInputs = Array.prototype.slice.call(document.querySelectorAll('input[id^="totalAmount"], input.total-amount'));
+        // Determine appropriate per-row total inputs depending on page context.
+        // Sale page rows use `.totalSale` inputs, purchase pages use inputs with id starting with totalAmount or class total-amount.
+        var saleTotals = Array.prototype.slice.call(document.querySelectorAll('#productDetails .totalSale'));
+        var totalInputs = saleTotals.length ? saleTotals : Array.prototype.slice.call(document.querySelectorAll('input[id^="totalAmount"], input.total-amount'));
         var base = 0; totalInputs.forEach(function(inp){ base += numVal(inp.value); });
 
         var discountStatusEl = document.getElementById('discountStatus');
@@ -129,16 +132,19 @@ window.recalcFinancials = function(){
         var discountPercentEl = document.getElementById('discountPercent');
         var paidEl = document.getElementById('paidAmount');
 
-        var disType = discountStatusEl ? discountStatusEl.value : '';
+        var disType = discountStatusEl ? discountStatusEl.value : null;
         var disAmount = discountAmountEl ? numVal(discountAmountEl.value) : 0;
         var disPercent = discountPercentEl ? numVal(discountPercentEl.value) : 0;
         var discount = 0;
-        if(disType == '1'){
+        if(disType === '1'){
             discount = disAmount;
-        } else if(disType == '2'){
+        } else if(disType === '2'){
             discount = (base * disPercent / 100) || 0;
             // ensure discountAmount displays computed amount for clarity
             if(discountAmountEl) discountAmountEl.value = Number(discount.toFixed(2));
+        } else {
+            // If there's no discount status selector (sale page), treat the plain `discountAmount` as absolute amount
+            if(!discountStatusEl && discountAmountEl){ discount = disAmount; }
         }
 
         var grand = Math.max(0, base - discount);
@@ -160,12 +166,24 @@ function discountAmountChange(){
     try{
         var discountAmountEl = document.getElementById('discountAmount');
         var discountPercentEl = document.getElementById('discountPercent');
+        // Determine base using same logic as recalcFinancials (support sale page `.totalSale` inputs)
         var base = 0;
-        try{ var totalInputs = Array.prototype.slice.call(document.querySelectorAll('input[id^="totalAmount"], input.total-amount')); totalInputs.forEach(function(inp){ base += numVal(inp.value); }); }catch(_){ base = 0; }
+        try{
+            var saleTotals = Array.prototype.slice.call(document.querySelectorAll('#productDetails .totalSale'));
+            var totalInputs = saleTotals.length ? saleTotals : Array.prototype.slice.call(document.querySelectorAll('input[id^="totalAmount"], input.total-amount'));
+            totalInputs.forEach(function(inp){ base += numVal(inp.value); });
+        }catch(_){ base = 0; }
         var dam = discountAmountEl ? numVal(discountAmountEl.value) : 0;
         if(discountPercentEl && base > 0){ discountPercentEl.value = Number(((dam / base) * 100).toFixed(2)); }
-        // Recalculate financials after manual discount amount change
-        if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else updateOtherDetails();
+        // Recalculate: on Sale page there may be no `discountStatus`/percent fields — prefer sale-specific recalc if present
+        var discountStatusEl = document.getElementById('discountStatus');
+        if(!discountStatusEl){
+            if(typeof window.recalcTotals === 'function') window.recalcTotals();
+            else if(typeof window.recalcFinancials === 'function') window.recalcFinancials();
+            else updateOtherDetails();
+        } else {
+            if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else updateOtherDetails();
+        }
     }catch(e){ console.warn(e); }
 }
 
@@ -173,12 +191,24 @@ function discountPercentChange(){
     try{
         var discountAmountEl = document.getElementById('discountAmount');
         var discountPercentEl = document.getElementById('discountPercent');
+        // Determine base using same logic as recalcFinancials (support sale page `.totalSale` inputs)
         var base = 0;
-        try{ var totalInputs = Array.prototype.slice.call(document.querySelectorAll('input[id^="totalAmount"], input.total-amount')); totalInputs.forEach(function(inp){ base += numVal(inp.value); }); }catch(_){ base = 0; }
+        try{
+            var saleTotals = Array.prototype.slice.call(document.querySelectorAll('#productDetails .totalSale'));
+            var totalInputs = saleTotals.length ? saleTotals : Array.prototype.slice.call(document.querySelectorAll('input[id^="totalAmount"], input.total-amount'));
+            totalInputs.forEach(function(inp){ base += numVal(inp.value); });
+        }catch(_){ base = 0; }
         var per = discountPercentEl ? numVal(discountPercentEl.value) : 0;
         if(discountAmountEl && base > 0){ discountAmountEl.value = Number(((per/100) * base).toFixed(2)); }
-        // Recalculate financials after discount percent change
-        if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else updateOtherDetails();
+        // Recalculate: if there's no discountStatus element (sale page), prefer sale recalc
+        var discountStatusEl = document.getElementById('discountStatus');
+        if(!discountStatusEl){
+            if(typeof window.recalcTotals === 'function') window.recalcTotals();
+            else if(typeof window.recalcFinancials === 'function') window.recalcFinancials();
+            else updateOtherDetails();
+        } else {
+            if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else updateOtherDetails();
+        }
     }catch(e){ console.warn(e); }
 }
 

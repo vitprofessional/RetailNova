@@ -121,6 +121,11 @@ Route::get('/ajax/public/sale/product/{id}/purchase-details', [
     JqueryController::class,
     'getSaleProductDetailsPublic'
 ])->name('ajax.sale.product.purchaseDetails.public');
+// Public endpoint to fetch a customer's aggregate previous due (sum of outstanding due)
+Route::get('/ajax/public/customer/{id}/previous-due', [
+    JqueryController::class,
+    'getCustomerPreviousDuePublic'
+])->name('ajax.customer.previousDue.public');
 // Require legacy session sync (SuperAdmin) and authenticate via admin guard
 Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group(function(){
 
@@ -445,7 +450,8 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         'updatePurchase'
     ])->name('updatePurchase');
 
-    Route::get('/delete/purchase/{id}',[
+    // Support both GET (legacy links) and DELETE (form method spoofing) for deleting purchases
+    Route::match(['get','delete'], '/delete/purchase/{id}', [
         purchase::class,
         'delPurchase'
     ])->name('delPurchase');

@@ -178,17 +178,20 @@ class JqueryController extends Controller
                 'products.name as productName',
                 'purchase_products.buyPrice',
                 'purchase_products.salePriceExVat',
+                'purchase_products.purchase_date as purchaseDate',
                 'suppliers.name as supplierName',
                 'product_stocks.currentStock as currentStock')
             ->orderBy('purchase_products.id','desc')
             ->get();
 
         $options = '<option value="">Select</option>';
-        foreach ($rows as $r) {
+            foreach ($rows as $r) {
             // Use a purchase-specific value prefix so the frontend can detect
             // that this option represents a purchase row rather than a product id.
             $val = 'purchase_' . $r->purchaseId;
-            $label = htmlspecialchars($r->productName . ' — ' . ($r->supplierName ?: 'Unknown') . ' (Stock: ' . ($r->currentStock ?: 0) . ')');
+            $datePart = '';
+            try{ if(!empty($r->purchaseDate)) $datePart = ' ['. \Carbon\Carbon::parse($r->purchaseDate)->format('Y-m-d') .']'; }catch(\Exception $e){}
+            $label = htmlspecialchars($r->productName . ' — ' . ($r->supplierName ?: 'Unknown') . ' (Stock: ' . ($r->currentStock ?: 0) . ')' . $datePart);
             $options .= '<option value="'.$val.'" data-purchase-id="'.$r->purchaseId.'">'.$label.'</option>';
         }
 
@@ -210,6 +213,7 @@ class JqueryController extends Controller
                     'purchase_products.id as purchaseId',
                     'products.id as productId',
                     'products.name as productName',
+                    'purchase_products.purchase_date as purchaseDate',
                     'purchase_products.buyPrice',
                     'purchase_products.salePriceExVat',
                     'purchase_products.vatStatus',
@@ -258,6 +262,41 @@ class JqueryController extends Controller
         }
 
         return response()->json(['productName' => '', 'currentStock' => 0, 'buyPrice' => '', 'salePrice' => '', 'purchaseDate'=>null, 'message' => 'Not found', 'id' => '']);
+    }
+
+    /**
+     * Public endpoint: return aggregate previous due for a customer.
+     * Computes sum of outstanding due for all sales belonging to the customer.
+     */
+    public function getCustomerPreviousDuePublic($customerId)
+    {
+        try {
+            // Prefer an explicit dueAmount column if present, otherwise compute grandTotal - paidAmount
+            $table = 'sale_products';
+            $hasDue = Schema::hasColumn($table, 'dueAmount');
+            $hasGrand = Schema::hasColumn($table, 'grandTotal');
+            $hasTotal = Schema::hasColumn($table, 'totalAmount');
+
+            if ($hasDue) {
+                $prevDue = SaleProduct::where('customerId', $customerId)->sum('dueAmount');
+            } else if ($hasGrand) {
+                $prevDue = SaleProduct::where('customerId', $customerId)
+                    ->selectRaw('COALESCE(SUM(COALESCE(grandTotal,0) - COALESCE(paidAmount,0)),0) as s')->value('s');
+            } else if ($hasTotal) {
+                $prevDue = SaleProduct::where('customerId', $customerId)
+                    ->selectRaw('COALESCE(SUM(COALESCE(totalAmount,0) - COALESCE(paidAmount,0)),0) as s')->value('s');
+            } else {
+                // Fallback: try to compute from known fields if present
+                $prevDue = SaleProduct::where('customerId', $customerId)
+                    ->selectRaw('COALESCE(SUM(COALESCE(grandTotal, totalAmount, 0) - COALESCE(paidAmount,0)),0) as s')->value('s');
+            }
+
+            $prevDue = (float) ($prevDue ?: 0);
+            return response()->json(['status' => 'ok', 'prevDue' => number_format($prevDue, 2, '.', '')]);
+        } catch (\Throwable $e) {
+            \Log::warning('getCustomerPreviousDuePublic error: '.$e->getMessage(), ['id'=>$customerId]);
+            return response()->json(['status' => 'error', 'prevDue' => '0.00'], 500);
+        }
     }
     public function getPurchaseDetails($id){
         $getData = PurchaseProduct::find($id);
