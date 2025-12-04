@@ -4,12 +4,25 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
+<style>
+    /* Small professional tweaks for sales table */
+    .rn-ellipsis{max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    table.data-tables tbody tr:hover{background-color:rgba(0,0,0,0.02)}
+    .rn-col-compact{width:48px;}
+    .rn-number{white-space:nowrap; text-align:right;}
+    .rn-actions .btn{padding:.25rem .5rem; font-size:.85rem}
+    .badge.bg-success, .badge.bg-warning, .badge.bg-danger{font-size:0.8rem}
+</style>
 <div class="row">
     <div class="col-md-12 col-sm-12 col-lg-12">
         <div class="card">
             <div class="card-body">
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                     <h4 class="mb-2 mb-sm-0">Sales</h4>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="{{ route('newsale') }}" class="btn btn-sm btn-primary">New Sale</a>
+                        <button id="exportCsvBtn" class="btn btn-sm btn-outline-secondary">Export CSV</button>
+                    </div>
                     @include('partials.table-filters', [
                         'tableId' => 'salesTable',
                         'searchId' => 'globalSearch',
@@ -25,7 +38,7 @@
                 @include('partials.bulk-actions', ['deleteRoute' => 'sales.bulkDelete', 'entity' => 'Sales'])
                 <div class="rounded mb-2 table-responsive product-table">
                     @php use Carbon\Carbon; @endphp
-                    <table id="salesTable" class="data-tables table mb-0 table-bordered">
+                    <table id="salesTable" class="data-tables table mb-0 table-striped table-bordered">
                         <thead class="bg-white text-uppercase">
                             <tr>
                                 <th class="rn-col-compact">
@@ -34,13 +47,13 @@
                                         <label for="selectAllSales" class="mb-0"></label>
                                     </div>
                                 </th>
-                                <th>Invoice</th>
+                                <th class="text-nowrap">Invoice</th>
                                 <th class="text-left">Customer</th>
-                                <th>Grand Total</th>
-                                <th>Paid</th>
-                                <th>Due</th>
+                                <th class="rn-number">Grand Total</th>
+                                <th class="rn-number">Paid</th>
+                                <th class="rn-number">Due</th>
                                 <th>Status</th>
-                                <th>Date</th>
+                                <th class="text-nowrap">Date</th>
                                 <th class="rn-col-compact">Actions</th>
                             </tr>
                         </thead>
@@ -68,11 +81,11 @@
                                                 <label class="mb-0"></label>
                                             </div>
                                         </td>
-                                        <td class="rn-ellipsis">{{ $sl->invoice }}</td>
+                                        <td class="rn-ellipsis text-nowrap">{{ $sl->invoice }}</td>
                                         <td class="text-left rn-ellipsis" title="{{ $customerName }}">{{ $customerName }}</td>
-                                        <td>{{ $grand }}</td>
-                                        <td>{{ $paid }}</td>
-                                        <td>{{ $due }}</td>
+                                        <td class="rn-number">{{ $grand }}</td>
+                                        <td class="rn-number">{{ $paid }}</td>
+                                        <td class="rn-number">{{ $due }}</td>
                                         <td>
                                             @if($status === 'Paid')
                                                 <span class="badge bg-success">Paid</span>
@@ -82,23 +95,15 @@
                                                 <span class="badge bg-danger">Due</span>
                                             @endif
                                         </td>
-                                        <td>{{ $dateFmt }}</td>
-                                        <td>
-                                            <div class="dropdown position-static">
-                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    Actions
-                                                </button>
-                                                <div class="dropdown-menu dropdown-menu-right" style="min-width:140px; z-index:1200;">
-                                                    <a class="dropdown-item" href="{{ route('invoiceGenerate',['id'=>$sl->id]) }}"><i class="las la-print mr-2"></i>Print</a>
-                                                    <a class="dropdown-item" href="{{ route('returnSale',['id'=>$sl->id]) }}"><i class="las la-undo mr-2"></i>Return</a>
-                                                    <div class="dropdown-divider"></div>
-                                                    <form method="POST" action="{{ route('delSale',['id'=>$sl->id]) }}" style="display:block; margin:0;">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="dropdown-item text-danger" data-confirm="delete"><i class="las la-trash-alt mr-2"></i>Delete</button>
-                                                    </form>
-                                                </div>
-                                            </div>
+                                        <td class="text-nowrap">{{ $dateFmt }}</td>
+                                        <td class="rn-actions text-center">
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('invoiceGenerate',['id'=>$sl->id]) }}" title="Print"><i class="las la-print"></i></a>
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('returnSale',['id'=>$sl->id]) }}" title="Return"><i class="las la-undo"></i></a>
+                                            <form method="POST" action="{{ route('delSale',['id'=>$sl->id]) }}" style="display:inline-block; margin:0 0 0 6px;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="delete" title="Delete"><i class="las la-trash-alt"></i></button>
+                                            </form>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -117,4 +122,77 @@
 @endsection
 @section('scripts')
 @include('partials.bulk-actions-script')
+<script>
+    (function(){
+        // Try to initialize DataTable safely; if DataTables not present, fail silently
+        try {
+                if (window.jQuery && $.fn.DataTable) {
+                var dt;
+                try{
+                    var tableEl = $('#salesTable');
+                    // Avoid reinitialization: use isDataTable check
+                    var already = (typeof $.fn.DataTable.isDataTable === 'function') ? $.fn.DataTable.isDataTable(tableEl[0]) : ($.fn.dataTable && $.fn.dataTable.isDataTable ? $.fn.dataTable.isDataTable('#salesTable') : false);
+                    if(!already){
+                        var dtOpts = {
+                            responsive: true,
+                            order: [[7, 'desc']],
+                            columnDefs: [
+                                { orderable: false, targets: [0,8] },
+                                { className: 'text-right', targets: [3,4,5] }
+                            ],
+                        };
+                        // If Buttons extension is available, enable some common export buttons
+                        if ($.fn.dataTable && $.fn.dataTable.Buttons) {
+                            dtOpts.dom = "<'row'<'col-sm-12 col-md-6'B><'col-sm-12 col-md-6'f>>t<'row'<'col-sm-12 col-md-6'i><'col-sm-12 col-md-6'p>>";
+                            dtOpts.buttons = [
+                                { extend: 'copy', className: 'btn btn-sm btn-outline-secondary' },
+                                { extend: 'csv', className: 'btn btn-sm btn-outline-secondary' },
+                                { extend: 'excel', className: 'btn btn-sm btn-outline-secondary' },
+                                { extend: 'print', className: 'btn btn-sm btn-outline-secondary' }
+                            ];
+                        } else {
+                            dtOpts.dom = "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>t<'row'<'col-sm-12 col-md-6'i><'col-sm-12 col-md-6'p>>";
+                        }
+                        dt = tableEl.DataTable(dtOpts);
+                    } else {
+                        dt = tableEl.DataTable(); // get existing instance
+                    }
+
+                    // Export CSV button: prefer Buttons API if present
+                    $('#exportCsvBtn').off('click').on('click', function(){
+                        try {
+                            if ($.fn.dataTable && $.fn.dataTable.Buttons && dt && dt.buttons){
+                                // try to trigger CSV action if available
+                                var csvBtn = dt.buttons().container().find('.buttons-csv');
+                                if(csvBtn && csvBtn.length){ csvBtn.click(); return; }
+                            }
+                        } catch(e) { /* fall through to fallback CSV */ }
+                        // fallback: create CSV from table rows
+                        var csv = [];
+                        $('#salesTable thead tr').each(function(){
+                            var row = [];
+                            $(this).find('th').each(function(){ row.push($(this).text().trim()); });
+                            csv.push(row.join(','));
+                        });
+                        $('#salesTable tbody tr').each(function(){
+                            var row = [];
+                            $(this).find('td').each(function(){ row.push('"'+($(this).text().trim().replace(/"/g,'""'))+'"'); });
+                            csv.push(row.join(','));
+                        });
+                        var csvContent = csv.join('\n');
+                        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                        var link = document.createElement('a');
+                        var url = URL.createObjectURL(blob);
+                        link.setAttribute('href', url);
+                        link.setAttribute('download', 'sales-export-'+(new Date()).toISOString().slice(0,10)+'.csv');
+                        link.style.visibility = 'hidden';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    });
+                }catch(e){ console.warn('DataTable init failed', e); }
+            }
+        } catch (e) { console.warn('sales table init failed', e); }
+    })();
+</script>
 @endsection

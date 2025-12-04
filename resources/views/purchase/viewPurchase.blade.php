@@ -9,7 +9,7 @@
             <a href="{{ route('purchaseList') }}" class="btn btn-secondary">
                 <i class="ri-arrow-left-line"></i> Back to List
             </a>
-            <button data-onclick="window.print()" class="btn btn-info">
+            <button type="button" class="btn btn-info" onclick="printPurchase()">
                 <i class="ri-printer-line"></i> Print
             </button>
             <a href="{{ route('returnPurchase', ['id' => $purchaseId]) }}" class="btn btn-danger">
@@ -17,7 +17,7 @@
             </a>
         </div>
     </div>
-    <div class="card-body">
+    <div id="rn-purchase-view-root" class="card-body">
         @if($purchase)
         <div class="row">
             <div class="col-md-4">
@@ -205,4 +205,39 @@
     }
 }
 </style>
+@section('scripts')
+    @parent
+    <script>
+        function printPurchase(){
+            try{
+                var root = document.getElementById('rn-purchase-view-root');
+                if(!root){ alert('Nothing to print'); return; }
+
+                // Prefer printing the entire card (header + body) so printed output matches the view
+                var card = root.closest('.card') || root;
+
+                var headNodes = document.querySelectorAll('link[rel="stylesheet"], style');
+                var stylesHtml = '';
+                headNodes.forEach(function(n){
+                    if(n.tagName === 'LINK'){
+                        try{ stylesHtml += '<link rel="stylesheet" href="'+n.href+'">'; }catch(e){}
+                    }else{
+                        stylesHtml += '<style>'+n.innerHTML+'</style>';
+                    }
+                });
+
+                var w = window.open('', '_blank');
+                if(!w){ alert('Please allow popups to print'); return; }
+
+                var doc = w.document.open();
+                var title = document.title || 'Purchase';
+                var html = '<!doctype html><html><head><meta charset="utf-8"><title>'+title+'</title>'+stylesHtml+'<style>@page{margin:8mm;} body{margin:0;padding:8mm; -webkit-print-color-adjust:exact;} .table{width:100%;} html,body{height:auto !important;}</style></head><body>' + card.outerHTML + '</body></html>';
+                doc.write(html);
+                doc.close();
+                w.focus();
+                setTimeout(function(){ try{ w.print(); w.close(); }catch(e){ console.warn('print failed', e); } }, 600);
+            }catch(e){ console.warn('printPurchase error', e); alert('Unable to print'); }
+        }
+    </script>
+@endsection
 @endsection

@@ -48,7 +48,9 @@ class saleController extends Controller
                 'invoice_items.qty',
                 'invoice_items.totalSale',
             )->orderBy('totalSale','desc')->get();
-            return view('invoice.invoicePage',['invoice'=>$invoice,'items'=>$items,'customer'=>$customer]);
+            // Load business settings if available
+            try{ $business = \App\Models\BusinessSetup::first(); }catch(\Exception $e){ $business = null; }
+            return view('invoice.invoicePage',[ 'invoice'=>$invoice, 'items'=>$items, 'customer'=>$customer, 'business' => $business ]);
         else:
             $message = Alert::error('Sorry!','No invoice items found');
             return back();

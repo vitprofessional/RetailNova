@@ -6,9 +6,14 @@
             <div class="card-body">
                 <div class="col-12 p-0 mt-0 mb-4 d-flex justify-content-between align-items-center">
                     <h4>Purchase List</h4>
-                    <a href="{{ route('returnPurchaseList') }}" class="btn btn-info">
-                        <i class="ri-arrow-go-back-line"></i> View Returns
-                    </a>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary" onclick="printPurchaseList()" title="Print list">
+                            <i class="fa-solid fa-print"></i> Print
+                        </button>
+                        <a href="{{ route('returnPurchaseList') }}" class="btn btn-info">
+                            <i class="ri-arrow-go-back-line"></i> View Returns
+                        </a>
+                    </div>
                 </div>
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                     @include('partials.table-filters', [
@@ -22,7 +27,7 @@
                     ])
                 </div>
                 @include('partials.bulk-actions', ['deleteRoute' => 'purchases.bulkDelete', 'entity' => 'Purchases'])
-                <div class="rounded mb-2 table-responsive product-table">
+                <div id="rn-purchase-root" class="rounded mb-2 table-responsive product-table">
                     @php
                         $totalGrand = 0.0; $totalPaid = 0.0; $totalDue = 0.0; $totalStock = 0;
                     @endphp
@@ -167,6 +172,39 @@
                     @endsection
                 @endif
                 @include('partials.bulk-actions-script')
+                @section('scripts')
+                    @parent
+                    <script>
+                        function printPurchaseList(){
+                            try{
+                                var root = document.getElementById('rn-purchase-root');
+                                if(!root){ alert('Nothing to print'); return; }
+
+                                // Collect stylesheets and inline styles
+                                var headNodes = document.querySelectorAll('link[rel="stylesheet"], style');
+                                var stylesHtml = '';
+                                headNodes.forEach(function(n){
+                                    if(n.tagName === 'LINK'){
+                                        try{ stylesHtml += '<link rel="stylesheet" href="'+n.href+'">'; }catch(e){}
+                                    }else{
+                                        stylesHtml += '<style>'+n.innerHTML+'</style>';
+                                    }
+                                });
+
+                                var w = window.open('', '_blank');
+                                if(!w){ alert('Please allow popups to print'); return; }
+
+                                var doc = w.document.open();
+                                var title = document.title || 'Purchase List';
+                                var html = '<!doctype html><html><head><meta charset="utf-8"><title>'+title+'</title>'+stylesHtml+'<style>@page{margin:8mm;} body{margin:0;padding:8mm; -webkit-print-color-adjust:exact;} .product-table{width:100%;} html,body{height:auto !important;}</style></head><body>' + root.innerHTML + '</body></html>';
+                                doc.write(html);
+                                doc.close();
+                                w.focus();
+                                setTimeout(function(){ try{ w.print(); w.close(); }catch(e){ console.warn('print failed', e); } }, 600);
+                            }catch(e){ console.warn('printPurchaseList error', e); alert('Unable to print'); }
+                        }
+                    </script>
+                @endsection
             </div>
         </div>
     </div>
