@@ -62,7 +62,7 @@
                 </thead>
                 <tbody class="ligth-body text-center">
                     @forelse(($provideList ?? []) as $row)
-                    <tr data-date="{{ optional($row->created_at)->format('Y-m-d') }}">
+                    <tr data-date="{{ optional($row->created_at)->format('Y-m-d') }}" data-customer="{{ $row->customer_name ?? 'Customer #'.$row->customerName }}">
                         <td>
                             <div class="checkbox d-inline-block">
                                 <input type="checkbox" class="checkbox-input bulk-select" id="bulk-select-{{ $row->id }}" value="{{ $row->id }}" />

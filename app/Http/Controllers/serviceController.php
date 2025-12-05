@@ -9,7 +9,7 @@ use App\Models\Customer;
 use Alert;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Barryvdh\DomPDF\Facade\Pdf;
+// Dompdf PDF generation is optional. We will check availability at runtime.
 
 class serviceController extends Controller
 {
@@ -109,12 +109,41 @@ class serviceController extends Controller
                 return back()->with('error', 'Selected services not found.');
             }
 
-            // Group services by the resolved customer name
-            $groupedServices = $services->groupBy('customer_name');
+            // Group services by customer name and then by date (Y-m-d)
+            $grouped = [];
+            foreach ($services as $s) {
+                $cust = $s->customer_name ?? 'Walking Customer';
+                $date = isset($s->created_at) ? (\Carbon\Carbon::parse($s->created_at)->format('Y-m-d')) : date('Y-m-d');
+                $grouped[$cust][$date][] = $s;
+            }
+
+            // Consolidate identical service lines within each customer/date group
+            $consolidated = [];
+            foreach ($grouped as $cust => $dates) {
+                foreach ($dates as $date => $rows) {
+                    $map = [];
+                    foreach ($rows as $r) {
+                        $key = trim(strtolower($r->serviceName ?? ''));
+                        if (!isset($map[$key])) {
+                            $map[$key] = [
+                                'serviceName' => $r->serviceName,
+                                'qty' => isset($r->qty) ? (int)$r->qty : 1,
+                                'amount' => isset($r->amount) ? (float)$r->amount : (isset($r->rate) && isset($r->qty) ? (float)$r->rate * (int)$r->qty : 0),
+                            ];
+                        } else {
+                            $map[$key]['qty'] += isset($r->qty) ? (int)$r->qty : 1;
+                            $map[$key]['amount'] += isset($r->amount) ? (float)$r->amount : (isset($r->rate) && isset($r->qty) ? (float)$r->rate * (int)$r->qty : 0);
+                        }
+                    }
+                    // Convert map to indexed array of objects for view consumption
+                    $consolidated[$cust][$date] = array_map(function($it){ return (object)$it; }, array_values($map));
+                }
+            }
 
             // Load business/store details for header
             $business = \App\Models\BusinessSetup::first();
-            return view('service.serviceProvideBulkPrint', ['groupedServices' => $groupedServices, 'business' => $business]);
+            // Pass consolidated items to the view so identical services are merged
+            return view('service.serviceProvideBulkPrint', ['groupedServices' => $consolidated, 'business' => $business]);
 
         } catch (\Exception $e) {
             \Log::error('bulkPrintProvidedServices failed: ' . $e->getMessage());
@@ -142,14 +171,49 @@ class serviceController extends Controller
                 return back()->with('error', 'Selected services not found.');
             }
 
-            $groupedServices = $services->groupBy('customer_name');
+            $grouped = [];
+            foreach ($services as $s) {
+                $cust = $s->customer_name ?? 'Walking Customer';
+                $date = isset($s->created_at) ? (\Carbon\Carbon::parse($s->created_at)->format('Y-m-d')) : date('Y-m-d');
+                $grouped[$cust][$date][] = $s;
+            }
             $business = \App\Models\BusinessSetup::first();
 
-            // Render a PDF-optimized Blade. Dompdf has limited CSS support so use a simpler view.
-            $pdf = Pdf::loadView('service.serviceProvideBulkPrintPdf', ['groupedServices' => $groupedServices, 'business' => $business])
-                ->setPaper('a4', 'portrait');
+            // Consolidate identical service lines within each customer/date group
+            $consolidated = [];
+            foreach ($grouped as $cust => $dates) {
+                foreach ($dates as $date => $rows) {
+                    $map = [];
+                    foreach ($rows as $r) {
+                        $key = trim(strtolower($r->serviceName ?? ''));
+                        if (!isset($map[$key])) {
+                            $map[$key] = [
+                                'serviceName' => $r->serviceName,
+                                'qty' => isset($r->qty) ? (int)$r->qty : 1,
+                                'amount' => isset($r->amount) ? (float)$r->amount : (isset($r->rate) && isset($r->qty) ? (float)$r->rate * (int)$r->qty : 0),
+                            ];
+                        } else {
+                            $map[$key]['qty'] += isset($r->qty) ? (int)$r->qty : 1;
+                            $map[$key]['amount'] += isset($r->amount) ? (float)$r->amount : (isset($r->rate) && isset($r->qty) ? (float)$r->rate * (int)$r->qty : 0);
+                        }
+                    }
+                    // Convert map to indexed array of objects for view consumption
+                    $consolidated[$cust][$date] = array_map(function($it){ return (object)$it; }, array_values($map));
+                }
+            }
 
-            return $pdf->stream('provided-services-bulk-print.pdf');
+            // Render a PDF-optimized Blade. Dompdf has limited CSS support so use a simpler view.
+            if (class_exists('\\Barryvdh\\DomPDF\\Facade\\Pdf')) {
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('service.serviceProvideBulkPrintPdf', ['groupedServices' => $consolidated, 'business' => $business])
+                    ->setPaper('a4', 'portrait');
+
+                return $pdf->stream('provided-services-bulk-print.pdf');
+            }
+
+            // Dompdf not available: show a helpful error to the user
+            \Log::warning('Dompdf facade not available: cannot generate PDF.');
+            Alert::error('PDF Not Available', 'PDF generation is not available on this installation. To enable PDFs run: <code>composer require barryvdh/laravel-dompdf</code> and register the service provider.');
+            return back();
         } catch (\Exception $e) {
             \Log::error('bulkPrintProvidedServicesPdf failed: ' . $e->getMessage());
             return back()->with('error', 'An error occurred while generating the PDF.');
@@ -190,11 +254,64 @@ class serviceController extends Controller
         return view('service.provideService', ['customerList' => $customer, 'serviceList' => $service]);
     }
 
+    // Return next invoice number for preview (AJAX)
+    public function getNextInvoiceNumber()
+    {
+        try {
+            $today = date('Y-m-d');
+            $countToday = \App\Models\ServiceInvoice::whereDate('created_at', $today)->count();
+            $seq = $countToday + 1;
+            $invoiceNumber = 'SI' . date('Ymd') . str_pad($seq, 4, '0', STR_PAD_LEFT);
+            return response()->json(['ok' => true, 'invoice_number' => $invoiceNumber]);
+        } catch (\Exception $e) {
+            Log::error('getNextInvoiceNumber failed: ' . $e->getMessage());
+            return response()->json(['ok' => false], 500);
+        }
+    }
+
+    // View a generated service invoice (with items)
+    public function serviceInvoiceView($id)
+    {
+        $invoice = \App\Models\ServiceInvoice::with('items')->find($id);
+        if (!$invoice) {
+            Alert::error('Failed!', 'Invoice not found');
+            return redirect()->route('serviceProvideList');
+        }
+
+        $customer = null;
+        if ($invoice->customer_id) {
+            $customer = Customer::find($invoice->customer_id);
+        }
+
+        $business = \App\Models\BusinessSetup::first();
+        return view('service.serviceInvoiceView', ['invoice' => $invoice, 'customer' => $customer, 'business' => $business]);
+    }
+
+    // Printable invoice view
+    public function serviceInvoicePrint($id)
+    {
+        $invoice = \App\Models\ServiceInvoice::with('items')->find($id);
+        if (!$invoice) {
+            Alert::error('Failed!', 'Invoice not found');
+            return redirect()->route('serviceProvideList');
+        }
+
+        $customer = null;
+        if ($invoice->customer_id) {
+            $customer = Customer::find($invoice->customer_id);
+        }
+
+        $business = \App\Models\BusinessSetup::first();
+        return view('service.serviceInvoicePrint', ['invoice' => $invoice, 'customer' => $customer, 'business' => $business]);
+    }
+
     // Save provided services (multiple rows at once)
     public function saveProvideService(Request $req)
     {
-        $req->validate([
-            'customerName' => 'required|integer|exists:customers,id',
+        // Support walking (walk-in) customers: if is_walkin present, customerName may be empty
+        $isWalkin = $req->has('is_walkin') && ($req->input('is_walkin') == '1' || $req->input('is_walkin') === true);
+
+        $rules = [
             'serviceName' => 'required|array',
             'serviceName.*' => 'required|string',
             'rate' => 'required|array',
@@ -202,26 +319,88 @@ class serviceController extends Controller
             'qty' => 'required|array',
             'qty.*' => 'required|integer|min:1',
             'note' => 'nullable|string',
-        ]);
+        ];
 
-        $customerId = $req->customerName;
+        if (!$isWalkin) {
+            $rules['customerName'] = 'required|integer|exists:customers,id';
+        }
+
+        $req->validate($rules);
+
+        $customerId = $isWalkin ? null : $req->customerName;
         $note = $req->note ?? null;
 
         $names = $req->serviceName;
         $rates = $req->rate;
         $qtys = $req->qty;
 
+        // If the new invoice tables are not yet migrated, fall back to legacy behavior
+        if (!\Schema::hasTable('service_invoices')) {
+            try {
+                foreach ($names as $idx => $serviceName) {
+                    $rate = isset($rates[$idx]) ? (float)$rates[$idx] : 0;
+                    $qty = isset($qtys[$idx]) ? (int)$qtys[$idx] : 1;
+                    $amount = round($rate * $qty, 2);
+
+                    $ps = new ProvideService();
+                    $ps->customerName = $customerId;
+                    $ps->serviceName = $serviceName;
+                    $ps->amount = $amount;
+                    if (\Schema::hasColumn('provide_services', 'qty')) {
+                        $ps->qty = $qty;
+                    }
+                    if (\Schema::hasColumn('provide_services', 'rate')) {
+                        $ps->rate = $rate;
+                    }
+                    $ps->note = $note;
+                    $ps->save();
+                }
+                Alert::success('Success!', 'Service(s) saved (legacy mode). Run migrations to enable invoices.');
+                return redirect(route('provideService'));
+            } catch (\Exception $e) {
+                Log::error('legacy saveProvideService failed: ' . $e->getMessage());
+                Alert::error('Failed!', 'Service save failed');
+                return back();
+            }
+        }
+
+        DB::beginTransaction();
         try {
+            // Generate an invoice number: SI + YYYYMMDD + 4-digit sequence
+            $today = date('Y-m-d');
+            $countToday = \App\Models\ServiceInvoice::whereDate('created_at', $today)->count();
+            $seq = $countToday + 1;
+            $invoiceNumber = 'SI' . date('Ymd') . str_pad($seq, 4, '0', STR_PAD_LEFT);
+
+            // Create invoice
+            $invoice = \App\Models\ServiceInvoice::create([
+                'invoice_number' => $invoiceNumber,
+                'customer_id' => $customerId,
+                'is_walkin' => $isWalkin ? 1 : 0,
+                'note' => $note,
+                'total_amount' => 0,
+            ]);
+
+            $totalAmount = 0;
             foreach ($names as $idx => $serviceName) {
                 $rate = isset($rates[$idx]) ? (float)$rates[$idx] : 0;
                 $qty = isset($qtys[$idx]) ? (int)$qtys[$idx] : 1;
-                $amount = $rate * $qty;
+                $amount = round($rate * $qty, 2);
 
+                // create invoice item
+                \App\Models\ServiceInvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'service_name' => $serviceName,
+                    'rate' => $rate,
+                    'qty' => $qty,
+                    'line_total' => $amount,
+                ]);
+
+                // also keep legacy ProvideService entries for backward compatibility
                 $ps = new ProvideService();
                 $ps->customerName = $customerId;
                 $ps->serviceName = $serviceName;
                 $ps->amount = $amount;
-                // store qty and rate for reference
                 if (\Schema::hasColumn('provide_services', 'qty')) {
                     $ps->qty = $qty;
                 }
@@ -230,13 +409,23 @@ class serviceController extends Controller
                 }
                 $ps->note = $note;
                 $ps->save();
+
+                $totalAmount += $amount;
             }
 
-            Alert::success('Success!', 'Service(s) saved successfully');
-            return redirect(route('provideService'));
+            // update invoice total
+            $invoice->total_amount = $totalAmount;
+            $invoice->save();
+
+            DB::commit();
+
+            Alert::success('Success!', 'Service(s) saved successfully. Invoice: ' . $invoiceNumber);
+            // Redirect user to the generated invoice view and request auto-print
+            return redirect()->route('serviceInvoiceView', ['id' => $invoice->id, 'autoprint' => 1]);
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('saveProvideService failed: ' . $e->getMessage());
-            Alert::error('Failed!', 'Service profile creation failed');
+            Alert::error('Failed!', 'Service save failed');
             return back();
         }
     }

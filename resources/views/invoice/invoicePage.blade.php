@@ -196,8 +196,8 @@ function printInvoice(){
     doc.open();
     doc.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">');
     doc.write(styleHtml);
-    // small print CSS to ensure minimum page margins and hide interactive elements
-    doc.write('<style>@page{margin:8mm;}body{margin:0;padding:8mm;color:#000;font-family:Arial,Helvetica,sans-serif; -webkit-print-color-adjust:exact;} .no-print{display:none !important} .invoice-table{width:100%;table-layout:fixed} .invoice-table th,.invoice-table td{border:1px solid #222;padding:.35rem} html,body{height:auto !important;} </style>');
+    // small print CSS to ensure full-bleed table and hide interactive
+    doc.write('<style>body{margin:0;padding:8mm;color:#000;font-family:Arial,Helvetica,sans-serif} .no-print{display:none !important} .invoice-table{width:100%;table-layout:fixed} .invoice-table th,.invoice-table td{border:1px solid #222;padding:.35rem}</style>');
     doc.write('</head><body>');
     doc.write(content);
     doc.write('</body></html>');

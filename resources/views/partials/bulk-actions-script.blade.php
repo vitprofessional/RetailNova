@@ -13,8 +13,10 @@
         var countEl = document.getElementById('bulkSelectedCount');
         var deleteBtn = document.getElementById('bulkDeleteBtn');
         var printBtn = document.getElementById('bulkPrintBtn');
+        var pdfBtn = document.getElementById('bulkPdfBtn');
         var deleteForm = document.getElementById('bulkDeleteForm');
         var printForm = document.getElementById('bulkPrintForm');
+        var pdfForm = document.getElementById('bulkPdfForm');
         var allCheckboxes = document.querySelectorAll('.bulk-select');
         
         // Dynamically find the "Select All" checkbox on the page and assign it the correct class for our script to use.
@@ -42,7 +44,7 @@
         function updateBulkUI() {
             var selected = document.querySelectorAll('.bulk-select:checked');
             var count = selected.length;
-            
+
             console.log(count + " items selected.");
 
             if (countEl) {
@@ -52,7 +54,42 @@
             var hasSelection = count > 0;
             wrapper.classList.toggle('d-none', !hasSelection);
             if (deleteBtn) deleteBtn.disabled = !hasSelection;
-            if (printBtn) printBtn.disabled = !hasSelection;
+
+            // Determine whether selected rows belong to the same customer and same date
+            var groupable = false;
+            if (hasSelection) {
+                var firstCust = null, firstDate = null, allSame = true;
+                selected.forEach(function(cb, idx){
+                    var tr = cb.closest('tr');
+                    if (!tr) return;
+                    var date = tr.dataset.date || (tr.getAttribute('data-date')) || '';
+                    // try to read customer from data attribute, otherwise second cell text
+                    var cust = tr.dataset.customer || (tr.getAttribute('data-customer')) || '';
+                    if(!cust){
+                        var tds = tr.querySelectorAll('td');
+                        if(tds.length > 1) cust = tds[1].textContent.trim();
+                    }
+                    if (idx === 0) {
+                        firstCust = cust;
+                        firstDate = date;
+                    } else {
+                        if ((cust || '') !== (firstCust || '') || (date || '') !== (firstDate || '')) {
+                            allSame = false;
+                        }
+                    }
+                });
+                groupable = allSame;
+            }
+
+            // show a groupability hint and enable/disable print button accordingly
+            var hint = document.getElementById('bulkGroupHint');
+            if (!groupable && hasSelection) {
+                if (hint) hint.classList.remove('d-none');
+            } else {
+                if (hint) hint.classList.add('d-none');
+            }
+            if (printBtn) printBtn.disabled = !groupable;
+            if (pdfBtn) pdfBtn.disabled = !groupable;
         }
 
         // --- Event Listeners ---
@@ -113,7 +150,28 @@
             });
             console.log("Appended " + selectedIds.length + " new hidden inputs to the form.");
 
-            // Now, submit the form programmatically
+            // For print forms, open a named window and submit into it (more reliable than bare target _blank)
+            if (form.id === 'bulkPrintForm' || form.id === 'bulkPdfForm') {
+                try {
+                    var winName = 'rn_bulk_print_' + Date.now();
+                    var newWin = window.open('', winName);
+                    if (newWin) {
+                        form.target = winName;
+                        // Use a short delay to ensure target is applied in all browsers
+                        setTimeout(function(){
+                            form.submit();
+                            // focus the new window/tab
+                            try{ newWin.focus(); }catch(e){}
+                        }, 50);
+                        console.log('Submitted print form into named window:', winName);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Named window open failed, falling back to direct submit', e);
+                }
+            }
+
+            // Default submit for other forms
             console.log("Submitting the form to " + form.action);
             form.submit();
         }
@@ -127,9 +185,48 @@
 
         if (printForm) {
             console.log("Attaching submit listener to the print form.");
-            printForm.addEventListener('submit', handleFormSubmit);
+            printForm.addEventListener('submit', function(e){
+                // re-check groupable condition before submitting
+                var selected = document.querySelectorAll('.bulk-select:checked');
+                if(selected.length === 0){ e.preventDefault(); alert('Please select at least one item to print.'); return; }
+                var firstCust = null, firstDate = null, allSame = true;
+                selected.forEach(function(cb, idx){
+                    var tr = cb.closest('tr');
+                    var date = tr ? (tr.dataset.date || tr.getAttribute('data-date') || '') : '';
+                    var cust = tr ? (tr.dataset.customer || tr.getAttribute('data-customer') || '') : '';
+                    if(!cust && tr){ var tds = tr.querySelectorAll('td'); if(tds.length>1) cust = tds[1].textContent.trim(); }
+                    if(idx===0){ firstCust = cust; firstDate = date; } else {
+                        if((cust||'') !== (firstCust||'') || (date||'') !== (firstDate||'')){ allSame = false; }
+                    }
+                });
+                if(!allSame){ e.preventDefault(); alert('Print requires all selected services to belong to the same customer and the same date.'); return; }
+                handleFormSubmit(e);
+            });
         } else {
             console.warn("Print form ('bulkPrintForm') not found.");
+        }
+
+        if (pdfForm) {
+            console.log("Attaching submit listener to the PDF form.");
+            pdfForm.addEventListener('submit', function(e){
+                // re-check groupable condition before submitting
+                var selected = document.querySelectorAll('.bulk-select:checked');
+                if(selected.length === 0){ e.preventDefault(); alert('Please select at least one item to create PDF.'); return; }
+                var firstCust = null, firstDate = null, allSame = true;
+                selected.forEach(function(cb, idx){
+                    var tr = cb.closest('tr');
+                    var date = tr ? (tr.dataset.date || tr.getAttribute('data-date') || '') : '';
+                    var cust = tr ? (tr.dataset.customer || tr.getAttribute('data-customer') || '') : '';
+                    if(!cust && tr){ var tds = tr.querySelectorAll('td'); if(tds.length>1) cust = tds[1].textContent.trim(); }
+                    if(idx===0){ firstCust = cust; firstDate = date; } else {
+                        if((cust||'') !== (firstCust||'') || (date||'') !== (firstDate||'')){ allSame = false; }
+                    }
+                });
+                if(!allSame){ e.preventDefault(); alert('PDF requires all selected services to belong to the same customer and the same date.'); return; }
+                handleFormSubmit(e);
+            });
+        } else {
+            console.warn("PDF form ('bulkPdfForm') not found.");
         }
 
         // Initial UI check on page load to hide the bar

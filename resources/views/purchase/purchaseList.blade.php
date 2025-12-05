@@ -196,7 +196,7 @@
 
                                 var doc = w.document.open();
                                 var title = document.title || 'Purchase List';
-                                var html = '<!doctype html><html><head><meta charset="utf-8"><title>'+title+'</title>'+stylesHtml+'<style>@page{margin:8mm;} body{margin:0;padding:8mm; -webkit-print-color-adjust:exact;} .product-table{width:100%;} html,body{height:auto !important;}</style></head><body>' + root.innerHTML + '</body></html>';
+                                var html = '<!doctype html><html><head><meta charset="utf-8"><title>'+title+'</title>'+stylesHtml+'<style>@page{margin:10mm;} body{margin:0;padding:8px; -webkit-print-color-adjust:exact;} .product-table{width:100%;}</style></head><body>' + root.innerHTML + '</body></html>';
                                 doc.write(html);
                                 doc.close();
                                 w.focus();

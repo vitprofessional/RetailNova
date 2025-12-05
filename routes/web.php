@@ -655,8 +655,8 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         'saveProvideService'
     ])->name('saveProvideService');
 
-    // service bulk delete
-    Route::post('/service/bulk-delete',[
+    // service bulk delete (accept both POST and DELETE for compatibility)
+    Route::match(['post','delete'], '/service/bulk-delete', [
         serviceController::class,
         'bulkDeleteService'
     ])->name('services.bulkDelete');
@@ -678,6 +678,23 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         serviceController::class,
         'provideServiceView'
     ])->name('provideServiceView');
+
+    // Service Invoice routes (view and print)
+    Route::get('service/invoice/{id}',[
+        serviceController::class,
+        'serviceInvoiceView'
+    ])->name('serviceInvoiceView');
+
+    Route::get('service/invoice/{id}/print',[
+        serviceController::class,
+        'serviceInvoicePrint'
+    ])->name('serviceInvoicePrint');
+
+    // Get next invoice number (AJAX preview)
+    Route::get('service/next-invoice-number',[
+        serviceController::class,
+        'getNextInvoiceNumber'
+    ])->name('service.nextInvoiceNumber');
     Route::get('provide/service/print/{id}',[
         serviceController::class,
         'provideServicePrint'

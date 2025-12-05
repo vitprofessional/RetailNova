@@ -46,41 +46,42 @@
     </div>
 
     <div class="content">
-        @if($groupedServices->isEmpty())
+        @if(empty($groupedServices))
             <div>No services found for the selected criteria.</div>
         @else
-            @foreach($groupedServices as $customerName => $services)
-                @php $total = $services->sum('amount'); @endphp
-                <div class="customer-section">
-                    <div class="customer-header">Customer: {{ $customerName }}</div>
-                    <div class="customer-range">Date Range: {{ optional($services->min('created_at'))->format('Y-m-d') }} to {{ optional($services->max('created_at'))->format('Y-m-d') }}</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width:6%;">#</th>
-                                <th style="width:64%;">Service Name</th>
-                                <th style="width:15%;">Date</th>
-                                <th style="width:15%;" class="text-right">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($services as $i => $s)
+            @foreach($groupedServices as $customerName => $dates)
+                @foreach($dates as $date => $rows)
+                    @php $total = array_sum(array_map(function($r){ return floatval($r->amount ?? 0); }, $rows)); @endphp
+                    <div class="customer-section">
+                        <div class="customer-header">Customer: {{ $customerName }} - {{ $date }}</div>
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td>{{ $i + 1 }}</td>
-                                    <td>{{ $s->serviceName }}</td>
-                                    <td>{{ optional($s->created_at)->format('Y-m-d') }}</td>
-                                    <td class="text-right">{{ number_format($s->amount,2) }}</td>
+                                    <th style="width:6%;">#</th>
+                                    <th style="width:64%;">Service Name</th>
+                                    <th style="width:15%;" class="text-right">Qty</th>
+                                    <th style="width:15%;" class="text-right">Amount</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                        <tfoot>
-                            <tr class="total-row">
-                                <td colspan="3" class="text-right">Total</td>
-                                <td class="text-right">{{ number_format($total,2) }}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                @foreach($rows as $i => $s)
+                                    <tr>
+                                        <td>{{ $i + 1 }}</td>
+                                        <td>{{ $s->serviceName }}</td>
+                                        <td class="text-right">{{ $s->qty ?? 1 }}</td>
+                                        <td class="text-right">{{ number_format($s->amount,2) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                <tr class="total-row">
+                                    <td colspan="3" class="text-right">Total</td>
+                                    <td class="text-right">{{ number_format($total,2) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                @endforeach
             @endforeach
         @endif
     </div>
