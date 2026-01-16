@@ -135,11 +135,11 @@
             min-width: 80px;
         }
         .form-control {
-            height: 30px;
+            min-height: 40px !important;
             line-height: 30px;
             background: #fff;
             border: 1px solid #DCDFE8;
-            font-size: 14px;
+            font-size: 13px !important;
             color: #000000;
             -webkit-border-radius: 10px;
             -moz-border-radius: 10px;
@@ -158,8 +158,487 @@
             font-size: 15px !important;
             padding-left: 20px !important;
         }
-        .btn i{
-            margin-right: 0 !important;u
+        .btn i {
+            margin-right: 0.35rem !important;
+        }
+        .btn-primary {
+            background-color: #4680ff;
+            border-color: #4680ff;
+            font-weight: 500;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #3566cc;
+            border-color: #3566cc;
+            color: #fff;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            font-weight: 500;
+            color: #fff;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #5a6268;
+            color: #fff;
+        }
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 13px;
+        }
+        .card {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            border-radius: 7px 7px 0 0;
+            padding: 1.25rem;
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-check{
+            padding-left: 2.5rem !important;
+        }
+        .form-group label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-size: 14px;
+        }
+        .table-responsive{
+            padding:1rem;
+        }
+        .form-control, .form-control:focus {
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            padding: 0.625rem 0.875rem;
+            font-size: 14px;
+            transition: all 0.15s ease;
+        }
+        .form-control:focus {
+            border-color: #4680ff;
+            box-shadow: 0 0 0 0.2rem rgba(70,128,255,.15);
+        }
+        .form-control:disabled, .form-control[readonly] {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+        }
+        .form-check-label {
+            font-weight: normal;
+            margin-bottom: 0;
+            font-size: 14px;
+        }
+        .table thead th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            font-size: 13px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1rem 0.75rem;
+        }
+        .table tbody td {
+            vertical-align: middle;
+            border-color: #e9ecef;
+            padding: 0.875rem 0.75rem;
+        }
+        .table-responsive {
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        .badge {
+            padding: 0.35rem 0.65rem;
+            font-weight: 500;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        .alert {
+            border-radius: 6px;
+            border: none;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .text-danger {
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .small, small {
+            font-size: 13px;
+            color: #6c757d;
+        }
+        .text-muted {
+            color: #6c757d !important;
+            font-size: 13px;
+        }
+        h4 {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.25rem;
+        }
+        .d-flex.justify-content-between {
+            gap: 1rem;
+        }
+        /* Delete Button Styling */
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            font-weight: 500;
+            color: #fff;
+            transition: all 0.2s ease;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+            transform: translateY(-2px);
+        }
+        .btn-danger:active {
+            background-color: #bd2130;
+            border-color: #b21f25;
+            box-shadow: 0 1px 3px rgba(220, 53, 69, 0.4);
+            transform: translateY(0);
+        }
+        .btn-danger:disabled {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            opacity: 0.65;
+        }
+        /* Delete icon styling */
+        .btn-danger i {
+            transition: transform 0.2s ease;
+        }
+        .btn-danger:hover i {
+            transform: scale(1.1);
+        }
+        /* Danger badge styling for delete links */
+        .badge-danger {
+            background-color: #dc3545;
+            color: #fff;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .badge-danger:hover {
+            background-color: #c82333;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+        .btn-info {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            font-weight: 500;
+            color: #fff;
+            transition: all 0.2s ease;
+        }
+        .btn-info:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(23, 162, 184, 0.4);
+            transform: translateY(-2px);
+        }
+        .btn-info:active {
+            background-color: #117a8b;
+            border-color: #0c5460;
+            box-shadow: 0 1px 3px rgba(23, 162, 184, 0.4);
+            transform: translateY(0);
+        }
+        /* Success/Edit button styling */
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+            font-weight: 500;
+            color: #fff;
+            transition: all 0.2s ease;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
+            transform: translateY(-2px);
+        }
+        /* Warning button styling */
+        .btn-warning {
+            background-color: #ffc107;
+            border-color: #ffc107;
+            font-weight: 500;
+            color: #212529;
+            transition: all 0.2s ease;
+        }
+        }
+        /* Button group styling */
+        .btn-group {
+            display: flex;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+        }
+        .btn-group .btn {
+            margin: 0;
+            border-radius: 6px;
+        }
+        /* Outline button variants */
+        .btn-outline-danger {
+            color: #dc3545;
+            border: 1.5px solid #dc3545;
+            background-color: transparent;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .btn-outline-danger:hover {
+            background-color: #dc3545;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+            transform: translateY(-2px);
+        }
+        .btn-outline-danger:active {
+            background-color: #bd2130;
+            border-color: #b21f25;
+        }
+        /* Additional danger badge styles for other delete patterns */
+        .bg-warning.badge {
+            background-color: #dc3545 !important;
+            color: #fff !important;
+            padding: 0.5rem 0.75rem !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+            font-weight: 500 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .bg-warning.badge:hover {
+            background-color: #c82333 !important;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4) !important;
+            transform: translateY(-2px) !important;
+            text-decoration: none !important;
+        }
+        .btn-link[data-original-title="Delete"] {
+            color: #dc3545;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .btn-link[data-original-title="Delete"]:hover {
+            color: #c82333;
+            transform: scale(1.1);
+        }
+        /* Generic danger badge styling */
+        .badge.bg-danger {
+            background-color: #dc3545 !important;
+            color: #fff !important;
+            padding: 0.5rem 0.75rem !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+        }
+        .badge.bg-danger:hover {
+            background-color: #c82333 !important;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4) !important;
+            transform: translateY(-2px) !important;
+        }
+        /* Print Button Styling */
+        .btn-print {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            font-weight: 500;
+            color: #fff;
+            transition: all 0.2s ease;
+        }
+        .btn-print:hover {
+            background-color: #5a6268;
+            border-color: #5a6268;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(108, 117, 125, 0.4);
+            transform: translateY(-2px);
+        }
+        .btn-print i {
+            margin-right: 0.35rem;
+        }
+        /* Utility classes for print control */
+        .d-print-none {
+            display: none !important;
+        }
+        .no-print {
+            display: block !important;
+        }
+        @media print {
+            .d-print-none {
+                display: none !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .d-print-block {
+                display: block !important;
+            }
+            .d-print-inline {
+                display: inline !important;
+            }
+        }
+        @media print {
+            /* Hide elements that shouldn't print */
+            .sidebar, .iq-navbar, .wrapper-menu, .search-toggle, nav, 
+            .btn, button, .badge:not(.badge-primary):not(.badge-success):not(.badge-danger):not(.badge-warning), 
+            .alert, .form-control, form, .d-print-none, .no-print {
+                display: none !important;
+            }
+            
+            /* Print-friendly body */
+            body {
+                background: white !important;
+                padding: 20px !important;
+                color: #000 !important;
+            }
+            
+            /* Print container adjustments */
+            .content-page, .container-fluid {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 20px !important;
+            }
+            
+            /* Print-friendly cards */
+            .card {
+                border: 1px solid #000 !important;
+                box-shadow: none !important;
+                page-break-inside: avoid !important;
+                margin-bottom: 20px !important;
+            }
+            
+            .card-header {
+                background: #f5f5f5 !important;
+                border-bottom: 2px solid #000 !important;
+                padding: 12px !important;
+            }
+            
+            .card-body {
+                padding: 15px !important;
+            }
+            
+            /* Print-friendly tables */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                margin-bottom: 15px !important;
+                page-break-inside: avoid !important;
+            }
+            
+            table thead th {
+                background: #e9ecef !important;
+                border: 1px solid #000 !important;
+                padding: 10px !important;
+                text-align: left !important;
+                font-weight: bold !important;
+            }
+            
+            table tbody td {
+                border: 1px solid #ddd !important;
+                padding: 8px !important;
+            }
+            
+            table tbody tr:nth-child(even) {
+                background: #f9f9f9 !important;
+            }
+            
+            /* Print-friendly headings */
+            h1, h2, h3, h4, h5, h6 {
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+            }
+            
+            /* Print-friendly paragraphs */
+            p {
+                page-break-inside: avoid !important;
+            }
+            
+            /* Print page breaks */
+            .page-break {
+                page-break-after: always !important;
+            }
+            
+            /* Print footer */
+            .print-footer {
+                display: block !important;
+                text-align: center !important;
+                margin-top: 20px !important;
+                padding-top: 20px !important;
+                border-top: 1px solid #000 !important;
+                font-size: 12px !important;
+                color: #666 !important;
+            }
+            
+            /* Link styling for print */
+            a {
+                text-decoration: none !important;
+                color: #000 !important;
+            }
+        }
+        .btn-outline-primary {
+            color: #4680ff;
+            border: 1.5px solid #4680ff;
+            background-color: transparent;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .btn-outline-primary:hover {
+            background-color: #4680ff;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(70, 128, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        /* Delete row styling for inline delete buttons */
+        .delete-row-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background-color: #ffebee;
+            color: #dc3545;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            font-size: 16px;
+        }
+        .delete-row-action:hover {
+            background-color: #dc3545;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+            transform: scale(1.05);
+        }
+        .delete-row-action:active {
+            transform: scale(0.95);
         }
         /* Global rounded search input styling */
         .rn-search { max-width: 420px; width: 100%; }
@@ -404,123 +883,69 @@
                       </ul>
                       </li>
                       <li class=" ">
-                          <a href="#account" class="{{ request()->routeIs('addAccount','accountList','accountReport') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addAccount','accountList','accountReport') ? 'true' : 'false' }}">
+                          <a href="#account" class="{{ request()->routeIs('account.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('account.*') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash8" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                               </svg>
-                              <span class="ml-4">Accounts</span>
+                              <span class="ml-4">Account Management</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
                           </a>
-                          <ul id="account" class="iq-submenu collapse{{ request()->routeIs('addAccount','accountList','accountReport') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="">
-                                          <a href="{{route('addAccount')}}">
-                                              <i class="las la-minus"></i><span>Accounts</span>
+                          <ul id="account" class="iq-submenu collapse{{ request()->routeIs('account.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
+                                  <li class="{{ request()->routeIs('account.chart','account.create','account.edit') ? 'active' : '' }}">
+                                          <a href="{{route('account.chart')}}">
+                                              <i class="las la-book"></i><span>Chart of Accounts</span>
                                           </a>
                                   </li>
-                                  <li class="">
-                                          <a href="{{route('accountList')}}">
-                                              <i class="las la-minus"></i><span>Accounts List</span>
+                                  <li class="{{ request()->routeIs('account.transactions','account.transactions.create') ? 'active' : '' }}">
+                                          <a href="{{route('account.transactions')}}">
+                                              <i class="las la-exchange-alt"></i><span>Transactions</span>
                                           </a>
                                   </li>
-                                  <li class="">
-                                          <a href="{{route('accountReport')}}">
-                                              <i class="las la-minus"></i><span>Accounts Report</span>
+                                  <li class="{{ request()->routeIs('account.reports') ? 'active' : '' }}">
+                                          <a href="{{route('account.reports')}}">
+                                              <i class="las la-chart-line"></i><span>Financial Reports</span>
                                           </a>
                                   </li>
                           </ul>
                       </li> <li class=" ">
-                          <a href="#expense" class="{{ request()->routeIs('addExpense','expense') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addExpense','expense') ? 'true' : 'false' }}">
+                          <a href="#expense" class="{{ request()->routeIs('expense.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('expense.*') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash8" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                  <circle cx="8.5" cy="7" r="4"></circle>
+                                  <line x1="18" y1="8" x2="23" y2="13"></line>
+                                  <line x1="23" y1="8" x2="18" y2="13"></line>
                               </svg>
-                              <span class="ml-4">Expense</span>
+                              <span class="ml-4">Expense Management</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
                           </a>
-                          <ul id="expense" class="iq-submenu collapse{{ request()->routeIs('addExpense','expense') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="">
-                                          <a href="{{route('addExpense')}}">
-                                              <i class="las la-minus"></i><span>Expense type</span>
+                          <ul id="expense" class="iq-submenu collapse{{ request()->routeIs('expense.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
+                                  <li class="{{ request()->routeIs('expense.categories','expense.categories.*') ? 'active' : '' }}">
+                                          <a href="{{route('expense.categories')}}">
+                                              <i class="las la-tags"></i><span>Expense Categories</span>
                                           </a>
                                   </li>
-                                  <li class="">
-                                          <a href="{{route('expense')}}">
-                                              <i class="las la-minus"></i><span>Expense</span>
+                                  <li class="{{ request()->routeIs('expense.create') ? 'active' : '' }}">
+                                          <a href="{{route('expense.create')}}">
+                                              <i class="las la-plus-circle"></i><span>Add Expense</span>
                                           </a>
                                   </li>
-                                  <li class="">
-                                          <a href="">
-                                              <i class="las la-minus"></i><span>Expense By type</span>
+                                  <li class="{{ request()->routeIs('expense.list','expense.edit') ? 'active' : '' }}">
+                                          <a href="{{route('expense.list')}}">
+                                              <i class="las la-list"></i><span>Expense List</span>
+                                          </a>
+                                  </li>
+                                  <li class="{{ request()->routeIs('expense.reports') ? 'active' : '' }}">
+                                          <a href="{{route('expense.reports')}}">
+                                              <i class="las la-chart-bar"></i><span>Expense Reports</span>
                                           </a>
                                   </li>
                           </ul>
                       </li>
-                      <li class=" ">
-                          <a href="#otherpage" class="{{ request()->routeIs('addStockReport','addSalesReport','addTopCustomerReport','addRceivableReport','addPaybleReport','addProductSaleReport','addLowProductListReport','addTransactionReport','addExpenseReport') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addStockReport','addSalesReport','addTopCustomerReport','addRceivableReport','addPaybleReport','addProductSaleReport','addLowProductListReport','addTransactionReport','addExpenseReport') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash9" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="9"></rect><rect x="14" y="7" width="3" height="5"></rect>
-                              </svg>
-                              <span class="ml-4">Report</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                                      <ul id="otherpage" class="iq-submenu collapse{{ request()->routeIs('addStockReport','addSalesReport','addTopCustomerReport','addRceivableReport','addPaybleReport','addProductSaleReport','addLowProductListReport','addTransactionReport','addExpenseReport') ? ' show' : '' }}" data-parent="#otherpage">
-                                              <li class="">
-                                                  <a href="">
-                                                      <i class="las la-minus"></i><span>Business Report</span>
-                                                  </a>
-                                              </li>
-                                              <li class="">
-                                                  <a href="{{route('addStockReport')}}">
-                                                      <i class="las la-minus"></i><span>Stock Report</span>
-                                                  </a>
-                                              </li>
-                                              <li class="">
-                                                  <a href="{{route('addSalesReport')}}">
-                                                      <i class="las la-minus"></i><span>Sale Report</span>
-                                                  </a>
-                                              </li>
-                                              <li class="">
-                                                  <a href="{{route('addTopCustomerReport')}}">
-                                                      <i class="las la-minus"></i><span>Top Customer</span>
-                                                  </a>
-                                              </li>
-                                              <li class="">
-                                                  <a href="{{route('addRceivableReport')}}">
-                                                      <i class="las la-minus"></i><span>Receivable</span>
-                                                  </a>
-                                              </li>
-                                              <li class="">
-                                                  <a href="{{route('addPaybleReport')}}">
-                                                      <i class="las la-minus"></i><span>Payable</span>
-                                                  </a>
-                                              </li>
-                                              <li class="">
-                                                  <a href="{{route('addProductSaleReport')}}">
-                                                      <i class="las la-minus"></i><span>Product Sale Report</span>
-                                                  </a>
-                                              </li>
-                                              <li class="">
-                                                  <a href="{{route('addLowProductListReport')}}">
-                                                      <i class="las la-minus"></i><span>Low Stock Product</span>
-                                                  </a>
-                                              </li>
-                                              <li class="">
-                                                  <a href="{{route('addTransactionReport')}}">
-                                                      <i class="las la-minus"></i><span>Transaction Report</span>
-                                                  </a>
-                                              </li>
-                                                  <li class="">
-                                                  <a href="{{route('addExpenseReport')}}">
-                                                      <i class="las la-minus"></i>Expense Reprot<span></span>
-                                                  </a>
-                                              </li>
-                                      </ul>
-                      </li>
+
                       @can('viewAudits')
                       <li class=" {{ request()->routeIs('audits.index') ? 'active' : '' }}">
                           <a href="{{ route('audits.index') }}" class="svg-icon">
@@ -530,19 +955,25 @@
                       </li>
                       @endcan
                       <li class=" ">
-                          <a href="#return" class="{{ request()->routeIs('addBusinessSetupPage') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addBusinessSetupPage') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash6" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line>
+                          <a href="#settings" class="{{ request()->routeIs('addBusinessSetupPage','business.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addBusinessSetupPage','business.*') ? 'true' : 'false' }}">
+                              <svg class="svg-icon" id="p-settings" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <circle cx="12" cy="12" r="3"></circle>
+                                  <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"></path>
                               </svg>
-                              <span class="ml-4">Business setup</span>
+                              <span class="ml-4">Business Settings</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
                           </a>
-                          <ul id="return" class="iq-submenu collapse{{ request()->routeIs('addBusinessSetupPage') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                <li class="">
+                          <ul id="settings" class="iq-submenu collapse{{ request()->routeIs('addBusinessSetupPage','business.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
+                                <li class="{{ request()->routeIs('addBusinessSetupPage') ? 'active' : '' }}">
                                         <a href="{{route('addBusinessSetupPage')}}">
-                                            <i class="las la-minus"></i><span>Setup Page</span>
+                                            <i class="las la-cog"></i><span>Business Configuration</span>
+                                        </a>
+                                </li>
+                                <li class="{{ request()->routeIs('business.locations.*','business.locations') ? 'active' : '' }}">
+                                        <a href="{{route('business.locations')}}">
+                                            <i class="las la-map-marked-alt"></i><span>Business Locations</span>
                                         </a>
                                 </li>
                           </ul>
@@ -833,6 +1264,11 @@
                   </div>
               </nav>
           </div>
+      </div>     
+      <div class="content-page">
+        <div class="container-fluid">
+            @yield('container')
+        </div>
       </div>
       <div class="modal fade" id="new-order" tabindex="-1" role="dialog" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered" role="document">
@@ -857,27 +1293,20 @@
                   </div>
               </div>
           </div>
-      </div>      
-      <div class="content-page">
-        <div class="container-fluid">
-            @yield('container')
-        </div>
-      </div>
+      </div> 
     </div>
     <!-- Wrapper End-->
     <footer class="iq-footer">
-            <div class="container-fluid">
+        <div class="container-fluid">
             <div class="card border-0">
                 <div class="card-body">
-                                                  <div class="p-3">
-                                                  <h5 class="mb-1">{{ $adminUser->mail ?? 'user@domain' }}</h5>
-                                                  <p class="mb-0">Since 10 march, 2020</p>
-                                                  <div class="d-flex align-items-center justify-content-center mt-3">
-                                                      <a href="{{ route('admin.profile.show') }}" class="btn border mr-2">My Profile</a>
-                                                      <a href="{{ route('dashboard') }}" class="btn border mr-2">Dashboard</a>
-                                                      <a href="{{ route('logout') }}" class="btn border">Sign Out</a>
-                                                  </div>
-                                              </div>
+                    <div class="p-3">
+                        <h5 class="mb-1">{{ $adminUser->mail ?? 'user@domain' }}</h5>
+                        <p class="mb-0">Since 10 march, 2020</p>
+                        <div class="d-flex align-items-center justify-content-center mt-3">
+                            <a href="{{ route('admin.profile.show') }}" class="btn border mr-2">My Profile</a>
+                            <a href="{{ route('dashboard') }}" class="btn border mr-2">Dashboard</a>
+                            <a href="{{ route('logout') }}" class="btn border">Sign Out</a>
                         </div>
                     </div>
                 </div>
@@ -887,8 +1316,10 @@
     
     <script>
         $(document).ready(function() {
-            $(".alert").fadeTo(2000, 500).slideUp(500, function() {
-                $(".alert").slideUp(500);
+            // Only auto-dismiss status alerts (success, warning, danger from SweetAlert/flash messages)
+            // Keep validation/content alerts visible
+            $(".alert-success, .alert-danger, .alert-warning").not(".alert-validation").fadeTo(3000, 500).slideUp(500, function() {
+                $(this).slideUp(500);
             });
         });
 

@@ -38,92 +38,92 @@
                     </div>
                 </div>
             </div>
-             <div class=" d-md-flex justify-content-md-end mt-2">
-            <button class="btn btn-primary btn-sm" type="submit">@if(isset($profile)) Update @else Add @endif Service </button>
-        </div>
+            <div class="justify-content-md-end mt-2">
+                <button class="btn btn-primary btn-sm" type="submit">@if(isset($profile)) Update @else Add @endif Service </button>
+            </div>
         </form>
-    </div>
-</div>
 
-@if(!isset($profile))
-<div class="row mt-4">
-    <div class="col-lg-12">
-        <div class="d-flex flex-wrap flex-wrap align-items-center justify-content-between mb-4">
-            <div>
-                <h4 class="">Service List</h4>
+        @if(!isset($profile))
+        <div class="row mt-4">
+            <div class="col-lg-12">
+                <div class="d-flex flex-wrap flex-wrap align-items-center justify-content-between mb-4">
+                    <div>
+                        <h4 class="">Service List</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-12">
+                <form id="bulkDeleteForm" action="{{ route('services.bulkDelete') }}" method="POST">
+                    @csrf
+                    <div class="mb-2 d-flex justify-content-end">
+                        <button type="submit" class="btn btn-danger btn-sm" data-onclick="confirm('Delete selected services?')">Delete Selected</button>
+                    </div>
+                    <div class="table-responsive rounded mb-3 p-2">
+                        <table class="data-tables table mb-0 tbl-server-info">
+                        <thead class="bg-white text-uppercase">
+                            <tr class="ligth ligth-data">
+                                <th>
+                                    <div class="checkbox d-inline-block">
+                                        <input type="checkbox" class="checkbox-input" id="selectAllServices" />
+                                        <label for="selectAllServices" class="mb-0"></label>
+                                    </div>
+                                </th>
+                                <th>Service Name</th>
+                                <th>Service Amount</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="ligth-body ">
+                            @if(!empty($listItem))
+                            @foreach($listItem as $serviceList)
+                            <tr>
+                                <td>
+                                    <div class="checkbox d-inline-block">
+                                        <input type="checkbox" class="checkbox-input service-checkbox" name="selected[]" value="{{ $serviceList->id }}" id="service_{{ $serviceList->id }}" />
+                                        <label for="service_{{ $serviceList->id }}" class="mb-0"></label>
+                                    </div>
+                                </td>
+                                <td>{{$serviceList -> serviceName}}</td>
+                                <td>{{$serviceList -> rate}}</td>
+                                <td>
+                                    <div class="d-flex align-items-center list-action">
+                                        <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit" href="{{route('editService',['id'=>$serviceList->id])}}"><i class="ri-pencil-line mr-0"></i></a>
+                                        <form action="{{ route('delService',['id'=>$serviceList->id]) }}" method="POST" style="display:inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="badge bg-warning mr-2" data-confirm="Are you sure to delete this service?" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete" style="border:none; background:transparent; padding:0;"><i class="ri-delete-bin-line mr-0"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                            @else
+                            <tr>
+                                <td>
+                                    <div class="checkbox d-inline-block">
+                                        <input type="checkbox" class="checkbox-input" id="checkbox2" />
+                                        <label for="checkbox2" class="mb-0"></label>
+                                    </div>
+                                </td>
+                                <td>Standerd</td>
+                                <td>1000</td>
+                                <td>
+                                    <div class="d-flex align-items-center list-action">
+                                        <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
+                                        <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </form>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-lg-12">
-        <form id="bulkDeleteForm" action="{{ route('services.bulkDelete') }}" method="POST">
-            @csrf
-            <div class="mb-2 d-flex justify-content-end">
-                <button type="submit" class="btn btn-danger btn-sm" data-onclick="confirm('Delete selected services?')">Delete Selected</button>
-            </div>
-            <div class="table-responsive rounded mb-3">
-                <table class="data-tables table mb-0 tbl-server-info">
-                <thead class="bg-white text-uppercase">
-                    <tr class="ligth ligth-data">
-                        <th>
-                            <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input" id="selectAllServices" />
-                                <label for="selectAllServices" class="mb-0"></label>
-                            </div>
-                        </th>
-                        <th>Service Name</th>
-                        <th>Service Amount</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody class="ligth-body ">
-                    @if(!empty($listItem))
-                    @foreach($listItem as $serviceList)
-                    <tr>
-                        <td>
-                            <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input service-checkbox" name="selected[]" value="{{ $serviceList->id }}" id="service_{{ $serviceList->id }}" />
-                                <label for="service_{{ $serviceList->id }}" class="mb-0"></label>
-                            </div>
-                        </td>
-                        <td>{{$serviceList -> serviceName}}</td>
-                        <td>{{$serviceList -> rate}}</td>
-                        <td>
-                            <div class="d-flex align-items-center list-action">
-                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit" href="{{route('editService',['id'=>$serviceList->id])}}"><i class="ri-pencil-line mr-0"></i></a>
-                                <form action="{{ route('delService',['id'=>$serviceList->id]) }}" method="POST" style="display:inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="badge bg-warning mr-2" data-confirm="Are you sure to delete this service?" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete" style="border:none; background:transparent; padding:0;"><i class="ri-delete-bin-line mr-0"></i></button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                    @else
-                    <tr>
-                        <td>
-                            <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input" id="checkbox2" />
-                                <label for="checkbox2" class="mb-0"></label>
-                            </div>
-                        </td>
-                        <td>Standerd</td>
-                        <td>1000</td>
-                        <td>
-                            <div class="d-flex align-items-center list-action">
-                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-                    @endif
-                </tbody>
-            </table>
-        </form>
-        </div>
+        @endif
     </div>
 </div>
-@endif
 
 @endsection
 

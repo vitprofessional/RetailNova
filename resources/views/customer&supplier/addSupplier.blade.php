@@ -117,6 +117,8 @@
         </div>
     </div>
     <div class="col-lg-12">
+        <div class="card">
+            <div class="card-body">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
             @include('partials.searchbar', [
                 'searchId' => 'supplier-table-search',
@@ -210,6 +212,8 @@
                 </tbody>
                 </table>
             </form>
+        </div>
+        </div>
         </div>
     </div>
     

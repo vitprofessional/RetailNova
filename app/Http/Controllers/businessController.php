@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\BusinessSetup;
+use App\Models\BusinessLocation;
 use Alert;
 use Illuminate\Support\Facades\Storage; 
 
@@ -70,5 +71,146 @@ class businessController extends Controller
                 return back();
             endif;
         endif;
+    }
+
+    public function delBusinessLogo($id){
+        try {
+            $business = BusinessSetup::find($id);
+            if($business && $business->businessLogo):
+                Storage::delete('public/uploads/business/'.$business->businessLogo);
+                $business->businessLogo = null;
+                $business->save();
+                Alert::success("Success","Business logo deleted successfully");
+            endif;
+        } catch(\Exception $e) {
+            Alert::error("Error","Failed to delete logo");
+        }
+        return back();
+    }
+
+    // Business Locations Management
+    public function locationsList(){
+        $locations = BusinessLocation::orderBy('is_main_location', 'desc')
+                                      ->orderBy('created_at', 'desc')
+                                      ->paginate(15);
+        return view('business.locations.index', ['locations' => $locations]);
+    }
+
+    public function createLocation(){
+        return view('business.locations.create');
+    }
+
+    public function storeLocation(Request $request){
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'city' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'postal_code' => 'required|string|max:20',
+            'country' => 'required|string|max:100',
+            'phone' => 'required|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'manager_name' => 'nullable|string|max:255',
+            'is_main_location' => 'nullable|boolean',
+            'status' => 'nullable|boolean',
+        ]);
+
+        try {
+            // If this is set as main location, unset others
+            if($request->is_main_location) {
+                BusinessLocation::where('is_main_location', true)->update(['is_main_location' => false]);
+            }
+
+            $location = BusinessLocation::create([
+                'name' => $request->name,
+                'address' => $request->address,
+                'city' => $request->city,
+                'state' => $request->state,
+                'postal_code' => $request->postal_code,
+                'country' => $request->country,
+                'phone' => $request->phone,
+                'email' => $request->email,
+                'manager_name' => $request->manager_name,
+                'is_main_location' => $request->is_main_location ?? false,
+                'status' => $request->status ?? true,
+                'description' => $request->description,
+            ]);
+
+            Alert::success("Success!", "Business location created successfully");
+            return redirect()->route('business.locations');
+        } catch(\Exception $e) {
+            Alert::error("Error", "Failed to create location: " . $e->getMessage());
+            return back()->withInput();
+        }
+    }
+
+    public function editLocation($id){
+        $location = BusinessLocation::findOrFail($id);
+        return view('business.locations.edit', ['location' => $location]);
+    }
+
+    public function updateLocation(Request $request, $id){
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'city' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'postal_code' => 'required|string|max:20',
+            'country' => 'required|string|max:100',
+            'phone' => 'required|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'manager_name' => 'nullable|string|max:255',
+            'is_main_location' => 'nullable|boolean',
+            'status' => 'nullable|boolean',
+        ]);
+
+        try {
+            $location = BusinessLocation::findOrFail($id);
+
+            // If this is set as main location, unset others
+            if($request->is_main_location && !$location->is_main_location) {
+                BusinessLocation::where('is_main_location', true)->update(['is_main_location' => false]);
+            }
+
+            $location->update([
+                'name' => $request->name,
+                'address' => $request->address,
+                'city' => $request->city,
+                'state' => $request->state,
+                'postal_code' => $request->postal_code,
+                'country' => $request->country,
+                'phone' => $request->phone,
+                'email' => $request->email,
+                'manager_name' => $request->manager_name,
+                'is_main_location' => $request->is_main_location ?? false,
+                'status' => $request->status ?? true,
+                'description' => $request->description,
+            ]);
+
+            Alert::success("Success!", "Business location updated successfully");
+            return redirect()->route('business.locations');
+        } catch(\Exception $e) {
+            Alert::error("Error", "Failed to update location: " . $e->getMessage());
+            return back()->withInput();
+        }
+    }
+
+    public function deleteLocation($id){
+        try {
+            $location = BusinessLocation::findOrFail($id);
+            
+            // Don't allow deletion if it's the main location
+            if($location->is_main_location) {
+                Alert::warning("Warning", "Cannot delete the main business location");
+                return back();
+            }
+
+            $location->delete();
+            Alert::success("Success!", "Business location deleted successfully");
+            return redirect()->route('business.locations');
+        } catch(\Exception $e) {
+            Alert::error("Error", "Failed to delete location: " . $e->getMessage());
+            return back();
+        }
     }
 }

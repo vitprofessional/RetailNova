@@ -48,7 +48,7 @@
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label class="form-label">Product Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control form-control-lg" placeholder="e.g., Nokia 1110" id="name" name="name" value="{{ $name }}" required />
+                                <input type="text" class="form-control" placeholder="e.g., Nokia 1110" id="name" name="name" value="{{ $name }}" required />
                             </div>
                         </div>
                         <div class="col-md-6">

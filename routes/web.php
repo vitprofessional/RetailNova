@@ -11,10 +11,11 @@ use App\Http\Controllers\expenseController;
 use App\Http\Controllers\JqueryController;
 use App\Http\Controllers\serviceController;
 use App\Http\Controllers\accountController;
-use App\Http\Controllers\reportController;
 use App\Http\Controllers\businessController;
 use App\Http\Controllers\invoiceController;
 use App\Http\Controllers\AdminProfileController;
+use App\Http\Controllers\AccountManagementController;
+use App\Http\Controllers\ExpenseManagementController;
 
 //user info str
 Route::get('/login',[
@@ -516,43 +517,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     ])->name('saleReturnSave');
     //sale end
 
-    // expense------------------------
-
-    Route::get('/expense/type',[
-        expenseController::class,
-        'addExpense'
-    ])->name('addExpense');
-
-    //expense save for
-    Route::post('/save/expense',[
-        expenseController::class,
-        'saveExpense'
-    ])->name('saveExpense');
-
-    //expense edit
-    Route::get('/expense/edit/{id}',[
-        expenseController::class,
-        'editExpense'
-    ])->name('editExpense');
-    
-    //expense delete
-    Route::get('/expense/delete/{id}',[
-        expenseController::class,
-        'delExpense'
-    ])->name('delExpense');
-
-    
-    // submit Expense by ajax
-    Route::get('/expense/save',[
-        expenseController::class,
-        'createExpense'
-    ])->name('createExpense');
-
-    Route::get('/expense',[
-        expenseController::class,
-        'expense'
-    ])->name('expense');
-    // endexpense
+    // OLD expense routes removed - replaced by ExpenseManagementController
 
     // balance_sheet------------------------
 
@@ -734,87 +699,57 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         'exportProvideServicesMissing'
     ])->name('admin.provideServices.missing.export')->middleware([\App\Http\Middleware\SuperAdmin::class,'auth:admin']);
 
-    //account------------------------
-    Route::get('/add/account',[
-        accountController::class,
-        'addAccount'
-    ])->name('addAccount');
+    // OLD account routes removed - replaced by AccountManagementController
 
-    Route::get('/account/report',[
-        accountController::class,
-        'accountReport'
-    ])->name('accountReport');
+    // Account Management System Routes
+    Route::prefix('accounts')->name('account.')->group(function () {
+        // Chart of Accounts
+        Route::get('/chart', [AccountManagementController::class, 'chartOfAccounts'])->name('chart');
+        Route::get('/create', [AccountManagementController::class, 'createAccount'])->name('create');
+        Route::post('/store', [AccountManagementController::class, 'storeAccount'])->name('store');
+        Route::get('/edit/{id}', [AccountManagementController::class, 'editAccount'])->name('edit');
+        Route::post('/update/{id}', [AccountManagementController::class, 'updateAccount'])->name('update');
+        Route::get('/delete/{id}', [AccountManagementController::class, 'deleteAccount'])->name('delete');
+        
+        // Transactions
+        Route::get('/transactions', [AccountManagementController::class, 'transactionList'])->name('transactions');
+        Route::get('/transactions/create', [AccountManagementController::class, 'createTransaction'])->name('transactions.create');
+        Route::post('/transactions/store', [AccountManagementController::class, 'storeTransaction'])->name('transactions.store');
+        
+        // Ledger
+        Route::get('/ledger/{id}', [AccountManagementController::class, 'accountLedger'])->name('ledger');
+        
+        // Financial Reports
+        Route::get('/reports', [AccountManagementController::class, 'financialReports'])->name('reports');
+    });
 
-    
-    Route::get('/account/list',[
-        accountController::class,
-        'accountList'
-    ])->name('accountList');
-    //account end
+    // Expense Management System Routes
+    Route::prefix('expenses')->name('expense.')->group(function () {
+        // Categories
+        Route::get('/categories', [ExpenseManagementController::class, 'expenseCategories'])->name('categories');
+        Route::get('/categories/create', [ExpenseManagementController::class, 'createCategory'])->name('categories.create');
+        Route::post('/categories/store', [ExpenseManagementController::class, 'storeCategory'])->name('categories.store');
+        Route::get('/categories/edit/{id}', [ExpenseManagementController::class, 'editCategory'])->name('categories.edit');
+        Route::post('/categories/update/{id}', [ExpenseManagementController::class, 'updateCategory'])->name('categories.update');
+        Route::get('/categories/delete/{id}', [ExpenseManagementController::class, 'deleteCategory'])->name('categories.delete');
+        
+        // Expense Entries
+        Route::get('/list', [ExpenseManagementController::class, 'expenseList'])->name('list');
+        Route::get('/create', [ExpenseManagementController::class, 'createExpense'])->name('create');
+        Route::post('/store', [ExpenseManagementController::class, 'storeExpense'])->name('store');
+        Route::get('/edit/{id}', [ExpenseManagementController::class, 'editExpense'])->name('edit');
+        Route::post('/update/{id}', [ExpenseManagementController::class, 'updateExpense'])->name('update');
+        Route::get('/delete/{id}', [ExpenseManagementController::class, 'deleteExpense'])->name('delete');
+        
+        // Reports
+        Route::get('/reports', [ExpenseManagementController::class, 'expenseReports'])->name('reports');
+        Route::get('/statistics', [ExpenseManagementController::class, 'expenseStatistics'])->name('statistics');
+    });
 
-    //Report------------------------
-
-    //stock report
-    Route::get('stock/report/',[
-        reportController::class,
-        'addStockReport'
-    ])->name('addStockReport');
-
-    //sales report
-    Route::get('sales/report/',[
-        reportController::class,
-        'addSalesReport'
-    ])->name('addSalesReport');
-
-    //top customer  report
-    Route::get('top-customer/report/',[
-        reportController::class,
-        'addTopCustomerReport'
-    ])->name('addTopCustomerReport');
-
-    //receivable report
-    Route::get('receivable/report/',[
-        reportController::class,
-        'addRceivableReport'
-    ])->name('addRceivableReport');
-    
     Route::post('/sale/save/data',[
         JqueryController::class,
         'saveSale'
     ])->name('saveSale');
-
-    
-    //Payble report
-    Route::get('payble/report/',[
-        reportController::class,
-        'addPaybleReport'
-    ])->name('addPaybleReport');
-
-    //product sale report
-    Route::get('product/sale/report/',[
-        reportController::class,
-        'addProductSaleReport'
-    ])->name('addProductSaleReport');
-
-    //low stock  report
-    Route::get('low/product/list/report/',[
-        reportController::class,
-        'addLowProductListReport'
-    ])->name('addLowProductListReport');
-
-    //transaction  report
-    Route::get('transaction/report/',[
-        reportController::class,
-        'addTransactionReport'
-    ])->name('addTransactionReport');
-    
-    //expense  report
-    Route::get('expense/report/',[
-        reportController::class,
-        'addExpenseReport'
-    ])->name('addExpenseReport');
-
-    //Report end
 
     //Business set up --------------------
 
@@ -823,6 +758,37 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         businessController::class,
         'addBusinessSetupPage'
     ])->name('addBusinessSetupPage');
+
+    // Business Locations
+    Route::get('business/locations', [
+        businessController::class,
+        'locationsList'
+    ])->name('business.locations');
+
+    Route::get('business/locations/create', [
+        businessController::class,
+        'createLocation'
+    ])->name('business.locations.create');
+
+    Route::post('business/locations/store', [
+        businessController::class,
+        'storeLocation'
+    ])->name('business.locations.store');
+
+    Route::get('business/locations/{id}/edit', [
+        businessController::class,
+        'editLocation'
+    ])->name('business.locations.edit');
+
+    Route::post('business/locations/{id}/update', [
+        businessController::class,
+        'updateLocation'
+    ])->name('business.locations.update');
+
+    Route::get('business/locations/{id}/delete', [
+        businessController::class,
+        'deleteLocation'
+    ])->name('business.locations.delete');
 
     //invoice------------------------------
     //invoice view
