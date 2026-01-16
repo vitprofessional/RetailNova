@@ -11,6 +11,7 @@
     </div>
 </div>
 
+@endsection
 @section('scripts')
     @parent
     <script>

@@ -104,15 +104,15 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header ">
-                    <div class="row">
-                        <div class="col-md-12 d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Opening Balance Summary</h5>
-                            <div>
-                                <span class="font-weight-bold">Total Opening Balance:</span>
-                                <span>@money($openingTotal ?? 0)</span>
-                            </div>
+                <div class="row">
+                    <div class="col-md-12 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Opening Balance Summary</h5>
+                        <div>
+                            <span class="font-weight-bold">Total Opening Balance:</span>
+                            <span>@money($openingTotal ?? 0)</span>
                         </div>
                     </div>
+                </div>
             </div>
         </div>
     </div>
