@@ -147,16 +147,29 @@ class ReportController extends Controller
         $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
         $limit = $request->input('limit', 20);
 
-        $topCustomers = Customer::select('customers.*')
+        $topCustomers = Customer::select(
+                'customers.id',
+                'customers.name',
+                'customers.mail',
+                'customers.mobile',
+                'customers.full_address',
+                'customers.openingBalance',
+                'customers.created_at',
+                'customers.updated_at',
+                'customers.deleted_at'
+            )
             ->selectRaw('COUNT(sale_products.id) as total_orders')
             ->selectRaw('SUM(sale_products.totalSale) as total_spent')
             ->selectRaw('MAX(sale_products.created_at) as last_purchase_date')
             ->leftJoin('sale_products', 'customers.id', '=', 'sale_products.customerId')
+            ->where('customers.deleted_at', null)
             ->where(function($q) use ($startDate, $endDate) {
                 $q->whereBetween('sale_products.created_at', [$startDate, $endDate])
                   ->orWhereBetween('sale_products.date', [$startDate, $endDate]);
             })
-            ->groupBy('customers.id')
+            ->groupBy('customers.id', 'customers.name', 'customers.mail', 'customers.mobile', 
+                     'customers.full_address', 'customers.openingBalance', 'customers.created_at', 
+                     'customers.updated_at', 'customers.deleted_at')
             ->orderBy('total_spent', 'desc')
             ->limit($limit)
             ->get();
