@@ -239,12 +239,17 @@
             </div>
             <form action="{{ route('saveBusinessLogo') }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                <input type="hidden" value="{{ $businessId }}" name="businessId">
+                <input type="hidden" value="{{ $businessId ?? '' }}" name="businessId">
                 <div class="modal-body">
+                    @if(empty($businessId))
+                    <div class="alert alert-warning">
+                        <i class="las la-exclamation-triangle mr-2"></i>Please save business details first before uploading a logo.
+                    </div>
+                    @endif
                     <div class="form-group">
                         <label for="businessLogo" class="form-label font-weight-600">Choose Logo File</label>
                         <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="businessLogo" name="businessLogo" accept="image/*" required>
+                            <input type="file" class="custom-file-input" id="businessLogo" name="businessLogo" accept="image/*" {{ empty($businessId) ? 'disabled' : 'required' }}>
                             <label class="custom-file-label" for="businessLogo">Choose file...</label>
                         </div>
                         <small class="form-text text-muted d-block mt-2">
@@ -254,7 +259,7 @@
                 </div>
                 <div class="modal-footer border-top">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-success" {{ empty($businessId) ? 'disabled' : '' }}>
                         <i class="las la-upload mr-2"></i>Upload Logo
                     </button>
                 </div>

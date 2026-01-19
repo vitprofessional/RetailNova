@@ -13,6 +13,9 @@ class businessController extends Controller
     //business setup page 
     public function addBusinessSetupPage(){
         $business = BusinessSetup::orderBy("id","desc")->first();
+        if(!$business) {
+            $business = new BusinessSetup();
+        }
         return view('business.businessSetup',['business'=>$business]);        
     }
 
@@ -47,6 +50,11 @@ class businessController extends Controller
     }
 
     public function saveBusinessLogo(Request $requ){
+        if(!isset($requ->businessId) || empty($requ->businessId)):
+            Alert::error("Error","Business ID is missing");
+            return back();
+        endif;
+        
         $business = BusinessSetup::find($requ->businessId);
         
         if(!$business):
