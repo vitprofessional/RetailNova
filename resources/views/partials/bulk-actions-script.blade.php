@@ -128,10 +128,10 @@
 
             // Specific confirmation for delete action
             if (form.id === 'bulkDeleteForm') {
-                if (!confirm('Are you sure you want to delete ' + selectedIds.length + ' ' + entity + '?')) {
-                    console.log("User cancelled the delete operation.");
-                    return;
-                }
+                console.log("Delete form detected, showing bulk delete modal");
+                event.preventDefault();
+                showBulkDeleteModal(selectedIds, entity, form);
+                return;
             }
 
             // Clear any old hidden inputs from previous attempts
@@ -233,6 +233,70 @@
         updateBulkUI();
         console.log("Initialization complete.");
     }
+
+    // --- Bulk Delete Modal Function ---
+    window.showBulkDeleteModal = function(selectedIds, entity, form) {
+        Swal.fire({
+            title: 'Delete ' + selectedIds.length + ' ' + entity,
+            html: '<p>Choose delete type:</p>' +
+                  '<div style="text-align: left; margin: 20px 0;">' +
+                  '<p style="margin: 10px 0;"><strong>Profile Only:</strong> Delete only the profile data</p>' +
+                  '<p style="margin: 10px 0;"><strong>Delete All Data:</strong> Delete profile and all related transactions</p>' +
+                  '</div>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Delete Profile Only',
+            cancelButtonText: 'Cancel',
+            didOpen: function() {
+                // Add additional button for full delete
+                const popup = Swal.getPopup();
+                const footerDiv = popup.querySelector('.swal2-actions');
+                
+                // Create Delete All Data button
+                const deleteAllBtn = document.createElement('button');
+                deleteAllBtn.className = 'btn btn-danger ml-2';
+                deleteAllBtn.textContent = 'Delete All Data';
+                deleteAllBtn.style.marginLeft = '10px';
+                deleteAllBtn.onclick = function() {
+                    submitBulkDelete(selectedIds, form, 'fullDelete');
+                    Swal.close();
+                };
+                footerDiv.appendChild(deleteAllBtn);
+            }
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                // Profile only delete was clicked
+                submitBulkDelete(selectedIds, form, 'profileOnly');
+            }
+        });
+    };
+
+    // --- Submit Bulk Delete ---
+    window.submitBulkDelete = function(selectedIds, form, deleteType) {
+        console.log("Submitting bulk delete with type: " + deleteType);
+        
+        // Set delete type
+        document.getElementById('bulkDeleteType').value = deleteType;
+        
+        // Clear old inputs
+        form.querySelectorAll('input[name="selected[]"]').forEach(function(inp) {
+            inp.remove();
+        });
+        
+        // Add selected IDs
+        selectedIds.forEach(function(id) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'selected[]';
+            input.value = id;
+            form.appendChild(input);
+        });
+        
+        // Submit the form
+        form.submit();
+    };
 
     // --- Script Entry Point ---
     // We must wait for the DOM to be fully loaded before we can safely query for elements.

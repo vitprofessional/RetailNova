@@ -106,19 +106,34 @@ class coustomerSupplier extends Controller
             return back();
         }
 
+        $deleteType = $req->input('deleteType', 'profileOnly');
         $clean = array_filter(array_map('intval', $ids));
+        
         DB::beginTransaction();
         try{
             foreach($clean as $cid){
-                $this->cascadeDeleteCustomer($cid);
                 $cust = Customer::withTrashed()->find($cid);
-                if($cust) $cust->forceDelete();
+                if(!$cust) continue;
+                
+                if($deleteType === 'fullDelete'){
+                    // Delete all related data (cascade delete)
+                    $this->cascadeDeleteCustomer($cid);
+                    $cust->forceDelete();
+                } else {
+                    // Delete only the profile (soft delete)
+                    $cust->delete();
+                }
             }
             DB::commit();
-            Alert::success('Deleted!','Selected customers and related records deleted successfully');
+            
+            if($deleteType === 'fullDelete'){
+                Alert::success('Deleted!','Selected customers and all related records deleted successfully');
+            } else {
+                Alert::success('Deleted!','Selected customer profiles deleted. Related transactions are preserved');
+            }
         }catch(\Throwable $e){
             DB::rollBack();
-            Alert::error('Failed!','Failed to delete selected customers');
+            Alert::error('Failed!','Failed to delete selected customers: '.$e->getMessage());
         }
         return back();
     }
@@ -321,19 +336,35 @@ class coustomerSupplier extends Controller
             Alert::error('No selection','No suppliers selected for deletion');
             return back();
         }
+        
+        $deleteType = $req->input('deleteType', 'profileOnly');
         $clean = array_filter(array_map('intval', $ids));
+        
         DB::beginTransaction();
         try{
             foreach($clean as $sid){
-                $this->cascadeDeleteSupplier($sid);
                 $sup = Supplier::withTrashed()->find($sid);
-                if($sup) $sup->forceDelete();
+                if(!$sup) continue;
+                
+                if($deleteType === 'fullDelete'){
+                    // Delete all related data (cascade delete)
+                    $this->cascadeDeleteSupplier($sid);
+                    $sup->forceDelete();
+                } else {
+                    // Delete only the profile (soft delete)
+                    $sup->delete();
+                }
             }
             DB::commit();
-            Alert::success('Deleted!','Selected suppliers and related records deleted successfully');
+            
+            if($deleteType === 'fullDelete'){
+                Alert::success('Deleted!','Selected suppliers and all related records deleted successfully');
+            } else {
+                Alert::success('Deleted!','Selected supplier profiles deleted. Related transactions are preserved');
+            }
         }catch(\Throwable $e){
             DB::rollBack();
-            Alert::error('Failed!','Failed to delete selected suppliers');
+            Alert::error('Failed!','Failed to delete selected suppliers: '.$e->getMessage());
         }
         return back();
     }

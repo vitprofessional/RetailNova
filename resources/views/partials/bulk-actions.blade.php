@@ -5,6 +5,7 @@
     @if($deleteRoute)
     <form id="bulkDeleteForm" data-entity="{{ $entity }}" method="POST" action="{{ route($deleteRoute) }}" class="d-inline">
         @csrf
+        <input type="hidden" id="bulkDeleteType" name="deleteType" value="profileOnly">
         <button type="submit" class="btn btn-sm btn-danger" id="bulkDeleteBtn" disabled>Delete Selected</button>
     </form>
     @endif
