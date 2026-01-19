@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
     <link rel= "stylesheet" href= "https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css" >
     <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/remixicon/fonts/remixicon.css"> 
-    <script src="https://kit.fontawesome.com/163dbb3d41.js" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/7001e2ea29.js" crossorigin="anonymous"></script>
     <!-- Ensure jQuery is available early for inline scripts -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script>
@@ -1266,7 +1266,7 @@
                                                   </div>
                                               </div>
                                               <div class="px-3 pt-0 pb-0 sub-card">
-                                                  <a href="#" class="iq-sub-card">
+                                                  <a href="#" class="iq-su€b-card">
                                                       <div class="media align-items-center cust-card py-3 border-bottom">
                                                           <div class="">
                                                               <img class="avatar-50 rounded-small"
