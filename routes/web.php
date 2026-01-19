@@ -98,9 +98,9 @@ Route::get('/logout',[
 
 //user info end
 Route::get('/',[
-    dashboardController::class,
-    'dashboard'
-])->name('dashboard');
+    userInfo::class,
+    'userLogin'
+]);
 
 // Public AJAX endpoint for product list (no auth) — used by sale page to populate product select when
 // admin session/cookies are not available to AJAX (keeps UI responsive). This returns option HTML.
