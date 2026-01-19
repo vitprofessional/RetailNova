@@ -141,10 +141,8 @@
         </div>
         <div class="table-responsive rounded mb-3">
             @include('partials.bulk-actions', ['deleteRoute' => 'customers.bulkDelete', 'entity' => 'Customers'])
-            <form id="bulkDeleteForm" method="POST" action="{{ route('customers.bulkDelete') }}">
-                @csrf
-                <table class="data-tables table mb-0 tbl-server-info" id="customer-table">
-                <thead class="bg-white text-uppercase">
+            <table class="data-tables table mb-0 tbl-server-info" id="customer-table">
+            <thead class="bg-white text-uppercase">
                     <tr class="ligth ligth-data">
                         <th class="rn-col-compact d-none d-sm-table-cell">
                             <div class="checkbox d-inline-block">
@@ -233,6 +231,10 @@
                     @endif
                 </tbody>
                 </table>
+            </div>
+            <!-- Bulk Delete Form (outside table to avoid nesting) -->
+            <form id="bulkDeleteForm" method="POST" action="{{ route('customers.bulkDelete') }}">
+                @csrf
             </form>
         </div>
         </div>
