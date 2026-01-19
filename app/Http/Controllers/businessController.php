@@ -48,6 +48,12 @@ class businessController extends Controller
 
     public function saveBusinessLogo(Request $requ){
         $business = BusinessSetup::find($requ->businessId);
+        
+        if(!$business):
+            Alert::error("Error","Business setup not found");
+            return back();
+        endif;
+        
         if($requ->hasFile('businessLogo')):
 
             $file       = $requ->file('businessLogo');
