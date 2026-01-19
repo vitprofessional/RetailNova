@@ -60,9 +60,10 @@
 
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label for="brand" class="form-label">Brand <span class="text-danger">*</span></label>
+                                <label for="brand" class="form-label">Brand</label>
                                 <div class="input-group input-append-equal">
-                                    <select id="brand" class="form-control" name="brand" required style="min-width:0;">
+                                    <select id="brand" class="form-control" name="brand" style="min-width:0;">
+                                      <option value="">Select</option>
                                       @php $updateBrand = \App\Models\Brand::find($brandId); @endphp
                                       @if(!empty($updateBrand))
                                       <option value="{{$updateBrand->id}}">{{$updateBrand->name}}</option>
@@ -80,9 +81,10 @@
 
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label for="categoryList" class="form-label">Category <span class="text-danger">*</span></label>
+                                <label for="categoryList" class="form-label">Category</label>
                                 <div class="input-group input-append-equal">
-                                    <select id="categoryList" class="form-control" name="category" required style="min-width:0;">
+                                    <select id="categoryList" class="form-control" name="category" style="min-width:0;">
+                                      <option value="">Select</option>
                                       @php $updateCategory = \App\Models\Category::find($categoryId); @endphp
                                       @if(!empty($updateCategory))
                                       <option value="{{$updateCategory->id}}">{{$updateCategory->name}}</option>
@@ -100,9 +102,9 @@
 
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label for="unitName" class="form-label">Unit <span class="text-danger">*</span></label>
+                                <label for="unitName" class="form-label">Unit</label>
                                 <div class="input-group input-append-equal">
-                                    <select id="unitName" class="form-control" name="unitName" required style="min-width:0;">
+                                    <select id="unitName" class="form-control" name="unitName" style="min-width:0;">
                                       @php $updateProductUnit = \App\Models\ProductUnit::find($unitId); @endphp
                                       @if(!empty($updateProductUnit))
                                       <option value="{{$updateProductUnit->id}}">{{$updateProductUnit->name}}</option>
@@ -209,10 +211,9 @@
             </div>
             <div class="modal-body">
                 <form action="{{ route('createBrand') }}" method="GET" id="brandForm" data-ajax="true" data-target="#brand" data-modal-id="createBrand">
-                    @csrf
                     <div class="mb-3">
-                        <label for="brandName" class="form-label">Brand Name</label>
-                        <input type="text" class="form-control" id="brandName" name="name" placeholder="Enter brand name" />
+                        <label for="brandName" class="form-label">Brand Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="brandName" name="name" placeholder="Enter brand name" required />
                     </div>
                     <button type="submit" class="btn btn-primary" id="saveBrand">Save</button>
                 </form>
@@ -222,7 +223,7 @@
             </div>
         </div>
     </div>
-    </div>
+</div>
 
 <!-- category modal -->
 <div class="modal fade" id="categoryModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="categoryModal" aria-hidden="true">
@@ -234,10 +235,9 @@
             </div>
             <div class="modal-body">
                 <form action="{{ route('createCategory') }}" method="GET" id="categoryForm" data-ajax="true" data-target="#categoryList" data-modal-id="categoryModal">
-                    @csrf
                     <div class="mb-3">
-                        <label for="categoryName" class="form-label">Category</label>
-                        <input type="text" class="form-control" id="categoryName" name="name" placeholder="Enter Category name" />
+                        <label for="categoryName" class="form-label">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="categoryName" name="name" placeholder="Enter Category name" required />
                     </div>
                     <button type="submit" class="btn btn-primary" id="add-category">Save</button>
                 </form>
@@ -254,15 +254,14 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title fs-5">Product Unit</h6>
+                <h6 class="modal-title fs-5">Create Product Unit</h6>
                 <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form action="{{ route('createProductUnit') }}" method="GET" id="productUnitForm" data-ajax="true" data-target="#unitName" data-modal-id="productUnitModal">
-                    @csrf
                     <div class="mb-3">
-                        <label for="productUnitName" class="form-label">Product Unit</label>
-                        <input type="text" class="form-control" id="productUnitName" name="name" placeholder="Enter Product Unit name" />
+                        <label for="productUnitName" class="form-label">Unit Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="productUnitName" name="name" placeholder="Enter Product Unit name" required />
                     </div>
                     <button type="submit" class="btn btn-primary" id="add-productUnit">Save</button>
                 </form>
@@ -278,6 +277,7 @@
 
 @section('scripts')
     @parent
+    @include('customScript')
     <script>
     // Legacy click handlers removed. Forms are submitted via data-ajax handler in `customScript`.
     </script>

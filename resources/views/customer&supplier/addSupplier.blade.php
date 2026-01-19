@@ -46,49 +46,49 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="openingBalance" class="form-label">Opening Balance *
+                                <label for="openingBalance" class="form-label">Opening Balance
                                     <span class="ml-1" data-toggle="tooltip" data-bs-toggle="tooltip" title="Positive = you owe supplier (payable). Negative = supplier owes you (receivable).">
                                         <i class="ri-information-line"></i>
                                     </span>
                                 </label>
-                                <input type="number" step="1" class="form-control" placeholder="Enter Opening Balance" id="openingBalance" name="openingBalance" value="{{$openingBalance}}" required />
+                                <input type="number" step="1" class="form-control" placeholder="Enter Opening Balance" id="openingBalance" name="openingBalance" value="{{$openingBalance}}" />
                                 <small class="text-muted">Positive payable, negative receivable.</small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Email *</label>
-                                <input type="email" class="form-control" placeholder="Enter Email" id="mail" name="mail" value="{{$mail}}" required />
+                                <label>Email</label>
+                                <input type="email" class="form-control" placeholder="Enter Email" id="mail" name="mail" value="{{$mail}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Phone Number *</label>
-                                <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" value="{{$mobile}}" required />
+                                <label>Phone Number</label>
+                                <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" value="{{$mobile}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Country *</label>
-                                <input type="text" class="form-control" placeholder="Enter The Country" id="country" name="country" value="{{$country}}" required />
+                                <label>Country</label>
+                                <input type="text" class="form-control" placeholder="Enter The Country" id="country" name="country" value="{{$country}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>State *</label>
-                                <input type="text" class="form-control" placeholder="Enter The State" id="state" name="state" value="{{$state}}" required />
+                                <label>State</label>
+                                <input type="text" class="form-control" placeholder="Enter The State" id="state" name="state" value="{{$state}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>City *</label>
-                                <input type="text" class="form-control" placeholder="Enter The City" id="city" name="city" value="{{$city}}" required />
+                                <label>City</label>
+                                <input type="text" class="form-control" placeholder="Enter The City" id="city" name="city" value="{{$city}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Area *</label>
-                                <input type="text" class="form-control" placeholder="Enter The Area" id="area" name="area" value="{{$area}}" required />
+                                <label>Area</label>
+                                <input type="text" class="form-control" placeholder="Enter The Area" id="area" name="area" value="{{$area}}" />
                             </div>
                         </div>
                     </div>

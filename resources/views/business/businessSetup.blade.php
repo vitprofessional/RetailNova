@@ -93,16 +93,16 @@
 
                                     <div class="form-group mb-4">
                                         <label for="businessLocation" class="form-label font-weight-600">
-                                            <i class="las la-map-marker mr-2"></i>Business Location <span class="text-danger">*</span>
+                                            <i class="las la-map-marker mr-2"></i>Business Location
                                         </label>
-                                        <input type="text" class="form-control" id="businessLocation" name="businessLocation" placeholder="Enter business location" value="{{ $businessLocation }}" required />
+                                        <input type="text" class="form-control" id="businessLocation" name="businessLocation" placeholder="Enter business location" value="{{ $businessLocation }}" />
                                     </div>
 
                                     <div class="form-group mb-4">
                                         <label for="mobile" class="form-label font-weight-600">
-                                            <i class="las la-phone mr-2"></i>Mobile Number <span class="text-danger">*</span>
+                                            <i class="las la-phone mr-2"></i>Mobile Number
                                         </label>
-                                        <input type="tel" class="form-control" id="mobile" name="mobile" placeholder="Enter phone number" value="{{ $businessMobile }}" required />
+                                        <input type="tel" class="form-control" id="mobile" name="mobile" placeholder="Enter phone number" value="{{ $businessMobile }}" />
                                     </div>
 
                                     <div class="form-group mb-4">

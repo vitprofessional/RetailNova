@@ -29,7 +29,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="date" class="form-label">Date *</label>
-                                    <input type="date" class="form-control" id="date" name="purchaseDate" value="{{ old('purchaseDate', date('Y-m-d')) }}" required />
+                                    <input type="date" class="form-control" id="date" name="purchaseDate" value="{{ old('purchaseDate', date('Y-m-d')) }}" />
                                 </div>
                             </div>
                             <div class="col-md-4">

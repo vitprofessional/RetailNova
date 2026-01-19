@@ -812,4 +812,13 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     Route::post('/provided-services/bulk-delete',[serviceController::class,'bulkDeleteProvidedServices'])->name('providedServices.bulkDelete');
     Route::post('/provided-services/bulk-print',[serviceController::class,'bulkPrintProvidedServices'])->name('providedServices.bulkPrint');
     Route::post('/provided-services/bulk-print/pdf',[serviceController::class,'bulkPrintProvidedServicesPdf'])->name('providedServices.bulkPrintPdf');
+
+    // Report Routes
+    Route::get('/reports', [\App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/business', [\App\Http\Controllers\ReportController::class, 'businessReport'])->name('reports.business');
+    Route::get('/reports/sales', [\App\Http\Controllers\ReportController::class, 'saleReport'])->name('reports.sales');
+    Route::get('/reports/purchases', [\App\Http\Controllers\ReportController::class, 'purchaseReport'])->name('reports.purchases');
+    Route::get('/reports/top-customers', [\App\Http\Controllers\ReportController::class, 'topCustomers'])->name('reports.topCustomers');
+    Route::get('/reports/payable-receivable', [\App\Http\Controllers\ReportController::class, 'payableReceivable'])->name('reports.payableReceivable');
+    Route::get('/reports/stock', [\App\Http\Controllers\ReportController::class, 'stockReport'])->name('reports.stock');
 });

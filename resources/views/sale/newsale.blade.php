@@ -35,7 +35,7 @@
                                 <div class="form-group">
                                     <label>Select Customer *</label>
                                     <label for="customerName" class="form-label"></label>
-                                <select id="customerName" name="customerId" class="form-control" data-onchange="actSaleProduct()" required
+                                <select id="customerName" name="customerId" class="form-control" data-onchange="actSaleProduct()"
                                     data-products-url="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}">
                                         <option value="">-</option>
                                     <!--  form option show proccessing -->
@@ -73,7 +73,7 @@
                             <div class="col-6">
                                 <div class="form-group">
                                 <label>Select Product*</label>
-                                <select id="productName" name="productName" class="form-control js-sale-product-select" required disabled 
+                                <select id="productName" name="productName" class="form-control js-sale-product-select" disabled 
                                     data-purchase-url="{{ route('getSaleProductDetails', ['id' => '__ID__']) }}">
                                    <!--  form option show proccessing -->
                                             <option value="">Select</option>
@@ -189,14 +189,13 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title fs-5" id="customerModal">Creat Customer</h6>
+                <h6 class="modal-title fs-5" id="customerModal">Create Customer</h6>
                 <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="card">
                     <div class="card-body">
-                        <form action="" method="POST" id="customerForm">
-                            @csrf
+                        <form action="{{ route('createCustomer') }}" method="GET" id="customerForm" data-ajax="true" data-target="#customerName" data-modal-id="customerModal">
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="form-group">
@@ -208,47 +207,58 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Email *</label>
-                                        <input type="email" class="form-control" placeholder="Enter Email" id="mail" name="mail" required />
+                                        <input type="email" class="form-control" placeholder="Enter Email" id="mail" name="mail" />
                                         <div class="help-block with-errors"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>Phone Number *</label>
-                                        <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" required />
+                                        <label>Phone Number</label>
+                                        <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" />
                                         <div class="help-block with-errors"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="inputState" class="form-label">Country *</label>
+                                        <label for="inputState" class="form-label">Country</label>
 
-                                        <input type="text" class="form-control" placeholder="Enter The Country" id="country" name="country" required />
+                                        <input type="text" class="form-control" placeholder="Enter The Country" id="country" name="country" />
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="inputState" class="form-label">State *</label>
+                                        <label for="inputState" class="form-label">State</label>
 
-                                        <input type="text" class="form-control" placeholder="Enter The State" id="state" name="state" required />
+                                        <input type="text" class="form-control" placeholder="Enter The State" id="state" name="state" />
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="inputState" class="form-label">City *</label>
+                                        <label for="inputState" class="form-label">City</label>
 
-                                        <input type="text" class="form-control" placeholder="Enter The City" id="city" name="city" required />
+                                        <input type="text" class="form-control" placeholder="Enter The City" id="city" name="city" />
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="inputState" class="form-label">Area *</label>
+                                        <label for="inputState" class="form-label">Area</label>
 
-                                        <input type="text" class="form-control" placeholder="Enter The area" id="area" name="area" required />
+                                        <input type="text" class="form-control" placeholder="Enter The area" id="area" name="area" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="openingBalance" class="form-label">Opening Balance
+                                            <span class="ml-1" data-toggle="tooltip" title="Positive = customer owes you. Negative = you owe customer. Leave 0 for new customers.">
+                                                <i class="ri-information-line"></i>
+                                            </span>
+                                        </label>
+                                        <input type="number" step="1" class="form-control" placeholder="0" id="openingBalance" name="openingBalance" value="0" />
+                                        <small class="text-muted">Use positive for receivable, negative for payable.</small>
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-primary mr-2 "  id="add-customer">Add Customer</button>
+                            <button type="submit" class="btn btn-primary mr-2" id="add-customer">Add Customer</button>
                             <button type="reset" class="btn btn-danger">Reset</button>
                         </form>
                     </div>

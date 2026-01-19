@@ -51,51 +51,51 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="openingBalance" class="form-label">Opening Balance *
+                                <label for="openingBalance" class="form-label">Opening Balance
                                     <span class="ml-1" data-toggle="tooltip" data-bs-toggle="tooltip" title="Positive = customer owes you (receivable). Negative = you owe customer (payable).">
                                         <i class="ri-information-line"></i>
                                     </span>
                                 </label>
-                                <input type="number" step="1" class="form-control" placeholder="Enter Opening Balance" id="openingBalance" name="openingBalance" value="{{$openingBalance}}"  required />
+                                <input type="number" step="1" class="form-control" placeholder="Enter Opening Balance" id="openingBalance" name="openingBalance" value="{{$openingBalance}}" />
                                 <small class="text-muted">Use positive for receivable, negative for payable.</small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Email *</label>
-                                <input type="email" class="form-control" placeholder="Enter Email" id="mail" name="mail" value="{{$mail}}"   required />
+                                <label>Email</label>
+                                <input type="email" class="form-control" placeholder="Enter Email" id="mail" name="mail" value="{{$mail}}" />
                                 <div class="help-block with-errors"></div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Phone Number *</label>
-                                <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" value="{{$mobile}}"  required />
+                                <label>Phone Number</label>
+                                <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" value="{{$mobile}}" />
                                 <div class="help-block with-errors"></div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="inputState" class="form-label">Country *</label>
-                                <input type="text" class="form-control" placeholder="Enter The Country" id="country" name="country" value="{{$country}}"  required />
+                                <label for="inputState" class="form-label">Country</label>
+                                <input type="text" class="form-control" placeholder="Enter The Country" id="country" name="country" value="{{$country}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="inputState" class="form-label">State *</label>
-                                <input type="text" class="form-control" placeholder="Enter The State" id="state" name="state" value="{{$state}}"  required />
+                                <label for="inputState" class="form-label">State</label>
+                                <input type="text" class="form-control" placeholder="Enter The State" id="state" name="state" value="{{$state}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="inputState" class="form-label">City *</label>
-                                <input type="text" class="form-control" placeholder="Enter The City" id="city" name="city" value="{{$city}}"  required />
+                                <label for="inputState" class="form-label">City</label>
+                                <input type="text" class="form-control" placeholder="Enter The City" id="city" name="city" value="{{$city}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="inputState" class="form-label">Area *</label>
-                                <input type="text" class="form-control" placeholder="Enter The Area" id="area" name="area" value="{{$area}}"  required />
+                                <label for="inputState" class="form-label">Area</label>
+                                <input type="text" class="form-control" placeholder="Enter The Area" id="area" name="area" value="{{$area}}" />
                             </div>
                         </div>
                     </div>
@@ -179,8 +179,12 @@
                             <span class="badge {{ $ob < 0 ? 'bg-danger' : 'bg-success' }}">@money($ob)</span>
                         </td>
                         <td>
+                            @if(!empty($customerList->mobile))
                             <a href="tel:{{$customerList->mobile}}" class="text-dark">{{$customerList->mobile}}</a>
                             <a href="javascript:void(0)" class="badge badge-light ml-2" data-toggle="tooltip" data-bs-toggle="tooltip" title="Copy" data-onclick="copyToClipboard('{{$customerList->mobile}}')"><i class="ri-file-copy-line"></i></a>
+                            @else
+                            <span class="text-muted">-</span>
+                            @endif
                         </td>
                         <td class="d-none d-lg-table-cell text-left">
                             <div class="rn-ellipsis rn-addr">{{$customerList->full_address ?? $customerList->area}}</div>

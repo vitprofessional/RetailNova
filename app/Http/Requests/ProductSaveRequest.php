@@ -16,9 +16,9 @@ class ProductSaveRequest extends FormRequest
     {
         return [
             'name'     => ['required','string','min:2','max:200'],
-            'brand'    => ['required','integer','exists:brands,id'],
-            'category' => ['required','integer','exists:categories,id'],
-            'unitName' => ['required','integer','exists:product_units,id'],
+            'brand'    => ['nullable','integer','exists:brands,id'],
+            'category' => ['nullable','integer','exists:categories,id'],
+            'unitName' => ['nullable','integer','exists:product_units,id'],
             'quantity' => ['nullable','integer','min:0'],
             'details'  => ['nullable','string','max:1000'],
             'barCode'  => ['nullable','string','max:190'],

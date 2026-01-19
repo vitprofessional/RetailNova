@@ -34,7 +34,7 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="rate" class="form-label">Service Rate</label>
-                        <input type="number" class="form-control" placeholder="Enter the amount" id="rate" name="rate" value="{{$rate}}" required />
+                        <input type="number" class="form-control" placeholder="Enter the amount" id="rate" name="rate" value="{{$rate}}" />
                     </div>
                 </div>
             </div>

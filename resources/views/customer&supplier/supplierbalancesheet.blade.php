@@ -11,15 +11,15 @@
                 <div class="row align-items-center">
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="payment">Payment *</label>
-                            <input type="text" id="payment" class="form-control" placeholder="0" required />
+                            <label for="payment">Payment</label>
+                            <input type="text" id="payment" class="form-control" placeholder="0" />
                             <div class="help-block with-errors"></div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="Received">Received*</label>
-                            <input type="text" id="Received" class="form-control" placeholder="0" required />
+                            <label for="Received">Received</label>
+                            <input type="text" id="Received" class="form-control" placeholder="0" />
                             <div class="help-block with-errors"></div>
                         </div>
                     </div>
@@ -27,7 +27,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>Date</label>
-                            <input type="date" class="form-control" placeholder="" required />
+                            <input type="date" class="form-control" placeholder="" />
                             <div class="help-block with-errors"></div>
                         </div>
                     </div>
@@ -51,22 +51,22 @@
 
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="payment">Discount Received *</label>
-                                    <input type="text" id="payment" class="form-control" placeholder="0" required />
+                                    <label for="payment">Discount Received</label>
+                                    <input type="text" id="payment" class="form-control" placeholder="0" />
                                     <div class="help-block with-errors"></div>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="Received">Discount*</label>
-                                    <input type="text" id="Received" class="form-control" placeholder="0" required />
+                                    <label for="Received">Discount</label>
+                                    <input type="text" id="Received" class="form-control" placeholder="0" />
                                     <div class="help-block with-errors"></div>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="form-group">
                                     <label>Date</label>
-                                    <input type="date" class="form-control" placeholder="" required />
+                                    <input type="date" class="form-control" placeholder="" />
                                     <div class="help-block with-errors"></div>
                                 </div>
                             </div>
@@ -113,15 +113,15 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label>Start Day*</label>
-                            <input type="date" class="form-control" placeholder="" required />
+                            <label>Start Day</label>
+                            <input type="date" class="form-control" placeholder="" />
                             <div class="help-block with-errors"></div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label>End Date*</label>
-                            <input type="date" class="form-control" placeholder="" required />
+                            <label>End Date</label>
+                            <input type="date" class="form-control" placeholder="" />
                             <div class="help-block with-errors"></div>
                         </div>
                     </div>

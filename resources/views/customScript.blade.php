@@ -296,12 +296,36 @@ document.addEventListener('submit', function(e){
             opts.body = formData;
         }
         fetch(url, opts).then(function(res){ return res.json ? res.json() : {}; }).then(function(result){
+            // Check for validation errors
+            if(result && result.errors){
+                // Display validation errors
+                try{
+                    var errorMsg = 'Validation failed:\n';
+                    for(var field in result.errors){
+                        if(result.errors.hasOwnProperty(field)){
+                            errorMsg += result.errors[field].join(', ') + '\n';
+                        }
+                    }
+                    if(typeof window.showToast === 'function'){
+                        window.showToast('Validation Error', errorMsg, 'error');
+                    }
+                }catch(e){}
+                return; // Don't close modal or reset form on validation error
+            }
             // On success, if the form has data-target attribute, update that element's innerHTML
             try{
                 var tgt = f.getAttribute('data-target');
                 if(tgt && result && result.data){
                     var nodes = document.querySelectorAll(tgt);
                     nodes.forEach(function(n){ try{ n.innerHTML = result.data; }catch(e){} });
+                }
+                // Show success message
+                if(result && result.message){
+                    try{
+                        if(typeof window.showToast === 'function'){
+                            window.showToast('Success', result.message, 'success');
+                        }
+                    }catch(e){}
                 }
                 // close modal if bootstrap/jQuery present — fallback to manual cleanup
                 var modalId = f.getAttribute('data-modal-id');
@@ -343,7 +367,15 @@ document.addEventListener('submit', function(e){
                 // reset form
                 try{ f.reset(); }catch(e){}
             }catch(err){ console.warn('ajax-form result handling', err); }
-        }).catch(function(err){ console.warn('ajax form submit failed', err); });
+        }).catch(function(err){ 
+            console.warn('ajax form submit failed', err); 
+            // Show error message
+            try{
+                if(typeof window.showToast === 'function'){
+                    window.showToast('Error', 'Failed to submit form. Please try again.', 'error');
+                }
+            }catch(e){}
+        });
     }catch(e){}
 });
 

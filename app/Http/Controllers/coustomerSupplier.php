@@ -129,43 +129,47 @@ class coustomerSupplier extends Controller
 
         $validator = Validator::make($payload, [
             'fullName'       => ['required','string','min:2','max:150'],
-            'mail'           => ['required','email','max:190', function($attr,$value,$fail){
-                                    $exists = Customer::withTrashed()
-                                        ->where('mail',$value)
-                                        ->whereNull('deleted_at')
-                                        ->exists();
-                                    if($exists) $fail('The email has already been taken.');
+            'mail'           => ['nullable','email','max:190', function($attr,$value,$fail){
+                                    if(!empty($value)){
+                                        $exists = Customer::withTrashed()
+                                            ->where('mail',$value)
+                                            ->whereNull('deleted_at')
+                                            ->exists();
+                                        if($exists) $fail('The email has already been taken.');
+                                    }
                                 }],
-            'mobile'         => ['required','string','min:6','max:25', function($attr,$value,$fail){
-                                    $exists = Customer::withTrashed()
-                                        ->where('mobile',$value)
-                                        ->whereNull('deleted_at')
-                                        ->exists();
-                                    if($exists) $fail('The mobile has already been taken.');
+            'mobile'         => ['nullable','string','min:6','max:25', function($attr,$value,$fail){
+                                    if(!empty($value)){
+                                        $exists = Customer::withTrashed()
+                                            ->where('mobile',$value)
+                                            ->whereNull('deleted_at')
+                                            ->exists();
+                                        if($exists) $fail('The mobile has already been taken.');
+                                    }
                                 }],
-            'country'        => ['required','string','max:100'],
-            'state'          => ['required','string','max:100'],
-            'city'           => ['required','string','max:100'],
-            'area'           => ['required','string','max:150'],
+            'country'        => ['nullable','string','max:100'],
+            'state'          => ['nullable','string','max:100'],
+            'city'           => ['nullable','string','max:100'],
+            'area'           => ['nullable','string','max:150'],
             'openingBalance' => ['integer'],
         ]);
 
         if($validator->fails()){
             return [
                 'data'    => '',
-                'message' => 'Validation failed',
+                'message' => 'Validation failed: ' . implode(', ', $validator->errors()->all()),
                 'errors'  => $validator->errors()->toArray(),
             ];
         }
 
         $data = new Customer();
         $data->name            = $payload['fullName'];
-        $data->mail            = $payload['mail'];
-        $data->mobile          = $payload['mobile'];
-        $data->country         = $payload['country'];
-        $data->state           = $payload['state'];
-        $data->city            = $payload['city'];
-        $data->area            = $payload['area'];
+        $data->mail            = !empty($payload['mail']) ? $payload['mail'] : null;
+        $data->mobile          = !empty($payload['mobile']) ? $payload['mobile'] : null;
+        $data->country         = !empty($payload['country']) ? $payload['country'] : null;
+        $data->state           = !empty($payload['state']) ? $payload['state'] : null;
+        $data->city            = !empty($payload['city']) ? $payload['city'] : null;
+        $data->area            = !empty($payload['area']) ? $payload['area'] : null;
         $data->openingBalance  = $payload['openingBalance'];
 
         try{
@@ -226,18 +230,18 @@ class coustomerSupplier extends Controller
         $req->validate([
             'fullName'      => ['required','string','min:2','max:150'],
             'mail'          => [
-                'required','email','max:190',
+                'nullable','email','max:190',
                 Rule::unique('suppliers','mail')->ignore($req->profileId)->where(fn($q)=>$q->whereNull('deleted_at'))
             ],
             'mobile'        => [
-                'required','string','min:6','max:25',
+                'nullable','string','min:6','max:25',
                 Rule::unique('suppliers','mobile')->ignore($req->profileId)->where(fn($q)=>$q->whereNull('deleted_at'))
             ],
-            'country'       => ['required','string','max:100'],
-            'state'         => ['required','string','max:100'],
-            'city'          => ['required','string','max:100'],
-            'area'          => ['required','string','max:150'],
-            'openingBalance'=> ['required','integer'],
+            'country'       => ['nullable','string','max:100'],
+            'state'         => ['nullable','string','max:100'],
+            'city'          => ['nullable','string','max:100'],
+            'area'          => ['nullable','string','max:150'],
+            'openingBalance'=> ['nullable','integer'],
         ]);
         $data = $isUpdate ? Supplier::find($req->profileId) : new Supplier();
         if($isUpdate && !$data){
@@ -400,31 +404,47 @@ class coustomerSupplier extends Controller
 
         $validator = Validator::make($payload, [
             'fullName'    => ['required','string','min:2','max:150'],
-            'email'       => ['required','email','max:190', Rule::unique('suppliers','mail')->where(fn($q)=>$q->whereNull('deleted_at'))],
-            'phoneNumber' => ['required','string','min:6','max:25', Rule::unique('suppliers','mobile')->where(fn($q)=>$q->whereNull('deleted_at'))],
-            'country'     => ['required','string','max:100'],
-            'state'       => ['required','string','max:100'],
-            'city'        => ['required','string','max:100'],
-            'area'        => ['required','string','max:150'],
+            'email'       => ['nullable','email','max:190', function($attr,$value,$fail){
+                                if(!empty($value)){
+                                    $exists = Supplier::withTrashed()
+                                        ->where('mail',$value)
+                                        ->whereNull('deleted_at')
+                                        ->exists();
+                                    if($exists) $fail('The email has already been taken.');
+                                }
+                            }],
+            'phoneNumber' => ['nullable','string','min:6','max:25', function($attr,$value,$fail){
+                                if(!empty($value)){
+                                    $exists = Supplier::withTrashed()
+                                        ->where('mobile',$value)
+                                        ->whereNull('deleted_at')
+                                        ->exists();
+                                    if($exists) $fail('The mobile has already been taken.');
+                                }
+                            }],
+            'country'     => ['nullable','string','max:100'],
+            'state'       => ['nullable','string','max:100'],
+            'city'        => ['nullable','string','max:100'],
+            'area'        => ['nullable','string','max:150'],
             'openingBalance' => ['integer'],
         ]);
 
         if($validator->fails()){
             return [
                 'data'    => '',
-                'message' => 'Validation failed',
+                'message' => 'Validation failed: ' . implode(', ', $validator->errors()->all()),
                 'errors'  => $validator->errors()->toArray(),
             ];
         }
 
         $data = new Supplier();
         $data->name    = $payload['fullName'];
-        $data->mail    = $payload['email'];
-        $data->mobile  = $payload['phoneNumber'];
-        $data->country = $payload['country'];
-        $data->state   = $payload['state'];
-        $data->city    = $payload['city'];
-        $data->area    = $payload['area'];
+        $data->mail    = !empty($payload['email']) ? $payload['email'] : null;
+        $data->mobile  = !empty($payload['phoneNumber']) ? $payload['phoneNumber'] : null;
+        $data->country = !empty($payload['country']) ? $payload['country'] : null;
+        $data->state   = !empty($payload['state']) ? $payload['state'] : null;
+        $data->city    = !empty($payload['city']) ? $payload['city'] : null;
+        $data->area    = !empty($payload['area']) ? $payload['area'] : null;
         $data->openingBalance = $payload['openingBalance'];
         
         $option = "";

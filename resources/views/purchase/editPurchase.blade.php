@@ -436,44 +436,44 @@ document.addEventListener('DOMContentLoaded', function(){
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Email *</label>
-                                    <input type="email" id="userMail" class="form-control" placeholder="Enter Email" name="mail"    required />
+                                    <label>Email</label>
+                                    <input type="email" id="userMail" class="form-control" placeholder="Enter Email" name="mail" />
                                     <div class="help-block with-errors"></div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Phone Number *</label>
-                                    <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" required />
+                                    <label>Phone Number</label>
+                                    <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" />
                                     <div class="help-block with-errors"></div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="inputState" class="form-label">Country *</label>
+                                    <label for="inputState" class="form-label">Country</label>
                                     
-                                    <input type="text" class="form-control" placeholder="Enter The Country" id="country" name="country" required />
+                                    <input type="text" class="form-control" placeholder="Enter The Country" id="country" name="country" />
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="inputState" class="form-label">State *</label>
+                                    <label for="inputState" class="form-label">State</label>
                                     
-                                    <input type="text" class="form-control" placeholder="Enter The State" id="state" name="state" required />
+                                    <input type="text" class="form-control" placeholder="Enter The State" id="state" name="state" />
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="inputState" class="form-label">City *</label>
+                                    <label for="inputState" class="form-label">City</label>
                                 
-                                    <input type="text" class="form-control" placeholder="Enter The City" id="city" name="city" required />
+                                    <input type="text" class="form-control" placeholder="Enter The City" id="city" name="city" />
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="area" class="form-label">Area *</label>
+                                    <label for="area" class="form-label">Area</label>
                                 
-                                    <input type="text" class="form-control" placeholder="Enter The Area" id="area" name="area" required />
+                                    <input type="text" class="form-control" placeholder="Enter The Area" id="area" name="area" />
                                 </div>
                             </div>
                         </div>

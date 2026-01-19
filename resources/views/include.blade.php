@@ -955,6 +955,50 @@
                       </li>
                       @endcan
                       <li class=" ">
+                          <a href="#reports" class="{{ request()->routeIs('reports.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('reports.*') ? 'true' : 'false' }}">
+                              <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <line x1="12" y1="2" x2="12" y2="22"></line>
+                                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                              </svg>
+                              <span class="ml-4">Reports</span>
+                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                              </svg>
+                          </a>
+                          <ul id="reports" class="iq-submenu collapse{{ request()->routeIs('reports.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
+                              <li class="{{ request()->routeIs('reports.business') ? 'active' : '' }}">
+                                  <a href="{{route('reports.business')}}">
+                                      <i class="las la-chart-line"></i><span>Business Report</span>
+                                  </a>
+                              </li>
+                              <li class="{{ request()->routeIs('reports.sales') ? 'active' : '' }}">
+                                  <a href="{{route('reports.sales')}}">
+                                      <i class="las la-shopping-cart"></i><span>Sale Report</span>
+                                  </a>
+                              </li>
+                              <li class="{{ request()->routeIs('reports.purchases') ? 'active' : '' }}">
+                                  <a href="{{route('reports.purchases')}}">
+                                      <i class="las la-dolly"></i><span>Purchase Report</span>
+                                  </a>
+                              </li>
+                              <li class="{{ request()->routeIs('reports.topCustomers') ? 'active' : '' }}">
+                                  <a href="{{route('reports.topCustomers')}}">
+                                      <i class="las la-star"></i><span>Top Customers</span>
+                                  </a>
+                              </li>
+                              <li class="{{ request()->routeIs('reports.payableReceivable') ? 'active' : '' }}">
+                                  <a href="{{route('reports.payableReceivable')}}">
+                                      <i class="las la-money-bill"></i><span>Payable/Receivable</span>
+                                  </a>
+                              </li>
+                              <li class="{{ request()->routeIs('reports.stock') ? 'active' : '' }}">
+                                  <a href="{{route('reports.stock')}}">
+                                      <i class="las la-cubes"></i><span>Stock Report</span>
+                                  </a>
+                              </li>
+                          </ul>
+                      </li>
+                      <li class=" ">
                           <a href="#settings" class="{{ request()->routeIs('addBusinessSetupPage','business.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addBusinessSetupPage','business.*') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-settings" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <circle cx="12" cy="12" r="3"></circle>
