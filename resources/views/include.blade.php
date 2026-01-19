@@ -252,6 +252,60 @@
             border-color: #e9ecef;
             padding: 0.875rem 0.75rem;
         }
+        
+        /* Documentation Section Table Styles */
+        .section table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.12);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .section table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .section table th {
+            padding: 16px 18px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #5568d3;
+            color: white;
+            background: transparent;
+        }
+        
+        .section table td {
+            padding: 14px 18px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #4a5568;
+        }
+        
+        .section table tbody tr {
+            transition: background-color 0.3s ease;
+        }
+        
+        .section table tbody tr:hover {
+            background-color: #f7fafc;
+        }
+        
+        .section table tbody tr:nth-child(even) {
+            background-color: #fafbfc;
+        }
+        
+        .section table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+        
         .table-responsive {
             border-radius: 6px;
             border: 1px solid #e9ecef;
@@ -997,6 +1051,12 @@
                                   </a>
                               </li>
                           </ul>
+                      </li>
+                      <li class=" {{ request()->routeIs('documentation.*') ? 'active' : '' }}">
+                          <a href="{{ route('documentation.index') }}" class="svg-icon">
+                              <i class="las la-book"></i>
+                              <span class="ml-4">Documentation</span>
+                          </a>
                       </li>
                       <li class=" ">
                           <a href="#settings" class="{{ request()->routeIs('addBusinessSetupPage','business.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addBusinessSetupPage','business.*') ? 'true' : 'false' }}">

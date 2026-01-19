@@ -821,4 +821,11 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     Route::get('/reports/top-customers', [\App\Http\Controllers\ReportController::class, 'topCustomers'])->name('reports.topCustomers');
     Route::get('/reports/payable-receivable', [\App\Http\Controllers\ReportController::class, 'payableReceivable'])->name('reports.payableReceivable');
     Route::get('/reports/stock', [\App\Http\Controllers\ReportController::class, 'stockReport'])->name('reports.stock');
+
+    // Documentation Routes
+    Route::get('/documentation', [\App\Http\Controllers\DocumentationController::class, 'index'])->name('documentation.index');
+    Route::get('/documentation/print', [\App\Http\Controllers\DocumentationController::class, 'print'])->name('documentation.print');
+    Route::get('/documentation/download-pdf', [\App\Http\Controllers\DocumentationController::class, 'downloadPdf'])->name('documentation.downloadPdf');
+    Route::get('/documentation/{section}', [\App\Http\Controllers\DocumentationController::class, 'show'])->name('documentation.show');
+    Route::get('/documentation/{section}/download-pdf', [\App\Http\Controllers\DocumentationController::class, 'downloadSectionPdf'])->name('documentation.sectionPdf');
 });
