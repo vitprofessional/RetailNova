@@ -12,6 +12,6 @@ class ProductPolicy
     public function view(User|AdminUser|null $user, Product $product): bool { return true; }
     public function create(User|AdminUser|null $user): bool { return true; }
     public function update(User|AdminUser|null $user, Product $product): bool { return true; }
-    public function delete(User|AdminUser|null $user, Product $product): bool { return $user && in_array($user->role,['admin','superadmin']); }
-    public function forceDelete(User|AdminUser|null $user, Product $product): bool { return $user && $user->role==='superadmin'; }
+    public function delete(User|AdminUser|null $user, Product $product): bool { return (bool)$user; }
+    public function forceDelete(User|AdminUser|null $user, Product $product): bool { return (bool)$user; }
 }
