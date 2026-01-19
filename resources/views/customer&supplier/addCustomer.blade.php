@@ -194,11 +194,10 @@
                                    href="{{route('balancesheet')}}"><i class="ri-eye-line mr-0 "></i></a>
                                 <a href="{{route('editCustomer',['id'=>$customerList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" data-original-title="Edit">
                                    <i class="ri-pencil-line mr-0"></i></a>
-                                <form action="{{ route('delCustomer',['id'=>$customerList->id]) }}" method="POST" style="display:inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="badge bg-warning mr-2" data-confirm="Are you sure to delete this customer?" data-toggle="tooltip" data-placement="top" data-original-title="Delete" style="border:none;background:transparent;padding:0;"><i class="ri-delete-bin-line mr-0"></i></button>
-                                </form>
+                                <button type="button" class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" data-original-title="Delete" style="border:none;background:transparent;padding:0;" 
+                                    data-delete-id="{{ $customerList->id }}" data-delete-name="{{ $customerList->name }}" onclick="showDeleteModal(this, '{{ route('delCustomer', ['id' => $customerList->id]) }}')">
+                                    <i class="ri-delete-bin-line mr-0"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -277,5 +276,69 @@
 </div>
 @endif
 <!-- Page end  -->
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete Customer</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteMessage"></p>
+                <div class="alert alert-info mt-3">
+                    <strong>Choose Delete Type:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li><strong>Profile Only:</strong> Delete only the customer profile data</li>
+                        <li><strong>Delete All Data:</strong> Delete profile and all related transaction data</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="submitDelete('profileOnly')">Delete Profile Only</button>
+                <button type="button" class="btn btn-danger" onclick="submitDelete('fullDelete')">Delete All Data</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Form for Delete -->
+<form id="deleteForm" method="POST" style="display:none;">
+    @csrf
+    @method('DELETE')
+    <input type="hidden" id="deleteType" name="deleteType" value="profileOnly">
+</form>
+
+<script>
+    let currentDeleteUrl = '';
+    
+    function showDeleteModal(button, deleteUrl) {
+        currentDeleteUrl = deleteUrl;
+        const customerName = button.getAttribute('data-delete-name');
+        document.getElementById('deleteMessage').innerHTML = 
+            `Are you sure you want to delete the customer: <strong>${customerName}</strong>?`;
+        
+        // Show the modal
+        $('#deleteModal').modal('show');
+    }
+    
+    function submitDelete(deleteType) {
+        if (!currentDeleteUrl) return;
+        
+        // Set the delete type
+        document.getElementById('deleteType').value = deleteType;
+        
+        // Set form action and submit
+        document.getElementById('deleteForm').action = currentDeleteUrl;
+        document.getElementById('deleteForm').submit();
+        
+        // Hide modal
+        $('#deleteModal').modal('hide');
+    }
+</script>
 @include('partials.bulk-actions-script')
 @endsection
