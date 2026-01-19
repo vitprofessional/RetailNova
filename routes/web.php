@@ -190,7 +190,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     ])->name('restoreCustomer');
 
     // customer bulk delete
-    Route::post('/customer/bulk-delete',[
+    Route::match(['post', 'delete'], '/customer/bulk-delete', [
         coustomerSupplier::class,
         'bulkDeleteCustomer'
     ])->name('customers.bulkDelete');
@@ -240,7 +240,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         'delSupplier'
     ])->name('delSupplier');
     // supplier bulk delete
-    Route::post('/supplier/bulk-delete',[
+    Route::match(['post', 'delete'], '/supplier/bulk-delete', [
         coustomerSupplier::class,
         'bulkDeleteSupplier'
     ])->name('suppliers.bulkDelete');
