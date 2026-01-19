@@ -152,7 +152,10 @@ class ReportController extends Controller
                 'customers.name',
                 'customers.mail',
                 'customers.mobile',
-                'customers.full_address',
+                'customers.country',
+                'customers.state',
+                'customers.city',
+                'customers.area',
                 'customers.openingBalance',
                 'customers.created_at',
                 'customers.updated_at',
@@ -168,7 +171,8 @@ class ReportController extends Controller
                   ->orWhereBetween('sale_products.date', [$startDate, $endDate]);
             })
             ->groupBy('customers.id', 'customers.name', 'customers.mail', 'customers.mobile', 
-                     'customers.full_address', 'customers.openingBalance', 'customers.created_at', 
+                     'customers.country', 'customers.state', 'customers.city', 'customers.area',
+                     'customers.openingBalance', 'customers.created_at', 
                      'customers.updated_at', 'customers.deleted_at')
             ->orderBy('total_spent', 'desc')
             ->limit($limit)
