@@ -178,7 +178,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     ])->name('editCustomer');
     
     //coustomer delete
-    Route::get('/customer/delete/{id}',[
+    Route::delete('/customer/delete/{id}',[
         coustomerSupplier::class,
         'delCustomer'
     ])->name('delCustomer');
@@ -235,7 +235,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     ])->name('editSupplier');
 
     //supplier delete
-    Route::get('/supplier/delete/{id}',[
+    Route::delete('/supplier/delete/{id}',[
         coustomerSupplier::class,
         'delSupplier'
     ])->name('delSupplier');
