@@ -135,16 +135,16 @@
             }
 
             // Clear any old hidden inputs from previous attempts
-            form.querySelectorAll('input[name="ids[]"]').forEach(function(inp) {
+            form.querySelectorAll('input[name="selected[]"]').forEach(function(inp) {
                 inp.remove();
             });
-            console.log("Cleared old hidden 'ids[]' inputs from the form.");
+            console.log("Cleared old hidden 'selected[]' inputs from the form.");
 
             // Add current IDs as new hidden inputs
             selectedIds.forEach(function(id) {
                 var input = document.createElement('input');
                 input.type = 'hidden';
-                input.name = 'ids[]';
+                input.name = 'selected[]';
                 input.value = id;
                 form.appendChild(input);
             });
