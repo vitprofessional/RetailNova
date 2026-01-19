@@ -79,7 +79,7 @@ Route::post('/business/logo/save',[
     'saveBusinessLogo'
 ])->name('saveBusinessLogo');
 
-Route::get('/business/logo/delete/{id}',[
+Route::match(['get','post','delete'],'/business/logo/delete/{id}',[
     businessController::class,
     'delBusinessLogo'
 ])->name('delBusinessLogo');
@@ -312,7 +312,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     ])->name('editBrand');
     
     //brand delete
-    Route::get('/brand/delete/{id}',[
+    Route::match(['get','post','delete'],'/brand/delete/{id}',[
         productController::class,
         'delBrand'
     ])->name('delBrand');
@@ -344,7 +344,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     ])->name('editCategory');
     
     //category delete
-    Route::get('/category/delete/{id}',[
+    Route::match(['get','post','delete'],'/category/delete/{id}',[
         productController::class,
         'delCategory'
     ])->name('delCategory');
@@ -494,7 +494,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     ])->name('invoiceGenerate');
 
     // Delete sale (revert stock and remove records)
-    Route::get('/sale/delete/{id}',[
+    Route::match(['get','post','delete'],'/sale/delete/{id}',[
         saleController::class,
         'delSale'
     ])->name('delSale');
@@ -553,7 +553,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     ])->name('addProductSerial');
     
     // delete product serial (AJAX)
-    Route::get('product/serial/delete/{id}', [
+    Route::match(['get','post','delete'],'product/serial/delete/{id}', [
         JqueryController::class,
         'deleteProductSerial'
     ])->name('deleteProductSerial');
@@ -709,7 +709,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         Route::post('/store', [AccountManagementController::class, 'storeAccount'])->name('store');
         Route::get('/edit/{id}', [AccountManagementController::class, 'editAccount'])->name('edit');
         Route::post('/update/{id}', [AccountManagementController::class, 'updateAccount'])->name('update');
-        Route::get('/delete/{id}', [AccountManagementController::class, 'deleteAccount'])->name('delete');
+        Route::match(['get','post','delete'],'/delete/{id}', [AccountManagementController::class, 'deleteAccount'])->name('delete');
         
         // Transactions
         Route::get('/transactions', [AccountManagementController::class, 'transactionList'])->name('transactions');
@@ -731,7 +731,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         Route::post('/categories/store', [ExpenseManagementController::class, 'storeCategory'])->name('categories.store');
         Route::get('/categories/edit/{id}', [ExpenseManagementController::class, 'editCategory'])->name('categories.edit');
         Route::post('/categories/update/{id}', [ExpenseManagementController::class, 'updateCategory'])->name('categories.update');
-        Route::get('/categories/delete/{id}', [ExpenseManagementController::class, 'deleteCategory'])->name('categories.delete');
+        Route::match(['get','post','delete'],'/categories/delete/{id}', [ExpenseManagementController::class, 'deleteCategory'])->name('categories.delete');
         
         // Expense Entries
         Route::get('/list', [ExpenseManagementController::class, 'expenseList'])->name('list');
@@ -739,7 +739,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         Route::post('/store', [ExpenseManagementController::class, 'storeExpense'])->name('store');
         Route::get('/edit/{id}', [ExpenseManagementController::class, 'editExpense'])->name('edit');
         Route::post('/update/{id}', [ExpenseManagementController::class, 'updateExpense'])->name('update');
-        Route::get('/delete/{id}', [ExpenseManagementController::class, 'deleteExpense'])->name('delete');
+        Route::match(['get','post','delete'],'/delete/{id}', [ExpenseManagementController::class, 'deleteExpense'])->name('delete');
         
         // Reports
         Route::get('/reports', [ExpenseManagementController::class, 'expenseReports'])->name('reports');
@@ -785,7 +785,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         'updateLocation'
     ])->name('business.locations.update');
 
-    Route::get('business/locations/{id}/delete', [
+    Route::match(['get','post','delete'],'business/locations/{id}/delete', [
         businessController::class,
         'deleteLocation'
     ])->name('business.locations.delete');
