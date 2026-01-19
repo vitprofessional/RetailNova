@@ -267,7 +267,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     ])->name('editProduct');
     
     //Product delete
-    Route::get('/product/delete/{id}',[
+    Route::match(['post','delete'], '/product/delete/{id}', [
         productController::class,
         'delProduct'
     ])->name('delProduct');
@@ -376,7 +376,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     ])->name('editProductUnit');
     
     //productUnit delete
-    Route::get('/productUnit/delete/{id}',[
+    Route::match(['post','delete'], '/productUnit/delete/{id}', [
         productController::class,
         'delProductUnit'
     ])->name('delProductUnit');
