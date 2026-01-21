@@ -61,7 +61,7 @@
                             <div class="col-md-7">
                                 <div class="form-group">
                                     <label for="productName" class="form-label">Product *</label>
-                                    <select id="productName" name="productName" class="form-control js-product-select" >
+                                    <select id="productName" name="productName_select" class="form-control js-product-select" >
                                     <!--  form option show proccessing -->
                                         <option value="">Select</option>
                                     @if(!empty($productList) && count($productList)>0)
@@ -74,6 +74,8 @@
                                     @endforeach
                                     @endif
                                     </select>
+                                    <!-- Hidden input to ensure product ID is submitted even if select is disabled -->
+                                    <input type="hidden" id="productNameHidden" name="productName" value="{{ $purchaseData->productName ?? '' }}" />
                                 </div>
                             </div>
 
@@ -154,9 +156,8 @@
                                             <ul class="list-unstyled mb-0 small">
                                                 @foreach($serials as $s)
                                                     @php $label = $s->serialNumber ?? $s->serial ?? $s->serial_number ?? $s->number ?? $s->id; @endphp
-                                                    <li class="d-flex align-items-center justify-content-between mb-1">
-                                                        <span class="text-truncate">{{ $label }}</span>
-                                                        <button type="button" class="text-danger ml-2 delete-serial btn btn-link p-0" data-id="{{ $s->id }}" title="Delete"><i class="ri-delete-bin-line"></i></button>
+                                                    <li class="mb-1">
+                                                        <span class="text-truncate d-inline-block w-100">{{ $label }}</span>
                                                     </li>
                                                 @endforeach
                                             </ul>
@@ -182,6 +183,7 @@
                                     <div class="d-flex align-items-center justify-content-center">
                                         <div class="form-check mr-2">
                                             <input type="checkbox" class="form-check-input include-vat" id="includeVat_edit" {{ (isset($purchaseData) && $purchaseData->vatStatus) ? 'checked' : '' }} />
+                                            <input type="hidden" name="vatStatus" id="vatStatus_hidden" value="{{ (isset($purchaseData) && $purchaseData->vatStatus) ? 1 : 0 }}" />
                                             <label class="form-check-label" for="includeVat_edit">Yes</label>
                                         </div>
                                         <span class="vat-badge" id="vatBadge_edit" style="display:{{ (isset($purchaseData) && $purchaseData->vatStatus) ? 'inline-block' : 'none' }}" title="VAT">VAT</span>
@@ -276,20 +278,22 @@
                     <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="resetSerial">
-                    {{-- Existing serials for this purchase (read-only list) --}}
+                    {{-- Existing serials for this purchase (now editable) --}}
                     <div class="mb-3">
                         <label class="form-label">Existing Serials</label>
-                        <div>
+                        <div id="existingSerialsList">
                             @if(!empty($serials) && $serials->count() > 0)
                                 @foreach($serials as $s)
                                     @php $label = $s->serialNumber ?? $s->serial ?? $s->serial_number ?? $s->number ?? $s->id; @endphp
-                                    <div id="serial-row-{{ $s->id }}" class="d-flex align-items-center mb-1">
-                                        <span class="mr-2">{{ $label }}</span>
-                                        <button type="button" class="text-danger delete-serial btn btn-link p-0" data-id="{{ $s->id }}" title="Delete"><i class="ri-delete-bin-line"></i></button>
+                                    <div id="serial-row-{{ $s->id }}" class="serial-input-row d-flex mb-2 align-items-center existing-serial-row" data-serial-id="{{ $s->id }}">
+                                        <input type="text" class="form-control flex-grow-1 existing-serial-input" data-serial-id="{{ $s->id }}" data-original="{{ $label }}" value="{{ $label }}" style="margin-right:12px;" />
+                                        <div class="d-flex">
+                                            <button type="button" class="btn btn-sm btn-outline-danger delete-serial" data-id="{{ $s->id }}">Remove</button>
+                                        </div>
                                     </div>
                                 @endforeach
                             @else
-                                <div class="text-muted">No serials for this purchase.</div>
+                                <div class="text-muted small" id="existingSerialsEmpty">No serials for this purchase.</div>
                             @endif
                         </div>
                     </div>
@@ -312,7 +316,9 @@
                         <div>
                             <button type="button" class="btn btn-success btn-sm rounded-0" id="add-serial">Add Serial</button>
                             <button type="button" class="btn btn-info btn-sm rounded-0" id="autoGenerateSerials" style="margin-left:8px;">Auto Generate Serials</button>
+                            <button type="button" class="btn btn-danger btn-sm rounded-0" id="removeAllSerials" style="margin-left:8px;">Remove All</button>
                         </div>
+                        <small id="serialCapacityInfo" class="text-danger ml-3" style="display:none;">Serial limit reached for current quantity.</small>
                     </div>
                 </div>
                     <div class="modal-footer">
@@ -340,17 +346,46 @@ document.addEventListener('DOMContentLoaded', function(){
 
         // When serial modal opens, set data-current-idx so global syncSerialsFromModal can find the row
         var serialButtons = document.querySelectorAll('[data-target="#serialModal"][data-purchase-id]');
-        serialButtons.forEach(function(btn){ btn.addEventListener('click', function(){ try{ var modal = document.getElementById('serialModal'); if(modal) modal.setAttribute('data-current-idx', btn.getAttribute('data-purchase-id') || ''); }catch(e){} }); });
+        serialButtons.forEach(function(btn){ btn.addEventListener('click', function(){ 
+            try{ 
+                var modal = document.getElementById('serialModal'); 
+                if(modal) {
+                    modal.setAttribute('data-current-idx', btn.getAttribute('data-purchase-id') || '');
+                    // Enforce capacity immediately after setting the current idx
+                    setTimeout(function(){ enforceSerialCapacity(modal); }, 100);
+                }
+            }catch(e){ console.warn('Serial button click handler error:', e); } 
+        }); });
 
-        // Form submit UX: disable save button and show saving text
-        var form = document.getElementById('savePurchase');
-        if(form){
-            form.addEventListener('submit', function(ev){ try{ var b = form.querySelector('button[type="submit"]'); if(b){ b.disabled = true; b.setAttribute('data-old', b.innerHTML); b.innerHTML = 'Saving...'; } }catch(e){} });
+        // Sync VAT checkbox with hidden vatStatus input
+        var vatCheckbox = document.getElementById('includeVat_edit');
+        var vatHidden = document.getElementById('vatStatus_hidden');
+        if(vatCheckbox && vatHidden){
+            vatCheckbox.addEventListener('change', function(){
+                vatHidden.value = this.checked ? 1 : 0;
+                console.log('Synced vatStatus to ' + vatHidden.value);
+            });
         }
 
-        // If saveSerials button clicked inside modal, trigger sync (global handler expects #saveSerials)
+        // Form submit UX: disable save button and show saving text and sync VAT before submit
+        var form = document.getElementById('savePurchase');
+        if(form){
+            form.addEventListener('submit', function(ev){ 
+                try{ 
+                    // Sync VAT checkbox before submission
+                    if(vatCheckbox && vatHidden){
+                        vatHidden.value = vatCheckbox.checked ? 1 : 0;
+                        console.log('Before submit: synced vatStatus to ' + vatHidden.value);
+                    }
+                    var b = form.querySelector('button[type="submit"]'); 
+                    if(b){ b.disabled = true; b.setAttribute('data-old', b.innerHTML); b.innerHTML = 'Saving...'; } 
+                }catch(e){} 
+            });
+        }
+
+        // If saveSerials button clicked inside modal, save and close
         var saveSerialsBtn = document.getElementById('saveSerials');
-        if(saveSerialsBtn){ saveSerialsBtn.addEventListener('click', function(){ try{ if(typeof syncSerialsFromModal === 'function'){ var modal = document.getElementById('serialModal'); var id = modal && modal.id ? modal.id : null; syncSerialsFromModal(modal && modal.getAttribute('data-current-idx') ? modal.getAttribute('data-current-idx') : modal.id); } }catch(e){ console.warn('saveSerials click', e); } }); }
+        if(saveSerialsBtn){ saveSerialsBtn.addEventListener('click', function(){ try{ if(typeof saveSerialsFromModal === 'function'){ saveSerialsFromModal(); } }catch(e){ console.warn('saveSerials click', e); } }); }
 
         // --- Product select enabling parity with Add Purchase ---
         try{

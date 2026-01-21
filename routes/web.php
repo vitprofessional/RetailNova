@@ -113,6 +113,11 @@ Route::get('/ajax/public/purchase/{id}/details', [
     JqueryController::class,
     'getPurchaseDetailsPublic'
 ])->name('ajax.purchase.details.public');
+// Public serial list for a purchase row (available/unsold only)
+Route::get('/ajax/public/purchase/{id}/serials', [
+    JqueryController::class,
+    'getPurchaseSerialsPublic'
+])->name('ajax.purchase.serials.public');
 // Public product details for dynamic pages (returns JSON)
 Route::get('/ajax/public/product/details/{id}', [
     JqueryController::class,
@@ -558,6 +563,12 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         JqueryController::class,
         'deleteProductSerial'
     ])->name('deleteProductSerial');
+
+    // update product serial (AJAX)
+    Route::match(['patch','post'],'product/serial/update/{id}', [
+        JqueryController::class,
+        'updateProductSerial'
+    ])->name('updateProductSerial');
     
     Route::get('sale/product/details/{id}',[
         JqueryController::class,

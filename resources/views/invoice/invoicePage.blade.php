@@ -72,7 +72,15 @@
             @php $line = (float)($item->totalSale ?? ($item->salePrice * $item->qty)); $subtotal += $line; @endphp
             <tr>
               <td>{{ $sl++ }}</td>
-              <td>{{ $item->productName }}</td>
+              <td>
+                {{ $item->productName }}
+                @php
+                  $serials = isset($serialsByPurchase) ? ($serialsByPurchase[$item->purchaseId] ?? collect()) : collect();
+                @endphp
+                @if($serials->count() > 0)
+                  <div class="text-muted small mt-1">Serials: {{ $serials->pluck('serialNumber')->join(', ') }}</div>
+                @endif
+              </td>
               <td class="text-end">{{ $item->qty }}</td>
               <td class="text-end">{{ number_format($item->salePrice ?? 0, 2, '.', ',') }} ৳</td>
               <td class="text-end">{{ number_format($line, 2, '.', ',') }} ৳</td>

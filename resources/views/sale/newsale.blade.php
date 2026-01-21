@@ -18,7 +18,8 @@
                data-products-template="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}"
                data-purchase-template="{{ route('ajax.sale.product.purchaseDetails.public', ['id' => '__ID__']) }}"
                data-purchase-by-id-template="{{ route('ajax.purchase.details.public', ['id' => '__ID__']) }}"
-               data-product-details-template="{{ route('ajax.product.details.public', ['id' => '__ID__']) }}"></div>
+               data-product-details-template="{{ route('ajax.product.details.public', ['id' => '__ID__']) }}"
+               data-purchase-serials-template="{{ route('ajax.purchase.serials.public', ['id' => '__ID__']) }}"></div>
         <div class="row">
             <div class="col-md-12 col-12">
                 <div class="card">
@@ -38,7 +39,6 @@
                                 <select id="customerName" name="customerId" class="form-control" data-onchange="actSaleProduct()"
                                     data-products-url="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}">
                                         <option value="">-</option>
-                                    <!--  form option show proccessing -->
                                   @if(!empty($customerList) && count($customerList)>0)
                                   @foreach($customerList as $customerData)
                                     <option value="{{$customerData->id}}">{{$customerData->name}}</option>
@@ -106,6 +106,7 @@
                                 <th>Remove</th>
                                 <th>Product Name</th>
                                 <th>Purchase Data</th>
+                                <th>Serials</th>
                                 <th>Qty</th>
                                 <th>Sale Price</th>
                                 <th>Total</th>
@@ -183,6 +184,34 @@
         </div>
     </div>
 </form>
+
+<!-- Serial selection modal for sale rows -->
+<div class="modal fade" id="saleSerialModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="saleSerialModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="saleSerialModalLabel">Select Serials</h6>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="saleSerialStatus" class="alert alert-info mb-2">Loading available serials...</div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="small text-muted" id="saleSerialMeta"></div>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Serial actions">
+                        <button type="button" class="btn btn-outline-secondary" id="saleSerialSelectAll">Select All</button>
+                        <button type="button" class="btn btn-outline-secondary" id="saleSerialClear">Clear</button>
+                    </div>
+                </div>
+                <div id="saleSerialList" class="list-group" style="max-height:320px; overflow:auto;"></div>
+            </div>
+            <div class="modal-footer">
+                <div class="text-muted me-auto small" id="saleSerialHint"></div>
+                <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="applySaleSerials">Apply Serials</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- start_model -->
  <div class="modal fade" id="customerModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="customerModal" aria-hidden="true">

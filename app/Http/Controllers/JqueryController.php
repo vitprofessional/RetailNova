@@ -323,7 +323,29 @@ class JqueryController extends Controller
             $currentStock = \App\Models\ProductStock::where('purchaseId', $id)->sum('currentStock');
             return ['id'=>$id, 'buyPrice'=> $buyPrice, 'getData' => $getData, 'salePrice'=>$salePrice, 'currentStock' => $currentStock];
         }else{
-            return ['id'=>"", 'buyPrice'=> "", 'getData' => null, 'salePrice'=>""];
+            return ['id'=>"", 'buyPrice'=> "", 'getData' => null, 'salePrice'=>"", 'currentStock' => 0];
+        }
+    }
+
+    /**
+     * Public serial lookup for a purchase row (returns only available/unsold serials)
+     */
+    public function getPurchaseSerialsPublic($purchaseId)
+    {
+        try {
+            $query = ProductSerial::where('purchaseId', $purchaseId);
+            // Only return serials that are not already sold/linked to a sale
+            $query->whereNull('saleId');
+            if (Schema::hasColumn('product_serials', 'status')) {
+                $query->where(function($q){
+                    $q->whereNull('status')->orWhere('status', '!=', 'sold');
+                });
+            }
+            $serials = $query->orderBy('id', 'asc')->get(['id','serialNumber','saleId','status','purchaseId']);
+            return response()->json(['status' => 'ok', 'serials' => $serials]);
+        } catch (\Throwable $e) {
+            \Log::warning('getPurchaseSerialsPublic error: '.$e->getMessage(), ['purchaseId' => $purchaseId]);
+            return response()->json(['status' => 'error', 'serials' => []], 500);
         }
     }
 
@@ -470,13 +492,41 @@ class JqueryController extends Controller
 
                     // attach serials for this row if provided (accept array or comma-separated string)
                     $rowSerials = [];
+                    // Try idx and idx+1 (for 1-based indexing used in DOM)
+                    $serialKey = null;
                     if (isset($serialsInput[$idx])) {
-                        if (is_array($serialsInput[$idx])) {
-                            $rowSerials = $serialsInput[$idx];
+                        $serialKey = $idx;
+                    } elseif (isset($serialsInput[$idx + 1])) {
+                        $serialKey = $idx + 1;
+                    }
+                    if ($serialKey !== null) {
+                        if (is_array($serialsInput[$serialKey])) {
+                            $rowSerials = $serialsInput[$serialKey];
                         } else {
-                            $rowSerials = array_filter(array_map('trim', explode(',', (string)$serialsInput[$idx])));
+                            $rowSerials = array_filter(array_map('trim', explode(',', (string)$serialsInput[$serialKey])));
                         }
                     }
+
+                    // VALIDATION: qty must not exceed (existing serials + new unique serials)
+                    $existingCount = (int) \App\Models\ProductSerial::where('purchaseId', $purchase->id)->count();
+                    $newSet = [];
+                    foreach ((array)$rowSerials as $sv) {
+                        $v = trim((string)$sv);
+                        if ($v !== '') { $newSet[$v] = true; }
+                    }
+                    $newUnique = array_keys($newSet);
+                    $alreadyForThisPurchase = 0;
+                    if (!empty($newUnique)) {
+                        $alreadyForThisPurchase = (int) \App\Models\ProductSerial::whereIn('serialNumber', $newUnique)
+                            ->where('purchaseId', $purchase->id)
+                            ->count();
+                    }
+                    $newUniqueToAdd = max(0, count($newUnique) - $alreadyForThisPurchase);
+                    $totalSerialsAfter = $existingCount + $newUniqueToAdd;
+                    if ($newQty > $totalSerialsAfter) {
+                        throw new \Exception('Quantity ('.$newQty.') exceeds total serials ('.$totalSerialsAfter.') for row '.($idx+1).'.');
+                    }
+
                     if (!empty($rowSerials)) {
                         foreach ($rowSerials as $serialValue) {
                             $v = trim($serialValue);
@@ -569,20 +619,58 @@ class JqueryController extends Controller
                     $prevStock->save();
 
                     // attach serials for this row if provided as array or comma-separated string
+                    \Log::info('savePurchase: processing serials for row', [
+                        'idx' => $idx, 
+                        'productId' => $prodId,
+                        'purchaseId' => $purchase->id,
+                        'serialsInput_keys' => array_keys($serialsInput),
+                        'serialsInput_raw' => $serialsInput
+                    ]);
+                    
                     $rowSerials = [];
+                    // Try to find serials for this row - check both idx and idx+1 (for 1-based indexing)
+                    $serialKey = null;
                     if (isset($serialsInput[$idx])) {
-                        if (is_array($serialsInput[$idx])) {
-                            $rowSerials = $serialsInput[$idx];
-                        } else {
-                            $rowSerials = array_filter(array_map('trim', explode(',', (string)$serialsInput[$idx])));
-                        }
+                        $serialKey = $idx;
+                    } elseif (isset($serialsInput[$idx + 1])) {
+                        $serialKey = $idx + 1;
                     }
+                    
+                    if ($serialKey !== null) {
+                        if (is_array($serialsInput[$serialKey])) {
+                            $rowSerials = $serialsInput[$serialKey];
+                        } else {
+                            $rowSerials = array_filter(array_map('trim', explode(',', (string)$serialsInput[$serialKey])));
+                        }
+                        \Log::info('savePurchase: found serials for row', [
+                            'idx' => $idx,
+                            'serialKey' => $serialKey,
+                            'rowSerials' => $rowSerials
+                        ]);
+                    } else {
+                        \Log::info('savePurchase: no serials found for row', ['idx' => $idx]);
+                    }
+                    // VALIDATION: qty must not exceed total provided serials for this row
+                    $providedSerialCount = 0;
                     if (!empty($rowSerials)) {
+                        $providedSerialCount = count(array_filter(array_map(function($v){ return trim((string)$v) !== '' ? 1 : null; }, $rowSerials)));
+                    }
+                    if ($qty > $providedSerialCount) {
+                        throw new \Exception('Quantity ('.$qty.') exceeds total serials ('.$providedSerialCount.') for row '.($idx+1).'.');
+                    }
+                    
+                    if (!empty($rowSerials)) {
+                        $savedCount = 0;
+                        $skippedCount = 0;
                         foreach ($rowSerials as $serialValue) {
                             $v = trim($serialValue);
                             if ($v === '') continue;
                             // skip duplicates
-                            if (ProductSerial::where('serialNumber', $v)->exists()) continue;
+                            if (ProductSerial::where('serialNumber', $v)->exists()) {
+                                $skippedCount++;
+                                \Log::info('savePurchase: skipped duplicate serial', ['serial' => $v]);
+                                continue;
+                            }
                             $newSerial = new ProductSerial();
                             $newSerial->serialNumber = $v;
                             $newSerial->productId = $prodId;
@@ -590,8 +678,20 @@ class JqueryController extends Controller
                                 $newSerial->purchaseId = $purchase->id;
                             }
                             $newSerial->save();
-                            try { \Log::debug('Saved serial', ['serial' => $v, 'purchaseId' => $purchase->id]); } catch (\Exception $e) {}
+                            $savedCount++;
+                            \Log::info('savePurchase: saved new serial', [
+                                'serial' => $v,
+                                'serialId' => $newSerial->id,
+                                'purchaseId' => $purchase->id,
+                                'productId' => $prodId
+                            ]);
                         }
+                        \Log::info('savePurchase: serial save summary for row', [
+                            'idx' => $idx,
+                            'saved' => $savedCount,
+                            'skipped' => $skippedCount,
+                            'total' => count($rowSerials)
+                        ]);
                     }
 
                     $createdAny = true;
@@ -656,6 +756,16 @@ class JqueryController extends Controller
         $invoiceService = app(InvoiceService::class);
 
         $items = $requ->qty ?? [];
+        $serialIdsInput = $requ->input('serialId', []);
+        $serialNumbersInput = $requ->input('serialNumber', []);
+
+        // Debug logging
+        \Log::info('saveSale: Received request', [
+            'items_count' => count($items),
+            'purchaseData' => $requ->purchaseData ?? [],
+            'serialIdsInput' => $serialIdsInput,
+            'serialNumbersInput' => $serialNumbersInput,
+        ]);
 
         try {
             DB::transaction(function() use ($requ, $items, $stockService, $invoiceService, &$message) {
@@ -711,9 +821,72 @@ class JqueryController extends Controller
                             throw new \Exception('Failed to save invoice item');
                         }
 
-                        // Only decrease stock for non-backorder rows
                         $purchaseId = (int)$requ->purchaseData[$index];
                         $qty = (int)$item;
+                        $selectedSerialIds = [];
+                        $selectedSerialNumbers = [];
+                        // Collect serial ids for this row if provided (nested by row index)
+                        if(isset($serialIdsInput[$index]) && is_array($serialIdsInput[$index])){
+                            $selectedSerialIds = array_values(array_filter($serialIdsInput[$index], function($v){ return trim((string)$v) !== ''; }));
+                        }
+                        if(isset($serialNumbersInput[$index]) && is_array($serialNumbersInput[$index])){
+                            $selectedSerialNumbers = array_values(array_filter($serialNumbersInput[$index], function($v){ return trim((string)$v) !== ''; }));
+                        }
+
+                        // Only enforce serial selection for non-backorder rows
+                        if(!$isBackorder){
+                            $hasSerialsForPurchase = ProductSerial::where('purchaseId', $purchaseId)->exists();
+                            if($hasSerialsForPurchase){
+                                // If no ids supplied but numbers exist, resolve ids by serialNumber
+                                if(empty($selectedSerialIds) && !empty($selectedSerialNumbers)){
+                                    $selectedSerialIds = ProductSerial::whereIn('serialNumber', $selectedSerialNumbers)->pluck('id')->toArray();
+                                }
+
+                                // Auto-pick available serials if user did not supply any
+                                if(empty($selectedSerialIds)){
+                                    $available = ProductSerial::where('purchaseId', $purchaseId)
+                                        ->where(function($q){
+                                            $q->whereNull('saleId');
+                                            if(Schema::hasColumn('product_serials','status')){
+                                                $q->orWhere('status','!=','sold');
+                                            }
+                                        })
+                                        ->orderBy('id')
+                                        ->limit($qty)
+                                        ->pluck('id')
+                                        ->toArray();
+                                    $selectedSerialIds = $available;
+                                }
+
+                                if(count($selectedSerialIds) !== $qty){
+                                    throw new \Exception('Select exactly '.$qty.' serial(s) for purchase #'.$purchaseId);
+                                }
+
+                                $serialRows = ProductSerial::whereIn('id', $selectedSerialIds)->lockForUpdate()->get();
+                                if($serialRows->count() !== count($selectedSerialIds)){
+                                    throw new \Exception('Invalid serial selection for purchase #'.$purchaseId);
+                                }
+
+                                foreach($serialRows as $sr){
+                                    if((int)$sr->purchaseId !== $purchaseId){
+                                        throw new \Exception('Serial '.$sr->serialNumber.' does not belong to this purchase');
+                                    }
+                                    $soldStatus = Schema::hasColumn('product_serials', 'status') ? strtolower((string)$sr->status) : '';
+                                    if($sr->saleId || $soldStatus === 'sold'){
+                                        throw new \Exception('Serial '.$sr->serialNumber.' is already sold');
+                                    }
+                                }
+
+                                foreach($serialRows as $sr){
+                                    $sr->saleId = $sales->id;
+                                    if(Schema::hasColumn('product_serials', 'sold_at')){ $sr->sold_at = now(); }
+                                    if(Schema::hasColumn('product_serials', 'status')){ $sr->status = 'sold'; }
+                                    $sr->save();
+                                }
+                            }
+                        }
+
+                        // Only decrease stock for non-backorder rows
                         if(!$isBackorder){
                             $ok = $stockService->decreaseStockForSale($purchaseId, $qty);
                             // decreaseStockForSale returns false if stock insufficient or not found
@@ -773,6 +946,41 @@ class JqueryController extends Controller
             return response()->json(['status' => 'success', 'message' => 'Serial deleted']);
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => 'Failed to delete serial'], 500);
+        }
+    }
+
+    /**
+     * Update a product serial by id (AJAX)
+     */
+    public function updateProductSerial(Request $request, $id)
+    {
+        \Log::info('updateProductSerial called', ['id' => $id, 'input' => $request->all()]);
+        
+        $serial = ProductSerial::find($id);
+        if (!$serial) {
+            \Log::warning('updateProductSerial: Serial not found', ['id' => $id]);
+            return response()->json(['status' => 'error', 'message' => 'Serial not found'], 404);
+        }
+
+        \Log::info('updateProductSerial: Found serial', ['oldValue' => $serial->serialNumber]);
+
+        $request->validate([
+            'serialNumber' => 'required|string|max:255'
+        ]);
+
+        try {
+            $oldValue = $serial->serialNumber;
+            $serial->serialNumber = $request->input('serialNumber');
+            $serial->save();
+            \Log::info('updateProductSerial: Serial updated successfully', [
+                'id' => $id,
+                'oldValue' => $oldValue,
+                'newValue' => $serial->serialNumber
+            ]);
+            return response()->json(['status' => 'success', 'message' => 'Serial updated']);
+        } catch (\Exception $e) {
+            \Log::error('updateProductSerial: Failed to update', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['status' => 'error', 'message' => 'Failed to update serial: ' . $e->getMessage()], 500);
         }
     }
 

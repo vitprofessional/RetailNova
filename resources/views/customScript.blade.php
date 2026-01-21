@@ -84,9 +84,21 @@ function recalcPurchaseRow(ctx){
             var vatPct = vatEl ? numVal(vatEl.value) : 0;
             var includeFlag = false; if(incEl){ if(incEl.type === 'checkbox') includeFlag = !!incEl.checked; else includeFlag = (String(incEl.value) === '1' || String(incEl.value).toLowerCase() === 'yes' || String(incEl.value).toLowerCase() === 'true'); }
             if(saleIncEl){
-                var saleIncVal = sale;
-                if(includeFlag && vatPct > 0){ saleIncVal = Number((sale * (1 + (vatPct/100))).toFixed(2)); }
-                try{ if('value' in saleIncEl) saleIncEl.value = saleIncVal; else saleIncEl.innerHTML = saleIncVal; }catch(_){ }
+                var saleIncVal = 0;
+                if(includeFlag && vatPct > 0){ 
+                    saleIncVal = Number((sale * (1 + (vatPct/100))).toFixed(2)); 
+                } else if(includeFlag){ 
+                    saleIncVal = sale; 
+                }
+                // When unchecked, saleIncVal remains 0
+                try{ 
+                    if('value' in saleIncEl) {
+                        // Explicitly set to 0 when unchecked, or calculated value when checked
+                        saleIncEl.value = saleIncVal;
+                    } else {
+                        saleIncEl.innerHTML = saleIncVal;
+                    }
+                }catch(_){ }
             }
             // Compute per-row VAT amount and display it as plain text under the VAT input (per user's request)
             try{
@@ -254,22 +266,30 @@ document.addEventListener('change', function(e){
             }catch(e){ includeFlag = false; }
 
             var vat = vatEl ? numVal(vatEl.value) : 0;
+            
+            // Forcefully set inc VAT to 0 when checkbox is unchecked
+            if(!includeFlag && saleInc){
+                try{
+                    // Remove readonly temporarily to ensure value can be set
+                    var wasReadonly = saleInc.hasAttribute('readonly');
+                    if(wasReadonly) saleInc.removeAttribute('readonly');
+                    if('value' in saleInc) {
+                        saleInc.value = '0';
+                    } else {
+                        saleInc.innerHTML = '0';
+                    }
+                    if(wasReadonly) saleInc.setAttribute('readonly', 'readonly');
+                }catch(e){console.warn('Failed to set inc VAT to 0', e);}
+            }
+            
             // Visual highlight + badge for include-vat
             try{
                 var badge = row.querySelector('.vat-badge') || document.getElementById('vatBadge__' + (row.getAttribute && row.getAttribute('data-idx') || '0'));
                 if(includeFlag){ row.classList.add('vat-enabled'); if(badge){ badge.style.display='inline-block'; badge.title = vat ? ('VAT included: '+vat+'%') : 'VAT included'; } }
                 else { row.classList.remove('vat-enabled'); if(badge){ badge.style.display='none'; badge.title = ''; } }
             }catch(e){}
-            // Only convert inclusive price to exclusive when include flag is set and vat > 0
-            if(includeFlag && saleInc && saleEx && vat>0){
-                var inc = numVal(saleInc.value);
-                var ex = inc / (1 + vat/100);
-                saleEx.value = Number(ex.toFixed(2));
-                recalcPurchaseRow(row);
-            } else {
-                // ensure row recalculation runs to keep totals consistent when toggling include-vat off
-                recalcPurchaseRow(row);
-            }
+            // Recalculate to update inc VAT field based on ex VAT (do NOT modify ex VAT)
+            recalcPurchaseRow(row);
         }
     }catch(e){ }
 }, true);

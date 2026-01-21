@@ -5,6 +5,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\SaleProduct;
 use App\Models\InvoiceItem;
+use App\Models\ProductSerial;
 use Alert;
 use App\Models\returnSaleProduct;
 use App\Models\returnInvoiceItem;
@@ -48,9 +49,16 @@ class saleController extends Controller
                 'invoice_items.qty',
                 'invoice_items.totalSale',
             )->orderBy('totalSale','desc')->get();
+
+            // Fetch sold serials for this sale grouped by purchase row for quick lookup
+            $serialsByPurchase = ProductSerial::where('saleId', $id)
+                ->select('purchaseId','serialNumber')
+                ->orderBy('id')
+                ->get()
+                ->groupBy('purchaseId');
             // Load business settings if available
             try{ $business = \App\Models\BusinessSetup::first(); }catch(\Exception $e){ $business = null; }
-            return view('invoice.invoicePage',[ 'invoice'=>$invoice, 'items'=>$items, 'customer'=>$customer, 'business' => $business ]);
+            return view('invoice.invoicePage',[ 'invoice'=>$invoice, 'items'=>$items, 'customer'=>$customer, 'business' => $business, 'serialsByPurchase' => $serialsByPurchase ]);
         else:
             $message = Alert::error('Sorry!','No invoice items found');
             return back();

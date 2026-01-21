@@ -472,6 +472,141 @@ function createSerialRow(value){
     }
 }
 
+// Helper: CSRF token
+function getCsrfToken(){
+    try{ var m = document.querySelector('meta[name="csrf-token"]'); if(m && m.content) return m.content; }catch(e){}
+    try{ if(window.Laravel && window.Laravel.csrfToken) return window.Laravel.csrfToken; }catch(e){}
+    return '';
+}
+
+// Enforce serial count not exceeding quantity (hides add button and new serial inputs)
+function enforceSerialCapacity(modal){
+    try{
+        modal = modal || document.getElementById('serialModal');
+        if(!modal) return {disabled:true};
+        
+        // Get quantity - try multiple approaches
+        var qty = 0;
+        
+        // First try: get from the data-current-idx (for multi-row purchases)
+        var idx = modal.getAttribute('data-current-idx') || '';
+        var row = idx ? document.querySelector('tr.product-row[data-idx="'+idx+'"]') : null;
+        var qtyEl = row ? (row.querySelector('.quantity') || row.querySelector('input[name="quantity"]') || row.querySelector('#quantity')) : null;
+        
+        // Second try: if not found, try global #quantity (for single edit/new purchase)
+        if(!qtyEl) qtyEl = document.getElementById('quantity');
+        
+        // Third try: try to find any quantity input in the page
+        if(!qtyEl) {
+            var qtyInputs = document.querySelectorAll('input[name="quantity"]');
+            if(qtyInputs.length > 0) qtyEl = qtyInputs[qtyInputs.length - 1]; // Use last one
+        }
+        
+        try{ qty = qtyEl ? (parseInt(String(qtyEl.value||'').replace(/,/g,'')) || 0) : 0; }catch(e){ qty = 0; }
+        
+        // Count existing serials (saved) and only FILLED new serial inputs (ignore empty rows)
+        var existingInputs = modal.querySelectorAll('.existing-serial-input[data-serial-id]');
+        var existingCount = existingInputs.length;
+        var newInputs = modal.querySelectorAll('#serialNumberBox input[name="serialNumber[]"]');
+        var newFilledCount = 0;
+        newInputs.forEach(function(inp){ try{ if((inp.value||'').trim() !== '') newFilledCount++; }catch(_){} });
+        var totalFilled = existingCount + newFilledCount;
+        var atCapacity = (qty > 0 && totalFilled >= qty);
+        var totalCount = totalFilled;
+        // Hide/disable add controls; keep serial inputs visible so users can see generated values
+        var addSerialBtn = document.getElementById('add-serial');
+        var serialNumberBox = document.getElementById('serialNumberBox');
+        var buttonContainer = addSerialBtn ? addSerialBtn.closest('.d-flex') : null; // container for Add/Auto/Remove All
+        var perRowAutoBtns = modal.querySelectorAll('#serialNumberBox .auto-gen-serial-row');
+
+        if(atCapacity){
+            if(buttonContainer) { buttonContainer.style.setProperty('display', 'none', 'important'); }
+            // Disable new inputs and per-row auto buttons but keep them visible
+            newInputs.forEach(function(inp){ try{ inp.setAttribute('disabled','disabled'); }catch(_){}});
+            perRowAutoBtns.forEach(function(btn){ try{ btn.setAttribute('disabled','disabled'); }catch(_){}});
+        } else {
+            if(buttonContainer) { buttonContainer.style.removeProperty('display'); }
+            newInputs.forEach(function(inp){ try{ inp.removeAttribute('disabled'); }catch(_){}});
+            perRowAutoBtns.forEach(function(btn){ try{ btn.removeAttribute('disabled'); }catch(_){}});
+        }
+        var info = document.getElementById('serialCapacityInfo');
+        if(info){
+            if(atCapacity){ info.style.display='block'; info.textContent = 'Serial limit reached for current quantity ('+qty+').'; }
+            else { info.style.display='none'; }
+        }
+        return {count:totalCount, qty:qty, disabled:atCapacity};
+    }catch(e){ 
+        console.warn('enforceSerialCapacity error:', e);
+        return {disabled:false}; 
+    }
+}
+
+function handleSerialDelete(serialId, triggerEl){
+    try{
+        var url = '{!! route('deleteProductSerial', ['id' => '__ID__']) !!}'.replace('__ID__', encodeURIComponent(serialId));
+        fetch(url, { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN': getCsrfToken()}, body: JSON.stringify({_method:'DELETE'}) })
+            .then(function(res){ return res.json().catch(function(){ return {}; }); })
+            .then(function(data){
+                if(data && data.status === 'success'){
+                    try{ var li = triggerEl.closest('.existing-serial-row'); if(li) li.remove(); }catch(e){}
+                    try{ var hidden = document.querySelector('input[data-serial-id="'+serialId+'"]'); if(hidden) hidden.remove(); }catch(e){}
+                    enforceSerialCapacity(document.getElementById('serialModal'));
+                    try{ showToast && showToast('Deleted','Serial removed','success'); }catch(e){ alert('Serial deleted'); }
+                } else {
+                    var msg = (data && data.message) ? data.message : 'Failed to delete serial';
+                    try{ showToast && showToast('Error', msg, 'error'); }catch(e){ alert(msg); }
+                }
+            })
+            .catch(function(){ try{ showToast && showToast('Error','Failed to delete serial','error'); }catch(e){ alert('Failed to delete serial'); } });
+    }catch(e){ console.warn('handleSerialDelete failed', e); }
+}
+
+function updateExistingSerial(serialId, newValue, inputEl){
+    return fetch('{!! route('updateProductSerial', ['id' => '__ID__']) !!}'.replace('__ID__', encodeURIComponent(serialId)), {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN': getCsrfToken()},
+        body: JSON.stringify({_method:'PATCH', serialNumber: newValue})
+    })
+    .then(function(res){ 
+        return res.json().catch(function(){ return {}; }); 
+    })
+    .then(function(data){
+        if(data && data.status === 'success'){
+            if(inputEl){ inputEl.dataset.original = newValue; }
+            try{ showToast && showToast('Success', 'Serial updated', 'success'); }catch(e){}
+            return true;
+        }
+        var msg = (data && data.message) ? data.message : 'Failed to update serial';
+        try{ showToast && showToast('Error', msg, 'error'); }catch(e){ alert(msg); }
+        throw new Error(msg);
+    })
+    .catch(function(err){
+        throw err;
+    });
+}
+
+async function saveSerialsFromModal(){
+    var modal = document.getElementById('serialModal');
+    if(!modal) return;
+    var existingInputs = modal.querySelectorAll('.existing-serial-input[data-serial-id]');
+    var updates = [];
+    existingInputs.forEach(function(inp){
+        var sid = inp.dataset.serialId;
+        var val = (inp.value || '').trim();
+        var orig = inp.dataset.original || '';
+        if(sid && val && val !== orig){
+            updates.push(updateExistingSerial(sid, val, inp));
+        }
+    });
+    try{ await Promise.all(updates); }catch(e){ console.warn('Some serial updates failed', e); }
+    // After saving existing serials, close modal to trigger hidden input sync for new serials
+    try{
+        if(window.jQuery){ $('#serialModal').modal('hide'); }
+        else if(window.bootstrap && window.bootstrap.Modal){ var inst = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal); inst.hide(); }
+        else { modal.classList.remove('show'); modal.style.display='none'; }
+    }catch(e){ modal.classList.remove('show'); modal.style.display='none'; }
+}
+
 // Helper: build a short product code from product name
 function buildProductCode(name){
     try{
@@ -496,6 +631,21 @@ document.addEventListener('click', function(e){
         // per-row remove serial input button
         if(target && target.classList && target.classList.contains('remove-serial')){
             try{ var serialRow = target.closest('.serial-input-row') || target.closest('.row'); if(serialRow) serialRow.parentNode.removeChild(serialRow); }catch(e){}
+            enforceSerialCapacity(document.getElementById('serialModal'));
+            return;
+        }
+
+        // delete existing serial via AJAX
+        if(target && target.classList && target.classList.contains('delete-serial')){
+            var sid = target.getAttribute('data-id');
+            if(!sid) return;
+            try{
+                if(window.Swal && window.Swal.fire){
+                    window.Swal.fire({title:'Delete serial?', text:'This will permanently remove the serial.', icon:'warning', showCancelButton:true, confirmButtonText:'Delete'}).then(function(res){ if(res && res.isConfirmed){ handleSerialDelete(sid, target); } });
+                } else if(confirm('Delete this serial?')){
+                    handleSerialDelete(sid, target);
+                }
+            }catch(e){ if(confirm('Delete this serial?')){ handleSerialDelete(sid, target); } }
             return;
         }
 
@@ -523,8 +673,57 @@ document.addEventListener('click', function(e){
         }
 
         if(target && target.id === 'add-serial'){
+            var modal = document.getElementById('serialModal');
+            var capacity = enforceSerialCapacity(modal);
+            if(capacity && capacity.disabled){ try{ showToast && showToast('Info','Serial limit reached for this quantity','info'); }catch(e){ alert('Serial limit reached for this quantity'); } return; }
             var box = document.getElementById('serialNumberBox'); if(!box) return;
-            var r = createSerialRow(''); box.appendChild(r); return;
+            var r = createSerialRow(''); box.appendChild(r);
+            enforceSerialCapacity(modal);
+            return;
+        }
+        if(target && target.id === 'removeAllSerials'){
+            var modal = document.getElementById('serialModal'); if(!modal) return;
+            var existingBox = document.getElementById('existingSerialsList'); if(!existingBox) return;
+            var box = document.getElementById('serialNumberBox'); if(!box) return;
+            
+            // Remove all existing serials (delete from DB)
+            var existingInputs = Array.from(existingBox.querySelectorAll('.existing-serial-row'));
+            existingInputs.forEach(function(row){
+                try{
+                    var serialId = row.getAttribute('data-serial-id');
+                    if(serialId){
+                        // Delete from database
+                        fetch(window.location.origin + '/product/serial/delete/' + serialId, {
+                            method: 'DELETE',
+                            headers: { 'X-CSRF-TOKEN': getCsrfToken() }
+                        }).catch(function(e){ console.warn('Delete failed:', e); });
+                    }
+                    row.remove();
+                }catch(e){ console.warn('Error removing existing serial:', e); }
+            });
+            // Show "No serials" message
+            if(existingBox.children.length === 0){
+                var noMsg = document.getElementById('existingSerialsEmpty');
+                if(!noMsg){
+                    noMsg = document.createElement('div');
+                    noMsg.id = 'existingSerialsEmpty';
+                    noMsg.className = 'text-muted small';
+                    noMsg.textContent = 'No serials for this purchase.';
+                    existingBox.appendChild(noMsg);
+                } else {
+                    noMsg.style.display = '';
+                }
+            }
+            
+            // Remove all new serials
+            var newRows = Array.from(box.querySelectorAll('.serial-input-row'));
+            newRows.forEach(function(row){ try{ row.remove(); }catch(e){} });
+            // Add one empty serial input row
+            var r = createSerialRow(''); box.appendChild(r);
+            
+            enforceSerialCapacity(modal);
+            try{ showToast && showToast('Success','All serials removed','success'); }catch(e){}
+            return;
         }
         if(target && target.id === 'autoGenerateSerials'){
             var modal = document.getElementById('serialModal'); if(!modal) return;
@@ -535,21 +734,47 @@ document.addEventListener('click', function(e){
             var qty = 0;
             try{ qty = qtyEl ? (parseInt(String(qtyEl.value || '').replace(/,/g,'')) || 0) : 0; }catch(e){ qty = 0; }
             if(qty <= 0){ try{ showToast && showToast('Warning','Please enter a valid quantity for this row before auto-generating serials','warning'); }catch(e){ alert('Please enter a valid quantity for this row before auto-generating serials'); } return; }
-            // generate serials and populate modal inputs
-            var box = document.getElementById('serialNumberBox'); if(!box) return; box.innerHTML = '';
-            // Use professional uppercase format: <PROD>-YYYYMMDD-<ROW>-<SEQ>
+
+            var box = document.getElementById('serialNumberBox'); if(!box) return;
+            var existingBox = document.getElementById('existingSerialsList');
+            // collect all inputs (existing + new)
+            var inputs = [];
+            try{ inputs = inputs.concat(Array.from(existingBox ? existingBox.querySelectorAll('.existing-serial-input') : [])); }catch(e){}
+            try{ inputs = inputs.concat(Array.from(box.querySelectorAll('input[name="serialNumber[]"]'))); }catch(e){}
+
+            // create extra rows if fewer than qty
+            while(inputs.length < qty){
+                var r = createSerialRow('');
+                box.appendChild(r);
+                var inp = r.querySelector('input[name="serialNumber[]"]');
+                if(inp) inputs.push(inp);
+            }
+            // trim extra non-existing rows if over qty
+            if(inputs.length > qty){
+                var toRemove = inputs.length - qty;
+                // remove from new rows container only to preserve existing DB rows
+                var newRows = box.querySelectorAll('.serial-input-row');
+                for(var ri=newRows.length-1; ri>=0 && toRemove>0; ri--){
+                    try{ newRows[ri].remove(); toRemove--; }catch(e){}
+                }
+                inputs = [];
+                try{ inputs = inputs.concat(Array.from(existingBox ? existingBox.querySelectorAll('.existing-serial-input') : [])); }catch(e){}
+                try{ inputs = inputs.concat(Array.from(box.querySelectorAll('input[name="serialNumber[]"]'))); }catch(e){}
+            }
+
+            // generate codes and assign to all inputs (existing + new) up to qty
             var prodName = '';
             try{ prodName = (row.querySelector('input[name="selectProductName[]"]')||{}).value || ''; }catch(e){}
             var prodCode = buildProductCode(prodName) || ('P'+idx);
             var dt = new Date();
             var ymd = dt.getFullYear().toString() + String(dt.getMonth()+1).padStart(2,'0') + String(dt.getDate()).padStart(2,'0');
-            for(var i=1;i<=qty;i++){
+            for(var i=0;i<qty && i<inputs.length;i++){
                 try{
-                    var code = (prodCode + '-' + ymd + '-' + idx + '-' + String(i).padStart(4,'0')).toUpperCase();
-                    var r = createSerialRow(code);
-                    box.appendChild(r);
+                    var code = (prodCode + '-' + ymd + '-' + idx + '-' + String(i+1).padStart(4,'0')).toUpperCase();
+                    inputs[i].value = code;
                 }catch(e){}
             }
+            enforceSerialCapacity(modal);
             return;
         }
         if(target && target.classList && target.classList.contains('remove-row')){
@@ -606,6 +831,7 @@ document.addEventListener('click', function(e){
                     box.appendChild(createSerialRow(''));
                 }
             }
+            enforceSerialCapacity(modal);
             // Show modal: prefer Bootstrap's JS API, fall back to jQuery, otherwise toggle classes
             try{
                 if(window.bootstrap && window.bootstrap.Modal){
@@ -621,6 +847,86 @@ document.addEventListener('click', function(e){
     }catch(e){ console.warn('row click handler', e); }
 });
 
+// Validate serial counts against quantities before submitting the purchase form (create or edit)
+document.addEventListener('submit', function(e){
+    try{
+        var form = e.target;
+        if(!form || form.id !== 'savePurchase') return;
+
+        var rows = Array.from(document.querySelectorAll('tr.product-row'));
+        if(!rows.length) return; // nothing to validate
+
+        var isEditPage = (rows.length === 1) && !!document.getElementById('serialModal');
+        var problems = [];
+        var firstBadRow = null;
+
+        rows.forEach(function(row, idx){
+            try{
+                var qtyEl = row.querySelector('.quantity') || row.querySelector('input[name="quantity"]') || row.querySelector('#quantity');
+                var qty = 0;
+                try{ qty = qtyEl ? (parseInt(String(qtyEl.value || '').replace(/,/g,'')) || 0) : 0; }catch(_){ qty = 0; }
+
+                // Count serials
+                var newHidden = row.querySelectorAll('input[type="hidden"][data-serial]').length;
+                var existing = 0;
+                if(isEditPage){
+                    // On edit page, existing serials are not posted as hidden inputs. Count from modal DOM.
+                    existing = document.querySelectorAll('#existingSerialsList .existing-serial-input').length;
+                }
+                var totalSerials = newHidden + existing;
+
+                if(qty > totalSerials){
+                    var productName = '';
+                    try{ productName = (row.querySelector('input[name="selectProductName[]"]')||{}).value || (row.querySelector('#productName')||{}).value || ''; }catch(_){ }
+                    problems.push('Row '+(idx+1)+(productName? (' ['+productName+']'):'')+': Qty '+qty+' > Serials '+totalSerials);
+                    if(!firstBadRow) firstBadRow = row;
+                }
+            }catch(_){ }
+        });
+
+        if(problems.length){
+            e.preventDefault();
+            // Re-enable submit button and restore label if a previous submit listener disabled it
+            try{
+                var submitBtn = form.querySelector('button[type="submit"]');
+                if(submitBtn){
+                    submitBtn.disabled = false;
+                    var old = submitBtn.getAttribute('data-old');
+                    if(old){ submitBtn.innerHTML = old; submitBtn.removeAttribute('data-old'); }
+                }
+            }catch(_){ }
+            try{
+                if(window.Swal && typeof window.Swal.fire === 'function'){
+                    window.Swal.fire({
+                        title: 'Validation error',
+                        html: 'Each row must have serials ≥ qty.<br><br>'+problems.join('<br>'),
+                        icon: 'error'
+                    });
+                } else if(window.swal && typeof window.swal === 'function'){
+                    window.swal('Validation error', problems.join('\n'), 'error');
+                } else if(typeof showToast === 'function'){
+                    showToast('Validation', problems.join('\n'), 'error');
+                } else {
+                    alert('Validation error:\n'+problems.join('\n'));
+                }
+            }catch(_){ alert('Validation error:\n'+problems.join('\n')); }
+            try{ if(firstBadRow) firstBadRow.scrollIntoView({behavior:'smooth', block:'center'}); }catch(_){}
+        }
+    }catch(err){ console.warn('submit validation error', err); }
+});
+
+// When serial modal is shown, enforce capacity limits
+if(window.jQuery){
+    $(document).on('shown.bs.modal', '#serialModal', function(){
+        try{
+            var modal = document.getElementById('serialModal');
+            if(modal) {
+                enforceSerialCapacity(modal);
+            }
+        }catch(e){ console.warn('shown.bs.modal handler error', e); }
+    });
+}
+
 // When serial modal is hidden, copy serial inputs back into the row as hidden inputs
 if(window.jQuery){
     $(document).on('hidden.bs.modal', '#serialModal', function(){
@@ -630,9 +936,48 @@ if(window.jQuery){
             var row = document.querySelector('tr.product-row[data-idx="'+idx+'"]'); if(!row) return;
             // remove old hidden serial inputs
             var olds = row.querySelectorAll('input[type="hidden"][data-serial]'); olds.forEach(function(o){ o.remove(); });
-            var inputs = document.querySelectorAll('#serialNumberBox input[name="serialNumber[]"]');
-            inputs.forEach(function(inp){ var v = inp.value.trim(); if(v==='') return; var h = document.createElement('input'); h.type='hidden'; h.name = 'serialNumber['+idx+'][]'; h.value = v; h.setAttribute('data-serial','1'); row.appendChild(h); });
+            
+            // collect ONLY NEW serial inputs (not existing ones - they're already in DB)
+            var allInputs = [];
+            var newInputs = document.querySelectorAll('#serialNumberBox input[name="serialNumber[]"]');
+            newInputs.forEach(function(inp){ allInputs.push(inp); });
+            
+            // Detect if this is an edit page (single row with simple form structure)
+            var isEditPage = !document.querySelector('input[name="productName[]"]');
+            
+            allInputs.forEach(function(inp){ 
+                var v = inp.value.trim(); 
+                if(v==='') return; 
+                var h = document.createElement('input'); 
+                h.type='hidden'; 
+                // Use flat array for edit page, nested array for add page
+                h.name = isEditPage ? 'serialNumber[]' : 'serialNumber['+idx+'][]';
+                h.value = v; 
+                h.setAttribute('data-serial','1'); 
+                row.appendChild(h); 
+            });
+            // Verify what was added
+            var afterAdd = row.querySelectorAll('input[type="hidden"][data-serial]');
         }catch(e){ console.warn('serial modal hide handler', e); }
+    });
+
+    // Handle existing serial input changes with blur event
+    $(document).on('blur', '.existing-serial-input', function(){
+        try{
+            var input = this;
+            var serialId = input.getAttribute('data-serial-id');
+            var newValue = input.value.trim();
+            var originalValue = input.getAttribute('data-original');
+            
+            if(!serialId || newValue === originalValue || newValue === ''){
+                return;
+            }
+            
+            updateExistingSerial(serialId, newValue, input).catch(function(e){
+                input.value = originalValue;
+                console.warn('Restoring original value due to error:', e);
+            });
+        }catch(e){ console.warn('existing serial blur handler', e); }
     });
 }
 
@@ -640,13 +985,80 @@ if(window.jQuery){
 (function(){
     try{
         var onDom = function(){
+            // Sync hidden productName input with select when select changes
+            var prodSelect = document.getElementById('productName');
+            var prodHidden = document.getElementById('productNameHidden');
+            if(prodSelect && prodHidden){
+                // Save original options to data attribute for later restoration if needed
+                if(!prodSelect.dataset.origOptions){
+                    prodSelect.dataset.origOptions = prodSelect.innerHTML;
+                }
+                
+                // Initial sync - get value from select, or fall back to hidden input if select is disabled
+                var selectValue = prodSelect.value;
+                if(!selectValue && prodHidden.value){
+                    selectValue = prodHidden.value;
+                }
+                prodHidden.value = selectValue;
+                
+                // Sync on change
+                prodSelect.addEventListener('change', function(){
+                    prodHidden.value = this.value;
+                });
+            }
+
             var form = document.getElementById('savePurchase');
             if(!form) return;
             form.addEventListener('submit', function(e){
-                try{
+                try{                    
+                    // Sync productName hidden input with select value before submission
+                    var prodSelect = document.getElementById('productName');
+                    var prodHidden = document.getElementById('productNameHidden');
+                    if(prodSelect && prodHidden){
+                        // Prefer select value, but fall back to hidden if select is disabled/empty
+                        var selectValue = prodSelect.value;
+                        if(!selectValue && prodHidden.value){
+                            selectValue = prodHidden.value;
+                        }
+                        prodHidden.value = selectValue;
+                    }
+                    // Collect serial inputs being submitted (no logging)
+                    var serialInputs = document.querySelectorAll('input[type="hidden"][data-serial]');
+                    
                     // Ensure supplier selected
                     var supplier = document.getElementById('supplierName');
                     if(!supplier || !supplier.value){ e.preventDefault(); alert('Please select a Supplier before saving the purchase.'); supplier && supplier.focus(); return false; }
+
+                    // Check if this is edit mode (has purchaseId) or create mode
+                    var purchaseIdField = document.querySelector('input[name="purchaseId"]');
+                    var purchaseIdValue = purchaseIdField ? purchaseIdField.value : '';
+                    var isEditMode = purchaseIdField && purchaseIdValue;
+                    
+                    if(isEditMode){
+                        // Edit mode: validate single global product and quantity selectors
+                        // Note: productName is submitted via hidden input, so check that directly
+                        var prodHidden = document.querySelector('input[name="productName"]');
+                        var prodSelect = document.querySelector('select[name="productName_select"]');
+                        var prodValue = '';
+                        
+                        // Get value from hidden input (which is kept in sync with select by JS)
+                        if(prodHidden && prodHidden.value){
+                            prodValue = prodHidden.value;
+                        }
+                        // If hidden input is empty, try to get from select as fallback
+                        if(!prodValue && prodSelect){
+                            if(prodSelect.selectedIndex >= 0 && prodSelect.options[prodSelect.selectedIndex]){
+                                prodValue = prodSelect.options[prodSelect.selectedIndex].value;
+                            }
+                        }
+                        
+                        if(!prodValue){ e.preventDefault(); alert('Please select a Product before saving.'); prodSelect && prodSelect.focus && prodSelect.focus(); return false; }
+                        var qty = document.querySelector('input[name="quantity"]');
+                        if(!qty || Number(qty.value) <= 0){ e.preventDefault(); alert('Please enter a valid quantity (>0).'); qty && qty.focus(); return false; }
+                        var buy = document.querySelector('input[name="buyPrice"]');
+                        if(!buy || buy.value === '' || isNaN(Number(buy.value))){ e.preventDefault(); alert('Please enter the Buy Price.'); buy && buy.focus(); return false; }
+                        return true;
+                    }
 
                     // Ensure at least one product row exists
                     var rows = document.querySelectorAll('tr.product-row');
@@ -657,10 +1069,12 @@ if(window.jQuery){
                         var r = rows[i];
                         // Support multiple templates: per-row product hidden (`productName[]`), per-row display (`selectProductName[]`),
                         // or single-row edit form using top-level `productName` select/input.
-                        var prod = r.querySelector('input[name="productName[]"], input[name="selectProductName[]"], select[name="productName"], input[name="productName"]');
+                        var prod = r.querySelector('input[name="productName[]"], input[name="selectProductName[]"], select[name="productName_select"], input[name="productName"]');
                         // if row doesn't have a per-row product input, fall back to top-level product selector
-                        if(!prod){ prod = document.querySelector('select[name="productName"], input[name="productName"]'); }
-                        var qty = r.querySelector('.quantity') || r.querySelector('input[name="quantity"]') || document.querySelector('input[name="quantity"]');
+                        if(!prod){ 
+                            prod = document.querySelector('select[name="productName_select"], input[name="productName"]');
+                        }
+                        var qty = r.querySelector('[id^="quantity"]') || r.querySelector('input[name="quantity[]"]') || document.querySelector('input[name="quantity"]');
                         var buy = r.querySelector('[id^="buyPrice"]') || r.querySelector('input[name="buyPrice[]"]') || document.querySelector('input[name="buyPrice"]');
                         var rowNum = i+1;
                         // determine a usable product value: support select/input value or plain text display

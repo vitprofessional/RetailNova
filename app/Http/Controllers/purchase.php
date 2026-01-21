@@ -230,6 +230,8 @@ class purchase extends Controller
     }
 
     public function updatePurchase(Request $request){
+        \Log::info('updatePurchase called', ['purchaseId' => $request->purchaseId, 'data' => $request->all()]);
+        
         $purchase = PurchaseProduct::find($request->purchaseId);
         if($purchase):
             // Basic validation inline (could be moved to Form Request later)
@@ -239,7 +241,7 @@ class purchase extends Controller
                 'buyPrice'        => ['nullable','numeric','min:0'],
                 'salePriceExVat'  => ['nullable','numeric','min:0'],
                 'salePriceInVat'  => ['nullable','numeric','min:0'],
-                'vatStatus'       => ['nullable','string','max:50'],
+                'vatStatus'       => ['nullable','numeric','in:0,1'],
                 'quantity'        => ['required','integer','min:0'],
                 'totalAmount'     => ['nullable','numeric','min:0'],
                 'grandTotal'      => ['nullable','numeric','min:0'],
@@ -251,6 +253,14 @@ class purchase extends Controller
 
             $oldQty = (int)$purchase->qty;
             $newQty = (int)$request->quantity;
+            
+            \Log::info('updatePurchase before update', [
+                'purchaseId' => $purchase->id,
+                'oldQty' => $oldQty,
+                'newQty' => $newQty,
+                'oldBuyPrice' => $purchase->buyPrice,
+                'newBuyPrice' => $request->buyPrice,
+            ]);
 
             $purchase->purchase_date    = $request->purchaseDate;
             $purchase->supplier         = $request->supplierName;
@@ -271,38 +281,108 @@ class purchase extends Controller
             $purchase->specialNote      = $request->specialNote ?? $purchase->specialNote;
 
             if($purchase->save()):
+                \Log::info('updatePurchase: purchase saved successfully', ['purchaseId' => $purchase->id]);
                 $service = new StockService();
                 $result = $service->adjustStockForPurchaseQtyChange($purchase->id, $oldQty, $newQty);
                 if(!$result['success']):
+                    \Log::error('updatePurchase: stock adjustment failed', ['purchaseId' => $purchase->id, 'error' => $result['message']]);
                     Alert::error('Sorry!',$result['message']);
                     return redirect()->route('editPurchase',['id'=>$purchase->id]);
                 endif;
 
-                // Save new serials (unchanged logic, but after stock adjustment)
+                // Save new serials (handle both direct array and nested array format)
                 if($request->has('serialNumber')):
                     $serials = $request->input('serialNumber', []);
+                    \Log::info('updatePurchase: serialNumber raw input', ['serials' => $serials, 'type' => gettype($serials)]);
+                    $serialsToSave = [];
+                    
+                    // Check if it's nested array format serialNumber[purchaseId][]
                     if(is_array($serials) && count($serials) > 0):
-                        foreach($serials as $serialValue):
+                        // If first key is numeric string (purchase ID), extract the nested array
+                        $firstKey = array_key_first($serials);
+                        \Log::info('updatePurchase: first key analysis', ['firstKey' => $firstKey, 'isNumeric' => is_numeric($firstKey)]);
+                        if(is_numeric($firstKey) && isset($serials[$firstKey]) && is_array($serials[$firstKey])):
+                            $serialsToSave = $serials[$firstKey];
+                            \Log::info('updatePurchase: found nested serials format', ['count' => count($serialsToSave), 'serials' => $serialsToSave]);
+                        else:
+                            // Direct array format
+                            $serialsToSave = $serials;
+                            \Log::info('updatePurchase: found direct serials format', ['count' => count($serialsToSave), 'serials' => $serialsToSave]);
+                        endif;
+                    endif;
+                    
+                    // VALIDATION: qty must not exceed (existing serials + new unique serials)
+                    $existingCount = (int) ProductSerial::where('purchaseId', $purchase->id)->count();
+                    $newSet = [];
+                    foreach ((array)$serialsToSave as $sv) {
+                        $v = trim((string)$sv);
+                        if ($v !== '') { $newSet[$v] = true; }
+                    }
+                    $newUnique = array_keys($newSet);
+                    $alreadyForThisPurchase = 0;
+                    if (!empty($newUnique)) {
+                        $alreadyForThisPurchase = (int) ProductSerial::whereIn('serialNumber', $newUnique)
+                            ->where('purchaseId', $purchase->id)
+                            ->count();
+                    }
+                    $newUniqueToAdd = max(0, count($newUnique) - $alreadyForThisPurchase);
+                    $totalSerialsAfter = $existingCount + $newUniqueToAdd;
+                    if ($newQty > $totalSerialsAfter) {
+                        \Log::warning('updatePurchase: qty exceeds total serials', ['purchaseId' => $purchase->id, 'qty' => $newQty, 'existing' => $existingCount, 'newUniqueToAdd' => $newUniqueToAdd, 'totalAfter' => $totalSerialsAfter]);
+                        Alert::error('Validation','Quantity ('.$newQty.') exceeds total serials ('.$totalSerialsAfter.'). Please add more serials.');
+                        return redirect()->route('editPurchase', ['id' => $purchase->id])->withInput();
+                    }
+
+                    if(count($serialsToSave) > 0):
+                        $savedCount = 0;
+                        $skippedCount = 0;
+                        foreach($serialsToSave as $idx => $serialValue):
+                            \Log::info('updatePurchase: processing serial', ['index' => $idx, 'value' => $serialValue, 'trimmed' => trim($serialValue), 'isEmpty' => empty(trim($serialValue))]);
                             if(!empty(trim($serialValue))):
-                                $newSerial = new ProductSerial();
-                                $newSerial->serialNumber = trim($serialValue);
-                                $newSerial->productId = $purchase->productName;
-                                if (Schema::hasColumn('product_serials', 'purchaseId')) {
-                                    $newSerial->purchaseId = $purchase->id;
-                                }
-                                $newSerial->save();
+                                // Check if this serial already exists for this purchase
+                                $exists = ProductSerial::where('serialNumber', trim($serialValue))
+                                    ->where('productId', $purchase->productName)
+                                    ->where('purchaseId', $purchase->id)
+                                    ->exists();
+                                
+                                \Log::info('updatePurchase: duplicate check', [
+                                    'serial' => trim($serialValue),
+                                    'productId' => $purchase->productName,
+                                    'purchaseId' => $purchase->id,
+                                    'exists' => $exists
+                                ]);
+                                    
+                                if(!$exists):
+                                    $newSerial = new ProductSerial();
+                                    $newSerial->serialNumber = trim($serialValue);
+                                    $newSerial->productId = $purchase->productName;
+                                    if (Schema::hasColumn('product_serials', 'purchaseId')) {
+                                        $newSerial->purchaseId = $purchase->id;
+                                    }
+                                    $newSerial->save();
+                                    $savedCount++;
+                                    \Log::info('updatePurchase: saved new serial', ['serial' => trim($serialValue), 'serialId' => $newSerial->id]);
+                                else:
+                                    $skippedCount++;
+                                    \Log::info('updatePurchase: skipped duplicate serial', ['serial' => trim($serialValue)]);
+                                endif;
                             endif;
                         endforeach;
+                        \Log::info('updatePurchase: serial save summary', ['saved' => $savedCount, 'skipped' => $skippedCount, 'total' => count($serialsToSave)]);
+                    else:
+                        \Log::info('updatePurchase: no serials to save');
                     endif;
                 endif;
 
                 Alert::success('Success!','Purchase updated successfully');
                 return redirect()->route('editPurchase', ['id' => $purchase->id]);
             else:
+                \Log::error('updatePurchase: purchase->save() failed', ['purchaseId' => $purchase->id]);
                 Alert::error('Sorry!','Failed to update purchase');
                 return redirect()->route('editPurchase', ['id' => $purchase->id])->withInput();
             endif;
         else:
+            \Log::warning('updatePurchase: purchase not found', ['purchaseId' => $request->purchaseId]);
             Alert::error('Sorry!','Purchase not found');
             return back();
         endif;

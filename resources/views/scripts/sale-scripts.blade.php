@@ -12,6 +12,7 @@
         var productsTpl = seed.getAttribute('data-products-template') || '';
         var purchaseTpl = seed.getAttribute('data-purchase-template') || '';
         var purchaseByIdTpl = seed.getAttribute('data-purchase-by-id-template') || '';
+        var purchaseSerialTpl = seed.getAttribute('data-purchase-serials-template') || '';
         // Use URL API when possible
         var base = '';
         try{
@@ -38,9 +39,10 @@
                 }
             }
         } catch(e){ /* ignore */ }
-        return { base: base, productsTpl: productsTpl, purchaseTpl: purchaseTpl, purchaseByIdTpl: purchaseByIdTpl };
+        return { base: base, productsTpl: productsTpl, purchaseTpl: purchaseTpl, purchaseByIdTpl: purchaseByIdTpl, purchaseSerialTpl: purchaseSerialTpl };
     }
     var ROUTES = {}; // will populate on DOMContentLoaded
+    var SALE_ROW_COUNTER = 0; // per-row counter to track serial selections
 
     // Ensure AJAX URLs are finalized safely. If a template is absolute or root-relative,
     // use it as-is. Otherwise fall back to `adjustForSubfolder` for legacy relative paths.
@@ -234,10 +236,15 @@
                 }
             }
             var tr = document.createElement('tr');
+            SALE_ROW_COUNTER = (SALE_ROW_COUNTER || 0) + 1;
+            var idx = SALE_ROW_COUNTER;
             // Expected by controller: purchaseData[], qty[], salePrice[], buyPrice[]; also show computed totals
             var purchaseId = p.purchaseId || p.id || '';
             var salePrice = (p.salePriceExVat!=null ? p.salePriceExVat : '')
             var buyPrice = (p.buyPrice!=null ? p.buyPrice : '')
+            tr.setAttribute('data-idx', idx);
+            tr.setAttribute('data-purchase-id', purchaseId);
+            tr.setAttribute('data-serial-available', '0');
             tr.innerHTML = ''+
                 '<td><button type="button" class="btn btn-sm btn-danger remove-row">Remove</button></td>'+
                 '<td><input type="text" class="form-control" value="'+ (p.productName || '') +'" readonly></td>'+
@@ -246,6 +253,13 @@
                     '<div class="small">Supplier: '+ (p.supplierName || '') +'</div>'+
                     '<div class="small">Invoice: '+ (p.invoice || '') +'</div>'+
                     '<div class="small">Stock: <span class="row-stock">'+ (p.currentStock || 0) +'</span></div>'+
+                '</td>'+
+                '<td>'+
+                    '<div class="d-flex align-items-center">'+
+                        '<button type="button" class="btn btn-sm btn-outline-primary open-sale-serials" data-idx="'+idx+'" data-purchase-id="'+purchaseId+'">Serials</button>'+
+                        '<span class="badge bg-secondary ms-2 serial-count-badge" data-idx="'+idx+'">0 selected</span>'+
+                    '</div>'+
+                    '<div class="text-danger small serial-note" style="display:none;"></div>'+
                 '</td>'+
                 '<td><input type="number" class="form-control qty" name="qty[]" min="1" step="1" value="1"></td>'+
                 '<td><input type="number" class="form-control salePrice" name="salePrice[]" value="'+ salePrice +'" readonly></td>'+
@@ -280,12 +294,253 @@
             var saleEl = tr.querySelector('.salePrice');
             var buyEl = tr.querySelector('.buyPrice');
             try{ if(saleEl) saleEl.title = 'Sale price (managed from database)'; if(buyEl) buyEl.title = 'Buy price (managed from database)'; }catch(e){}
-            [qtyEl, saleEl, buyEl].forEach(function(inp){ inp && inp.addEventListener('input', function(){ recalcRow(tr, p.currentStock || 0); recalcTotals(); }); });
-            tr.querySelector('.remove-row').addEventListener('click', function(){ tr.parentNode.removeChild(tr); recalcTotals(); });
+            [qtyEl, saleEl, buyEl].forEach(function(inp){ inp && inp.addEventListener('input', function(){ recalcRow(tr, p.currentStock || 0); recalcTotals(); validateSerialsForRow(tr); }); });
+            tr.querySelector('.remove-row').addEventListener('click', function(){ tr.parentNode.removeChild(tr); reindexSaleSerialInputs(); recalcTotals(); toggleSaveButton(); });
             // initial calc
             recalcRow(tr, p.currentStock || 0);
+            validateSerialsForRow(tr);
+            // Prefetch available serial count to enforce selection when required
+            fetchAvailableSerials(purchaseId).then(function(serials){
+                try{ tr.setAttribute('data-serial-available', (serials && serials.length) ? serials.length : 0); }catch(e){}
+                validateSerialsForRow(tr);
+            }).catch(function(){ /* ignore */ });
+            toggleSaveButton();
         }catch(e){ console.warn('appendSaleRow error', e); }
     }
+
+    function fetchAvailableSerials(purchaseId){
+        var tpl = ROUTES.purchaseSerialTpl || '';
+        var url = tpl ? tpl.replace('__ID__', encodeURIComponent(purchaseId)) : (ROUTES.base + '/ajax/public/purchase/'+encodeURIComponent(purchaseId)+'/serials');
+        url = safeFinalizeUrl(url);
+        return fetch(url, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
+            .then(function(res){
+                var ct = res.headers.get('content-type') || '';
+                if(res.redirected || res.status === 302 || res.status === 401 || res.status === 403) throw new Error('unauthorized');
+                if(ct.indexOf('application/json') === -1) throw new Error('invalid-response');
+                return res.json();
+            })
+            .then(function(json){ return (json && json.serials) ? json.serials : []; });
+    }
+
+    function renderSerialList(serials, selectedIds){
+        var list = byId('saleSerialList');
+        var status = byId('saleSerialStatus');
+        var meta = byId('saleSerialMeta');
+        if(list) list.innerHTML = '';
+        if(!serials || serials.length === 0){
+            if(status){ status.className = 'alert alert-warning mb-2'; status.textContent = 'No available serials for this purchase.'; }
+            if(meta) meta.textContent = '';
+            return;
+        }
+        if(status){ status.className = 'alert alert-success mb-2'; status.textContent = 'Available serials: ' + serials.length; }
+        if(meta) meta.textContent = 'Select the serials to assign to this sale row.';
+        serials.forEach(function(s){
+            var li = document.createElement('label');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            var checked = selectedIds.indexOf(String(s.id)) !== -1;
+            li.innerHTML = '<div class="form-check">'+
+                '<input class="form-check-input serial-pick" type="checkbox" name="serialPick[]" value="'+(s.id||'')+'" data-serial-number="'+(s.serialNumber||'')+'" '+(checked ? 'checked' : '')+'>\n'+
+                '<span class="ms-2">'+ (s.serialNumber || '') +'</span>'+
+                '</div>'+
+                '<span class="badge bg-light text-muted">Available</span>';
+            list.appendChild(li);
+        });
+        enforceSerialLimit();
+    }
+
+    function enforceSerialLimit(){
+        try{
+            var modal = byId('saleSerialModal');
+            if(!modal) return;
+            var qty = parseInt(modal.getAttribute('data-qty') || '0', 10) || 0;
+            if(qty <= 0) return;
+            var picks = Array.prototype.slice.call(document.querySelectorAll('#saleSerialModal input.serial-pick'));
+            var checked = picks.filter(function(p){ return p.checked; });
+            var limit = qty;
+            picks.forEach(function(p){
+                if(!p.checked && checked.length >= limit){
+                    p.disabled = true;
+                } else {
+                    p.disabled = false;
+                }
+            });
+        }catch(e){ console.warn('enforceSerialLimit error', e); }
+    }
+
+    function showSaleSerialModal(modal){
+        if(!modal) return;
+        try{
+            if(typeof bootstrap !== 'undefined' && bootstrap.Modal){
+                var inst = (typeof bootstrap.Modal.getInstance === 'function') ? bootstrap.Modal.getInstance(modal) : null;
+                if(!inst){ inst = new bootstrap.Modal(modal); }
+                inst.show();
+                return;
+            }
+        }catch(e){}
+        if(window.jQuery && typeof window.jQuery.fn.modal === 'function'){
+            try{ window.jQuery(modal).modal('show'); return; }catch(e){}
+        }
+        modal.classList.add('show');
+        modal.style.display = 'block';
+    }
+
+    function hideSaleSerialModal(modal){
+        if(!modal) return;
+        try{
+            if(typeof bootstrap !== 'undefined' && bootstrap.Modal){
+                var inst = (typeof bootstrap.Modal.getInstance === 'function') ? bootstrap.Modal.getInstance(modal) : null;
+                if(!inst){ inst = new bootstrap.Modal(modal); }
+                inst.hide();
+                return;
+            }
+        }catch(e){}
+        if(window.jQuery && typeof window.jQuery.fn.modal === 'function'){
+            try{ window.jQuery(modal).modal('hide'); return; }catch(e){}
+        }
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+    }
+
+    function openSaleSerialModal(idx, purchaseId){
+        var modal = byId('saleSerialModal'); if(!modal) return;
+        var list = byId('saleSerialList'); if(list) list.innerHTML = '';
+        var status = byId('saleSerialStatus'); if(status){ status.className = 'alert alert-info mb-2'; status.textContent = 'Loading available serials...'; }
+        var hint = byId('saleSerialHint'); if(hint) hint.textContent = '';
+        var row = document.querySelector('tr[data-idx="'+idx+'"]');
+        var qty = num((row && row.querySelector('.qty')) ? row.querySelector('.qty').value : 0);
+        modal.setAttribute('data-idx', idx || '');
+        modal.setAttribute('data-purchase-id', purchaseId || '');
+        modal.setAttribute('data-qty', qty || 0);
+        modal.setAttribute('data-available-count', '0');
+        var existing = [];
+        try{
+            existing = Array.prototype.slice.call(row.querySelectorAll('input[type="hidden"][data-serial][name^="serialId"]')).map(function(h){ return String(h.value||''); });
+        }catch(e){ existing = []; }
+            enforceSerialLimit();
+            fetchAvailableSerials(purchaseId).then(function(serials){
+            var avail = serials.length || 0;
+            modal.setAttribute('data-available-count', avail);
+            if(row) row.setAttribute('data-serial-available', avail);
+            renderSerialList(serials, existing);
+            if(hint && qty){ hint.textContent = 'Select exactly '+qty+' serial(s).'; }
+            enforceSerialLimit();
+            showSaleSerialModal(modal);
+        }).catch(function(err){
+            console.warn('fetchAvailableSerials failed', err);
+            if(status){ status.className = 'alert alert-danger mb-2'; status.textContent = 'Failed to load serials. Please retry.'; }
+            showSaleSerialModal(modal);
+        });
+    }
+
+    function applySaleSerials(){
+        try{
+            var modal = byId('saleSerialModal'); if(!modal){ console.warn('applySaleSerials: modal not found'); return; }
+            var idx = modal.getAttribute('data-idx') || '';
+            var qty = parseInt(modal.getAttribute('data-qty') || '0', 10) || 0;
+            var avail = parseInt(modal.getAttribute('data-available-count') || '0', 10) || 0;
+            var row = document.querySelector('tr[data-idx="'+idx+'"]');
+            if(!row){ console.warn('applySaleSerials: row not found for idx', idx); return; }
+            var picks = Array.prototype.slice.call(document.querySelectorAll('#saleSerialModal input.serial-pick:checked'));
+            if(avail > 0 && qty > 0 && picks.length !== qty){
+                var status = byId('saleSerialStatus');
+                if(status){ status.className = 'alert alert-warning mb-2'; status.textContent = 'Select exactly '+qty+' serial(s). Selected '+picks.length+'.'; }
+                return;
+            }
+            // clear previous hidden serial inputs
+            try{ Array.prototype.slice.call(row.querySelectorAll('input[type="hidden"][data-serial]')).forEach(function(h){ h.remove(); }); }catch(e){}
+            picks.forEach(function(chk){
+                var idVal = chk.value || '';
+                var serialNo = chk.getAttribute('data-serial-number') || '';
+                var hid = document.createElement('input'); hid.type='hidden'; hid.name = 'serialId['+idx+'][]'; hid.value = idVal; hid.setAttribute('data-serial','1'); row.appendChild(hid);
+                var hno = document.createElement('input'); hno.type='hidden'; hno.name = 'serialNumber['+idx+'][]'; hno.value = serialNo; hno.setAttribute('data-serial','1'); row.appendChild(hno);
+            });
+            reindexSaleSerialInputs();
+            validateSerialsForRow(row);
+            showToast && showToast('Serials applied', picks.length+' serial(s) assigned to this row', 'success');
+            hideSaleSerialModal(modal);
+        }catch(e){ console.error('applySaleSerials error:', e); }
+    }
+
+    function validateSerialsForRow(tr){
+        if(!tr) return;
+        var qty = num((tr.querySelector('.qty')||{}).value || 0);
+        var selected = tr.querySelectorAll('input[type="hidden"][data-serial][name^="serialId"]');
+        var count = selected ? selected.length : 0;
+        var badge = tr.querySelector('.serial-count-badge'); if(badge) badge.textContent = count + ' selected';
+        var note = tr.querySelector('.serial-note');
+        var available = parseInt(tr.getAttribute('data-serial-available') || '0', 10) || 0;
+        var requireSerials = available > 0;
+        var mismatch = false;
+        if(requireSerials && qty > 0 && count !== qty){
+            mismatch = true;
+            if(note){ note.style.display = 'block'; note.textContent = 'Select exactly '+qty+' serial(s).'; }
+        } else {
+            if(note){ note.style.display = 'none'; note.textContent = ''; }
+        }
+        if(mismatch){ tr.classList.add('serial-mismatch'); }
+        else { tr.classList.remove('serial-mismatch'); }
+    }
+
+    function reindexSaleSerialInputs(){
+        try{
+            var rows = document.querySelectorAll('#productDetails tr');
+            rows.forEach(function(r, idx){
+                r.setAttribute('data-row-order', idx);
+                Array.prototype.slice.call(r.querySelectorAll('input[type="hidden"][data-serial]')).forEach(function(h){
+                    if(h.name.indexOf('serialId[') === 0){ h.name = 'serialId['+idx+'][]'; }
+                    else if(h.name.indexOf('serialNumber[') === 0){ h.name = 'serialNumber['+idx+'][]'; }
+                });
+            });
+        }catch(e){ console.warn('reindexSaleSerialInputs failed', e); }
+    }
+
+    // Open serial modal for a sale row
+    document.addEventListener('click', function(ev){
+        try{
+            var btn = ev.target.closest && ev.target.closest('.open-sale-serials');
+            if(!btn) return;
+            var idx = btn.getAttribute('data-idx');
+            var pid = btn.getAttribute('data-purchase-id');
+            if(!pid){ showToast && showToast('Missing purchase','Purchase id not found for this row','error'); return; }
+            openSaleSerialModal(idx, pid);
+        }catch(e){ console.warn('open-sale-serials handler', e); }
+    });
+
+    // Serial modal actions
+    document.addEventListener('click', function(ev){
+        try{
+            var t = ev.target;
+            if(!t) return;
+            if(t.id === 'saleSerialSelectAll'){
+                var modal = byId('saleSerialModal');
+                var qty = parseInt(modal && modal.getAttribute('data-qty') || '0', 10) || 0;
+                var picks = Array.prototype.slice.call(document.querySelectorAll('#saleSerialModal input.serial-pick'));
+                var count = 0;
+                picks.forEach(function(c){
+                    if(!qty || count < qty){ c.checked = true; count++; }
+                    else { c.checked = false; }
+                });
+                enforceSerialLimit();
+            }
+            if(t.id === 'saleSerialClear'){
+                Array.prototype.slice.call(document.querySelectorAll('#saleSerialModal input.serial-pick')).forEach(function(c){ c.checked = false; c.disabled = false; });
+                enforceSerialLimit();
+            }
+            if(t.id === 'applySaleSerials'){
+                applySaleSerials();
+            }
+        }catch(e){ console.warn('serial modal action handler', e); }
+    });
+
+    // Enforce limit when toggling individual checkboxes
+    document.addEventListener('change', function(ev){
+        try{
+            var t = ev.target;
+            if(t && t.matches && t.matches('#saleSerialModal input.serial-pick')){
+                enforceSerialLimit();
+            }
+        }catch(e){ console.warn('serial pick change handler', e); }
+    });
 
     // Disable/enable Save button depending on whether any product rows exist
     function toggleSaveButton(){
@@ -304,6 +559,7 @@
             if(!form) return;
             form.addEventListener('submit', function(ev){
                 try{
+                    reindexSaleSerialInputs();
                     // basic validation: at least one row
                     var rows = Array.prototype.slice.call(document.querySelectorAll('#productDetails tr'));
                     if(rows.length === 0){ ev.preventDefault(); showToast && showToast('No items','Add at least one product before saving','warning'); return false; }
@@ -317,6 +573,15 @@
                         if(qv <= 0){ ev.preventDefault(); showToast && showToast('Invalid quantity','Quantity must be at least 1','error'); return false; }
                         // Block submit if any row exceeds available stock
                         try{ if(r.classList && r.classList.contains('stock-exceeded')){ ev.preventDefault(); showToast && showToast('Stock exceeded','Adjust quantities below stock before saving','error'); return false; } }catch(e){}
+                        // Block submit if serials are required but not matched to qty
+                        try{ 
+                            if(r.classList && r.classList.contains('serial-mismatch')){ 
+                                console.error('Form blocked: row has serial-mismatch', r);
+                                ev.preventDefault(); 
+                                showToast && showToast('Serials missing','Select serials equal to quantity for each row','error'); 
+                                return false; 
+                            } 
+                        }catch(e){}
                     }
                     // disable submit to avoid double-post and show saving indicator
                     var submitBtn = form.querySelector('button[type="submit"]');
@@ -361,6 +626,7 @@
                 try{ if(noteEl){ noteEl.style.display = 'none'; noteEl.textContent = ''; } }catch(e){}
                 try{ tr.classList.remove('stock-exceeded'); }catch(e){}
             }
+            validateSerialsForRow(tr);
         }catch(e){ console.warn('recalcRow error', e); }
     }
     function recalcTotals(){

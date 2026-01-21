@@ -33,6 +33,12 @@ class SaleStoreRequest extends FormRequest
             'curDue'          => ['nullable','numeric','min:0'],
             'reference'       => ['nullable','string','max:190'],
             'note'            => ['nullable','string','max:1000'],
+            'serialId'        => ['sometimes','array'],
+            'serialId.*'      => ['array'],
+            'serialId.*.*'    => ['integer'],
+            'serialNumber'    => ['sometimes','array'],
+            'serialNumber.*'  => ['array'],
+            'serialNumber.*.*'=> ['nullable','string'],
         ];
     }
 }
