@@ -6,7 +6,7 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<form action="{{ route('saveSale') }}" id="saveSaleForm" class="row" method="POST" data-action-template="/sale/save/data">
+<form action="{{ route('saveSale') }}" id="saveSaleForm" class="row" method="POST" data-action-template="{{ route('saveSale') }}">
     @csrf
     @php
     $randomInvoiceNumber = 'INV-' . strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));

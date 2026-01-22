@@ -69,8 +69,14 @@
             var form = byId('saveSaleForm');
             if(form){
                 var tmpl = form.getAttribute('data-action-template') || '/sale/save/data';
-                var url = ROUTES.base + tmpl;
-                url = adjustForSubfolder(url);
+                var url = '';
+                // If the template is already absolute or root-relative, skip prefixing with ROUTES.base
+                if(tmpl.indexOf('http://') === 0 || tmpl.indexOf('https://') === 0 || tmpl.charAt(0) === '/'){
+                    url = tmpl;
+                } else {
+                    url = (ROUTES.base || '') + tmpl;
+                }
+                url = safeFinalizeUrl(url);
                 form.setAttribute('action', url);
                 if(window.__SALEDEBUG) console.debug('[SALE] Form action set to:', url);
             }
@@ -386,19 +392,24 @@
 
     function hideSaleSerialModal(modal){
         if(!modal) return;
+        var cleanup = function(){
+            try{ modal.classList.remove('show'); modal.style.display = 'none'; modal.setAttribute('aria-hidden','true'); modal.removeAttribute('aria-modal'); }catch(_){ }
+            try{ document.body.classList.remove('modal-open'); document.body.style.paddingRight = ''; }catch(_){ }
+            try{ Array.prototype.slice.call(document.querySelectorAll('.modal-backdrop')).forEach(function(b){ if(b && b.parentNode) b.parentNode.removeChild(b); }); }catch(_){ }
+        };
         try{
             if(typeof bootstrap !== 'undefined' && bootstrap.Modal){
                 var inst = (typeof bootstrap.Modal.getInstance === 'function') ? bootstrap.Modal.getInstance(modal) : null;
                 if(!inst){ inst = new bootstrap.Modal(modal); }
                 inst.hide();
+                cleanup();
                 return;
             }
         }catch(e){}
         if(window.jQuery && typeof window.jQuery.fn.modal === 'function'){
-            try{ window.jQuery(modal).modal('hide'); return; }catch(e){}
+            try{ window.jQuery(modal).modal('hide'); cleanup(); return; }catch(e){}
         }
-        modal.classList.remove('show');
-        modal.style.display = 'none';
+        cleanup();
     }
 
     function openSaleSerialModal(idx, purchaseId){

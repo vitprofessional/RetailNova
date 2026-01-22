@@ -758,7 +758,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         Route::get('/statistics', [ExpenseManagementController::class, 'expenseStatistics'])->name('statistics');
     });
 
-    Route::post('/sale/save/data',[
+    Route::post('/new/sale/save/data',[
         JqueryController::class,
         'saveSale'
     ])->name('saveSale');
