@@ -138,24 +138,24 @@
   </div>
 </div>
 
-  <!-- Print-only footer: appears once at the end of printed invoice -->
-  <div class="print-only-footer" aria-hidden="true">
+  <!-- Invoice footer: visible on view and print -->
+  <div class="invoice-footer">
     <hr style="border-color:#ddd">
     <div style="text-align:center; font-size:0.92rem; color:#333;">{{ $business && $business->invoiceFooter ? $business->invoiceFooter : 'Thank you for your business. Visit us at ' . config('app.url', '/') }}</div>
     <div style="text-align:center; font-size:0.82rem; color:#666; margin-top:6px;">Powered by {{ config('app.name', env('APP_NAME', 'POS')) }}</div>
   </div>
 
 <style>
-  /* Hide print-only footer during normal view; it is shown only when printing */
-  .print-only-footer { display: none; }
+  /* Invoice footer visible on both screen and print */
+  .invoice-footer { display: block; margin-top: 20px; }
 
   /* Invoice print styles */
   @media print {
     /* Hide everything then reveal only invoice root and footer to avoid printing page chrome */
     body * { visibility: hidden; }
     #rn-invoice-root, #rn-invoice-root * { visibility: visible; }
-    .print-only-footer { display: block !important; visibility: visible; }
-    .print-only-footer * { visibility: visible; }
+    .invoice-footer { display: block !important; visibility: visible; }
+    .invoice-footer * { visibility: visible; }
     /* Keep invoice in normal flow to avoid forcing an extra blank page */
     html, body { height: auto; }
     #rn-invoice-root { box-shadow: none !important; border: none !important; margin: 0; padding: 0; position: static; width: 100%; page-break-after: avoid; }
@@ -171,7 +171,7 @@
     thead { display: table-header-group; }
     tfoot { display: table-footer-group; }
     /* Print footer styling: minimal gap so it doesn't force a new page */
-    .print-only-footer { display: block; visibility: visible; position: relative; margin-top: 3mm; page-break-inside: avoid; }
+    .invoice-footer { display: block; visibility: visible; position: relative; margin-top: 3mm; page-break-inside: avoid; }
     /* Reduce page margins slightly to maximize content per page */
     @page { margin: 8mm 8mm 8mm 8mm; }
   }
