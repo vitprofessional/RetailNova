@@ -251,29 +251,31 @@
             tr.setAttribute('data-idx', idx);
             tr.setAttribute('data-purchase-id', purchaseId);
             tr.setAttribute('data-serial-available', '0');
-            tr.innerHTML = ''+
-                '<td><button type="button" class="btn btn-sm btn-danger remove-row">Remove</button></td>'+
-                '<td><input type="text" class="form-control" value="'+ (p.productName || '') +'" readonly></td>'+
-                '<td>'+
-                    '<input type="hidden" name="purchaseData[]" value="'+ purchaseId +'">'+
-                    '<div class="small">Supplier: '+ (p.supplierName || '') +'</div>'+
-                    '<div class="small">Invoice: '+ (p.invoice || '') +'</div>'+
-                    '<div class="small">Stock: <span class="row-stock">'+ (p.currentStock || 0) +'</span></div>'+
-                '</td>'+
-                '<td>'+
-                    '<div class="d-flex align-items-center">'+
-                        '<button type="button" class="btn btn-sm btn-outline-primary open-sale-serials" data-idx="'+idx+'" data-purchase-id="'+purchaseId+'">Serials</button>'+
-                        '<span class="badge bg-secondary ms-2 serial-count-badge" data-idx="'+idx+'">0 selected</span>'+
-                    '</div>'+
-                    '<div class="text-danger small serial-note" style="display:none;"></div>'+
-                '</td>'+
-                '<td><input type="number" class="form-control qty" name="qty[]" min="1" step="1" value="1"></td>'+
-                '<td><input type="number" class="form-control salePrice" name="salePrice[]" value="'+ salePrice +'" readonly></td>'+
-                '<td><input type="number" class="form-control totalSale" readonly></td>'+
-                '<td><input type="number" class="form-control buyPrice" name="buyPrice[]" value="'+ buyPrice +'" readonly></td>'+
-                '<td><input type="number" class="form-control totalPurchase" readonly></td>'+
-                '<td><input type="text" class="form-control profitMargin" readonly></td>'+
-                '<td><input type="number" class="form-control profitTotal" readonly></td>';
+            tr.innerHTML = `
+                <td><button type="button" class="btn btn-sm btn-danger remove-row">Remove</button></td>
+                <td><input type="text" class="form-control" value="${p.productName || ''}" readonly></td>
+                <td>
+                    <input type="hidden" name="purchaseData[]" value="${purchaseId}">
+                    <div class="small">Supplier: ${p.supplierName || ''}</div>
+                    <div class="small">Invoice: ${p.invoice || ''}</div>
+                    <div class="small">Stock: <span class="row-stock">${p.currentStock || 0}</span></div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <button type="button" class="btn btn-sm btn-outline-primary open-sale-serials" data-idx="${idx}" data-purchase-id="${purchaseId}">Serials</button>
+                        <span class="badge bg-secondary ms-2 serial-count-badge" data-idx="${idx}">0 selected</span>
+                    </div>
+                    <div class="text-danger small serial-note" style="display:none;"></div>
+                    <div class="serial-hidden" style="display:none"></div>
+                </td>
+                <td><input type="number" class="form-control qty" name="qty[]" min="1" step="1" value="1"></td>
+                <td><input type="number" class="form-control salePrice" name="salePrice[]" value="${salePrice}" readonly></td>
+                <td><input type="number" class="form-control totalSale" readonly></td>
+                <td><input type="number" class="form-control buyPrice" name="buyPrice[]" value="${buyPrice}" readonly></td>
+                <td><input type="number" class="form-control totalPurchase" readonly></td>
+                <td><input type="text" class="form-control profitMargin" readonly></td>
+                <td><input type="number" class="form-control profitTotal" readonly></td>
+            `;
             // If this row was created as a backorder, mark it and include hidden marker for server
             try{
                 if(p && p.__backorder){
@@ -419,7 +421,10 @@
         var hint = byId('saleSerialHint'); if(hint) hint.textContent = '';
         var row = document.querySelector('tr[data-idx="'+idx+'"]');
         var qty = num((row && row.querySelector('.qty')) ? row.querySelector('.qty').value : 0);
+        // Preserve both creation idx and current row order so selected serials stay aligned after reindexing
+        var rowOrder = row ? (row.getAttribute('data-row-order') || '') : '';
         modal.setAttribute('data-idx', idx || '');
+        modal.setAttribute('data-row-order', rowOrder);
         modal.setAttribute('data-purchase-id', purchaseId || '');
         modal.setAttribute('data-qty', qty || 0);
         modal.setAttribute('data-available-count', '0');
@@ -447,23 +452,27 @@
         try{
             var modal = byId('saleSerialModal'); if(!modal){ console.warn('applySaleSerials: modal not found'); return; }
             var idx = modal.getAttribute('data-idx') || '';
+            var rowOrder = modal.getAttribute('data-row-order');
             var qty = parseInt(modal.getAttribute('data-qty') || '0', 10) || 0;
             var avail = parseInt(modal.getAttribute('data-available-count') || '0', 10) || 0;
             var row = document.querySelector('tr[data-idx="'+idx+'"]');
             if(!row){ console.warn('applySaleSerials: row not found for idx', idx); return; }
+            // Prefer current row order when writing hidden inputs so server arrays align after reindexing
+            var targetIdx = (rowOrder !== null && rowOrder !== '' ? rowOrder : idx);
             var picks = Array.prototype.slice.call(document.querySelectorAll('#saleSerialModal input.serial-pick:checked'));
             if(avail > 0 && qty > 0 && picks.length !== qty){
                 var status = byId('saleSerialStatus');
                 if(status){ status.className = 'alert alert-warning mb-2'; status.textContent = 'Select exactly '+qty+' serial(s). Selected '+picks.length+'.'; }
                 return;
             }
-            // clear previous hidden serial inputs
-            try{ Array.prototype.slice.call(row.querySelectorAll('input[type="hidden"][data-serial]')).forEach(function(h){ h.remove(); }); }catch(e){}
+            // clear previous hidden serial inputs within the serial container (safer than direct tr children)
+            var serialBox = row.querySelector('.serial-hidden') || row;
+            try{ Array.prototype.slice.call(serialBox.querySelectorAll('input[type="hidden"][data-serial]')).forEach(function(h){ h.remove(); }); }catch(e){}
             picks.forEach(function(chk){
                 var idVal = chk.value || '';
                 var serialNo = chk.getAttribute('data-serial-number') || '';
-                var hid = document.createElement('input'); hid.type='hidden'; hid.name = 'serialId['+idx+'][]'; hid.value = idVal; hid.setAttribute('data-serial','1'); row.appendChild(hid);
-                var hno = document.createElement('input'); hno.type='hidden'; hno.name = 'serialNumber['+idx+'][]'; hno.value = serialNo; hno.setAttribute('data-serial','1'); row.appendChild(hno);
+                var hid = document.createElement('input'); hid.type='hidden'; hid.name = 'serialId['+targetIdx+'][]'; hid.value = idVal; hid.setAttribute('data-serial','1'); serialBox.appendChild(hid);
+                var hno = document.createElement('input'); hno.type='hidden'; hno.name = 'serialNumber['+targetIdx+'][]'; hno.value = serialNo; hno.setAttribute('data-serial','1'); serialBox.appendChild(hno);
             });
             reindexSaleSerialInputs();
             validateSerialsForRow(row);
@@ -475,7 +484,8 @@
     function validateSerialsForRow(tr){
         if(!tr) return;
         var qty = num((tr.querySelector('.qty')||{}).value || 0);
-        var selected = tr.querySelectorAll('input[type="hidden"][data-serial][name^="serialId"]');
+        var holder = tr.querySelector('.serial-hidden') || tr;
+        var selected = holder.querySelectorAll('input[type="hidden"][data-serial][name^="serialId"]');
         var count = selected ? selected.length : 0;
         var badge = tr.querySelector('.serial-count-badge'); if(badge) badge.textContent = count + ' selected';
         var note = tr.querySelector('.serial-note');
@@ -497,7 +507,8 @@
             var rows = document.querySelectorAll('#productDetails tr');
             rows.forEach(function(r, idx){
                 r.setAttribute('data-row-order', idx);
-                Array.prototype.slice.call(r.querySelectorAll('input[type="hidden"][data-serial]')).forEach(function(h){
+                var holder = r.querySelector('.serial-hidden') || r;
+                Array.prototype.slice.call(holder.querySelectorAll('input[type="hidden"][data-serial]')).forEach(function(h){
                     if(h.name.indexOf('serialId[') === 0){ h.name = 'serialId['+idx+'][]'; }
                     else if(h.name.indexOf('serialNumber[') === 0){ h.name = 'serialNumber['+idx+'][]'; }
                 });

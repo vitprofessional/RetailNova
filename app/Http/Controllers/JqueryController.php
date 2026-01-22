@@ -756,19 +756,29 @@ class JqueryController extends Controller
         $invoiceService = app(InvoiceService::class);
 
         $items = $requ->qty ?? [];
-        $serialIdsInput = $requ->input('serialId', []);
-        $serialNumbersInput = $requ->input('serialNumber', []);
+        // Get raw serial input
+        $rawSerialIds = $requ->input('serialId', []);
+        $rawSerialNumbers = $requ->input('serialNumber', []);
+        
+        // Normalize serial arrays to zero-based indexes so they align with qty/purchaseData ordering
+        $serialIdsInput = array_values($rawSerialIds);
+        $serialNumbersInput = array_values($rawSerialNumbers);
 
-        // Debug logging
-        \Log::info('saveSale: Received request', [
-            'items_count' => count($items),
-            'purchaseData' => $requ->purchaseData ?? [],
-            'serialIdsInput' => $serialIdsInput,
-            'serialNumbersInput' => $serialNumbersInput,
-        ]);
+        // Build a purchaseId-keyed lookup for serials to survive any client-side reindex mismatches
+        $serialMapByPurchase = [];
+        if(isset($requ->purchaseData) && is_array($requ->purchaseData)){
+            foreach($requ->purchaseData as $i => $pid){
+                $pidInt = (int)$pid;
+                if($pidInt <= 0) continue;
+                $serialMapByPurchase[$pidInt] = [
+                    'ids' => (isset($serialIdsInput[$i]) && is_array($serialIdsInput[$i])) ? array_values($serialIdsInput[$i]) : [],
+                    'numbers' => (isset($serialNumbersInput[$i]) && is_array($serialNumbersInput[$i])) ? array_values($serialNumbersInput[$i]) : [],
+                ];
+            }
+        }
 
         try {
-            DB::transaction(function() use ($requ, $items, $stockService, $invoiceService, &$message) {
+            DB::transaction(function() use ($requ, $items, $stockService, $invoiceService, $serialMapByPurchase, $serialIdsInput, $serialNumbersInput, &$message) {
                 $sales = new SaleProduct();
                 // Generate a sequenced sale invoice (replaces client-provided invoice)
                 $sales->invoice         = $invoiceService->generateSaleInvoice();
@@ -831,6 +841,13 @@ class JqueryController extends Controller
                         }
                         if(isset($serialNumbersInput[$index]) && is_array($serialNumbersInput[$index])){
                             $selectedSerialNumbers = array_values(array_filter($serialNumbersInput[$index], function($v){ return trim((string)$v) !== ''; }));
+                        }
+                        
+                        // Prefer purchaseId-keyed serials if present (more robust against index drift)
+                        if(isset($serialMapByPurchase[$purchaseId])){
+                            $alt = $serialMapByPurchase[$purchaseId];
+                            if(!empty($alt['ids'])){ $selectedSerialIds = array_values(array_filter($alt['ids'], function($v){ return trim((string)$v) !== ''; })); }
+                            if(!empty($alt['numbers'])){ $selectedSerialNumbers = array_values(array_filter($alt['numbers'], function($v){ return trim((string)$v) !== ''; })); }
                         }
 
                         // Only enforce serial selection for non-backorder rows
