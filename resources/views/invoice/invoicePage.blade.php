@@ -128,9 +128,16 @@
       <div class="text-muted">{{ $invoice->note ?? 'Thank you for your business. Payment is due within 15 days.' }}</div>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center">
-      <div class="text-muted small">Powered by {{ config('app.name', env('APP_NAME', 'POS')) }}</div>
-      <div class="no-print">
+    <!-- Invoice footer: appears on both view and print -->
+    <div class="invoice-footer mt-4">
+      <hr style="border-color:#ddd">
+      <div style="text-align:center; font-size:0.92rem; color:#333;">{{ $business && $business->invoiceFooter ? $business->invoiceFooter : 'Thank you for your business. Visit us at ' . config('app.url', '/') }}</div>
+      <div style="text-align:center; font-size:0.82rem; color:#666; margin-top:6px;">Powered by {{ config('app.name', env('APP_NAME', 'POS')) }}</div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center no-print mt-3">
+      <div></div>
+      <div>
         <button class="btn btn-outline-secondary btn-sm" onclick="printInvoice()">Print</button>
         <a class="btn btn-primary btn-sm" href="{{ route('saleList') }}">Back to Sales Page</a>
       </div>
@@ -138,24 +145,16 @@
   </div>
 </div>
 
-  <!-- Invoice footer: visible on view and print -->
-  <div class="invoice-footer">
-    <hr style="border-color:#ddd">
-    <div style="text-align:center; font-size:0.92rem; color:#333;">{{ $business && $business->invoiceFooter ? $business->invoiceFooter : 'Thank you for your business. Visit us at ' . config('app.url', '/') }}</div>
-    <div style="text-align:center; font-size:0.82rem; color:#666; margin-top:6px;">Powered by {{ config('app.name', env('APP_NAME', 'POS')) }}</div>
-  </div>
-
 <style>
-  /* Invoice footer visible on both screen and print */
-  .invoice-footer { display: block; margin-top: 20px; }
+  /* Invoice footer visible on both view and print */
+  .invoice-footer { display: block; }
 
   /* Invoice print styles */
   @media print {
     /* Hide everything then reveal only invoice root and footer to avoid printing page chrome */
     body * { visibility: hidden; }
     #rn-invoice-root, #rn-invoice-root * { visibility: visible; }
-    .invoice-footer { display: block !important; visibility: visible; }
-    .invoice-footer * { visibility: visible; }
+    .invoice-footer, .invoice-footer * { visibility: visible; }
     /* Keep invoice in normal flow to avoid forcing an extra blank page */
     html, body { height: auto; }
     #rn-invoice-root { box-shadow: none !important; border: none !important; margin: 0; padding: 0; position: static; width: 100%; page-break-after: avoid; }
@@ -170,7 +169,7 @@
     tr { page-break-inside: avoid; }
     thead { display: table-header-group; }
     tfoot { display: table-footer-group; }
-    /* Print footer styling: minimal gap so it doesn't force a new page */
+    /* Invoice footer styling: minimal gap so it doesn't force a new page */
     .invoice-footer { display: block; visibility: visible; position: relative; margin-top: 3mm; page-break-inside: avoid; }
     /* Reduce page margins slightly to maximize content per page */
     @page { margin: 8mm 8mm 8mm 8mm; }
