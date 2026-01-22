@@ -39,11 +39,12 @@ class AppServiceProvider extends ServiceProvider
             $view->with('config',$businessTable);
         });
 
-        // Blade directive for currency formatting
+        // Blade directive for currency formatting (respects symbol/position/neg-parentheses)
         Blade::directive('money', function($expression){
-            return "<?php echo \\App\\Support\\Currency::format((int)($expression)); ?>";    
+            $expr = $expression ?: '0';
+            return "<?php echo \\App\\Support\\Currency::format($expr); ?>";    
         });
-        // Simple decimal currency directive (two decimals) for amounts
+        // Simple decimal currency directive (two decimals) for raw numbers (no symbol)
         Blade::directive('currency', function ($expression) {
             return "<?php echo number_format($expression, 2); ?>";
         });

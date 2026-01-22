@@ -30,6 +30,9 @@
         {{-- QR code for quick verification (hidden from interactive header spacing) --}}
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode(route('invoiceGenerate',['id'=>$invoice->id]).'?'.$invoice->invoice) }}" alt="QR" style="width:90px; height:90px; object-fit:contain;">
       </div>
+      <div class="ms-3 text-end only-print">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data={{ urlencode(route('invoiceGenerate',['id'=>$invoice->id]).'?'.$invoice->invoice) }}" alt="QR" style="width:90px; height:90px; object-fit:contain;">
+      </div>
     </div>
 
     <div class="row mb-3 invoice-meta">
@@ -42,9 +45,7 @@
       </div>
       <div class="col-6 text-end">
         <h6 class="mb-1">Payment Info</h6>
-        <div>Paid: <strong>{{ number_format($invoice->paidAmount ?? 0, 2, '.', ',') }} ৳</strong></div>
-        <div>Previous Due: {{ number_format($invoice->prevDue ?? 0, 2, '.', ',') }} ৳</div>
-        <div>Current Due: <strong>{{ number_format($invoice->curDue ?? 0, 2, '.', ',') }} ৳</strong></div>
+        <div>Previous Due: @money($invoice->prevDue ?? 0)</div>
       </div>
     </div>
 
@@ -82,8 +83,8 @@
                 @endif
               </td>
               <td class="text-end">{{ $item->qty }}</td>
-              <td class="text-end">{{ number_format($item->salePrice ?? 0, 2, '.', ',') }} ৳</td>
-              <td class="text-end">{{ number_format($line, 2, '.', ',') }} ৳</td>
+              <td class="text-end">@money($item->salePrice ?? 0)</td>
+              <td class="text-end">@money($line)</td>
             </tr>
           @empty
             <tr><td colspan="5">No items found</td></tr>
@@ -93,19 +94,31 @@
     </div>
 
     <div class="d-flex justify-content-end mb-4">
-      <div style="min-width:300px;">
-        <div class="d-flex justify-content-between">
-          <div class="text-muted">Subtotal</div>
-          <div>{{ number_format($subtotal, 2, '.', ',') }} ৳</div>
+      <div class="totals-block" style="min-width:300px;">
+        <div class="d-flex justify-content-between line">
+          <div class="key">Subtotal</div>
+          <div class="value">@money($subtotal)</div>
         </div>
-        <div class="d-flex justify-content-between">
-          <div class="text-muted">Discount</div>
-          <div>{{ number_format($invoice->discountAmount ?? 0, 2, '.', ',') }} ৳</div>
+        <div class="d-flex justify-content-between line">
+          <div class="key">Discount</div>
+          <div class="value">@money($invoice->discountAmount ?? 0)</div>
         </div>
-        <hr>
-        <div class="d-flex justify-content-between fs-5 fw-bold">
-          <div>Grand Total</div>
-          <div>{{ number_format($invoice->grandTotal ?? $subtotal, 2, '.', ',') }} ৳</div>
+        <hr class="my-2">
+        <div class="d-flex justify-content-between line grand">
+          <div class="key">Grand Total</div>
+          <div class="value">@money($invoice->grandTotal ?? $subtotal)</div>
+        </div>
+        <div class="d-flex justify-content-between line">
+          <div class="key">Paid</div>
+          <div class="value">@money($invoice->paidAmount ?? 0)</div>
+        </div>
+        <div class="d-flex justify-content-between line">
+          <div class="key">Current Due</div>
+          <div class="value">@money($invoice->curDue ?? 0)</div>
+        </div>
+        <div class="d-flex justify-content-between line grand">
+          <div class="key">Total Outstanding (incl. prev. due)</div>
+          <div class="value">@money(($invoice->curDue ?? 0) + ($invoice->prevDue ?? 0))</div>
         </div>
       </div>
     </div>
@@ -133,12 +146,16 @@
   </div>
 
 <style>
+  /* Hide print-only footer during normal view; it is shown only when printing */
+  .print-only-footer { display: none; }
+
   /* Invoice print styles */
   @media print {
     /* Hide everything then reveal only invoice root and footer to avoid printing page chrome */
     body * { visibility: hidden; }
     #rn-invoice-root, #rn-invoice-root * { visibility: visible; }
-    .print-only-footer, .print-only-footer * { visibility: visible; }
+    .print-only-footer { display: block !important; visibility: visible; }
+    .print-only-footer * { visibility: visible; }
     /* Keep invoice in normal flow to avoid forcing an extra blank page */
     html, body { height: auto; }
     #rn-invoice-root { box-shadow: none !important; border: none !important; margin: 0; padding: 0; position: static; width: 100%; page-break-after: avoid; }
@@ -147,6 +164,7 @@
     #rn-invoice-root, #rn-invoice-root * { color: #000 !important; -webkit-print-color-adjust: exact; }
     /* Hide interactive elements explicitly marked as no-print */
     .no-print { display: none !important; }
+    .only-print { display: block !important; }
     /* Ensure the invoice table and footer print with visible borders and avoid page-splitting */
     .invoice-table thead th, .invoice-table tbody td { border: 1px solid #222 !important; }
     tr { page-break-inside: avoid; }
@@ -168,6 +186,12 @@
   .invoice-table th.col-item, .invoice-table td.col-item { width: 56%; white-space: normal; word-break: break-word; }
   .invoice-table td, .invoice-table th { white-space: nowrap; }
   .invoice-table td.col-item, .invoice-table th.col-item { white-space: normal; }
+  .totals-block .line { padding: 2px 0; }
+  .totals-block .key { color: #555; }
+  .totals-block .value { font-weight: 600; }
+  .totals-block .grand .value { font-weight: 700; font-size: 1.05rem; }
+  .totals-block .grand .key { font-weight: 600; }
+  .only-print { display: none; }
   /* Ensure print uses full width table */
   @media print {
     .invoice-table { width: 100% !important; }

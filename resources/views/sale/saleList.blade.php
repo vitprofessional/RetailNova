@@ -63,9 +63,9 @@
                                     @php
                                         $customer = \App\Models\Customer::find($sl->customerId);
                                         $customerName = $customer ? $customer->name : '-';
-                                        $grand = is_numeric($sl->grandTotal ?? null) ? number_format($sl->grandTotal, 2) : ($sl->grandTotal ?? '0.00');
-                                        $paid  = is_numeric($sl->paidAmount ?? null) ? number_format($sl->paidAmount, 2) : ($sl->paidAmount ?? '0.00');
-                                        $due   = is_numeric($sl->curDue ?? null) ? number_format($sl->curDue, 2) : ($sl->curDue ?? '0.00');
+                                        $grand = \App\Support\Currency::format($sl->grandTotal ?? 0);
+                                        $paid  = \App\Support\Currency::format($sl->paidAmount ?? 0);
+                                        $due   = \App\Support\Currency::format($sl->curDue ?? 0);
                                         $status = 'Due';
                                         if (isset($sl->curDue) && (float)$sl->curDue <= 0) {
                                             $status = 'Paid';
