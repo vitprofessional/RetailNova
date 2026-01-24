@@ -8,9 +8,11 @@
     /* Small professional tweaks for sales table */
     .rn-ellipsis{max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
     table.data-tables tbody tr:hover{background-color:rgba(0,0,0,0.02)}
-    .rn-col-compact{width:48px;}
+    .rn-col-compact{width:96px;}
     .rn-number{white-space:nowrap; text-align:right;}
-    .rn-actions .btn{padding:.25rem .5rem; font-size:.85rem}
+    /* Grid: two action buttons per row */
+    .rn-actions{display:grid; grid-template-columns: repeat(2, 36px); gap:8px; justify-content:center;}
+    .rn-actions .btn{width:36px; height:36px; padding:0; font-size:1rem; display:flex; align-items:center; justify-content:center; border-radius:12px}
     .badge.bg-success, .badge.bg-warning, .badge.bg-danger{font-size:0.8rem}
 </style>
 <div class="row">
@@ -38,7 +40,7 @@
                 @include('partials.bulk-actions', ['deleteRoute' => 'sales.bulkDelete', 'entity' => 'Sales'])
                 <div class="rounded mb-2 table-responsive product-table">
                     @php use Carbon\Carbon; @endphp
-                    <table id="salesTable" class="data-tables table mb-0 table-striped table-bordered">
+                    <table id="salesTable" class="data-tables table mb-0 table-striped table-bordered rn-table-pro">
                         <thead class="bg-white text-uppercase">
                             <tr>
                                 <th class="rn-col-compact">
@@ -99,7 +101,8 @@
                                         <td class="rn-actions text-center">
                                             <a class="btn btn-sm btn-outline-secondary" href="{{ route('invoiceGenerate',['id'=>$sl->id]) }}" title="Print"><i class="las la-print"></i></a>
                                             <a class="btn btn-sm btn-outline-secondary" href="{{ route('returnSale',['id'=>$sl->id]) }}" title="Return"><i class="las la-undo"></i></a>
-                                            <form method="POST" action="{{ route('delSale',['id'=>$sl->id]) }}" style="display:inline-block; margin:0 0 0 6px;">
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('sale.edit',['id'=>$sl->id]) }}" title="Edit"><i class="las la-edit"></i></a>
+                                            <form method="POST" action="{{ route('delSale',['id'=>$sl->id]) }}" style="display:inline-block;">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="delete" title="Delete"><i class="las la-trash-alt"></i></button>

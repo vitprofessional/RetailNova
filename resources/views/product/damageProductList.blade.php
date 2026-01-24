@@ -35,7 +35,7 @@
                             <input type="date" class="form-control rn-filter-input" data-table-target="damageTable" data-filter-date="to">
                         </div>
                     </div>
-                    <table id="damageTable" class="data-tables table mb-0 table-bordered ">
+                    <table id="damageTable" class="data-tables table mb-0 table-bordered rn-table-pro">
                         <thead class="bg-white text-uppercase">
                             <tr>
                                 <th>

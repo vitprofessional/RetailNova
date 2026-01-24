@@ -20,7 +20,7 @@
                             </div>
 
                             <div class="table-responsive">
-                                <table class="table table-bordered">
+                                <table class="table table-bordered rn-table-pro">
                                     <thead>
                                         <tr>
                                             <th>#</th>

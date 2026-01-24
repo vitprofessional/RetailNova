@@ -98,7 +98,7 @@
         <div class="card">
             <div class="card-body">
                 <div class="mb-3 table-responsive product-table">
-                    <table class="table table-striped table-bordered mb-0">
+                    <table class="table table-striped table-bordered mb-0 rn-table-pro">
                         <thead class="bg-light text-uppercase small">
                             <tr>
                                 <th style="min-width:220px">Product</th>
@@ -219,7 +219,7 @@
                             <h6 class="card-title">Other Details</h6>
                         </div>
                         <div class="mb-3 table-responsive product-table">
-                            <table class="table mb-0 table-bordered rounded-0">
+                            <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
                                 <thead class="bg-white text-uppercase">
                                     <tr>
                                         <th>Discount Type</th>

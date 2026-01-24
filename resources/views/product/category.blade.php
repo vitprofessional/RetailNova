@@ -34,7 +34,7 @@
         @if(!isset($profile))
         <div class="thead-start mt-4">
             @include('partials.bulk-actions', ['deleteRoute' => 'categories.bulkDelete', 'entity' => 'Categories'])
-            <table class=" data-tables    table  table-success table-bordered table-striped-colums">
+            <table class=" data-tables    table  table-success table-bordered table-striped-colums rn-table-pro">
                 <thead class="">
                     <tr class=" ">
                         <th>

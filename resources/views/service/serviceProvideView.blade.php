@@ -6,7 +6,7 @@
         <div class="card">
             <div class="card-body">
                 <h4 class="mb-3">Provided Service #{{ $row->id }}</h4>
-                <table class="table table-bordered">
+                <table class="table table-bordered rn-table-pro">
                     <tr><th>Customer</th><td>{{ $row->customer_name ?? 'Customer #'.$row->customerName }}</td></tr>
                     <tr><th>Service</th><td>{{ $row->serviceName }}</td></tr>
                     <tr><th>Qty</th><td>{{ $row->qty ?? '-' }}</td></tr>

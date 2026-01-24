@@ -141,7 +141,7 @@
         </div>
         <div class="table-responsive rounded mb-3">
             @include('partials.bulk-actions', ['deleteRoute' => 'customers.bulkDelete', 'entity' => 'Customers'])
-            <table class="data-tables table mb-0 tbl-server-info" id="customer-table">
+            <table class="data-tables table mb-0 tbl-server-info rn-table-pro" id="customer-table">
             <thead class="bg-white text-uppercase">
                     <tr class="ligth ligth-data">
                         <th class="rn-col-compact d-none d-sm-table-cell">
@@ -246,7 +246,7 @@
                 <h5 class="card-title">Deleted Customers</h5>
             </div>
             <div class="table-responsive rounded mb-3">
-                <table class="data-tables table mb-0 tbl-server-info">
+                <table class="data-tables table mb-0 tbl-server-info rn-table-pro">
                     <thead class="bg-white text-uppercase">
                         <tr class="ligth ligth-data">
                             <th>Customer Name</th>

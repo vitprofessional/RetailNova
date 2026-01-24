@@ -653,7 +653,9 @@
     }
     function recalcTotals(){
         try{
+            // Guard: only run on Sale pages where `.totalSale` inputs exist
             var totals = Array.prototype.slice.call(document.querySelectorAll('#productDetails .totalSale'));
+            if(!totals.length){ return; }
             var base = 0; totals.forEach(function(t){ base += num(t.value); });
             var discount = num(byId('discountAmount') && byId('discountAmount').value);
             var grand = Math.max(0, base - discount);

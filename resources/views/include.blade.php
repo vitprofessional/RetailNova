@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/backend-plugin.min.css">
     <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/backende209.css?v=1.0.0">
     <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/rn-custom.css">
+    <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/rn-table-pro.css">
     <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
     <link rel= "stylesheet" href= "https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css" >
     <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/remixicon/fonts/remixicon.css"> 
@@ -746,9 +747,42 @@
                           </a>
                       </li>
                       <li class=" ">
+                          <a href="#sale" class="{{ request()->routeIs('newsale','saleList','returnSaleList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('newsale','saleList','returnSaleList') ? 'true' : 'false' }}">
+                              <svg class="svg-icon" id="p-dash5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                                  <path d="M16 10a4 4 0 0 1-8 0"></path>
+                              </svg>
+                              <span class="ml-4">Sales</span>
+                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                              </svg>
+                          </a>
+                          <ul id="sale" class="iq-submenu collapse{{ request()->routeIs('newsale','saleList','returnSaleList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
+                                  <li class="">
+                                          <a href="{{route('newsale')}}">
+                                              <i class="las la-minus"></i><span>New sale</span>
+                                          </a>
+                                  </li>
+                                  <li class="">
+                                          <a href="{{route('saleList')}}">
+                                              <i class="las la-minus"></i><span>Sale List</span>
+                                          </a>
+                                  </li>
+                                  <li class="">
+                                            <a href="{{route('returnSaleList')}}">
+                                                <i class="las la-minus"></i><span>Sale Return List</span>
+                                            </a>
+                                  </li>
+                          </ul>
+                      </li>
+                      <li class=" ">
                           <a href="#product" class="{{ request()->routeIs('addCustomer','addSupplier') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addCustomer','addSupplier') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash2" width="20" height="20"  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle>
-                                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                              <svg class="svg-icon" id="p-dash2" width="20" height="20"  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                  <circle cx="9" cy="7" r="4"></circle>
+                                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                               </svg>
                               <span class="ml-4">Customer & Supplier</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -770,8 +804,11 @@
                       </li>
                       <li class=" ">
                                                       <a href="#category" class="{{ request()->routeIs('addProduct','productlist','stockProduct','addBrand','addCategory','addProductUnit') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addProduct','productlist','stockProduct','addBrand','addCategory','addProductUnit') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash3" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                              <svg class="svg-icon" id="p-dash3" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+                                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
                               </svg>
                               <span class="ml-4">Product</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -812,32 +849,11 @@
                           </ul>
                       </li>
                       <li class=" ">
-                          <a href="#damage" class="{{ request()->routeIs('damageProduct','damageProductList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('damageProduct','damageProductList') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                                  <line x1="1" y1="10" x2="23" y2="10"></line>
-                              </svg>
-                              <span class="ml-4">Damage</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="damage" class="iq-submenu collapse{{ request()->routeIs('damageProduct','damageProductList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="">
-                                          <a href="{{route('damageProduct')}}">
-                                              <i class="las la-minus"></i><span>Damage Product</span>
-                                          </a>
-                                  </li>
-                                  <li class="">
-                                          <a href="{{route('damageProductList')}}">
-                                              <i class="las la-minus"></i><span>Damage Product List</span>
-                                          </a>
-                                  </li>
-                          </ul>
-                      </li>
-                      <li class=" ">
                           <a href="#parchase" class="{{ request()->routeIs('addPurchase','purchaseList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addPurchase','purchaseList') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash4" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                                  <circle cx="9" cy="21" r="1"></circle>
+                                  <circle cx="20" cy="21" r="1"></circle>
+                                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                               </svg>
                               <span class="ml-4">Purchase</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -858,37 +874,9 @@
                           </ul>
                       </li>
                       <li class=" ">
-                          <a href="#sale" class="{{ request()->routeIs('newsale','saleList','returnSaleList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('newsale','saleList','returnSaleList') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                                  <line x1="1" y1="10" x2="23" y2="10"></line>
-                              </svg>
-                              <span class="ml-4">sale</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="sale" class="iq-submenu collapse{{ request()->routeIs('newsale','saleList','returnSaleList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="">
-                                          <a href="{{route('newsale')}}">
-                                              <i class="las la-minus"></i><span>New sale</span>
-                                          </a>
-                                  </li>
-                                  <li class="">
-                                          <a href="{{route('saleList')}}">
-                                              <i class="las la-minus"></i><span>Sale List</span>
-                                          </a>
-                                  </li>
-                                  <li class="">
-                                            <a href="{{route('returnSaleList')}}">
-                                                <i class="las la-minus"></i><span>Sale Return List</span>
-                                            </a>
-                                  </li>
-                          </ul>
-                      </li>
-                      <li class=" ">
                           <a href="#service" class="{{ request()->routeIs('provideService','addServiceName','serviceProvideList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('provideService','addServiceName','serviceProvideList') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash6" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line>
+                                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
                               </svg>
                               <span class="ml-4">Service</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -916,7 +904,7 @@
                       <li class=" ">
                                   <a href="#warranty" class="{{ request()->routeIs('rma','serialList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('rma','serialList') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash6" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line>
+                                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                               </svg>
                               <span class="ml-4">Warranty</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -935,6 +923,31 @@
                               </a>
                           </li>
                       </ul>
+                      </li>
+                      <li class=" ">
+                          <a href="#damage" class="{{ request()->routeIs('damageProduct','damageProductList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('damageProduct','damageProductList') ? 'true' : 'false' }}">
+                              <svg class="svg-icon" id="p-dash5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                              </svg>
+                              <span class="ml-4">Damage</span>
+                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                              </svg>
+                          </a>
+                          <ul id="damage" class="iq-submenu collapse{{ request()->routeIs('damageProduct','damageProductList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
+                                  <li class="">
+                                          <a href="{{route('damageProduct')}}">
+                                              <i class="las la-minus"></i><span>Damage Product</span>
+                                          </a>
+                                  </li>
+                                  <li class="">
+                                          <a href="{{route('damageProductList')}}">
+                                              <i class="las la-minus"></i><span>Damage Product List</span>
+                                          </a>
+                                  </li>
+                          </ul>
                       </li>
                       <li class=" ">
                           <a href="#account" class="{{ request()->routeIs('account.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('account.*') ? 'true' : 'false' }}">
@@ -963,13 +976,12 @@
                                           </a>
                                   </li>
                           </ul>
-                      </li> <li class=" ">
+                      </li> 
+                      <li class=" ">
                           <a href="#expense" class="{{ request()->routeIs('expense.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('expense.*') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash8" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                  <circle cx="8.5" cy="7" r="4"></circle>
-                                  <line x1="18" y1="8" x2="23" y2="13"></line>
-                                  <line x1="23" y1="8" x2="18" y2="13"></line>
+                                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                  <line x1="1" y1="10" x2="23" y2="10"></line>
                               </svg>
                               <span class="ml-4">Expense Management</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1003,7 +1015,10 @@
                       @can('viewAudits')
                       <li class=" {{ request()->routeIs('audits.index') ? 'active' : '' }}">
                           <a href="{{ route('audits.index') }}" class="svg-icon">
-                              <i class="las la-history"></i>
+                              <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <polyline points="12 6 12 12 16 14"></polyline>
+                              </svg>
                               <span class="ml-4">Audits</span>
                           </a>
                       </li>
@@ -1011,8 +1026,9 @@
                       <li class=" ">
                           <a href="#reports" class="{{ request()->routeIs('reports.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('reports.*') ? 'true' : 'false' }}">
                               <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <line x1="12" y1="2" x2="12" y2="22"></line>
-                                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                  <line x1="18" y1="20" x2="18" y2="10"></line>
+                                  <line x1="12" y1="20" x2="12" y2="4"></line>
+                                  <line x1="6" y1="20" x2="6" y2="14"></line>
                               </svg>
                               <span class="ml-4">Reports</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1054,7 +1070,10 @@
                       </li>
                       <li class=" {{ request()->routeIs('documentation.*') ? 'active' : '' }}">
                           <a href="{{ route('documentation.index') }}" class="svg-icon">
-                              <i class="las la-book"></i>
+                              <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                              </svg>
                               <span class="ml-4">Documentation</span>
                           </a>
                       </li>

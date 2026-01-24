@@ -101,7 +101,7 @@ Stock Report
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
+                    <table class="table table-bordered table-hover rn-table-pro">
                         <thead class="bg-light">
                             <tr>
                                 <th>Product Name</th>

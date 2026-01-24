@@ -484,60 +484,54 @@ function enforceSerialCapacity(modal){
     try{
         modal = modal || document.getElementById('serialModal');
         if(!modal) return {disabled:true};
-        
-        // Get quantity - try multiple approaches
+
+        // Determine current row quantity
         var qty = 0;
-        
-        // First try: get from the data-current-idx (for multi-row purchases)
         var idx = modal.getAttribute('data-current-idx') || '';
         var row = idx ? document.querySelector('tr.product-row[data-idx="'+idx+'"]') : null;
         var qtyEl = row ? (row.querySelector('.quantity') || row.querySelector('input[name="quantity"]') || row.querySelector('#quantity')) : null;
-        
-        // Second try: if not found, try global #quantity (for single edit/new purchase)
         if(!qtyEl) qtyEl = document.getElementById('quantity');
-        
-        // Third try: try to find any quantity input in the page
-        if(!qtyEl) {
-            var qtyInputs = document.querySelectorAll('input[name="quantity"]');
-            if(qtyInputs.length > 0) qtyEl = qtyInputs[qtyInputs.length - 1]; // Use last one
-        }
-        
+        if(!qtyEl){ var qtyInputs = document.querySelectorAll('input[name="quantity"]'); if(qtyInputs.length > 0) qtyEl = qtyInputs[qtyInputs.length - 1]; }
         try{ qty = qtyEl ? (parseInt(String(qtyEl.value||'').replace(/,/g,'')) || 0) : 0; }catch(e){ qty = 0; }
-        
-        // Count existing serials (saved) and only FILLED new serial inputs (ignore empty rows)
+
+        // Count existing serials (DB rows) and only FILLED new serial inputs
         var existingInputs = modal.querySelectorAll('.existing-serial-input[data-serial-id]');
         var existingCount = existingInputs.length;
         var newInputs = modal.querySelectorAll('#serialNumberBox input[name="serialNumber[]"]');
         var newFilledCount = 0;
         newInputs.forEach(function(inp){ try{ if((inp.value||'').trim() !== '') newFilledCount++; }catch(_){} });
+
         var totalFilled = existingCount + newFilledCount;
         var atCapacity = (qty > 0 && totalFilled >= qty);
-        var totalCount = totalFilled;
-        // Hide/disable add controls; keep serial inputs visible so users can see generated values
-        var addSerialBtn = document.getElementById('add-serial');
-        var serialNumberBox = document.getElementById('serialNumberBox');
-        var buttonContainer = addSerialBtn ? addSerialBtn.closest('.d-flex') : null; // container for Add/Auto/Remove All
-        var perRowAutoBtns = modal.querySelectorAll('#serialNumberBox .auto-gen-serial-row');
 
-        if(atCapacity){
-            if(buttonContainer) { buttonContainer.style.setProperty('display', 'none', 'important'); }
-            // Disable new inputs and per-row auto buttons but keep them visible
-            newInputs.forEach(function(inp){ try{ inp.setAttribute('disabled','disabled'); }catch(_){}});
-            perRowAutoBtns.forEach(function(btn){ try{ btn.setAttribute('disabled','disabled'); }catch(_){}});
-        } else {
-            if(buttonContainer) { buttonContainer.style.removeProperty('display'); }
-            newInputs.forEach(function(inp){ try{ inp.removeAttribute('disabled'); }catch(_){}});
-            perRowAutoBtns.forEach(function(btn){ try{ btn.removeAttribute('disabled'); }catch(_){}});
-        }
+        // Controls: only disable add/auto when at capacity; never hide Save/Cancel
+        var addSerialBtn = document.getElementById('add-serial');
+        var autoGenerateBtn = document.getElementById('autoGenerateSerials');
+        var perRowAutoBtns = modal.querySelectorAll('#serialNumberBox .auto-gen-serial-row');
+        var saveBtn = document.getElementById('saveSerials');
+        var cancelBtns = modal.querySelectorAll('#serialModal [data-dismiss="modal"], #serialModal .btn-close');
+
+        if(addSerialBtn) addSerialBtn.disabled = !!atCapacity;
+        if(autoGenerateBtn) autoGenerateBtn.disabled = !!atCapacity;
+        perRowAutoBtns.forEach(function(btn){ try{ btn.disabled = !!atCapacity; }catch(_){} });
+        // Keep inputs visible; optionally disable new inputs when at capacity
+        newInputs.forEach(function(inp){ try{ if(atCapacity) inp.setAttribute('disabled','disabled'); else inp.removeAttribute('disabled'); }catch(_){} });
+
+        // Explicitly ensure Save/Cancel remain enabled and visible
+        if(saveBtn) saveBtn.disabled = false;
+        cancelBtns.forEach(function(btn){ try{ btn.disabled = false; btn.style.removeProperty('display'); }catch(_){} });
+
+        // Capacity info message
         var info = document.getElementById('serialCapacityInfo');
         if(info){
             if(atCapacity){ info.style.display='block'; info.textContent = 'Serial limit reached for current quantity ('+qty+').'; }
             else { info.style.display='none'; }
         }
-        return {count:totalCount, qty:qty, disabled:atCapacity};
-    }catch(e){ 
+
+        return {count: totalFilled, qty: qty, disabled: atCapacity};
+    }catch(e){
         console.warn('enforceSerialCapacity error:', e);
-        return {disabled:false}; 
+        return {disabled:false};
     }
 }
 

@@ -40,7 +40,7 @@
 
         {{-- Accounts Table --}}
         <div class="table-responsive">
-                        <table class="data-tables table mb-0 table-bordered" id="accounts-table">
+                        <table class="data-tables table mb-0 table-bordered rn-table-pro" id="accounts-table">
                             <thead class="bg-white text-uppercase">
                                 <tr>
                                     <th>Code</th>

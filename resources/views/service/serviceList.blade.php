@@ -45,7 +45,7 @@
                         </div>
                     </div>
                     @include('partials.bulk-actions', ['deleteRoute' => 'providedServices.bulkDelete', 'printRoute' => 'providedServices.bulkPrint', 'pdfRoute' => 'providedServices.bulkPrintPdf', 'entity' => 'Provided Services'])
-                    <table class="data-tables table mb-0 tbl-server-info" id="provideServiceTable">
+                    <table class="data-tables table mb-0 tbl-server-info rn-table-pro" id="provideServiceTable">
                         <thead class="bg-white text-uppercase">
                             <tr class="ligth ligth-data">
                                 <th>

@@ -19,7 +19,7 @@
 
             @if(isset($serials) && $serials->count())
             <div class="table-responsive">
-                <table class="table table-sm table-hover">
+                <table class="table table-sm table-hover rn-table-pro">
                     <thead>
                         <tr>
                             <th>#</th>

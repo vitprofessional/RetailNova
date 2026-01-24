@@ -14,7 +14,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Ensure global helpers are loaded even if Composer's files autoload is cached
+        $helpers = app_path('Support/helpers.php');
+        if (file_exists($helpers)) {
+            require_once $helpers;
+        }
     }
 
     /**

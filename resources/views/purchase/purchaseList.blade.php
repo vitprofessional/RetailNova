@@ -31,7 +31,7 @@
                     @php
                         $totalGrand = 0.0; $totalPaid = 0.0; $totalDue = 0.0; $totalStock = 0;
                     @endphp
-                    <table id="purchaseTable" class="data-tables table table-hover table-bordered mb-0">
+                    <table id="purchaseTable" class="data-tables table table-hover table-bordered mb-0 rn-table-pro">
                         <thead class="bg-white text-uppercase small">
                             <tr>
                                 <th style="width:34px"> <input type="checkbox" id="selectAllPurchases" /></th>

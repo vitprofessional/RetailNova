@@ -48,7 +48,7 @@
                                         <h6>Assets</h6>
                                         <table class="table table-sm">
                                             @foreach($data['assets'] as $asset)
-                                            <tr>
+                                                <tr>
                                                 <td>{{ $asset->account_name }}</td>
                                                 <td class="text-right">{{ number_format($asset->current_balance, 2) }}</td>
                                             </tr>
@@ -64,7 +64,7 @@
                                         <h6>Liabilities</h6>
                                         <table class="table table-sm">
                                             @foreach($data['liabilities'] as $liability)
-                                            <tr>
+                                                <tr>
                                                 <td>{{ $liability->account_name }}</td>
                                                 <td class="text-right">{{ number_format($liability->current_balance, 2) }}</td>
                                             </tr>
@@ -78,7 +78,7 @@
                                         <h6 class="mt-3">Equity</h6>
                                         <table class="table table-sm">
                                             @foreach($data['equity'] as $eq)
-                                            <tr>
+                                                <tr>
                                                 <td>{{ $eq->account_name }}</td>
                                                 <td class="text-right">{{ number_format($eq->current_balance, 2) }}</td>
                                             </tr>
@@ -106,7 +106,7 @@
                                 <h6>Revenue</h6>
                                 <table class="table table-sm">
                                     @foreach($data['revenue'] as $rev)
-                                    <tr>
+                                        <tr>
                                         <td>{{ $rev->account_name }}</td>
                                         <td class="text-right">{{ number_format($rev->current_balance, 2) }}</td>
                                     </tr>
@@ -120,7 +120,7 @@
                                 <h6>Expenses</h6>
                                 <table class="table table-sm">
                                     @foreach($data['expenses'] as $expense)
-                                    <tr>
+                                        <tr>
                                         <td>{{ $expense->account_name }}</td>
                                         <td class="text-right">{{ number_format($expense->current_balance, 2) }}</td>
                                     </tr>
@@ -143,7 +143,7 @@
                                 <h5 class="text-center mb-3">Trial Balance</h5>
                                 <p class="text-center">As of {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}</p>
 
-                                <table class="table table-bordered">
+                                    <table class="table table-bordered rn-table-pro">
                                     <thead class="thead-dark">
                                         <tr>
                                             <th>Account Code</th>

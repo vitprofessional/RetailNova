@@ -16,7 +16,7 @@
         </div>
 
         <div class="table-responsive">
-            <table id="expenseCategoriesTable" class="data-tables table mb-0 table-bordered">
+            <table id="expenseCategoriesTable" class="data-tables table mb-0 table-bordered rn-table-pro">
                 <thead class="bg-white text-uppercase">
                     <tr>
                         <th>Category Name</th>

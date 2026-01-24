@@ -57,7 +57,7 @@
 
                             {{-- Transactions Table --}}
                             <div class="table-responsive mt-3">
-                                <table class="table table-bordered table-hover">
+                                <table class="table table-bordered table-hover rn-table-pro">
                                     <thead class="thead-light">
                                         <tr>
                                             <th>Date</th>

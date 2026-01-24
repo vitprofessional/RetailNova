@@ -15,7 +15,7 @@
         </div>
         @if($locations->count() > 0)
             <div class="table-responsive">
-                <table class="data-tables table mb-0 table-bordered">
+                <table class="data-tables table mb-0 table-bordered rn-table-pro">
                     <thead class="bg-white text-uppercase">
                         <tr>
                             <th>Location Name</th>

@@ -51,7 +51,7 @@
         <div class="row  product-table">
             <div class="col-md-12">
                 <h4>Products for Return</h4>
-                <table class="table mb-0 table-bordered rounded-0">
+                <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
                     <thead>
                         <tr>
                             <th>#</th>

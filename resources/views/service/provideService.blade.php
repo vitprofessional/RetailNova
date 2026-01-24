@@ -60,7 +60,7 @@
             </div>
                 <div class="row">
                     <div class="mb-3 table-responsive product-table">
-                        <table class="table mb-0 table-bordered rounded-0">
+                        <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
                             <thead class="bg-white text-uppercase">
                                 <tr>
                                     <th>Service Type</th>

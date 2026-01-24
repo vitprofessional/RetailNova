@@ -499,6 +499,30 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         'invoiceGenerate'
     ])->name('invoiceGenerate');
 
+    // Edit sale
+    Route::get('/sale/edit/{id}', [
+        saleController::class,
+        'editSale'
+    ])->name('sale.edit');
+
+    // Edit sale items (quantities/prices)
+    Route::get('/sale/items/edit/{id}', [
+        saleController::class,
+        'editSaleItems'
+    ])->name('sale.items.edit');
+
+    // Update sale items (POST)
+    Route::post('/sale/items/update/{id}', [
+        saleController::class,
+        'updateSaleItems'
+    ])->name('sale.items.update');
+
+    // Update sale (POST)
+    Route::post('/sale/update/{id}', [
+        saleController::class,
+        'updateSale'
+    ])->name('sale.update');
+
     // Delete sale (revert stock and remove records)
     Route::match(['get','post','delete'],'/sale/delete/{id}',[
         saleController::class,

@@ -127,7 +127,7 @@
                     </div>
                 </div>
                 
-                    <table class="table mt-3 table-bordered ">
+                    <table class="table mt-3 table-bordered rn-table-pro">
                         <thead class="bg-white text-uppercase">
                             <tr>
                                

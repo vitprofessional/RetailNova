@@ -135,7 +135,7 @@
             @include('partials.bulk-actions', ['deleteRoute' => 'suppliers.bulkDelete', 'entity' => 'Suppliers'])
             <form id="bulkDeleteForm" method="POST" action="{{ route('suppliers.bulkDelete') }}">
                 @csrf
-                <table class="data-tables table mb-0 tbl-server-info" id="supplier-table">
+                <table class="data-tables table mb-0 tbl-server-info rn-table-pro" id="supplier-table">
                 <thead class="bg-white text-uppercase">
                     <tr class="ligth ligth-data">
                         <th class="rn-col-compact d-none d-sm-table-cell">

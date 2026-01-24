@@ -32,6 +32,325 @@ class saleController extends Controller
         return view('sale.saleList',['saleList'=>$saleList]);
     }
 
+    /**
+     * Edit a sale: allow updating paid amount and date; due is recalculated.
+     */
+    public function editSale($id)
+    {
+        $sale = SaleProduct::find($id);
+        if(!$sale){
+            Alert::error('Error', 'Sale not found');
+            return back();
+        }
+        $customer = Customer::find($sale->customerId);
+        return view('sale.editSale', ['sale' => $sale, 'customer' => $customer]);
+    }
+
+    /**
+     * Edit sale items: quantities and prices, with stock reconciliation.
+     */
+    public function editSaleItems($id)
+    {
+        $sale = SaleProduct::find($id);
+        if(!$sale){
+            Alert::error('Error', 'Sale not found');
+            return back();
+        }
+        $customer = Customer::find($sale->customerId);
+        // Load items with purchase and product name
+        $items = InvoiceItem::where('saleId', $sale->id)
+            ->join('purchase_products','purchase_products.id','=','invoice_items.purchaseId')
+            ->join('products','products.id','=','purchase_products.productName')
+            ->leftJoin('product_stocks','product_stocks.purchaseId','=','purchase_products.id')
+            ->select(
+                'invoice_items.id as id',
+                'invoice_items.saleId as saleId',
+                'invoice_items.purchaseId as purchaseId',
+                'products.name as productName',
+                'invoice_items.qty as qty',
+                'invoice_items.salePrice as salePrice',
+                'invoice_items.buyPrice as buyPrice',
+                'invoice_items.totalSale as totalSale',
+                DB::raw('COALESCE(product_stocks.currentStock, 0) as currentStock')
+            )
+            ->orderBy('products.name')
+            ->get();
+        // Gather currently assigned serials for this sale keyed by purchaseId
+        $soldSerials = \App\Models\ProductSerial::where('saleId', $sale->id)
+            ->orderBy('id')
+            ->get(['id','serialNumber','purchaseId'])
+            ->groupBy('purchaseId');
+        $soldSerialsByPurchase = [];
+        foreach($soldSerials as $pid => $rows){
+            $soldSerialsByPurchase[$pid] = $rows->map(function($r){ return ['id'=>$r->id, 'serialNumber'=>$r->serialNumber]; })->toArray();
+        }
+        return view('sale.editSaleItems', ['sale' => $sale, 'customer' => $customer, 'items' => $items, 'soldSerialsByPurchase' => $soldSerialsByPurchase]);
+    }
+
+    /**
+     * Update sale paid amount and date; recompute current due.
+     * Also allows updating payment mode and remarks.
+     */
+    public function updateSale(Request $req, $id)
+    {
+        $sale = SaleProduct::find($id);
+        if(!$sale){
+            Alert::error('Error', 'Sale not found');
+            return back();
+        }
+
+        // Base validation
+        $validator = \Validator::make($req->all(), [
+            'paidAmount'  => 'required|numeric|min:0',
+            'date'        => 'nullable|date',
+            'note'        => 'nullable|string|max:1000',
+        ]);
+
+        $grand = (float)($sale->grandTotal ?? $sale->totalAmount ?? 0);
+        $validator->after(function($v) use ($grand) {
+            $paid = (float)request('paidAmount');
+            if($paid > $grand){
+                $v->errors()->add('paidAmount', 'Paid amount cannot exceed grand total ('.number_format($grand,2).').');
+            }
+        });
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $data = $validator->validated();
+
+        // Apply updates
+        $sale->paidAmount = (float)$data['paidAmount'];
+        // Persist due into commonly-used field names
+        $sale->curDue     = max(0, $grand - (float)$sale->paidAmount);
+        // Align with create-sale schema: use invoiceDue instead of dueAmount
+        $sale->invoiceDue = $sale->curDue;
+
+        if(isset($data['date']) && $data['date']){
+            $sale->date = $data['date']; // schema uses `date`
+        }
+
+        if(array_key_exists('note', $data)){
+            $sale->note = $data['note'];
+        }
+
+        if($sale->save()){
+            Alert::success('Updated','Sale updated successfully');
+            return redirect()->route('saleList');
+        }
+        Alert::error('Error','Failed to update sale');
+        return back();
+    }
+
+    /**
+     * Update sale items (quantities/prices) and reconcile stock; recompute totals/due.
+     */
+    public function updateSaleItems(Request $req, $id)
+    {
+        $sale = SaleProduct::find($id);
+        if(!$sale){
+            Alert::error('Error', 'Sale not found');
+            return back();
+        }
+
+        $itemsInput = (array)$req->input('items', []);
+        $addInput   = (array)$req->input('add', []);
+
+        $service = new StockService();
+
+        DB::beginTransaction();
+        try {
+            // Update existing items
+            foreach($itemsInput as $itemId => $payload){
+                $payloadQty  = isset($payload['qty']) ? (int)$payload['qty'] : null;
+                $payloadPrice= isset($payload['salePrice']) ? (float)$payload['salePrice'] : null;
+                $invItem = InvoiceItem::lockForUpdate()->find($itemId);
+                if(!$invItem || $invItem->saleId != $sale->id){
+                    continue;
+                }
+                $oldQty = (int)$invItem->qty;
+                $newQty = is_null($payloadQty) ? $oldQty : max(0, $payloadQty);
+
+                // Handle qty change and stock reconciliation
+                if($newQty !== $oldQty){
+                    $delta = $newQty - $oldQty;
+                    if($delta > 0){
+                        // Need to consume additional stock
+                        $ok = $service->decreaseStockForSale((int)$invItem->purchaseId, $delta);
+                        if(!$ok){
+                            throw new \Exception('Insufficient stock to increase quantity for item ID '.$invItem->id);
+                        }
+                    } elseif($delta < 0){
+                        // Return stock for reduced quantity
+                        $service->increaseStockForSaleReturn((int)$invItem->purchaseId, abs($delta));
+                    }
+                    $invItem->qty = $newQty;
+                }
+
+                // Update price if provided
+                if(!is_null($payloadPrice) && $payloadPrice >= 0){
+                    $invItem->salePrice = $payloadPrice;
+                }
+
+                // Serial management: enforce and sync selection to match qty where serials exist
+                $hasSerialsForPurchase = \App\Models\ProductSerial::where('purchaseId', $invItem->purchaseId)->exists();
+                if($hasSerialsForPurchase){
+                    // Current assignments for this sale & purchase
+                    $current = \App\Models\ProductSerial::where('purchaseId', $invItem->purchaseId)
+                        ->where('saleId', $sale->id)
+                        ->pluck('id')
+                        ->map(function($v){ return (int)$v; })
+                        ->toArray();
+                    // Prefer item-specific selection to avoid collisions when multiple rows share a purchaseId
+                    $selected = (array)$req->input('serialIdByItem.'.(int)$invItem->id, []);
+                    if(empty($selected)){
+                        // Fallback to purchase-based selection if item-specific array not present
+                        $selected = (array)$req->input('serialIdByPurchase.'.(int)$invItem->purchaseId, []);
+                    }
+                    // Clean values to ints
+                    $selected = array_values(array_filter(array_map('intval', $selected), function($v){ return $v > 0; }));
+                    // If no selection was submitted, and the current assignments already match the desired qty, accept as-is
+                    if(empty($selected) && count($current) === (int)$invItem->qty){
+                        $selected = $current;
+                    }
+                    if(count($selected) !== (int)$invItem->qty){
+                        throw new \Exception('Select exactly '.(int)$invItem->qty.' serial(s) for purchase #'.(int)$invItem->purchaseId);
+                    }
+                    // Determine changes
+                    $toRelease = array_diff($current, $selected);
+                    $toAssign  = array_diff($selected, $current);
+                    if(!empty($toRelease)){
+                        $rels = \App\Models\ProductSerial::whereIn('id', $toRelease)->lockForUpdate()->get();
+                        foreach($rels as $sr){
+                            $sr->saleId = null;
+                            if(\Schema::hasColumn('product_serials','status')){ $sr->status = null; }
+                            if(\Schema::hasColumn('product_serials','sold_at')){ $sr->sold_at = null; }
+                            $sr->save();
+                        }
+                    }
+                    if(!empty($toAssign)){
+                        $assignRows = \App\Models\ProductSerial::whereIn('id', $toAssign)->lockForUpdate()->get();
+                        if($assignRows->count() !== count($toAssign)){
+                            throw new \Exception('Invalid serial selection');
+                        }
+                        foreach($assignRows as $sr){
+                            if((int)$sr->purchaseId !== (int)$invItem->purchaseId){
+                                throw new \Exception('Serial '.$sr->serialNumber.' does not belong to this purchase');
+                            }
+                            $soldStatus = \Schema::hasColumn('product_serials','status') ? strtolower((string)$sr->status) : '';
+                            if($sr->saleId || $soldStatus === 'sold'){
+                                throw new \Exception('Serial '.$sr->serialNumber.' is already sold');
+                            }
+                        }
+                        foreach($assignRows as $sr){
+                            $sr->saleId = $sale->id;
+                            if(\Schema::hasColumn('product_serials','status')){ $sr->status = 'sold'; }
+                            if(\Schema::hasColumn('product_serials','sold_at')){ $sr->sold_at = now(); }
+                            $sr->save();
+                        }
+                    }
+                }
+
+                // Recompute totals
+                $invItem->totalSale     = (float)$invItem->salePrice * (int)$invItem->qty;
+                $invItem->totalPurchase = (float)$invItem->buyPrice * (int)$invItem->qty;
+                $invItem->profitTotal   = (float)$invItem->totalSale - (float)$invItem->totalPurchase;
+                $invItem->profitMargin  = $invItem->totalSale > 0 ? round(($invItem->profitTotal / $invItem->totalSale) * 100, 2) : 0;
+
+                // If quantity became 0, delete the line to keep invoice clean
+                if((int)$invItem->qty === 0){
+                    // Release any serials tied to this purchase in this sale
+                    \App\Models\ProductSerial::where('purchaseId', $invItem->purchaseId)->where('saleId', $sale->id)
+                        ->update(['saleId' => null] + (\Schema::hasColumn('product_serials','status') ? ['status'=>null] : []) + (\Schema::hasColumn('product_serials','sold_at') ? ['sold_at'=>null] : []));
+                    $invItem->delete();
+                } else {
+                    $invItem->save();
+                }
+            }
+
+            // Optionally add a new item
+            if(!empty($addInput)){
+                $purchaseId = (int)($addInput['purchaseId'] ?? 0);
+                $qty        = (int)($addInput['qty'] ?? 0);
+                $salePrice  = (float)($addInput['salePrice'] ?? 0);
+                if($purchaseId > 0 && $qty > 0 && $salePrice > 0){
+                    $ok = $service->decreaseStockForSale($purchaseId, $qty);
+                    if(!$ok){
+                        throw new \Exception('Insufficient stock to add new item from purchase #'.$purchaseId);
+                    }
+                    $purchase = \App\Models\PurchaseProduct::find($purchaseId);
+                    if(!$purchase){
+                        throw new \Exception('Purchase row not found for new item');
+                    }
+                    $invItem = new InvoiceItem();
+                    $invItem->saleId      = $sale->id;
+                    $invItem->purchaseId  = $purchaseId;
+                    $invItem->qty         = $qty;
+                    $invItem->salePrice   = $salePrice;
+                    $invItem->buyPrice    = (float)($purchase->buyPrice ?? 0);
+                    $invItem->totalSale     = (float)$invItem->salePrice * (int)$invItem->qty;
+                    $invItem->totalPurchase = (float)$invItem->buyPrice * (int)$invItem->qty;
+                    $invItem->profitTotal   = (float)$invItem->totalSale - (float)$invItem->totalPurchase;
+                    $invItem->profitMargin  = $invItem->totalSale > 0 ? round(($invItem->profitTotal / $invItem->totalSale) * 100, 2) : 0;
+                    $invItem->save();
+
+                    // Serial handling for new item
+                    $hasSerialsForPurchase = \App\Models\ProductSerial::where('purchaseId', $purchaseId)->exists();
+                    if($hasSerialsForPurchase){
+                        $selected = (array)$req->input('serialIdByPurchase.'.(int)$purchaseId, []);
+                        $selected = array_values(array_filter(array_map('intval', $selected), function($v){ return $v > 0; }));
+                        if(count($selected) !== (int)$qty){
+                            throw new \Exception('Select exactly '.$qty.' serial(s) for purchase #'.$purchaseId);
+                        }
+                        $assignRows = \App\Models\ProductSerial::whereIn('id', $selected)->lockForUpdate()->get();
+                        if($assignRows->count() !== count($selected)){
+                            throw new \Exception('Invalid serial selection');
+                        }
+                        foreach($assignRows as $sr){
+                            if((int)$sr->purchaseId !== (int)$purchaseId){
+                                throw new \Exception('Serial '.$sr->serialNumber.' does not belong to this purchase');
+                            }
+                            $soldStatus = \Schema::hasColumn('product_serials','status') ? strtolower((string)$sr->status) : '';
+                            if($sr->saleId || $soldStatus === 'sold'){
+                                throw new \Exception('Serial '.$sr->serialNumber.' is already sold');
+                            }
+                        }
+                        foreach($assignRows as $sr){
+                            $sr->saleId = $sale->id;
+                            if(\Schema::hasColumn('product_serials','status')){ $sr->status = 'sold'; }
+                            if(\Schema::hasColumn('product_serials','sold_at')){ $sr->sold_at = now(); }
+                            $sr->save();
+                        }
+                    }
+                }
+            }
+
+            // Recompute sale totals
+            $sum = (float)InvoiceItem::where('saleId', $sale->id)->sum('totalSale');
+            $discountReq = (float)$req->input('discountAmount', $sale->discountAmount ?? 0);
+            if($discountReq < 0){ $discountReq = 0; }
+            if($discountReq > $sum){ $discountReq = $sum; }
+            $grand = max(0, $sum - $discountReq);
+            // Persist totals/due (align to create-sale fields)
+            $sale->totalSale     = $sum;
+            $sale->grandTotal    = $grand;
+            $sale->discountAmount= $discountReq;
+            $paid = (float)($sale->paidAmount ?? 0);
+            $sale->curDue        = max(0, $grand - $paid);
+            $sale->invoiceDue    = $sale->curDue;
+            $sale->save();
+
+            DB::commit();
+            Alert::success('Updated', 'Sale items updated successfully');
+            return redirect()->route('invoiceGenerate', ['id' => $sale->id]);
+        } catch(\Exception $e){
+            DB::rollBack();
+            \Log::error('updateSaleItems failed: '.$e->getMessage());
+            return back()->withErrors(['items' => $e->getMessage()])->withInput();
+        }
+    }
+
     public function invoiceGenerate($id){
         $invoice = SaleProduct::find($id);
         if($invoice):

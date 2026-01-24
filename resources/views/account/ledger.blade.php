@@ -66,7 +66,7 @@
 
                             {{-- Ledger Table --}}
                             <div class="table-responsive">
-                                <table class="table table-bordered">
+                                <table class="table table-bordered rn-table-pro">
                                     <thead class="thead-dark">
                                         <tr>
                                             <th>Date</th>

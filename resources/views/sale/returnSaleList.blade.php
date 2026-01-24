@@ -10,7 +10,7 @@
                     <h4>Sales Return List</h4>
                 </div>
                 <div class="rounded mb-2 table-responsive product-table">
-                    <table class="data-tables table mb-0 table-bordered ">
+                    <table class="data-tables table mb-0 table-bordered rn-table-pro">
                         <thead class="bg-white text-uppercase">
                             <tr>
                                 <th>

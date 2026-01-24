@@ -87,7 +87,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered">
+                            <table class="table table-bordered rn-table-pro">
                                 <thead class="bg-light">
                                     <tr>
                                         <th>Product Name</th>
@@ -136,7 +136,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered">
+                            <table class="table table-bordered rn-table-pro">
                                 <thead class="bg-light">
                                     <tr>
                                         <th>Return Date</th>

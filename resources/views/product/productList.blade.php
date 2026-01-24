@@ -19,7 +19,7 @@
                 </div>
                 @include('partials.bulk-actions', ['deleteRoute' => 'products.bulkDelete', 'entity' => 'Products'])
                 <div class="rounded mb-3 table-responsive product-table">
-                    <table id="productTable" class="data-tables table mb-0 table-bordered">
+                    <table id="productTable" class="data-tables table mb-0 table-bordered rn-table-pro">
                         <thead class="bg-white text-uppercase">
                             <tr>
                                 <th>

@@ -16,3 +16,11 @@
 
 /* Small accessibility improvement for spinner */
 .rn-report-spinner .sr-only{ position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+/* Global professional spacing between adjacent action buttons */
+.btn + .btn { margin-left: 8px; }
+.btn-group .btn + .btn { margin-left: 0; } /* keep Bootstrap button-group seams */
+
+/* Utility: professional action button container spacing */
+.rn-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rn-actions .btn { margin: 0; }

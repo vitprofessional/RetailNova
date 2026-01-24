@@ -156,7 +156,7 @@
                 <h4 class="mb-0">Product List</h4>
             </div>
             <div class="card-body table-responsive rounded mb-3">
-                <table class="data-tables table mb-0 tbl-server-info">
+                <table class="data-tables table mb-0 tbl-server-info rn-table-pro">
                     <thead class="bg-white text-uppercase">
                         <tr class="table">
                             <th scope="col">Product Name</th>

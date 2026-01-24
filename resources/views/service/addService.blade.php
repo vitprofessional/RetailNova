@@ -59,7 +59,7 @@
                         <button type="submit" class="btn btn-danger btn-sm" data-onclick="confirm('Delete selected services?')">Delete Selected</button>
                     </div>
                     <div class="table-responsive rounded mb-3 p-2">
-                        <table class="data-tables table mb-0 tbl-server-info">
+                        <table class="data-tables table mb-0 tbl-server-info rn-table-pro">
                         <thead class="bg-white text-uppercase">
                             <tr class="ligth ligth-data">
                                 <th>

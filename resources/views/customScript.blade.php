@@ -155,8 +155,19 @@ window.recalcFinancials = function(){
             // ensure discountAmount displays computed amount for clarity
             if(discountAmountEl) discountAmountEl.value = Number(discount.toFixed(2));
         } else {
-            // If there's no discount status selector (sale page), treat the plain `discountAmount` as absolute amount
-            if(!discountStatusEl && discountAmountEl){ discount = disAmount; }
+            // Fallback behavior when discount type not selected: infer from filled fields
+            // Prefer absolute amount when present; otherwise percent
+            if(disAmount > 0){
+                discount = disAmount;
+                // back-calculate percent for display if base > 0
+                if(discountPercentEl && base > 0){ discountPercentEl.value = Number(((disAmount / base) * 100).toFixed(2)); }
+            } else if(disPercent > 0){
+                discount = (base * disPercent / 100) || 0;
+                if(discountAmountEl){ discountAmountEl.value = Number(discount.toFixed(2)); }
+            } else {
+                // If there's no discount status selector (sale page), treat the plain `discountAmount` as absolute amount
+                if(!discountStatusEl && discountAmountEl){ discount = disAmount; }
+            }
         }
 
         var grand = Math.max(0, base - discount);
@@ -172,7 +183,21 @@ window.recalcFinancials = function(){
     }catch(e){ console.warn('recalcFinancials error', e); }
 };
 
-function discountType(){ try{ updateOtherDetails(); }catch(e){} }
+function discountType(){
+    try{
+        // Toggle readonly states based on selected type and recalc
+        var statusEl = document.getElementById('discountStatus');
+        var dam = document.getElementById('discountAmount');
+        var dper = document.getElementById('discountPercent');
+        var status = statusEl ? statusEl.value : '';
+        var isPercent = (status === 'percent' || String(status) === '2');
+        var isAmount = (status === 'amount' || String(status) === '1');
+        if(isPercent){ if(dam) dam.setAttribute('readonly','readonly'); if(dper) dper.removeAttribute('readonly'); }
+        else if(isAmount){ if(dper) dper.setAttribute('readonly','readonly'); if(dam) dam.removeAttribute('readonly'); }
+        else { if(dper) dper.removeAttribute('readonly'); if(dam) dam.removeAttribute('readonly'); }
+        updateOtherDetails();
+    }catch(e){ console.warn('discountType error', e); }
+}
 
 function discountAmountChange(){
     try{
@@ -338,6 +363,52 @@ document.addEventListener('submit', function(e){
                 if(tgt && result && result.data){
                     var nodes = document.querySelectorAll(tgt);
                     nodes.forEach(function(n){ try{ n.innerHTML = result.data; }catch(e){} });
+                    // If the supplier select was updated, auto-select the newly created supplier
+                    // and enable the product select immediately (without requiring a manual change).
+                    try{
+                        var supplierSel = document.querySelector('#supplierName');
+                        var productSel = document.querySelector('.js-product-select') || document.querySelector('#productName');
+                        if(supplierSel){
+                            // Prefer option with selected attribute; else choose the last non-empty option
+                            var selectedOpt = supplierSel.querySelector('option[selected]');
+                            if(selectedOpt && selectedOpt.value){ supplierSel.value = selectedOpt.value; }
+                            else {
+                                var opts = supplierSel.querySelectorAll('option');
+                                var lastVal = '';
+                                for(var i=opts.length-1;i>=0;i--){ var v = (opts[i].value || '').trim(); if(v){ lastVal = v; break; } }
+                                if(lastVal){ supplierSel.value = lastVal; }
+                            }
+                            // If a supplier is selected and product select exists, restore options and enable it
+                            var selVal = (supplierSel.value || '').trim();
+                            if(selVal && productSel){
+                                if(productSel.dataset && productSel.dataset.origOptions){ productSel.innerHTML = productSel.dataset.origOptions; }
+                                productSel.disabled = false;
+                            }
+                        }
+                    }catch(e){ console.warn('auto-enable product select after supplier create', e); }
+
+                    // If the customer select (sale page) was updated, auto-select the new customer,
+                    // enable the sale product select, and trigger the change handler to load products.
+                    try{
+                        var customerSel = document.querySelector('#customerName');
+                        var saleProdSel = document.querySelector('.js-sale-product-select') || document.querySelector('#productName');
+                        if(customerSel){
+                            var selectedOpt2 = customerSel.querySelector('option[selected]');
+                            if(selectedOpt2 && selectedOpt2.value){ customerSel.value = selectedOpt2.value; }
+                            else {
+                                var opts2 = customerSel.querySelectorAll('option');
+                                var lastVal2 = '';
+                                for(var j=opts2.length-1;j>=0;j--){ var v2 = (opts2[j].value || '').trim(); if(v2){ lastVal2 = v2; break; } }
+                                if(lastVal2){ customerSel.value = lastVal2; }
+                            }
+                            var custVal = (customerSel.value || '').trim();
+                            if(custVal && saleProdSel){
+                                saleProdSel.disabled = false;
+                                // Fire a change event so sale scripts fetch customer-specific products
+                                try{ var ev = new Event('change', { bubbles: true }); customerSel.dispatchEvent(ev); }catch(_){ /* ignore */ }
+                            }
+                        }
+                    }catch(e){ console.warn('auto-enable sale product select after customer create', e); }
                 }
                 // Show success message
                 if(result && result.message){

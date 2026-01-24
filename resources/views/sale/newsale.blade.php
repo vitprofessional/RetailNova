@@ -100,7 +100,7 @@
                     <h6 class="card-title">Product Details</h6>
                 </div>
                 <div class="table-responsive">
-                    <table class="table mb-0 table-bordered rounded-0">
+                    <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
                         <thead class="bg-white text-uppercase">
                             <tr>
                                 <th>Remove</th>
@@ -132,7 +132,7 @@
                             <h6 class="card-title">Payment Details</h6>
                         </div>
                         <div class="mb-3 table-responsive product-table">
-                            <table class="table mb-0 table-bordered rounded-0">
+                            <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
                                 <thead class="bg-white text-uppercase">
                                     <tr>
                                         <th>Total</th>
