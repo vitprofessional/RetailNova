@@ -34,17 +34,20 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Select Customer *</label>
+                                    <label>Select Customer * <span class="small text-muted">(use Walk-in for quick sale)</span></label>
                                     <label for="customerName" class="form-label"></label>
                                 <select id="customerName" name="customerId" class="form-control" data-onchange="actSaleProduct()"
                                     data-products-url="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}">
                                         <option value="">-</option>
                                   @if(!empty($customerList) && count($customerList)>0)
                                   @foreach($customerList as $customerData)
-                                    <option value="{{$customerData->id}}">{{$customerData->name}}</option>
+                                    <option value="{{$customerData->id}}" {{ (isset($walkingCustomerId) && $walkingCustomerId === $customerData->id) ? 'selected' : '' }}>{{$customerData->name}}</option>
                                     @endforeach
                                     @endif
                                 </select>
+                                <div class="mt-1">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="useWalkingCustomerBtn">Use Walk-in Customer</button>
+                                </div>
                                 </div>
                                 <div class="small mt-1">
                                     <span id="prevDueDisplay" class="badge bg-warning text-dark">Previous Due: 0.00</span>
@@ -325,4 +328,27 @@
 
 @section('scripts')
     @include('customScript')
+    <script>
+    (function(){
+        document.addEventListener('DOMContentLoaded', function(){
+            try{
+                var btn = document.getElementById('useWalkingCustomerBtn');
+                var sel = document.getElementById('customerName');
+                if(btn && sel){
+                    btn.addEventListener('click', function(){
+                        try{
+                            var walkingId = {{ isset($walkingCustomerId) && $walkingCustomerId ? (int)$walkingCustomerId : 'null' }};
+                            if(!walkingId){ return; }
+                            sel.value = String(walkingId);
+                            // trigger change to load products and previous due
+                            try{ var ev = new Event('change', { bubbles: true }); sel.dispatchEvent(ev); }catch(_){ }
+                            // visual feedback
+                            try{ if(typeof showToast === 'function') showToast('Customer selected','Using Walking Customer','success'); }catch(_){}
+                        }catch(e){ console.warn('useWalkingCustomer click failed', e); }
+                    });
+                }
+            }catch(e){ }
+        });
+    })();
+    </script>
 @endsection

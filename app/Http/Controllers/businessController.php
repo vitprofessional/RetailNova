@@ -7,6 +7,7 @@ use App\Models\BusinessSetup;
 use App\Models\BusinessLocation;
 use Alert;
 use Illuminate\Support\Facades\Storage; 
+use Illuminate\Support\Facades\Artisan;
 
 class businessController extends Controller
 {
@@ -46,12 +47,45 @@ class businessController extends Controller
         // Editable Terms & Conditions text
         $business->invoice_terms_text = $requ->invoiceTermsText ?? $business->invoice_terms_text;
         if($business->save()):
+            // Persist walk-in invoice UI toggles to .env so config picks them up
+            try {
+                $hideAck = (bool)$requ->input('hideAckWalkin', 0);
+                $hideSig = (bool)$requ->input('hideSignaturesWalkin', 0);
+                $this->updateEnv([
+                    'POS_HIDE_ACK_WALKIN' => $hideAck ? 'true' : 'false',
+                    'POS_HIDE_SIGNATURES_WALKIN' => $hideSig ? 'true' : 'false',
+                ]);
+                // Refresh config cache so changes take effect immediately
+                try { Artisan::call('config:clear'); Artisan::call('config:cache'); } catch(\Throwable $e) {}
+            } catch(\Throwable $e) {
+                \Log::warning('Failed to update walk-in toggles in .env', ['error' => $e->getMessage()]);
+            }
             Alert::success("Success!","Business data saved successfully");
             return back();
         else:
             Alert::error("Sorry!","Business data failed to save");
             return back();
         endif;
+    }
+
+    /**
+     * Safely update key-value pairs in the .env file.
+     */
+    protected function updateEnv(array $data): void
+    {
+        $envPath = base_path('.env');
+        if (!file_exists($envPath)) return;
+        $env = file_get_contents($envPath);
+        foreach ($data as $key => $value) {
+            $pattern = "/^" . preg_quote($key, '/') . "=.*/m";
+            $line = $key . '=' . $value;
+            if (preg_match($pattern, $env)) {
+                $env = preg_replace($pattern, $line, $env);
+            } else {
+                $env .= PHP_EOL . $line;
+            }
+        }
+        file_put_contents($envPath, $env);
     }
 
     public function saveBusinessLogo(Request $requ){

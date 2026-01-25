@@ -21,9 +21,15 @@ use Illuminate\Support\Facades\DB;
 class saleController extends Controller
 {
     Public function newsale (){
+        // Ensure a default Walking Customer exists for quick walk-in sales
+        try{ $walking = Customer::ensureWalkingCustomer(); }catch(\Throwable $e){ $walking = null; }
         $customer = Customer::orderBy('id','DESC')->get();
         $product = Product::orderBy('id','DESC')->get();
-        return view('sale.newsale',['customerList'=>$customer,'productList'=>$product]);
+        return view('sale.newsale',[
+            'customerList'=>$customer,
+            'productList'=>$product,
+            'walkingCustomerId' => $walking ? $walking->id : null
+        ]);
 
     }
 

@@ -1,61 +1,89 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# RetailNova Account and Expense Management
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+RetailNova extends the POS stack with double-entry accounting and expense management built on Laravel 12 (PHP 8.2). The module delivers a chart of accounts, transaction workflows, expense capture with receipts, reports, and auditing.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Accounting: chart of accounts (five types), parent-child structure, double-entry transactions (journal, payment, receipt, expense, sale, purchase, transfer), ledgers, balance sheet, income statement, trial balance, multi-location support, audit trail.
+- Expenses: category management, expense entry with reference numbers and receipt uploads, payment methods (cash, bank, card, cheque, mobile), reports by category/payment/date/location, statistics dashboard, automatic accounting integration.
+- UI: Blade views powered by DataTables for filtering, pagination, and exports; SweetAlert confirmations.
+- Security: auth plus SuperAdmin middleware, CSRF protection, validation, file upload limits, auditing of all changes.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Laravel 12, PHP ^8.2
+- MySQL (or any Laravel-supported database)
+- Vite + Tailwind CSS 4 + jQuery/DataTables
+- DomPDF for print/export, owen-it/laravel-auditing for change tracking, realrashid/sweet-alert for dialogs
+- Playwright end-to-end test scaffold (see playwright/README.md)
 
-## Learning Laravel
+## Prerequisites
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- PHP 8.2+, Composer
+- Node 20+ and npm
+- Database credentials configured in .env (APP_URL, DB_*, FILESYSTEM_DRIVER if customized)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Quick Start
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+1) Install dependencies
 
-## Laravel Sponsors
+```bash
+composer install
+npm install
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+2) Configure environment
 
-### Premium Partners
+```bash
+cp .env.example .env
+php artisan key:generate
+# update .env with DB connection and APP_URL
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development/)**
-- **[Active Logic](https://activelogic.com)**
+3) Provision database and storage
 
-## Contributing
+```bash
+php artisan migrate
+php artisan db:seed --class=AccountSeeder
+php artisan db:seed --class=ExpenseCategorySeeder
+php artisan storage:link
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4) Run the app
 
-## Code of Conduct
+```bash
+# option A: run everything together
+composer run dev
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# option B: separate terminals
+php artisan serve
+npm run dev
+```
 
-## Security Vulnerabilities
+## Key URLs
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- Accounts: /accounts/chart, /accounts/transactions, /accounts/reports
+- Expenses: /expenses/categories, /expenses/create, /expenses/list, /expenses/reports
+- Ledger: /accounts/ledger/{id}
+- Expense statistics (AJAX): /expenses/statistics
 
-## License
+## Testing
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Application tests: `php artisan test`
+- Playwright (optional): see playwright/README.md for installing playwright dependencies and running browser tests.
+
+## Documentation
+
+- Detailed guide: docs/account_expense_management.md
+- Quick setup checklist: docs/SETUP_GUIDE.md
+- File inventory: docs/FILE_SUMMARY.md
+
+## Troubleshooting
+
+- Migration errors about references: ensure business locations and users exist before accounting tables; re-run `php artisan migrate` after fixing.
+- Receipts not visible: re-run `php artisan storage:link` and check permissions on storage/app/public.
+- Balances look off: confirm account types align with debit/credit rules and that seeds were applied once.
+
+---
+
+Last updated: January 25, 2026

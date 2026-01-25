@@ -286,6 +286,13 @@
       </div>
     </div>
 
+    @php
+      // Walk-in and config-driven display toggles for signatures and acknowledgement
+      $isWalking = isset($customer) && is_string($customer->name ?? null) && strcasecmp(trim($customer->name), 'Walking Customer') === 0;
+      $hideAck = $isWalking && config('pos.hide_ack_walkin', true);
+      $hideSignatures = $isWalking && config('pos.hide_signatures_walkin', true);
+    @endphp
+    @if(!$hideSignatures)
     <!-- Signatures -->
     <div class="row mt-2 mb-1">
       <div class="col-12">
@@ -305,12 +312,14 @@
         </div>
       </div>
     </div>
+    @endif
     <!-- Invoice footer: appears on both view and print -->
     <div class="invoice-footer mt-4">
       <div style="text-align:center; font-size:0.92rem; color:#333;">{{ $business && $business->invoiceFooter ? $business->invoiceFooter : 'Thank you for your business. Visit us at ' . config('app.url', '/') }}</div>
       <div style="text-align:center; font-size:0.82rem; color:#666; margin-top:6px;">Powered by {{ config('app.name', env('APP_NAME', 'POS')) }}</div>
     </div>
 
+      @if(!$hideAck)
       <!-- Acknowledgement Section (placed after footer per reference) -->
       <div id="acknowledgementSection" class="acknowledgement-section">
         <div class="ack-separator-wrap">
@@ -386,6 +395,7 @@
           <div class="receiver-label">Receiver's Seal & Sign</div>
         </div>
       </div>
+      @endif
 
     <div class="d-flex justify-content-between align-items-center no-print mt-3">
       <div></div>
