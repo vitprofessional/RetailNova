@@ -773,30 +773,6 @@
                           </ul>
                       </li>
                       <li class=" ">
-                          <a href="#quotations" class="{{ request()->routeIs('quotation.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('quotation.*') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-quotation" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M4 4h16v16H4z"></path>
-                                  <path d="M8 8h8M8 12h8M8 16h5"></path>
-                              </svg>
-                              <span class="ml-4">Quotations</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="quotations" class="iq-submenu collapse{{ request()->routeIs('quotation.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="{{ request()->routeIs('quotation.create') ? 'active' : '' }}">
-                                          <a href="{{ route('quotation.create') }}">
-                                              <i class="las la-minus"></i><span>New Quotation</span>
-                                          </a>
-                                  </li>
-                                  <li class="{{ request()->routeIs('quotation.list') ? 'active' : '' }}">
-                                          <a href="{{ route('quotation.list') }}">
-                                              <i class="las la-minus"></i><span>Quotation List</span>
-                                          </a>
-                                  </li>
-                          </ul>
-                      </li>
-                      <li class=" ">
                           <a href="#sale" class="{{ request()->routeIs('newsale','saleList','returnSaleList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('newsale','saleList','returnSaleList') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
@@ -947,6 +923,30 @@
                               </a>
                           </li>
                       </ul>
+                      </li>
+                      <li class=" ">
+                          <a href="#quotations" class="{{ request()->routeIs('quotation.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('quotation.*') ? 'true' : 'false' }}">
+                              <svg class="svg-icon" id="p-quotation" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M4 4h16v16H4z"></path>
+                                  <path d="M8 8h8M8 12h8M8 16h5"></path>
+                              </svg>
+                              <span class="ml-4">Quotations</span>
+                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                              </svg>
+                          </a>
+                          <ul id="quotations" class="iq-submenu collapse{{ request()->routeIs('quotation.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
+                                  <li class="{{ request()->routeIs('quotation.create') ? 'active' : '' }}">
+                                          <a href="{{ route('quotation.create') }}">
+                                              <i class="las la-minus"></i><span>New Quotation</span>
+                                          </a>
+                                  </li>
+                                  <li class="{{ request()->routeIs('quotation.list') ? 'active' : '' }}">
+                                          <a href="{{ route('quotation.list') }}">
+                                              <i class="las la-minus"></i><span>Quotation List</span>
+                                          </a>
+                                  </li>
+                          </ul>
                       </li>
                       <li class=" ">
                           <a href="#damage" class="{{ request()->routeIs('damageProduct','damageProductList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('damageProduct','damageProductList') ? 'true' : 'false' }}">
