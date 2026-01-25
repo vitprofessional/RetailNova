@@ -268,6 +268,7 @@
                     <div class="text-danger small serial-note" style="display:none;"></div>
                     <div class="serial-hidden" style="display:none"></div>
                 </td>
+                <td><input type="text" class="form-control warrantyDays" name="warranty_days[]" placeholder="e.g. 365"></td>
                 <td><input type="number" class="form-control qty" name="qty[]" min="1" step="1" value="1"></td>
                 <td><input type="number" class="form-control salePrice" name="salePrice[]" value="${salePrice}" readonly></td>
                 <td><input type="number" class="form-control totalSale" readonly></td>

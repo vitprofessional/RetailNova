@@ -68,6 +68,7 @@ class saleController extends Controller
                 'invoice_items.purchaseId as purchaseId',
                 'products.name as productName',
                 'invoice_items.qty as qty',
+                'invoice_items.warranty_days as warranty_days',
                 'invoice_items.salePrice as salePrice',
                 'invoice_items.buyPrice as buyPrice',
                 'invoice_items.totalSale as totalSale',
@@ -165,6 +166,7 @@ class saleController extends Controller
             foreach($itemsInput as $itemId => $payload){
                 $payloadQty  = isset($payload['qty']) ? (int)$payload['qty'] : null;
                 $payloadPrice= isset($payload['salePrice']) ? (float)$payload['salePrice'] : null;
+                $payloadWarranty = isset($payload['warranty_days']) ? (string)$payload['warranty_days'] : null;
                 $invItem = InvoiceItem::lockForUpdate()->find($itemId);
                 if(!$invItem || $invItem->saleId != $sale->id){
                     continue;
@@ -191,6 +193,11 @@ class saleController extends Controller
                 // Update price if provided
                 if(!is_null($payloadPrice) && $payloadPrice >= 0){
                     $invItem->salePrice = $payloadPrice;
+                }
+
+                // Update warranty if provided (free-text, e.g., number of days)
+                if(!is_null($payloadWarranty)){
+                    $invItem->warranty_days = trim($payloadWarranty);
                 }
 
                 // Serial management: enforce and sync selection to match qty where serials exist
@@ -274,6 +281,7 @@ class saleController extends Controller
                 $purchaseId = (int)($addInput['purchaseId'] ?? 0);
                 $qty        = (int)($addInput['qty'] ?? 0);
                 $salePrice  = (float)($addInput['salePrice'] ?? 0);
+                $warrantyDays = isset($addInput['warranty_days']) ? (string)$addInput['warranty_days'] : null;
                 if($purchaseId > 0 && $qty > 0 && $salePrice > 0){
                     $ok = $service->decreaseStockForSale($purchaseId, $qty);
                     if(!$ok){
@@ -289,6 +297,7 @@ class saleController extends Controller
                     $invItem->qty         = $qty;
                     $invItem->salePrice   = $salePrice;
                     $invItem->buyPrice    = (float)($purchase->buyPrice ?? 0);
+                    if(!is_null($warrantyDays)) { $invItem->warranty_days = trim($warrantyDays); }
                     $invItem->totalSale     = (float)$invItem->salePrice * (int)$invItem->qty;
                     $invItem->totalPurchase = (float)$invItem->buyPrice * (int)$invItem->qty;
                     $invItem->profitTotal   = (float)$invItem->totalSale - (float)$invItem->totalPurchase;
@@ -358,14 +367,20 @@ class saleController extends Controller
             $items = InvoiceItem::where(['saleId'=>$id])
             ->join('purchase_products','purchase_products.id','invoice_items.purchaseId')
             ->join('products','products.id','purchase_products.productName')
+            ->leftJoin('product_units','product_units.id','=','products.unitName')
             ->select(
                 'purchase_products.id as purchaseId',
                 'products.id as productId',
                 'products.name as productName',
+                // Professional POS code: use product barcode
+                DB::raw('COALESCE(NULLIF(products.barCode, ""), NULL) as productCode'),
+                // Unit display name if available
+                'product_units.name as unit',
                 'invoice_items.id as invoiceId',
                 'invoice_items.salePrice',
                 'invoice_items.buyPrice',
                 'invoice_items.qty',
+                'invoice_items.warranty_days',
                 'invoice_items.totalSale',
             )->orderBy('totalSale','desc')->get();
 

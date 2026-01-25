@@ -813,6 +813,8 @@ class JqueryController extends Controller
                         if($isBackorder){ $invoice->isBackorder = true; }
                         $invoice->saleId = $sales->id;
                         $invoice->qty = $item;
+                        // Persist optional per-item warranty in days from request
+                        try{ $invoice->warranty_days = isset($requ->warranty_days[$index]) ? $requ->warranty_days[$index] : null; }catch(\Throwable $_){ $invoice->warranty_days = null; }
                         $invoice->salePrice = $requ->salePrice[$index];
                         $invoice->buyPrice = $requ->buyPrice[$index];
 
@@ -982,7 +984,7 @@ class JqueryController extends Controller
         \Log::info('updateProductSerial: Found serial', ['oldValue' => $serial->serialNumber]);
 
         $request->validate([
-            'serialNumber' => 'required|string|max:255'
+            'serialNumber' => 'required|string'
         ]);
 
         try {

@@ -49,7 +49,8 @@ class PurchaseSaveRequest extends FormRequest
             // Accept either an array of strings, or an array of arrays (per-row serial lists).
             // We normalize nested arrays into comma-separated strings in prepareForValidation().
             'serialNumber'        => ['nullable','array'],
-            'serialNumber.*'      => ['nullable','string','max:255'],
+            // No length cap on comma-separated serial lists
+            'serialNumber.*'      => ['nullable','string'],
         ];
     }
 

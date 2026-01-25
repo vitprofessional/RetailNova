@@ -40,6 +40,11 @@ class businessController extends Controller
         $business->currencySymbol   = $requ->currencySymbol ?? $business->currencySymbol;
         $business->currencyPosition = $requ->currencyPosition ?? $business->currencyPosition ?? 'left';
         $business->currencyNegParentheses = isset($requ->currencyNegParentheses) ? (bool)$requ->currencyNegParentheses : ($business->currencyNegParentheses ?? true);
+        // Show/hide Terms & Conditions: checkbox sends value only when checked
+        // Use explicit default to 0 so unchecking correctly disables it
+        $business->invoice_terms_enabled = (bool)$requ->input('invoiceTermsEnabled', 0);
+        // Editable Terms & Conditions text
+        $business->invoice_terms_text = $requ->invoiceTermsText ?? $business->invoice_terms_text;
         if($business->save()):
             Alert::success("Success!","Business data saved successfully");
             return back();

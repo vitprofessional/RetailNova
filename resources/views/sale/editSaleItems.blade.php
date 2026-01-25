@@ -33,6 +33,7 @@
                   <th style="width:10%">Purchase #</th>
                   <th style="width:12%" class="text-end">Current Stock</th>
                   <th style="width:12%" class="text-end">Qty</th>
+                  <th style="width:12%" class="text-end">Warranty (days)</th>
                   <th style="width:15%" class="text-end">Price</th>
                   <th style="width:15%" class="text-end">Line Total</th>
                 </tr>
@@ -57,6 +58,9 @@
                     <td class="text-end">{{ $it->currentStock }}</td>
                     <td>
                       <input type="number" name="items[{{ $it->id }}][qty]" min="0" class="form-control form-control-sm text-end" value="{{ old('items.'.$it->id.'.qty', $it->qty) }}" data-purchase-id="{{ $it->purchaseId }}" data-role="qty">
+                    </td>
+                    <td>
+                      <input type="text" name="items[{{ $it->id }}][warranty_days]" class="form-control form-control-sm text-end" value="{{ old('items.'.$it->id.'.warranty_days', $it->warranty_days) }}" placeholder="e.g. 365">
                     </td>
                     <td>
                       <input type="number" step="0.01" min="0" name="items[{{ $it->id }}][salePrice]" class="form-control form-control-sm text-end" value="{{ old('items.'.$it->id.'.salePrice', $it->salePrice) }}" data-role="price">
@@ -85,6 +89,10 @@
                   <td>
                     <small class="text-muted">Quantity</small>
                     <input type="number" name="add[qty]" id="addQty" min="0" class="form-control form-control-sm" value="{{ old('add.qty') }}" placeholder="Qty">
+                  </td>
+                  <td>
+                    <small class="text-muted">Warranty (days)</small>
+                    <input type="text" name="add[warranty_days]" id="addWarrantyDays" class="form-control form-control-sm text-end" value="{{ old('add.warranty_days') }}" placeholder="e.g. 365">
                   </td>
                   <td colspan="2">
                     <small class="text-muted">Sale Price</small>

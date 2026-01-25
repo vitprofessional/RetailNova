@@ -158,6 +158,36 @@
                                     </div>
 
                                     <div class="form-group form-check mb-4 p-3 bg-light rounded">
+                                        @php $showTerms = $business->invoice_terms_enabled ?? true; @endphp
+                                        <input type="checkbox" class="form-check-input" id="invoiceTermsEnabled" name="invoiceTermsEnabled" value="1" {{ $showTerms ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="invoiceTermsEnabled">
+                                            <span class="font-weight-600">Show Terms & Conditions on Invoice</span>
+                                            <small class="d-block text-muted">Toggle visibility of the Terms & Conditions section on printed/viewed invoices.</small>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-group mb-4">
+                                        <label for="invoiceTermsText" class="form-label font-weight-600">
+                                            <i class="las la-file-contract mr-2"></i>Invoice Terms & Conditions Text
+                                        </label>
+                                        <textarea class="form-control" id="invoiceTermsText" name="invoiceTermsText" placeholder="Enter terms and conditions shown on invoice" rows="4">{{ $business->invoice_terms_text ?? "• Thanks for doing business with us.\n• Warranty doesn't cover any physical damage, burn, water damage to the product or warranty sticker removed.\n• Payment is due within 15 days from the date of invoice.\n• Goods once sold cannot be returned or exchanged." }}</textarea>
+                                        <small class="text-muted d-block mt-1">Use line breaks to separate bullet points. This text appears when the toggle above is enabled.</small>
+                                    </div>
+
+                                    <!-- Live Preview -->
+                                    <div class="form-group mb-4">
+                                        <label class="form-label font-weight-600">
+                                            <i class="las la-eye mr-2"></i>Invoice Terms Preview
+                                        </label>
+                                        @php
+                                            $defaultTerms = "• Thanks for doing business with us.\n• Warranty doesn't cover any physical damage, burn, water damage to the product or warranty sticker removed.\n• Payment is due within 15 days from the date of invoice.\n• Goods once sold cannot be returned or exchanged.";
+                                            $initialPreview = nl2br(e($business->invoice_terms_text ?? $defaultTerms));
+                                        @endphp
+                                        <div id="invoiceTermsPreview" class="p-3 border rounded bg-white" style="white-space:normal; min-height: 80px;">{!! $initialPreview !!}</div>
+                                        <small class="text-muted d-block mt-1">Preview reflects the text above. Visibility on invoice depends on the checkbox setting.</small>
+                                    </div>
+
+                                    <div class="form-group form-check mb-4 p-3 bg-light rounded">
                                         @php $negP = $business->currencyNegParentheses ?? true; @endphp
                                         <input type="checkbox" class="form-check-input" id="currencyNegParentheses" name="currencyNegParentheses" value="1" {{ $negP ? 'checked' : '' }}>
                                         <label class="form-check-label" for="currencyNegParentheses">
@@ -281,6 +311,19 @@
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
     }
 </style>
+<script>
+(function(){
+    var ta = document.getElementById('invoiceTermsText');
+    var prev = document.getElementById('invoiceTermsPreview');
+    function esc(s){
+        return s.replace(/[&<>"']/g, function(c){
+            return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'})[c];
+        });
+    }
+    function update(){ if(!ta || !prev) return; prev.innerHTML = esc(ta.value).replace(/\n/g,'<br>'); }
+    if(ta && prev){ ta.addEventListener('input', update); }
+})();
+</script>
     </div>
 </div>
 <!-- Page end  -->

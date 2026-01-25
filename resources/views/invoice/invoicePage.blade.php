@@ -126,7 +126,17 @@
               </table>
             </div>
             <div class="invoice-qr-section ms-3">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode(route('invoiceGenerate',['id'=>$invoice->id]).'?'.$invoice->invoice) }}" alt="QR Code" class="invoice-qr">
+              @php
+                $companyName = $b && $b->businessName ? $b->businessName : 'Computer Care';
+                $invoiceNo = $invoice->invoice ?? '';
+                $dateIso = \Carbon\Carbon::parse($invoice->date)->format('Y-m-d');
+                $grandTotalVal = number_format((float)$grandTotal, 2);
+                $dueVal = number_format((float)$currentDue, 2);
+                $statusVal = $paymentStatus;
+                // Human-readable, newline-separated payload for easy scanning
+                $qrPayload = "Company: {$companyName}\nInvoice: {$invoiceNo}\nDate: {$dateIso}\nGrand Total: {$grandTotalVal}\nDue: {$dueVal}\nStatus: {$statusVal}";
+              @endphp
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{ urlencode($qrPayload) }}" alt="QR Code" class="invoice-qr">
             </div>
           </div>
         </div>
@@ -142,9 +152,19 @@
           <h6 class="party-label">BILL TO:</h6>
           <div class="party-content">
             <div class="party-name">{{ $customer->name ?? '-' }}</div>
-            @if(!empty($customer->address))<div class="party-detail">{{ $customer->address }}</div>@endif
-            @if(!empty($customer->mobile))<div class="party-detail">Contact: {{ $customer->mobile }}</div>@endif
-            @if(!empty($customer->email))<div class="party-detail">Email: {{ $customer->email }}</div>@endif
+            @php 
+              $custAddress = '';
+              if(!empty($customer)){
+                // Show only area or address; exclude city/state/country/email
+                if(!empty($customer->area)){
+                  $custAddress = trim($customer->area);
+                } elseif(!empty($customer->address)) {
+                  $custAddress = trim($customer->address);
+                }
+              }
+            @endphp
+            @if(!empty($custAddress))<div class="party-detail">{{ $custAddress }}</div>@endif
+            @if(!empty($customer) && !empty($customer->mobile))<div class="party-detail">Contact: {{ $customer->mobile }}</div>@endif
           </div>
         </div>
       </div>
@@ -165,12 +185,12 @@
         <thead>
           <tr>
             <th style="width:5%;">#</th>
-            <th style="width:12%;">Code</th>
-            <th style="width:40%;">Product Name</th>
+            <th style="width:15%;">Code</th>
+            <th style="width:43%;">Product Name</th>
             <th style="width:8%;" class="text-center">Qty</th>
-            <th style="width:7%;" class="text-center">Unit</th>
+            <th style="width:10%;" class="text-center">Warranty (days)</th>
             <th style="width:12%;" class="text-end">Price/Unit</th>
-            <th style="width:16%;" class="text-end">Total</th>
+            <th style="width:17%;" class="text-end">Total</th>
           </tr>
         </thead>
         <tbody>
@@ -190,12 +210,12 @@
                 @endif
               </td>
               <td class="text-center">{{ $item->qty }}</td>
-              <td class="text-center">{{ $item->unit ?? 'PCS' }}</td>
+              <td class="text-center">{{ $item->warranty_days ?? '-' }}</td>
               <td class="text-end">@money($item->salePrice ?? 0)</td>
-              <td class="text-end"><strong>@money($line)</strong></td>
+              <td class="text-end fw-normal">@money($line)</td>
             </tr>
           @empty
-            <tr><td colspan="7" class="text-center">No items found</td></tr>
+            <tr><td colspan="6" class="text-center">No items found</td></tr>
           @endforelse
         </tbody>
         <tfoot>
@@ -221,15 +241,18 @@
           <div class="words-text">{{ ucwords(\Illuminate\Support\Str::title(numberToWords($invoice->grandTotal ?? $subtotal))) }} Taka Only</div>
         </div>
         
+        @php 
+          $showTerms = ($b && isset($b->invoice_terms_enabled)) ? (bool)$b->invoice_terms_enabled : true; 
+          $termsText = ($b && !empty($b->invoice_terms_text)) 
+                        ? nl2br(e($b->invoice_terms_text)) 
+                        : "• Thanks for doing business with us.<br>• Warranty doesn't cover any physical damage, burn, water damage to the product or warranty sticker removed.<br>• Payment is due within 15 days from the date of invoice.<br>• Goods once sold cannot be returned or exchanged.";
+        @endphp
+        @if($showTerms)
         <div class="terms-conditions mt-2">
           <strong>Terms & Conditions:</strong>
-          <div class="terms-text">
-            • Thanks for doing business with us.<br>
-            • Warranty doesn't cover any physical damage, burn, water damage to the product or warranty sticker removed.<br>
-            • Payment is due within 15 days from the date of invoice.<br>
-            • Goods once sold cannot be returned or exchanged.
-          </div>
+          <div class="terms-text">{!! $termsText !!}</div>
         </div>
+        @endif
         
         @if(!empty($invoice->note))
         <div class="invoice-remarks mt-2">
@@ -256,7 +279,7 @@
             </tr>
             <tr class="due-row">
               <td class="label">Outstanding Due</td>
-              <td class="value text-danger">@money($invoice->curDue ?? 0)</td>
+              <td class="value text-danger fw-bold">@money($invoice->curDue ?? 0)</td>
             </tr>
           </table>
         </div>
@@ -339,14 +362,21 @@
             <div class="ack-card">
               <h4 class="fw-bold">Bill To:</h4>
               <div class="ack-customer-name">{{ $customer->name ?? '-' }}</div>
-              @if(!empty($customer->address))
-                <div class="ack-customer-detail">{{ $customer->address }}</div>
+              @php 
+                $ackAddress = '';
+                if(!empty($customer)){
+                  if(!empty($customer->area)){
+                    $ackAddress = trim($customer->area);
+                  } elseif(!empty($customer->address)) {
+                    $ackAddress = trim($customer->address);
+                  }
+                }
+              @endphp
+              @if(!empty($ackAddress))
+                <div class="ack-customer-detail">{{ $ackAddress }}</div>
               @endif
-              @if(!empty($customer->mobile))
+              @if(!empty($customer) && !empty($customer->mobile))
                 <div class="ack-customer-detail">Contact: {{ $customer->mobile }}</div>
-              @endif
-              @if(!empty($customer->email))
-                <div class="ack-customer-detail">Email: {{ $customer->email }}</div>
               @endif
             </div>
           </div>
@@ -413,7 +443,7 @@
 }
 
 .company-logo-small {
-  height: 40px;
+  height: 100px;
   width: auto;
   margin-bottom: 6px;
   object-fit: contain;
@@ -422,20 +452,20 @@
 .company-name {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: #000;
   margin-bottom: 8px;
 }
 
 .company-details {
   font-size: 0.875rem;
-  color: #555;
+  color: #000;
   line-height: 1.45;
 }
 
 .invoice-title {
   font-size: 1.9rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: #000;
   letter-spacing: 3px;
   margin: 6px 0 8px;
 }
@@ -459,7 +489,7 @@
 }
 
 .invoice-info-table td:first-child {
-  color: #666;
+  color: #000;
   width: 50%;
 }
 
@@ -474,7 +504,7 @@
 }
 
 .party-box {
-  background: #f8f9fa;
+  background: transparent;
   border: 1px solid #dee2e6;
   border-radius: 6px;
   padding: 10px;
@@ -484,24 +514,24 @@
 .party-label {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #333;
+  color: #000;
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 2px solid #007bff;
+  border-bottom: 2px solid #333;
   padding-bottom: 5px;
 }
 
 .party-name {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: #000;
   margin-bottom: 5px;
 }
 
 .party-detail {
   font-size: 0.875rem;
-  color: #555;
+  color: #000;
   line-height: 1.6;
 }
 
@@ -514,8 +544,8 @@
 }
 
 .invoice-items-table thead {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: transparent;
+  color: #000;
 }
 
 .invoice-items-table thead th {
@@ -524,7 +554,7 @@
   text-transform: uppercase;
   font-size: 0.78rem;
   letter-spacing: 0.5px;
-  border: 1px solid #5568d3;
+  border: 1px solid #333;
 }
 
 .invoice-items-table tbody td {
@@ -542,11 +572,11 @@
 }
 
 .invoice-items-table tbody tr:nth-child(even) {
-  background-color: #f8f9fa;
+  background-color: transparent;
 }
 
 .invoice-items-table tbody tr:hover {
-  background-color: #e9ecef;
+  background-color: transparent;
 }
 
 .serial-info {
@@ -564,25 +594,26 @@
 }
 
 .subtotal-row td {
-  background-color: #f8f9fa;
+  background-color: transparent;
 }
 
 .discount-row td {
-  background-color: #fff3cd;
-  color: #856404;
+  background-color: transparent;
+  color: inherit;
 }
 
 .grandtotal-row td {
-  background-color: #28a745;
-  color: white;
+  background-color: transparent;
+  color: inherit;
   font-size: 1rem;
   font-weight: 700;
+  border-top: 2px solid #333;
 }
 
 /* Amount in Words */
 .amount-in-words {
-  background: #fff9e6;
-  border: 1px solid #ffd700;
+  background: transparent;
+  border: 1px solid #dee2e6;
   border-radius: 6px;
   padding: 9px 10px;
   margin-bottom: 10px;
@@ -590,14 +621,14 @@
 
 .words-text {
   font-size: 1rem;
-  color: #333;
+  color: #000;
   margin-top: 5px;
   font-style: italic;
 }
 
 /* Collection Detail Box */
 .collection-detail-box {
-  background: #f8f9fa;
+  background: transparent;
   border: 1px solid #dee2e6;
   border-radius: 6px;
   padding: 10px;
@@ -606,7 +637,7 @@
 .collection-title {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: #000;
   margin-bottom: 8px;
   text-align: center;
 }
@@ -635,7 +666,7 @@
 }
 
 .collection-table .label {
-  color: #555;
+  color: #000;
 }
 
 .collection-table .value {
@@ -676,7 +707,7 @@
 .signature-label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #444;
+  color: #000;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   margin-top: 2px;
@@ -711,32 +742,32 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: #2c3e50;
+  color: #000;
   margin-bottom: 4px;
 }
 
 .ack-company {
   font-weight: 700;
   font-size: 0.95rem;
-  color: #2c3e50;
+  color: #000;
   margin-bottom: 2px;
 }
 
 .ack-address {
   font-size: 0.82rem;
-  color: #555;
+  color: #000;
   margin-bottom: 6px;
 }
 
 .ack-details {
   font-size: 0.82rem;
-  color: #555;
+  color: #000;
   line-height: 1.6;
 }
 
 .ack-meta {
   font-size: 0.82rem;
-  color: #444;
+  color: #000;
 }
 
 .ack-logo {
@@ -751,7 +782,7 @@
 }
 
 .ack-card {
-  background: #f8f9fa;
+  background: transparent;
   border: 1px solid #dee2e6;
   border-radius: 6px;
   padding: 8px 10px;
@@ -761,16 +792,16 @@
 .ack-card-title {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #333;
+  color: #000;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 2px solid #007bff;
+  border-bottom: 2px solid #333;
   padding-bottom: 4px;
   margin-bottom: 6px;
 }
 
 .ack-customer {
-  background: #f8f9fa;
+  background: transparent;
   border: 1px solid #dee2e6;
   border-radius: 6px;
   padding: 8px 10px;
@@ -779,10 +810,10 @@
 .ack-customer-label {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #333;
+  color: #000;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 2px solid #007bff;
+  border-bottom: 2px solid #333;
   padding-bottom: 4px;
   margin-bottom: 6px;
 }
@@ -790,34 +821,34 @@
 .ack-customer-name {
   font-size: 1rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: #000;
   margin-bottom: 4px;
 }
 
 .ack-customer-detail {
   font-size: 0.82rem;
-  color: #555;
+  color: #000;
   line-height: 1.6;
 }
 
 /* Terms & Conditions */
 .terms-conditions {
-  background: #f8f9fa;
-  border-left: 3px solid #007bff;
+  background: transparent;
+  border-left: 3px solid #333;
   padding: 8px 10px;
   border-radius: 4px;
 }
 
 .terms-conditions .terms-text {
   font-size: 0.8rem;
-  color: #555;
+  color: #000;
   line-height: 1.6;
   margin-top: 4px;
 }
 
 .receiver-label {
   font-size: 0.78rem;
-  color: #444;
+  color: #000;
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
@@ -836,8 +867,8 @@
 
 /* Invoice Remarks */
 .invoice-remarks {
-  background: #e7f3ff;
-  border-left: 4px solid #0066cc;
+  background: transparent;
+  border-left: 4px solid #333;
   padding: 8px 10px;
   border-radius: 4px;
   font-size: 0.875rem;
@@ -849,21 +880,24 @@
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 600;
+  background-color: transparent;
+  color: #000;
+  border: 1px solid #333;
 }
 
 .badge-success {
-  background-color: #28a745;
-  color: white;
+  background-color: transparent;
+  color: #000;
 }
 
 .badge-warning {
-  background-color: #ffc107;
-  color: #333;
+  background-color: transparent;
+  color: #000;
 }
 
 .badge-danger {
-  background-color: #dc3545;
-  color: #fff;
+  background-color: transparent;
+  color: #000;
 }
 
 /* Responsive Design */
@@ -929,6 +963,18 @@
   .col-md-12, .col-12 { flex: 0 0 100% !important; max-width: 100% !important; }
   .table-responsive { overflow: visible !important; }
   
+  /* Force signature boxes to display horizontally (side-by-side) on print */
+  .signature-boxes {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    gap: 18px !important;
+  }
+  
+  .signature-box {
+    flex: 1 !important;
+  }
+  
   .no-print { 
     display: none !important; 
   }
@@ -946,16 +992,14 @@
   }
   
   .invoice-items-table thead {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
+    background: transparent !important;
+    color: #000 !important;
   }
   
   .grandtotal-row td {
-    background-color: #28a745 !important;
-    color: white !important;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
+    background-color: transparent !important;
+    color: inherit !important;
+    border-top: 2px solid #333 !important;
   }
   
   tr { 

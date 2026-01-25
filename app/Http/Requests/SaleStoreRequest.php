@@ -24,6 +24,9 @@ class SaleStoreRequest extends FormRequest
             'salePrice.*'     => ['required','numeric','min:0'],
             'buyPrice'        => ['required','array','min:1'],
             'buyPrice.*'      => ['required','numeric','min:0'],
+            // Optional per-item warranty in days captured by UI as warranty_days[]
+            'warranty_days'   => ['sometimes','array'],
+            'warranty_days.*' => ['nullable','string'],
             'totalSaleAmount' => ['required','numeric','min:0'],
             'discountAmount'  => ['nullable','numeric','min:0'],
             'grandTotal'      => ['required','numeric','min:0'],

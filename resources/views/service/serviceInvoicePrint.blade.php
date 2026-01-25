@@ -23,8 +23,17 @@
 
         <h5>Bill To</h5>
         @if($customer)
+            @php
+                $addr = '';
+                if(!empty($customer->area)){
+                    $addr = trim($customer->area);
+                } elseif(!empty($customer->address)) {
+                    $addr = trim($customer->address);
+                }
+            @endphp
             <div><strong>{{ $customer->name }}</strong></div>
-            <div>{{ $customer->mobile ?? '' }}</div>
+            @if(!empty($addr))<div>{{ $addr }}</div>@endif
+            @if(!empty($customer->mobile))<div>Contact: {{ $customer->mobile }}</div>@endif
         @else
             <div><strong>Walking Customer</strong></div>
         @endif

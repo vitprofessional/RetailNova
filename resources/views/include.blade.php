@@ -747,6 +747,56 @@
                           </a>
                       </li>
                       <li class=" ">
+                          <a href="#product" class="{{ request()->routeIs('addCustomer','addSupplier') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addCustomer','addSupplier') ? 'true' : 'false' }}">
+                              <svg class="svg-icon" id="p-dash2" width="20" height="20"  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                  <circle cx="9" cy="7" r="4"></circle>
+                                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                              </svg>
+                              <span class="ml-4">Customer & Supplier</span>
+                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                              </svg>
+                          </a>
+                          <ul id="product" class="iq-submenu collapse{{ request()->routeIs('addCustomer','addSupplier') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
+                              <li class="{{ request()->routeIs('addCustomer') ? 'active' : '' }}">
+                                  <a href="{{route('addCustomer')}}">
+                                      <i class="las la-minus"></i><span>Customer</span>
+                                  </a>
+                              </li>
+                              <li class="{{ request()->routeIs('addSupplier') ? 'active' : '' }}">
+                                  <a href="{{route('addSupplier')}}">
+                                      <i class="las la-minus"></i><span>Supplier</span>
+                                  </a>
+                              </li>
+                          </ul>
+                      </li>
+                      <li class=" ">
+                          <a href="#quotations" class="{{ request()->routeIs('quotation.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('quotation.*') ? 'true' : 'false' }}">
+                              <svg class="svg-icon" id="p-quotation" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M4 4h16v16H4z"></path>
+                                  <path d="M8 8h8M8 12h8M8 16h5"></path>
+                              </svg>
+                              <span class="ml-4">Quotations</span>
+                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                              </svg>
+                          </a>
+                          <ul id="quotations" class="iq-submenu collapse{{ request()->routeIs('quotation.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
+                                  <li class="{{ request()->routeIs('quotation.create') ? 'active' : '' }}">
+                                          <a href="{{ route('quotation.create') }}">
+                                              <i class="las la-minus"></i><span>New Quotation</span>
+                                          </a>
+                                  </li>
+                                  <li class="{{ request()->routeIs('quotation.list') ? 'active' : '' }}">
+                                          <a href="{{ route('quotation.list') }}">
+                                              <i class="las la-minus"></i><span>Quotation List</span>
+                                          </a>
+                                  </li>
+                          </ul>
+                      </li>
+                      <li class=" ">
                           <a href="#sale" class="{{ request()->routeIs('newsale','saleList','returnSaleList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('newsale','saleList','returnSaleList') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
@@ -774,32 +824,6 @@
                                                 <i class="las la-minus"></i><span>Sale Return List</span>
                                             </a>
                                   </li>
-                          </ul>
-                      </li>
-                      <li class=" ">
-                          <a href="#product" class="{{ request()->routeIs('addCustomer','addSupplier') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addCustomer','addSupplier') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash2" width="20" height="20"  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                  <circle cx="9" cy="7" r="4"></circle>
-                                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                              </svg>
-                              <span class="ml-4">Customer & Supplier</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="product" class="iq-submenu collapse{{ request()->routeIs('addCustomer','addSupplier') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                              <li class="{{ request()->routeIs('addCustomer') ? 'active' : '' }}">
-                                  <a href="{{route('addCustomer')}}">
-                                      <i class="las la-minus"></i><span>Customer</span>
-                                  </a>
-                              </li>
-                              <li class="{{ request()->routeIs('addSupplier') ? 'active' : '' }}">
-                                  <a href="{{route('addSupplier')}}">
-                                      <i class="las la-minus"></i><span>Suplier</span>
-                                  </a>
-                              </li>
                           </ul>
                       </li>
                       <li class=" ">

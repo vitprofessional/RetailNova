@@ -16,6 +16,7 @@ use App\Http\Controllers\invoiceController;
 use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\AccountManagementController;
 use App\Http\Controllers\ExpenseManagementController;
+use App\Http\Controllers\QuotationController;
 
 //user info str
 Route::get('/login',[
@@ -864,4 +865,13 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     Route::get('/documentation/download-pdf', [\App\Http\Controllers\DocumentationController::class, 'downloadPdf'])->name('documentation.downloadPdf');
     Route::get('/documentation/{section}', [\App\Http\Controllers\DocumentationController::class, 'show'])->name('documentation.show');
     Route::get('/documentation/{section}/download-pdf', [\App\Http\Controllers\DocumentationController::class, 'downloadSectionPdf'])->name('documentation.sectionPdf');
+
+    // Quotation System Routes
+    Route::get('/quotation/create', [QuotationController::class, 'create'])->name('quotation.create');
+    Route::post('/quotation/store', [QuotationController::class, 'store'])->name('quotation.store');
+    Route::get('/quotation/list', [QuotationController::class, 'index'])->name('quotation.list');
+    Route::get('/quotation/{id}', [QuotationController::class, 'show'])->name('quotation.show');
+    Route::get('/quotation/{id}/print', [QuotationController::class, 'print'])->name('quotation.print');
+    Route::get('/quotation/{id}/edit', [QuotationController::class, 'edit'])->name('quotation.edit');
+    Route::post('/quotation/{id}/update', [QuotationController::class, 'update'])->name('quotation.update');
 });

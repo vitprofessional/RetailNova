@@ -11,7 +11,7 @@ class InvoiceItem extends Model implements AuditableContract
 {
     use Auditable;
     protected $fillable = [
-        'saleId', 'purchaseId', 'qty', 'salePrice', 'buyPrice', 
+        'saleId', 'purchaseId', 'qty', 'warranty_days', 'salePrice', 'buyPrice', 
         'totalSale', 'totalPurchase', 'profitTotal', 'profitMargin', 'isBackorder'
     ];
 

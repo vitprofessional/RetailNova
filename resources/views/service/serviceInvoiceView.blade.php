@@ -19,7 +19,19 @@
                     <div class="col-md-6">
                         <h6>Bill To</h6>
                         @if($customer)
-                            <p><strong>{{ $customer->name }}</strong><br>{{ $customer->mobile ?? '' }}<br>{{ $customer->email ?? '' }}</p>
+                            @php
+                                $addr = '';
+                                if(!empty($customer->area)){
+                                    $addr = trim($customer->area);
+                                } elseif(!empty($customer->address)) {
+                                    $addr = trim($customer->address);
+                                }
+                            @endphp
+                            <p>
+                                <strong>{{ $customer->name }}</strong><br>
+                                @if(!empty($addr)){{ $addr }}<br>@endif
+                                @if(!empty($customer->mobile))Contact: {{ $customer->mobile }}@endif
+                            </p>
                         @else
                             <p><strong>Walking Customer</strong></p>
                         @endif

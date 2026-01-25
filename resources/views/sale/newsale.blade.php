@@ -107,6 +107,7 @@
                                 <th>Product Name</th>
                                 <th>Purchase Data</th>
                                 <th>Serials</th>
+                                <th>Warranty (days)</th>
                                 <th>Qty</th>
                                 <th>Sale Price</th>
                                 <th>Total</th>
