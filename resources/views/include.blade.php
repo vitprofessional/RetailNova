@@ -79,7 +79,14 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        
+    
+        }
+        .invoice-items-table tbody td,.invoice-items-table tfoot td {
+            line-height: 0 !important;
+            vertical-align: middle !important;
+        }
+        .serial-info {
+            line-height: 1.2 !important;
         }
         .header .store-info {
         font-size: 14px;
@@ -746,6 +753,7 @@
                               <span class="ml-4">Dashboards </span>
                           </a>
                       </li>
+                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       <li class=" ">
                           <a href="#product" class="{{ request()->routeIs('addCustomer','addSupplier') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addCustomer','addSupplier') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash2" width="20" height="20"  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -772,6 +780,43 @@
                               </li>
                           </ul>
                       </li>
+                      
+                      @php $__adminUser = Auth::guard('admin')->user(); @endphp
+                      @if(isset($__adminUser) && strtolower($__adminUser->role) === 'super admin')
+                      <li class=" ">
+                          <a href="#superadmin" class="collapsed" data-toggle="collapse" aria-expanded="false">
+                              <svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M12 2l9 4-9 4-9-4 9-4z"></path>
+                                  <path d="M2 10l10 4 10-4"></path>
+                                  <path d="M2 18l10 4 10-4"></path>
+                              </svg>
+                              <span class="ml-4">Super Admin</span>
+                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                              </svg>
+                          </a>
+                          <ul id="superadmin" class="iq-submenu collapse" data-parent="#iq-sidebar-toggle">
+                              <li><a href="{{ route('admin.super.users.index') }}"><i class="las la-minus"></i><span>User Management</span></a></li>
+                              <li><a href="{{ route('admin.super.subscriptions.plans') }}"><i class="las la-minus"></i><span>Subscription Plans</span></a></li>
+                              <li><a href="{{ route('admin.super.subscriptions.index') }}"><i class="las la-minus"></i><span>Subscriptions</span></a></li>
+                              <li><a href="{{ route('admin.super.stores.index') }}"><i class="las la-minus"></i><span>Stores</span></a></li>
+                              <li><a href="{{ route('admin.super.gateways.index') }}"><i class="las la-minus"></i><span>Payment Gateways</span></a></li>
+                          </ul>
+                      </li>
+                      @endif
+                      @if(isset($__adminUser) && in_array(strtolower($__adminUser->role), ['admin','gm']))
+                      <li class=" ">
+                          <a href="{{ route('admin.manage.users.index') }}" class="svg-icon">
+                              <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                  <circle cx="9" cy="7" r="4"></circle>
+                                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                              </svg>
+                              <span class="ml-4">User Management</span>
+                          </a>
+                      </li>
+                      @endif
                       <li class=" ">
                           <a href="#sale" class="{{ request()->routeIs('newsale','saleList','returnSaleList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('newsale','saleList','returnSaleList') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -802,8 +847,9 @@
                                   </li>
                           </ul>
                       </li>
+                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       <li class=" ">
-                                                      <a href="#category" class="{{ request()->routeIs('addProduct','productlist','stockProduct','addBrand','addCategory','addProductUnit') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addProduct','productlist','stockProduct','addBrand','addCategory','addProductUnit') ? 'true' : 'false' }}">
+                          <a href="#category" class="{{ request()->routeIs('addProduct','productlist','stockProduct','addBrand','addCategory','addProductUnit') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addProduct','productlist','stockProduct','addBrand','addCategory','addProductUnit') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash3" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
                                   <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
@@ -848,6 +894,8 @@
                                   </li>
                           </ul>
                       </li>
+                      
+                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       <li class=" ">
                           <a href="#parchase" class="{{ request()->routeIs('addPurchase','purchaseList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addPurchase','purchaseList') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash4" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -873,6 +921,8 @@
                                   </li>
                           </ul>
                       </li>
+                      
+                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       <li class=" ">
                           <a href="#service" class="{{ request()->routeIs('provideService','addServiceName','serviceProvideList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('provideService','addServiceName','serviceProvideList') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash6" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -884,25 +934,27 @@
                               </svg>
                           </a>
                           <ul id="service" class="iq-submenu collapse{{ request()->routeIs('provideService','addServiceName','serviceProvideList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="">
-                                          <a href="{{route('provideService')}}">
-                                              <i class="las la-minus"></i><span>Provide Service</span>
-                                          </a>
-                                  </li>
-                                  <li class="">
-                                          <a href="{{route('addServiceName')}}">
-                                              <i class="las la-minus"></i><span>Service item</span>
-                                          </a>
-                                  </li>
-                                   <li class="">
-                                          <a href="{{route('serviceProvideList')}}">
-                                              <i class="las la-minus"></i><span>Service List</span>
-                                          </a>
-                                  </li>
+                              <li class="">
+                                  <a href="{{route('provideService')}}">
+                                      <i class="las la-minus"></i><span>Provide Service</span>
+                                  </a>
+                              </li>
+                              <li class="">
+                                  <a href="{{route('addServiceName')}}">
+                                      <i class="las la-minus"></i><span>Service item</span>
+                                  </a>
+                              </li>
+                               <li class="">
+                                  <a href="{{route('serviceProvideList')}}">
+                                      <i class="las la-minus"></i><span>Service List</span>
+                                  </a>
+                              </li>
                           </ul>
                       </li>
+                      
+                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       <li class=" ">
-                                  <a href="#warranty" class="{{ request()->routeIs('rma','serialList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('rma','serialList') ? 'true' : 'false' }}">
+                          <a href="#warranty" class="{{ request()->routeIs('rma','serialList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('rma','serialList') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash6" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                               </svg>
@@ -924,6 +976,8 @@
                           </li>
                       </ul>
                       </li>
+                      
+                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       <li class=" ">
                           <a href="#quotations" class="{{ request()->routeIs('quotation.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('quotation.*') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-quotation" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -936,18 +990,20 @@
                               </svg>
                           </a>
                           <ul id="quotations" class="iq-submenu collapse{{ request()->routeIs('quotation.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="{{ request()->routeIs('quotation.create') ? 'active' : '' }}">
-                                          <a href="{{ route('quotation.create') }}">
-                                              <i class="las la-minus"></i><span>New Quotation</span>
-                                          </a>
-                                  </li>
-                                  <li class="{{ request()->routeIs('quotation.list') ? 'active' : '' }}">
-                                          <a href="{{ route('quotation.list') }}">
-                                              <i class="las la-minus"></i><span>Quotation List</span>
-                                          </a>
-                                  </li>
+                              <li class="{{ request()->routeIs('quotation.create') ? 'active' : '' }}">
+                                  <a href="{{ route('quotation.create') }}">
+                                      <i class="las la-minus"></i><span>New Quotation</span>
+                                  </a>
+                              </li>
+                              <li class="{{ request()->routeIs('quotation.list') ? 'active' : '' }}">
+                                  <a href="{{ route('quotation.list') }}">
+                                      <i class="las la-minus"></i><span>Quotation List</span>
+                                  </a>
+                              </li>
                           </ul>
                       </li>
+                      
+                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       <li class=" ">
                           <a href="#damage" class="{{ request()->routeIs('damageProduct','damageProductList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('damageProduct','damageProductList') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -973,6 +1029,9 @@
                                   </li>
                           </ul>
                       </li>
+                      
+                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
+                      @if(!isset($__adminUser) || !in_array(strtolower($__adminUser->role), ['storemanager','salesmanager']))
                       <li class=" ">
                           <a href="#account" class="{{ request()->routeIs('account.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('account.*') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash8" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1035,8 +1094,10 @@
                                   </li>
                           </ul>
                       </li>
+                      @endif
 
                       @can('viewAudits')
+                      @if(!isset($__adminUser) || !in_array(strtolower($__adminUser->role), ['storemanager','salesmanager']))
                       <li class=" {{ request()->routeIs('audits.index') ? 'active' : '' }}">
                           <a href="{{ route('audits.index') }}" class="svg-icon">
                               <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1046,7 +1107,10 @@
                               <span class="ml-4">Audits</span>
                           </a>
                       </li>
+                      @endif
                       @endcan
+                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
+                      @if(!isset($__adminUser) || !in_array(strtolower($__adminUser->role), ['storemanager','salesmanager']))
                       <li class=" ">
                           <a href="#reports" class="{{ request()->routeIs('reports.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('reports.*') ? 'true' : 'false' }}">
                               <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1092,6 +1156,9 @@
                               </li>
                           </ul>
                       </li>
+                      @endif
+                      
+                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       <li class=" {{ request()->routeIs('documentation.*') ? 'active' : '' }}">
                           <a href="{{ route('documentation.index') }}" class="svg-icon">
                               <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1101,6 +1168,9 @@
                               <span class="ml-4">Documentation</span>
                           </a>
                       </li>
+                      
+                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
+                      @if(!isset($__adminUser) || !in_array(strtolower($__adminUser->role), ['storemanager','salesmanager']))
                       <li class=" ">
                           <a href="#settings" class="{{ request()->routeIs('addBusinessSetupPage','business.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addBusinessSetupPage','business.*') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-settings" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1125,6 +1195,7 @@
                                 </li>
                           </ul>
                       </li>
+                      @endif
                   </ul>
               </nav>
               <div id="sidebar-bottom" class="position-relative sidebar-bottom">
@@ -1147,7 +1218,7 @@
                       <i class="ri-menu-line wrapper-menu"></i>
                       <a href="{{route('dashboard')}}" class="header-logo">
                           <img src="{{asset('/public/eshop/')}}/assets/images/logo.png" class="img-fluid rounded-normal" alt="logo">
-                          <h5 class="logo-title ml-3">eshop</h5>
+                          <h5 class="logo-title ml-3">Retail Nova</h5>
       
                       </a>
                   </div>
@@ -1449,7 +1520,7 @@
                 <div class="card-body">
                     <div class="p-3">
                         <h5 class="mb-1">{{ $adminUser->mail ?? 'user@domain' }}</h5>
-                        <p class="mb-0">Since 10 march, 2020</p>
+                        <p class="mb-0">Since {{ optional($adminUser->created_at)->format('j M, Y') ?? '26 Mar, 2020' }}</p>
                         <div class="d-flex align-items-center justify-content-center mt-3">
                             <a href="{{ route('admin.profile.show') }}" class="btn border mr-2">My Profile</a>
                             <a href="{{ route('dashboard') }}" class="btn border mr-2">Dashboard</a>

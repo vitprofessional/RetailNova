@@ -35,7 +35,9 @@
                 <td><span class="badge badge-secondary">{{ ucfirst($q->status) }}</span></td>
                 <td>
                   @if($q->status === 'draft')
+                  @canEdit(false)
                   <a class="btn btn-sm btn-warning" href="{{ route('quotation.edit',['id'=>$q->id]) }}"><i class="las la-pen"></i> Edit</a>
+                  @endcanEdit
                   @endif
                   <a class="btn btn-sm btn-outline-primary" href="{{ route('quotation.show',['id'=>$q->id]) }}">View</a>
                   <a class="btn btn-sm btn-outline-secondary" href="{{ route('quotation.print',['id'=>$q->id]) }}" target="_blank">Print</a>

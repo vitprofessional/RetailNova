@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\SuperAdmin;
 use App\Http\Middleware\GeneralAdmin;
+use App\Http\Middleware\SalesOnly;
 use App\Http\Middleware\SyncSessionUser;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'posAdmin' => SuperAdmin::class,
             'generalAdmin' => GeneralAdmin::class,
+            'salesOnly' => SalesOnly::class,
         ]);
         // Ensure web requests authenticate from session pos keys
         $middleware->appendToGroup('web', SyncSessionUser::class);

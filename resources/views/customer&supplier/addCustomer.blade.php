@@ -41,6 +41,7 @@
                 <form action="{{route('saveCustomer')}}" method="POST" >
                     @csrf
                     <div class="row">
+                        @include('partials.business_selector', ['businesses' => $businesses ?? [] , 'selectedBusinessId' => $profile->businessId ?? null])
                         <input type="hidden" name="profileId" value="{{ $profileId }}">
                         <div class="col-md-4">
                             <div class="form-group">

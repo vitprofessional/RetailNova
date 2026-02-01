@@ -170,7 +170,10 @@ window.recalcFinancials = function(){
             }
         }
 
-        var grand = Math.max(0, base - discount);
+        // Additional charge (e.g., service charge) augments grand total
+        var addChargeEl = document.getElementById('additionalChargeAmount');
+        var addCharge = addChargeEl ? numVal(addChargeEl.value) : 0;
+        var grand = Math.max(0, base - discount + addCharge);
         var totalSaleEl = document.getElementById('totalSaleAmount'); if(totalSaleEl) totalSaleEl.value = Number(base.toFixed(2));
         var grandEl = document.getElementById('grandTotal'); if(grandEl) grandEl.value = Number(grand.toFixed(2));
 
@@ -363,6 +366,23 @@ document.addEventListener('submit', function(e){
                 if(tgt && result && result.data){
                     var nodes = document.querySelectorAll(tgt);
                     nodes.forEach(function(n){ try{ n.innerHTML = result.data; }catch(e){} });
+                            // If we updated the customer select, attempt to auto-select the newly created customer
+                            try{
+                                if(tgt === '#customerName'){
+                                    var customerSel = document.querySelector('#customerName');
+                                    if(customerSel){
+                                        // Choose the option with the largest numeric id (newest customer)
+                                        var opts = Array.prototype.slice.call(customerSel.querySelectorAll('option'));
+                                        var maxId = 0, maxVal = null;
+                                        opts.forEach(function(o){ var v = parseInt(o.value||0,10); if(!isNaN(v) && v>maxId){ maxId = v; maxVal = o.value; } });
+                                        if(maxVal !== null){ customerSel.value = String(maxVal); }
+                                        // Enable sale product select and trigger change so products load
+                                        var saleProdSel = document.querySelector('.js-sale-product-select') || document.querySelector('#productName');
+                                        if(saleProdSel) saleProdSel.disabled = false;
+                                        try{ var ev2 = new Event('change', { bubbles: true }); customerSel.dispatchEvent(ev2); }catch(_){ }
+                                    }
+                                }
+                            }catch(e){ console.warn('auto-select-customer failed', e); }
                     // If the supplier select was updated, auto-select the newly created supplier
                     // and enable the product select immediately (without requiring a manual change).
                     try{

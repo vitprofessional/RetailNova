@@ -7,11 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 class Product extends Model implements AuditableContract
 {
-    use Auditable;
+    use Auditable, ScopesByBusiness;
     protected $fillable = [
-        'name', 'brand', 'category', 'unitName', 'quantity', 'details', 'barCode'
+        'name', 'brand', 'category', 'unitName', 'quantity', 'details', 'barCode', 'businessId'
     ];
 
     protected $auditExclude = [

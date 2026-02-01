@@ -17,9 +17,16 @@ use App\Services\StockService;
 use App\Services\InvoiceService;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class purchase extends Controller
 {
+   public function __construct(){
+       $this->middleware(function($request, $next){
+           $actor = Auth::guard('admin')->user();
+           return $next($request);
+       });
+   }
    public function addPurchase(){
        $supplier = Supplier::orderBy('id','DESC')->get();
        $product = Product::orderBy('id','DESC')->get();
@@ -28,6 +35,7 @@ class purchase extends Controller
        $brand = Brand::orderBy('id','DESC')->get();
        // robust invoice generation using sequence table
        $generatedInvoice = app(InvoiceService::class)->generatePurchaseInvoice();
+                $businesses = \App\Models\BusinessSetup::orderBy('id','asc')->get();
 
          return view('purchase.addPurchase',[
              'brandList'=>$brand,
@@ -35,7 +43,8 @@ class purchase extends Controller
              'productUnitList'=>$productUnit,
              'supplierList'=>$supplier,
              'productList'=>$product,
-             'generatedInvoice' => $generatedInvoice,
+                         'generatedInvoice' => $generatedInvoice,
+                         'businesses' => $businesses,
          ]);
    }
 

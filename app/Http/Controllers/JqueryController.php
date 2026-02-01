@@ -314,6 +314,85 @@ class JqueryController extends Controller
             return response()->json(['status' => 'error', 'prevDue' => '0.00'], 500);
         }
     }
+
+    /**
+     * Public endpoint: return categories as <option> HTML for filtering products on sale page.
+     */
+    public function getCategoriesPublic()
+    {
+        try {
+            $cats = \App\Models\Category::orderBy('name','asc')->get(['id','name']);
+            $options = '<option value="">All Categories</option>';
+            foreach($cats as $c){
+                $options .= '<option value="'.$c->id.'">'.htmlspecialchars($c->name).'</option>';
+            }
+            return response()->json(['data' => $options]);
+        } catch (\Throwable $e) {
+            \Log::warning('getCategoriesPublic error: '.$e->getMessage());
+            return response()->json(['data' => '<option value="">All Categories</option>'], 500);
+        }
+    }
+
+    /**
+     * Public endpoint: return product options filtered by a category id.
+     * Options include stock and supplier, consistent with customer products endpoint.
+     */
+    public function getProductsByCategoryPublic($categoryId)
+    {
+        try {
+            $cat = \App\Models\Category::find($categoryId);
+            $catName = $cat ? $cat->name : null;
+            $rows = \App\Models\PurchaseProduct::join('suppliers','purchase_products.supplier','suppliers.id')
+                ->join('products','purchase_products.productName','products.id')
+                ->leftJoin('product_stocks','product_stocks.purchaseId','purchase_products.id')
+                ->when($categoryId, function($q) use ($categoryId, $catName){
+                    $q->where(function($w) use ($categoryId, $catName){
+                        $w->where('products.category', (string)$categoryId);
+                        if($catName){ $w->orWhere('products.category', $catName); }
+                    });
+                })
+                ->select(
+                    'purchase_products.id as purchaseId',
+                    'products.id as productId',
+                    'products.name as productName',
+                    'purchase_products.buyPrice',
+                    'purchase_products.salePriceExVat',
+                    'purchase_products.purchase_date as purchaseDate',
+                    'suppliers.name as supplierName',
+                    'product_stocks.currentStock as currentStock'
+                )
+                ->orderBy('purchase_products.id','desc')
+                ->get();
+
+            $options = '<option value="">Select</option>';
+            $outOfStock = [];
+            foreach ($rows as $r) {
+                $stock = intval($r->currentStock ?: 0);
+                if($stock <= 0){
+                    $outOfStock[] = [
+                        'purchaseId' => $r->purchaseId,
+                        'productId' => $r->productId ?? null,
+                        'productName' => $r->productName,
+                        'supplierName' => $r->supplierName,
+                        'currentStock' => $stock,
+                        'purchaseDate' => !empty($r->purchaseDate) ? \Carbon\Carbon::parse($r->purchaseDate)->format('Y-m-d') : null,
+                    ];
+                    continue;
+                }
+                $val = 'purchase_' . $r->purchaseId;
+                $datePart = '';
+                try{ if(!empty($r->purchaseDate)) $datePart = ' ['. \Carbon\Carbon::parse($r->purchaseDate)->format('Y-m-d') .']'; }catch(\Exception $e){}
+                $label = htmlspecialchars(($r->productName ?: '') . ' — ' . ($r->supplierName ?: 'Unknown') . ' (Stock: ' . $stock . ')' . $datePart);
+                $titleAttr = ' title="Stock: ' . $stock . '"';
+                $options .= '<option value="'.$val.'" data-purchase-id="'.$r->purchaseId.'" data-current-stock="'.$stock.'"'.$titleAttr.'>'.$label.'</option>';
+            }
+
+            return response()->json(['data' => $options, 'outOfStock' => $outOfStock]);
+        } catch (\Throwable $e) {
+            \Log::warning('getProductsByCategoryPublic error: '.$e->getMessage(), ['categoryId'=>$categoryId]);
+            return response()->json(['data' => '<option value="">Select</option>', 'outOfStock' => []], 500);
+        }
+    }
     public function getPurchaseDetails($id){
         $getData = PurchaseProduct::find($id);
         if($getData){
@@ -410,8 +489,16 @@ class JqueryController extends Controller
                         $purchase->paidAmount       = $requ->get('paidAmount');
                         $purchase->dueAmount        = $requ->get('dueAmount');
                         $purchase->specialNote      = $requ->get('specialNote');
+                        // Assign businessId from request for admin/superadmin
+                        $actor = auth('admin')->user();
+                        if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
+                            $bizId = (int)($requ->input('businessId') ?? 0);
+                            if($bizId > 0){ $purchase->businessId = $bizId; }
+                        }
                         if(!$purchase->save()) throw new \Exception('Failed to save new purchase row during update');
-                        $stock = new ProductStock(); $stock->productId = $pId; $stock->purchaseId = $purchase->id; $stock->currentStock = (int)$qty; $stock->save();
+                        $stock = new ProductStock(); $stock->productId = $pId; $stock->purchaseId = $purchase->id; $stock->currentStock = (int)$qty; 
+                        if(isset($purchase->businessId)) { $stock->businessId = $purchase->businessId; }
+                        $stock->save();
                         // serials: accept either an array or a comma-separated string per-row
                         $rowSerials = [];
                         if (isset($serialsInput[$idx])) {
@@ -477,6 +564,12 @@ class JqueryController extends Controller
                     $purchase->dueAmount        = $requ->get('dueAmount');
                     $purchase->specialNote      = $requ->get('specialNote');
 
+                    // Assign/override businessId from request for admin/superadmin (optional on update)
+                    $actor = auth('admin')->user();
+                    if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
+                        $bizId = (int)($requ->input('businessId') ?? 0);
+                        if($bizId > 0){ $purchase->businessId = $bizId; }
+                    }
                     if(!$purchase->save()) throw new \Exception('Failed to update purchase id '.$pid);
 
                         // debug removed
@@ -605,6 +698,12 @@ class JqueryController extends Controller
                     $purchase->dueAmount        = $requ->get('dueAmount');
                     $purchase->specialNote      = $requ->get('specialNote');
 
+                    // Assign businessId from request for admin/superadmin
+                    $actor = auth('admin')->user();
+                    if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
+                        $bizId = (int)($requ->input('businessId') ?? 0);
+                        if($bizId > 0){ $purchase->businessId = $bizId; }
+                    }
                     if(!$purchase->save()){
                         throw new \Exception('Failed to save purchase row for product '.$prodId);
                     }
@@ -616,6 +715,7 @@ class JqueryController extends Controller
                     $prevStock->productId    = $prodId;
                     $prevStock->purchaseId   = $purchase->id;
                     $prevStock->currentStock = (int)$qty;
+                    if(isset($purchase->businessId)) { $prevStock->businessId = $purchase->businessId; }
                     $prevStock->save();
 
                     // attach serials for this row if provided as array or comma-separated string
@@ -788,12 +888,25 @@ class JqueryController extends Controller
                 $sales->note            = $requ->note;
                 $sales->totalSale       = $requ->totalSaleAmount;
                 $sales->discountAmount  = $requ->discountAmount;
+                // Persist optional additional charge (e.g., service charge)
+                try{
+                    $sales->additionalChargeName   = $requ->input('additionalChargeName');
+                    $sales->additionalChargeAmount = $requ->input('additionalChargeAmount');
+                }catch(\Throwable $_){ /* ignore */ }
                 $sales->grandTotal      = $requ->grandTotal;
                 $sales->paidAmount      = $requ->paidAmount;
                 $sales->invoiceDue      = $requ->dueAmount;
                 $sales->prevDue         = $requ->prevDue;
                 $sales->curDue          = $requ->curDue;
                 $sales->status          = "Ordered";
+                // Assign businessId from request for admin/superadmin
+                $actor = auth('admin')->user();
+                if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
+                    $bizId = (int)($requ->input('businessId') ?? 0);
+                    if($bizId > 0){ $sales->businessId = $bizId; }
+                }
+                // Record salesperson (the admin user who created this sale)
+                try{ if($actor && isset($actor->id)){ $sales->salespersonId = $actor->id; } }catch(\Throwable $_){}
 
                 if(!$sales->save()){
                     throw new \Exception('Failed to save sale');
@@ -812,6 +925,7 @@ class JqueryController extends Controller
                         Exception $_){ $isBackorder = false; }
                         if($isBackorder){ $invoice->isBackorder = true; }
                         $invoice->saleId = $sales->id;
+                        if(isset($sales->businessId)) { $invoice->businessId = $sales->businessId; }
                         $invoice->qty = $item;
                         // Persist optional per-item warranty in days from request
                         try{ $invoice->warranty_days = isset($requ->warranty_days[$index]) ? $requ->warranty_days[$index] : null; }catch(\Throwable $_){ $invoice->warranty_days = null; }

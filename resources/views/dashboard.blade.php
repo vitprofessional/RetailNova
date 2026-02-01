@@ -7,10 +7,9 @@ Dashboard
             <div class="col-lg-12">
                 <div class="card card-transparent card-block card-stretch card-height border-none">
                     <div class="card-body p-0 mt-lg-2 mt-0">
-                        <h3 class="mb-3">Hi Hasnat, 
+                        <h3 class="mb-1">Hi {{ optional($adminUser)->fullName ?? 'there' }},
                             @php
-                                $hour = \Carbon\Carbon::now()->format('H'); // 24-hour format
-
+                                $hour = \Carbon\Carbon::now()->format('H');
                                 if ($hour >= 5 && $hour < 12) {
                                     echo 'Good Morning! 🌅';
                                 } elseif ($hour >= 12 && $hour < 17) {
@@ -22,12 +21,32 @@ Dashboard
                                 }
                             @endphp
                         </h3>
-                        <p class="mb-0 mr-4">Your dashboard gives you views of key performance or business process.</p>
+                        <p class="mb-3 mr-4">Your dashboard highlights sales, purchases, cash flow, stock, and more.</p>
+                        <div class="d-flex align-items-center flex-wrap">
+                            <div class="form-inline mr-2 mb-2">
+                                <label class="mr-2 mb-0">Range</label>
+                                <select id="rn-range" class="form-control form-control-sm">
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month" selected>This Month</option>
+                                    <option value="year">This Year</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div id="rn-custom-range" class="form-inline mr-2 mb-2" style="display:none;">
+                                <label class="mr-2 mb-0">From</label>
+                                <input type="date" id="rn-start" class="form-control form-control-sm mr-2">
+                                <label class="mr-2 mb-0">To</label>
+                                <input type="date" id="rn-end" class="form-control form-control-sm mr-2">
+                            </div>
+                            <button id="rn-apply" class="btn btn-primary btn-sm mb-2">Apply</button>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-lg-12">
                 <div class="row">
+                    <!-- Opening balances -->
                     <div class="col-lg-3 col-md-3 ">
                         <div class="alert text-white bg-primary" role="alert">
                             <div class="iq-alert-text  card-body">
@@ -60,18 +79,18 @@ Dashboard
                             </div>
                         </div>
                     </div>
+                    <!-- Dynamic metric cards -->
                     <div class="col-lg-3 col-md-3 ">
                         <div class="alert text-white bg-secondary" role="alert">
                             <div class="iq-alert-text  card-body">
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
                                         <p class="mb-2">Sales</p>
-                                        <h4>31.50</h4>
+                                        <h4 id="rn-sales">0.00</h4>
                                     </div>
-                                </div>                                
+                                </div>
                                 <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70">
-                                    </span>
+                                    <span class="bg-dark iq-progress progress-1" data-percent="70"></span>
                                 </div>
                             </div>
                         </div>
@@ -82,12 +101,11 @@ Dashboard
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
                                         <p class="mb-2">Purchase</p>
-                                        <h4>31.50</h4>
+                                        <h4 id="rn-purchases">0.00</h4>
                                     </div>
-                                </div>                                
+                                </div>
                                 <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70">
-                                    </span>
+                                    <span class="bg-dark iq-progress progress-1" data-percent="70"></span>
                                 </div>
                             </div>
                         </div>
@@ -98,12 +116,11 @@ Dashboard
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
                                         <p class="mb-2">Received</p>
-                                        <h4>31.50</h4>
+                                        <h4 id="rn-receipts">0.00</h4>
                                     </div>
-                                </div>                                
+                                </div>
                                 <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70">
-                                    </span>
+                                    <span class="bg-dark iq-progress progress-1" data-percent="70"></span>
                                 </div>
                             </div>
                         </div>
@@ -114,12 +131,11 @@ Dashboard
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
                                         <p class="mb-2">Payment</p>
-                                        <h4>31.50</h4>
+                                        <h4 id="rn-payments">0.00</h4>
                                     </div>
-                                </div>                                
+                                </div>
                                 <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70">
-                                    </span>
+                                    <span class="bg-dark iq-progress progress-1" data-percent="70"></span>
                                 </div>
                             </div>
                         </div>
@@ -130,92 +146,26 @@ Dashboard
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
                                         <p class="mb-2">Expense</p>
-                                        <h4>31.50</h4>
+                                        <h4 id="rn-expenses">0.00</h4>
                                     </div>
-                                </div>                                
+                                </div>
                                 <div class="iq-progress-bar">
-                                    <span class="bg-primary iq-progress progress-1" data-percent="70">
-                                    </span>
+                                    <span class="bg-primary iq-progress progress-1" data-percent="70"></span>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-danger" role="alert">
+                        <div class="alert text-white bg-info" role="alert" style="background:#17a2b8 !important;">
                             <div class="iq-alert-text  card-body">
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
-                                        <p class="mb-2">My Account</p>
-                                        <h4>31.50</h4>
+                                        <p class="mb-2">Cash Flow</p>
+                                        <h4 id="rn-cashflow">0.00</h4>
                                     </div>
-                                </div>                                
-                                <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70">
-                                    </span>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-warning" role="alert">
-                            <div class="iq-alert-text  card-body">
-                                <div class="d-flex align-items-center  card-total-sale">
-                                    <div>
-                                        <p class="mb-2">Sales Return</p>
-                                        <h4>31.50</h4>
-                                    </div>
-                                </div>                                
                                 <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1 " data-percent="70">
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-primary" role="alert">
-                            <div class="iq-alert-text  card-body">
-                                <div class="d-flex align-items-center  card-total-sale">
-                                    <div>
-                                        <p class="mb-2">Service</p>
-                                        <h4>31.50</h4>
-                                    </div>
-                                </div>                                
-                                <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70">
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-warning" role="alert">
-                            <div class="iq-alert-text  card-body">
-                                <div class="d-flex align-items-center  card-total-sale">
-                                    <div>
-                                        <p class="mb-2">Sales Invoice</p>
-                                        <h4>31.50</h4>
-                                    </div>
-                                </div>                                
-                                <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70">
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-success" role="alert">
-                            <div class="iq-alert-text  card-body">
-                                <div class="d-flex align-items-center  card-total-sale">
-                                    <div>
-                                        <p class="mb-2">Purchase Invoice</p>
-                                        <h4>31.50</h4>
-                                    </div>
-                                </div>                                
-                                <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70">
-                                    </span>
+                                    <span class="bg-dark iq-progress progress-1" data-percent="70"></span>
                                 </div>
                             </div>
                         </div>
@@ -226,67 +176,80 @@ Dashboard
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
                                         <p class="mb-2">Net Sale</p>
-                                        <h4>31.50</h4>
+                                        <h4 id="rn-net">0.00</h4>
                                     </div>
-                                </div>                                
+                                </div>
                                 <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70">
-                                    </span>
+                                    <span class="bg-dark iq-progress progress-1" data-percent="70"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-3 ">
+                        <div class="alert text-white bg-dark" role="alert">
+                            <div class="iq-alert-text  card-body">
+                                <div class="d-flex align-items-center card-total-sale">
+                                    <div>
+                                        <p class="mb-2">Total Stock Qty</p>
+                                        <h4 class="text-white" id="rn-stock-total">0</h4>
+                                    </div>
+                                </div>
+                                <div class="iq-progress-bar">
+                                    <span class="bg-primary iq-progress progress-1" data-percent="70"></span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
+            <div class="col-lg-12">
                 <div class="card card-block card-stretch card-height">
                     <div class="card-header d-flex justify-content-between">
                         <div class="header-title">
-                            <h4 class="card-title">Overview</h4>
-                        </div>                        
-                        <div class="card-header-toolbar d-flex align-items-center">
-                            <div class="dropdown">
-                                <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton001"
-                                    data-toggle="dropdown">
-                                    This Month<i class="ri-arrow-down-s-line ml-1"></i>
-                                </span>
-                                <div class="dropdown-menu dropdown-menu-right shadow-none"
-                                    aria-labelledby="dropdownMenuButton001">
-                                    <a class="dropdown-item" href="#">Year</a>
-                                    <a class="dropdown-item" href="#">Month</a>
-                                    <a class="dropdown-item" href="#">Week</a>
-                                </div>
-                            </div>
+                            <h4 class="card-title">Financial Report</h4>
                         </div>
-                    </div>                    
+                    </div>
                     <div class="card-body">
-                        <div id="layout1-chart1"></div>
+                        <canvas id="rn-financial-chart" height="140"></canvas>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
+            <div class="col-lg-12">
                 <div class="card card-block card-stretch card-height">
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <div class="header-title">
-                            <h4 class="card-title">Revenue Vs Cost</h4>
-                        </div>
-                        <div class="card-header-toolbar d-flex align-items-center">
-                            <div class="dropdown">
-                                <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton002"
-                                    data-toggle="dropdown">
-                                    This Month<i class="ri-arrow-down-s-line ml-1"></i>
-                                </span>
-                                <div class="dropdown-menu dropdown-menu-right shadow-none"
-                                    aria-labelledby="dropdownMenuButton002">
-                                    <a class="dropdown-item" href="#">Yearly</a>
-                                    <a class="dropdown-item" href="#">Monthly</a>
-                                    <a class="dropdown-item" href="#">Weekly</a>
-                                </div>
-                            </div>
+                            <h4 class="card-title">Latest Invoices</h4>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div id="layout1-chart-2" style="min-height: 360px;"></div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Invoice</th>
+                                        <th>Customer</th>
+                                        <th class="text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rn-latest-invoices">
+                                    <tr><td colspan="3" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-12">
+                <div class="card card-block card-stretch card-height">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <div class="header-title">
+                            <h4 class="card-title">Low Stock Products</h4>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush" id="rn-low-stock">
+                            <li class="list-group-item">Loading...</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -369,176 +332,115 @@ Dashboard
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4"> 
-                <div class="card card-block card-stretch card-height-helf">
-                    <div class="card-body card-item-right">
-                        <div class="d-flex align-items-top">
-                            <div class="style-text text-left">
-                                <h5 class="mb-0">Last sale</h5>
-                                <p class="mb-0">Total Sell : 45897</p>
-                                <p class="mb-0">Reference No : 32589</p>
-                                <p class="mb-0">Total Sell : 45897</p>
-                                <p class="mb-0">Discount: 1000</p>
-                                <p class="mb-0">Paid : 45897</p>
-                                <p class="mb-0">Due Amount : $45,89 M</p>
-                                <p class="mb-0">Date : 10.10.2025</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <div class="card card-block card-stretch card-height-helf">
-                    <div class="card-body card-item-right">
-                        <div class="d-flex align-items-top">
-                            <div class="style-text text-left">
-                                <h5 class="mb-0">Last Purchase</h5>
-                                <p class="mb-0">Total Sell : 45897</p>
-                                <p class="mb-0">Reference No : 32589</p>
-                                <p class="mb-0">Total Sell : 45897</p>
-                                <p class="mb-0">Discount: 1000</p>
-                                <p class="mb-0">Paid : 45897</p>
-                                <p class="mb-0">Due Amount : $45,89 M</p>
-                                <p class="mb-0">Date : 10.10.2025</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <div class="card card-block card-stretch card-height-helf">
-                    <div class="card-body card-item-right">
-                        <div class="d-flex align-items-top">
-                            <div class="style-text text-left">
-                                <h5 class="mb-0">Last Transaction</h5>
-                                <p class="mb-0">Total Sell : 45897</p>
-                                <p class="mb-0">Reference No : 32589</p>
-                                <p class="mb-0">Total Sell : 45897</p>
-                                <p class="mb-0">Discount: 1000</p>
-                                <p class="mb-0">Paid : 45897</p>
-                                <p class="mb-0">Due Amount : $45,89 M</p>
-                                <p class="mb-0">Date : 10.10.2025</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- Removed placeholder last sale/purchase/transaction cards -->
             </div>
             <div class="row">        
-            <div class="col-lg-6">  
-                <div class="card card-block card-stretch card-height-helf">
-                    <div class="card-body">
-                        <div class="d-flex align-items-top justify-content-between">
-                            <div class="">
-                                <p class="mb-0">Income</p>
-                                <h5>$ 98,7800 K</h5>
-                            </div>
-                            <div class="card-header-toolbar d-flex align-items-center">
-                                <div class="dropdown">
-                                    <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton003"
-                                        data-toggle="dropdown">
-                                        This Month<i class="ri-arrow-down-s-line ml-1"></i>
-                                    </span>
-                                    <div class="dropdown-menu dropdown-menu-right shadow-none"
-                                        aria-labelledby="dropdownMenuButton003">
-                                        <a class="dropdown-item" href="#">Year</a>
-                                        <a class="dropdown-item" href="#">Month</a>
-                                        <a class="dropdown-item" href="#">Week</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="layout1-chart-3" class="layout-chart-1"></div>
-                    </div>
-                </div>
-            </div>          
-            <div class="col-lg-6">  
-                <div class="card card-block card-stretch card-height-helf">
-                    <div class="card-body">
-                        <div class="d-flex align-items-top justify-content-between">
-                            <div class="">
-                                <p class="mb-0">Expenses</p>
-                                <h5>$ 45,8956 K</h5>
-                            </div>
-                            <div class="card-header-toolbar d-flex align-items-center">
-                                <div class="dropdown">
-                                    <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton004"
-                                        data-toggle="dropdown">
-                                        This Month<i class="ri-arrow-down-s-line ml-1"></i>
-                                    </span>
-                                    <div class="dropdown-menu dropdown-menu-right shadow-none"
-                                        aria-labelledby="dropdownMenuButton004">
-                                        <a class="dropdown-item" href="#">Year</a>
-                                        <a class="dropdown-item" href="#">Month</a>
-                                        <a class="dropdown-item" href="#">Week</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="layout1-chart-4" class="layout-chart-2"></div>
-                    </div>
-                </div>
+            <!-- Removed placeholder income/expense charts -->
             </div>
-            </div>
-            <div class="col-lg-12">  
-                <div class="card card-block card-stretch card-height">
-                    <div class="card-header d-flex justify-content-between">
-                        <div class="header-title">
-                            <h4 class="card-title">Order Summary</h4>
-                        </div>                        
-                        <div class="card-header-toolbar d-flex align-items-center">
-                            <div class="dropdown">
-                                <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton005"
-                                    data-toggle="dropdown">
-                                    This Month<i class="ri-arrow-down-s-line ml-1"></i>
-                                </span>
-                                <div class="dropdown-menu dropdown-menu-right shadow-none"
-                                    aria-labelledby="dropdownMenuButton005">
-                                    <a class="dropdown-item" href="#">Year</a>
-                                    <a class="dropdown-item" href="#">Month</a>
-                                    <a class="dropdown-item" href="#">Week</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div> 
-                    <div class="card-body">
-                        <div class="d-flex flex-wrap align-items-center mt-2">
-                            <div class="d-flex align-items-center progress-order-left">
-                                <div class="progress progress-round m-0 orange conversation-bar" data-percent="46">
-                                    <span class="progress-left">
-                                        <span class="progress-bar"></span>
-                                    </span>
-                                    <span class="progress-right">
-                                        <span class="progress-bar"></span>
-                                    </span>
-                                    <div class="progress-value text-secondary">46%</div>
-                                </div>
-                                <div class="progress-value ml-3 pr-5 border-right">
-                                    <h5>$12,6598</h5>
-                                    <p class="mb-0">Average Orders</p>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center ml-5 progress-order-right">
-                                <div class="progress progress-round m-0 primary conversation-bar" data-percent="46">
-                                    <span class="progress-left">
-                                        <span class="progress-bar"></span>
-                                    </span>
-                                    <span class="progress-right">
-                                        <span class="progress-bar"></span>
-                                    </span>
-                                    <div class="progress-value text-primary">46%</div>
-                                </div>
-                                <div class="progress-value ml-3">
-                                    <h5>$59,8478</h5>
-                                    <p class="mb-0">Top Orders</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body pt-0">
-                        <div id="layout1-chart-5"></div>
-                    </div>
-                </div>
-            </div>
+            <!-- Removed placeholder order summary section -->
         </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    (function(){
+        var fmtMoney = function(n){
+            try{ return new Intl.NumberFormat(undefined, { style:'currency', currency: (window.APP_CURRENCY||'USD') }).format(n||0); }catch(e){ return (n||0).toFixed(2); }
+        };
+
+        var $range = document.getElementById('rn-range');
+        var $custom = document.getElementById('rn-custom-range');
+        var $start = document.getElementById('rn-start');
+        var $end = document.getElementById('rn-end');
+        var $apply = document.getElementById('rn-apply');
+
+        if($range){
+            $range.addEventListener('change', function(){ $custom.style.display = this.value === 'custom' ? '' : 'none'; });
+        }
+
+        var chart, ctx = document.getElementById('rn-financial-chart');
+        function renderChart(labels, sales, purchases, expenses){
+            if(!ctx) return;
+            if(chart){ chart.destroy(); }
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Sales', data: sales, borderColor: '#6c757d', backgroundColor: 'rgba(108,117,125,0.1)', tension:.3 },
+                        { label: 'Purchases', data: purchases, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.1)', tension:.3 },
+                        { label: 'Expenses', data: expenses, borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.1)', tension:.3 },
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        function setText(id, v){ var el = document.getElementById(id); if(el) el.textContent = v; }
+
+        function loadMetrics(){
+            var params = new URLSearchParams();
+            var r = ($range && $range.value) || 'month';
+            params.set('range', r);
+            if(r === 'custom'){
+                if($start && $start.value) params.set('start', $start.value);
+                if($end && $end.value) params.set('end', $end.value);
+            }
+            fetch("{{ route('dashboard.metrics') }}?"+params.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' }})
+              .then(function(res){ return res.json(); })
+              .then(function(json){
+                var t = json.totals || {};
+                setText('rn-sales', fmtMoney(t.sales||0));
+                setText('rn-purchases', fmtMoney(t.purchases||0));
+                setText('rn-receipts', fmtMoney(t.receipts||0));
+                setText('rn-payments', fmtMoney(t.payments||0));
+                setText('rn-expenses', fmtMoney(t.expenses||0));
+                setText('rn-cashflow', fmtMoney(t.cash_flow||0));
+                setText('rn-net', fmtMoney(t.net_sales||0));
+
+                var stock = json.stock || {};
+                setText('rn-stock-total', (stock.total_quantity||0));
+
+                var list = document.getElementById('rn-latest-invoices');
+                if(list){
+                    list.innerHTML = '';
+                    (json.latest_invoices||[]).forEach(function(i){
+                        var tr = document.createElement('tr');
+                        tr.innerHTML = '<td>'+ (i.invoiceNo||'-') +'</td>'+
+                                       '<td>'+ (i.customer||'-') +'</td>'+
+                                       '<td class="text-right">'+ fmtMoney(i.total||0) +'</td>';
+                        list.appendChild(tr);
+                    });
+                    if(!list.children.length){
+                        var tr = document.createElement('tr');
+                        tr.innerHTML = '<td colspan="3" class="text-center">No invoices</td>';
+                        list.appendChild(tr);
+                    }
+                }
+
+                var low = document.getElementById('rn-low-stock');
+                if(low){
+                    low.innerHTML = '';
+                    (stock.low_stock||[]).forEach(function(p){
+                        var li = document.createElement('li');
+                        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                        li.innerHTML = '<span>'+ p.name +'</span><span class="badge badge-danger badge-pill">'+ p.stock +'/'+ p.alert +'</span>';
+                        low.appendChild(li);
+                    });
+                    if(!low.children.length){
+                        var li = document.createElement('li'); li.className = 'list-group-item'; li.textContent = 'No low stock items'; low.appendChild(li);
+                    }
+                }
+
+                var ch = json.chart || {}; renderChart(ch.labels||[], (ch.series||{}).sales||[], (ch.series||{}).purchases||[], (ch.series||{}).expenses||[]);
+              })
+              .catch(function(){ /* silently ignore */ });
+        }
+
+        if($apply){ $apply.addEventListener('click', loadMetrics); }
+        // Initial load
+        loadMetrics();
+    })();
+</script>
 @endsection

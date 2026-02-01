@@ -45,6 +45,7 @@
                     <input type="hidden" name="profileId" value="{{ $profileId }}" />
 
                     <div class="row g-3">
+                        @include('partials.business_selector', ['businesses' => $businesses ?? [] , 'selectedBusinessId' => $profile->businessId ?? null])
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label class="form-label">Product Name <span class="text-danger">*</span></label>

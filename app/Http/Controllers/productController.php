@@ -9,6 +9,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\ProductUnit;
 use Alert;
+use Illuminate\Support\Facades\Auth;
 use App\Models\ProductStock;
 use App\Models\DamageProduct;
 use Illuminate\Support\Facades\DB;
@@ -18,17 +19,26 @@ use App\Http\Requests\ProductUnitSaveRequest;
 
 class productController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $actor = Auth::guard('admin')->user();
+            return $next($request);
+        });
+    }
     public function addProduct(){
         $productUnit = ProductUnit::orderBy('id','DESC')->get();
         $category = Category::orderBy('id','DESC')->get();
         $brand = Brand::orderBy('id','DESC')->get();
         $data = Product::with(['brandModel','categoryModel','unitModel','stocks'])->orderBy('id','DESC')->get();
+        $businesses = \App\Models\BusinessSetup::orderBy('id','asc')->get();
 
         return view('product.newProduct',[
             'listItem'=>$data,
             'brandList'=>$brand,
             'categoryList'=>$category,
-            'productUnitList'=>$productUnit
+            'productUnitList'=>$productUnit,
+            'businesses' => $businesses
         ]);
    }
 
@@ -48,6 +58,13 @@ class productController extends Controller
         $data->quantity = $validated['quantity'] ?? 0;
         $data->details  = $validated['details'] ?? null;
         $data->barCode  = $validated['barCode'] ?? null;
+
+        // Assign businessId if provided and actor is admin/superadmin
+        $actor = auth('admin')->user();
+        if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
+            $bizId = (int)($req->input('businessId') ?? 0);
+            if($bizId > 0){ $data->businessId = $bizId; }
+        }
 
         if($data->save()){
             $msg = $req->profileId ? 'Product updated successfully' : 'Product created successfully';
@@ -121,6 +138,12 @@ class productController extends Controller
         $data->quantity = (int)($payload['quantity'] ?? 0);
         $data->details  = $payload['details'];
         $data->barCode  = $payload['barCode'];
+        // Assign businessId if provided and actor is admin/superadmin
+        $actor = auth('admin')->user();
+        if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
+            $bizId = (int)($req->input('businessId') ?? 0);
+            if($bizId > 0){ $data->businessId = $bizId; }
+        }
         $option = '';
 
         if($data->save()){

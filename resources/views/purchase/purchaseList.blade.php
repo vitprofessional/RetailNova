@@ -86,12 +86,14 @@
                                             <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
                                                 <a href="{{ route('purchaseView',['id'=>$pid]) }}" class="btn btn-outline-primary" title="View"><i class="fa-solid fa-eye"></i></a>
                                                 <a href="{{ route('returnPurchase',['id'=>$pid]) }}" class="btn btn-outline-warning" title="Return"><i class="fa-regular fa-turn-down-left"></i></a>
+                                                @canEdit(false)
                                                 <a href="{{ route('editPurchase',['id'=>$pid]) }}" class="btn btn-outline-success" title="Edit"><i class="ri-pencil-line"></i></a>
                                                 <form method="POST" action="{{ route('delPurchase',['id'=>$pid]) }}" style="display:inline">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-outline-danger" title="Delete" data-confirm="Are you sure to delete this purchase?"><i class="fa-solid fa-trash"></i></button>
                                                 </form>
+                                                @endcanEdit
                                             </div>
                                         </td>
                                     </tr>

@@ -108,5 +108,17 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Throwable $e) {
             // if anything fails during boot (migrations, tests) do not crash
         }
+
+        // Blade conditional: @canEdit(true) ... @endcanEdit
+        Blade::if('canEdit', function ($isSale = false) {
+            $actor = auth('admin')->user();
+            if (!$actor) return false;
+            $role = strtolower($actor->role ?? '');
+            if ($role === 'salesmanager') {
+                return (bool)$isSale;
+            }
+            // Other roles can edit
+            return true;
+        });
     }
 }

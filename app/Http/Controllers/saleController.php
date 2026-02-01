@@ -25,16 +25,27 @@ class saleController extends Controller
         try{ $walking = Customer::ensureWalkingCustomer(); }catch(\Throwable $e){ $walking = null; }
         $customer = Customer::orderBy('id','DESC')->get();
         $product = Product::orderBy('id','DESC')->get();
+        $businesses = \App\Models\BusinessSetup::orderBy('id','asc')->get();
+        // Generate a random invoice number (format: INV + ymd + 4 random digits)
+        $randomInvoiceNumber = 'INV' . date('ymd') . rand(1000,9999);
         return view('sale.newsale',[
             'customerList'=>$customer,
             'productList'=>$product,
-            'walkingCustomerId' => $walking ? $walking->id : null
+            'walkingCustomerId' => $walking ? $walking->id : null,
+            'businesses' => $businesses,
+            'randomInvoiceNumber' => $randomInvoiceNumber
         ]);
 
     }
 
     public function saleList(){
-        $saleList = SaleProduct::orderBy('id','desc')->get();
+        $actor = auth('admin')->user();
+        $query = SaleProduct::with('salesperson')->orderBy('id','desc');
+        // Non-admin users should only see their own generated bills
+        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin'])){
+            $query->where('salespersonId', $actor->id);
+        }
+        $saleList = $query->get();
         return view('sale.saleList',['saleList'=>$saleList]);
     }
 
@@ -46,6 +57,12 @@ class saleController extends Controller
         $sale = SaleProduct::find($id);
         if(!$sale){
             Alert::error('Error', 'Sale not found');
+            return back();
+        }
+        // Ownership check: non-admins can only edit their own sales
+        $actor = auth('admin')->user();
+        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin']) && (int)$sale->salespersonId !== (int)$actor->id){
+            Alert::error('Unauthorized','You are not allowed to edit this sale');
             return back();
         }
         $customer = Customer::find($sale->customerId);
@@ -60,6 +77,12 @@ class saleController extends Controller
         $sale = SaleProduct::find($id);
         if(!$sale){
             Alert::error('Error', 'Sale not found');
+            return back();
+        }
+        // Ownership check
+        $actor = auth('admin')->user();
+        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin']) && (int)$sale->salespersonId !== (int)$actor->id){
+            Alert::error('Unauthorized','You are not allowed to edit items of this sale');
             return back();
         }
         $customer = Customer::find($sale->customerId);
@@ -103,6 +126,13 @@ class saleController extends Controller
         $sale = SaleProduct::find($id);
         if(!$sale){
             Alert::error('Error', 'Sale not found');
+            return back();
+        }
+
+        // Ownership check
+        $actor = auth('admin')->user();
+        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin']) && (int)$sale->salespersonId !== (int)$actor->id){
+            Alert::error('Unauthorized','You are not allowed to update this sale');
             return back();
         }
 
@@ -158,6 +188,13 @@ class saleController extends Controller
         $sale = SaleProduct::find($id);
         if(!$sale){
             Alert::error('Error', 'Sale not found');
+            return back();
+        }
+
+        // Ownership check
+        $actor = auth('admin')->user();
+        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin']) && (int)$sale->salespersonId !== (int)$actor->id){
+            Alert::error('Unauthorized','You are not allowed to update items of this sale');
             return back();
         }
 
@@ -369,6 +406,12 @@ class saleController extends Controller
     public function invoiceGenerate($id){
         $invoice = SaleProduct::find($id);
         if($invoice):
+            // Ownership check for viewing invoices
+            $actor = auth('admin')->user();
+            if($actor && !in_array(strtolower($actor->role), ['admin','superadmin']) && (int)$invoice->salespersonId !== (int)$actor->id){
+                Alert::error('Unauthorized','You are not allowed to view this invoice');
+                return back();
+            }
             $customer = Customer::find($invoice->customerId);
             $items = InvoiceItem::where(['saleId'=>$id])
             ->join('purchase_products','purchase_products.id','invoice_items.purchaseId')
@@ -409,6 +452,12 @@ class saleController extends Controller
      public function returnSale($id){
         $invoice = SaleProduct::find($id);
         if($invoice):
+            // Ownership check
+            $actor = auth('admin')->user();
+            if($actor && !in_array(strtolower($actor->role), ['admin','superadmin']) && (int)$invoice->salespersonId !== (int)$actor->id){
+                Alert::error('Unauthorized','You are not allowed to access returns for this sale');
+                return back();
+            }
             $customer = Customer::find($invoice->customerId);
             $items = InvoiceItem::where(['saleId'=>$id])
             ->join('purchase_products','purchase_products.id','invoice_items.purchaseId')
@@ -451,6 +500,14 @@ class saleController extends Controller
         $history->adjustAmount      = $requ->adjustAmount;
 
         if($history->save()){
+            // Ownership check: ensure actor may create return for that sale
+            $actor = auth('admin')->user();
+            if($actor && !in_array(strtolower($actor->role), ['admin','superadmin'])){
+                if($resolvedSaleId && (int)$resolvedSaleId !== (int)$actor->id){
+                    Alert::error('Unauthorized','You are not allowed to return items for this sale');
+                    return back();
+                }
+            }
             $service = new StockService();
             $items = $requ->totalQty ?? [];
             if(is_array($items) && count($items) > 0){

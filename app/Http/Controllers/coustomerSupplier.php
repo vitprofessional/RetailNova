@@ -27,10 +27,12 @@ class coustomerSupplier extends Controller
         $data = Customer::orderBy('id','DESC')->get();
         $trashed = Customer::onlyTrashed()->orderBy('id','DESC')->get();
         $openingTotal = Customer::sum('openingBalance');
+        $businesses = \App\Models\BusinessSetup::orderBy('id','asc')->get();
         return view('customer&supplier.addCustomer',[
             'listItem'=>$data,
             'trashedList' => $trashed,
             'openingTotal' => $openingTotal,
+            'businesses' => $businesses,
         ]);
     }
 
@@ -50,6 +52,13 @@ class coustomerSupplier extends Controller
         $data->state         = trim($req->state);
         $data->city          = trim($req->city);
         $data->area          = trim($req->area);
+
+        // Assign businessId if provided and actor is admin/superadmin
+        $actor = auth('admin')->user();
+        if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
+            $bizId = (int)($req->input('businessId') ?? 0);
+            if($bizId > 0){ $data->businessId = $bizId; }
+        }
 
         if($data->save()):
             $message = $req->profileId ? 'Customer profile updated successfully' : 'Customer profile created successfully';
@@ -240,10 +249,12 @@ class coustomerSupplier extends Controller
         $data = Supplier::orderBy('id','DESC')->get();
         $trashed = Supplier::onlyTrashed()->orderBy('id','DESC')->get();
         $openingTotal = Supplier::sum('openingBalance');
+        $businesses = \App\Models\BusinessSetup::orderBy('id','asc')->get();
         return view('customer&supplier.addSupplier',[
             'listItem'=>$data,
             'trashedList' => $trashed,
             'openingTotal' => $openingTotal,
+            'businesses' => $businesses,
         ]);
     }
 
@@ -282,6 +293,13 @@ class coustomerSupplier extends Controller
         $data->state         = trim((string)$req->state);
         $data->city          = trim((string)$req->city);
         $data->area          = trim((string)$req->area);
+
+        // Assign businessId if provided and actor is admin/superadmin
+        $actor = auth('admin')->user();
+        if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
+            $bizId = (int)($req->input('businessId') ?? 0);
+            if($bizId > 0){ $data->businessId = $bizId; }
+        }
 
         if($data->save()){
             $msg = $isUpdate ? 'Supplier profile updated successfully' : 'Supplier profile created successfully';

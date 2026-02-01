@@ -6,25 +6,39 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<form action="{{ route('saveSale') }}" id="saveSaleForm" class="row" method="POST" data-action-template="{{ route('saveSale') }}">
+<form action="{{ route('saveSale') }}" id="saveSaleForm" class="row sale-page" method="POST" data-action-template="{{ route('saveSale') }}">
     @csrf
-    @php
-    $randomInvoiceNumber = 'INV-' . strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
-    @endphp
-    <div class="col-12">
-        <!-- Route seed container for robust JS URL construction -->
-           <div id="rn-route-seeds"
-               data-newsale="{{ route('newsale') }}"
-               data-products-template="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}"
-               data-purchase-template="{{ route('ajax.sale.product.purchaseDetails.public', ['id' => '__ID__']) }}"
-               data-purchase-by-id-template="{{ route('ajax.purchase.details.public', ['id' => '__ID__']) }}"
-               data-product-details-template="{{ route('ajax.product.details.public', ['id' => '__ID__']) }}"
-               data-purchase-serials-template="{{ route('ajax.purchase.serials.public', ['id' => '__ID__']) }}"></div>
+    <style>
+        .sale-page .card .card-body { padding: 16px; }
+        .sale-page .form-group label { font-weight:600; color:#111; }
+        .input-group .btn { border-left:0; }
+        .rn-btn-plus { width:40px; display:flex; align-items:center; justify-content:center; }
+        .card-title h6 { font-size:1rem; font-weight:700; color:#111; }
+        .rn-pay-box { background:#fff; border:1px solid #e6e6e6; }
+        .table thead th { background:#fafafa; font-weight:600; color:#111; }
+        /* Compact table spacing */
+        .rn-table-pro td, .rn-table-pro th{ padding:8px; vertical-align:middle }
+        /* Sticky payment panel on wide screens */
+        @media(min-width: 992px){
+            .payment-side{ position:sticky; top:90px; }
+        }
+        /* Make primary actions more prominent */
+        .btn-primary.save-btn{ padding:10px 22px; font-weight:700 }
+    </style>
+    <div id="rn-route-seeds" class="d-none"
+         data-newsale="{{ route('newsale') }}"
+         data-products-template="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}"
+         data-categories-url="{{ route('ajax.categories.public') }}"
+         data-category-products-template="{{ route('ajax.category.products.public', ['id' => '__ID__']) }}"
+         data-purchase-template="{{ route('ajax.sale.product.purchaseDetails.public', ['id' => '__ID__']) }}"
+         data-purchase-by-id-template="{{ route('ajax.purchase.details.public', ['id' => '__ID__']) }}"
+         data-product-details-template="{{ route('ajax.product.details.public', ['id' => '__ID__']) }}"
+         data-purchase-serials-template="{{ route('ajax.purchase.serials.public', ['id' => '__ID__']) }}"></div>
         <div class="row">
             <div class="col-md-12 col-12">
                 <div class="card">
                     <div class="card-body">
-                        <div class="row align-items-center">
+                        <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label>Date</label>
@@ -32,45 +46,48 @@
                                     <div class="help-block with-errors"></div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>Select Customer * <span class="small text-muted">(use Walk-in for quick sale)</span></label>
-                                    <label for="customerName" class="form-label"></label>
-                                <select id="customerName" name="customerId" class="form-control" data-onchange="actSaleProduct()"
-                                    data-products-url="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}">
-                                        <option value="">-</option>
-                                  @if(!empty($customerList) && count($customerList)>0)
-                                  @foreach($customerList as $customerData)
-                                    <option value="{{$customerData->id}}" {{ (isset($walkingCustomerId) && $walkingCustomerId === $customerData->id) ? 'selected' : '' }}>{{$customerData->name}}</option>
-                                    @endforeach
-                                    @endif
-                                </select>
-                                <div class="mt-1">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="useWalkingCustomerBtn">Use Walk-in Customer</button>
-                                </div>
-                                </div>
-                                <div class="small mt-1">
-                                    <span id="prevDueDisplay" class="badge bg-warning text-dark">Previous Due: 0.00</span>
-                                </div>
-                                <div class="d-flex small mt-1 align-items-center">
-                                    <span id="outOfStockNote" class="text-muted small me-2">&nbsp;</span>
-                                    <button id="outOfStockBtn" type="button" class="btn btn-outline-secondary btn-sm" style="display:none;" data-toggle="modal" data-target="#outOfStockModal">View out-of-stock</button>
-                                </div>
-                            </div>
-                            <div class="col-md-2 mt-3 p-0">
-                                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#customerModal"><i class="las la-plus mr-2"></i>add customer</button>
-                            </div>
-                            <div class="col-md-3 ">
+                            <!-- add customer button moved inline beside the select -->
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="invoice" class="form-label">Invoice *</label>
                                     <input type="text" class="form-control" id="invoice" name="invoice" value="{{ $randomInvoiceNumber }}" readonly />
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-6 text-md-end mt-3 mt-md-0">
                                 <div class="form-group">
-                                    <label>Reference(if any)</label>
-                                    <input type="text" name="reference" class="form-control" placeholder="Enter reference if any" />
-                                    <div class="help-block with-errors"></div>
+                                    <label>Select Customer * <span class="small text-muted">(use Walk-in for quick sale)</span></label>
+                                    <label for="customerName" class="form-label">Customer</label>
+                                    <div class="input-group">
+                                        <select id="customerName" name="customerId" class="form-control" data-onchange="actSaleProduct()"
+                                            data-products-url="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}">
+                                                <option value="">Select customer</option>
+                                          @if(!empty($customerList) && count($customerList)>0)
+                                          @foreach($customerList as $customerData)
+                                            <option value="{{$customerData->id}}" {{ (isset($walkingCustomerId) && $walkingCustomerId === $customerData->id) ? 'selected' : '' }}>{{$customerData->name}}</option>
+                                            @endforeach
+                                            @endif
+                                        </select>
+                                        <button type="button" class="btn btn-outline-primary rn-btn-plus rounded-0" title="Add customer" data-toggle="modal" data-target="#customerModal">
+                                            <i class="las la-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div class="my-2">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="useWalkingCustomerBtn">Use Walk-in Customer</button>
+                                        <span id="prevDueDisplay" class="badge bg-warning text-dark mx-2">Previous Due: 0.00</span>
+                                        <button id="outOfStockBtn" type="button" class="btn btn-outline-danger btn-sm mx-2" style="display:none; height:30px; padding:4px 8px;" data-toggle="modal" data-target="#outOfStockModal" title="0 product(s) out of stock">View Out of Stock(0)</button>
+                                        <span id="outOfStockNote" class="text-muted small ms-2" style="display:none">&nbsp;</span>
+                                    </div>
+                                </div>
+                            </div>
+                            @include('partials.business_selector', ['businesses' => $businesses ?? [] , 'selectedBusinessId' => null])
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Product Category</label>
+                                    <select id="categorySelect" name="categoryId" class="form-control" disabled>
+                                        <option value="">All Categories</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-6">
@@ -102,8 +119,51 @@
                 <div class="header-title">
                     <h6 class="card-title">Product Details</h6>
                 </div>
-                <div class="table-responsive">
-                    <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
+                <style>
+                    .rn-table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch}
+                    .rn-table-pro{min-width:960px}
+                    .rn-table-pro thead th{position:sticky; top:0; background:#fff; z-index:1}
+                    /* Ensure product name shows fully and aligns left */
+                    .rn-table-pro thead th:nth-child(2),
+                    .rn-table-pro tbody td:nth-child(2){
+                        text-align:left !important;
+                        min-width:260px;
+                    }
+                    .rn-table-pro tbody td:nth-child(2) *{
+                        white-space:normal !important;
+                        word-break:break-word;
+                        overflow:visible;
+                        text-overflow:clip;
+                    }
+                    .rn-table-pro tbody td:nth-child(2) .form-control{
+                        width:100% !important;
+                        min-width:0 !important;
+                    }
+                    @media (max-width: 992px){
+                        .rn-table-pro{min-width:720px}
+                        .rn-table-pro thead th:nth-child(3),
+                        .rn-table-pro tbody td:nth-child(3),
+                        .rn-table-pro thead th:nth-child(4),
+                        .rn-table-pro tbody td:nth-child(4),
+                        .rn-table-pro thead th:nth-child(5),
+                        .rn-table-pro tbody td:nth-child(5),
+                        .rn-table-pro thead th:nth-child(9),
+                        .rn-table-pro tbody td:nth-child(9),
+                        .rn-table-pro thead th:nth-child(10),
+                        .rn-table-pro tbody td:nth-child(10),
+                        .rn-table-pro thead th:nth-child(11),
+                        .rn-table-pro tbody td:nth-child(11),
+                        .rn-table-pro thead th:nth-child(12),
+                        .rn-table-pro tbody td:nth-child(12){display:none}
+                    }
+                    @media (max-width: 576px){
+                        .rn-table-pro{min-width:540px}
+                        .rn-table-pro thead th:nth-child(8),
+                        .rn-table-pro tbody td:nth-child(8){display:none}
+                    }
+                </style>
+                <div class="table-responsive rn-table-wrap">
+                    <table class="table table-sm mb-0 table-bordered rounded-0 rn-table-pro">
                         <thead class="bg-white text-uppercase">
                             <tr>
                                 <th>Remove</th>
@@ -135,49 +195,87 @@
                         <div class="header-title">
                             <h6 class="card-title">Payment Details</h6>
                         </div>
-                        <div class="mb-3 table-responsive product-table">
-                            <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
-                                <thead class="bg-white text-uppercase">
-                                    <tr>
-                                        <th>Total</th>
-                                        <th>Discount</th>
-                                        <th>Grand Total</th>
-                                        <th>Paid Amount</th>
-                                        <th>Due Amount</th>
-                                        <th>Previous Due</th>
-                                        <th>Current Due</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="paymentDetails">
-                                    <tr>
-                                        <td>
-                                            <input type="number" class="form-control" id="totalSaleAmount" name="totalSaleAmount" value="0" readonly  />
-                                        </td>
-                                        <td>
-                                            <input type="number" class="form-control" id="discountAmount" data-onkeyup="getDiscountAmount()"  name="discountAmount" value="0"  />
-                                        </td>
-                                        <td>
-                                            <input type="number" class="form-control" id="grandTotal" name="grandTotal" value="0" readonly />
-                                        </td>
-                                        <td>
-                                            <input type="number" class="form-control" id="paidAmount" data-onkeyup="dueSaleCalculate()" name="paidAmount" value="0"    />
-                                        </td>
-                                        <td>
-                                            <input type="number" class="form-control" id="dueAmount" name="dueAmount" value="0" readonly  />
-                                        </td>
-                                        <td>
-                                            <input type="number" class="form-control" id="prevDue" name="prevDue" value="0" readonly  />
-                                        </td>
-                                        <td>
-                                            <input type="number" class="form-control" id="curDue" name="curDue" value="0" readonly  />
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="mb-3 product-table">
+                            <style>
+                                .rn-pay-box{border:1px solid #e9ecef; border-radius:8px; background:#fff; padding:16px}
+                                .rn-pay-row{display:flex; align-items:center; margin-bottom:10px}
+                                .rn-pay-label{width:240px; color:#333}
+                                .rn-pay-value{flex:1}
+                                .rn-pay-value .form-control{max-width:380px; margin-left:auto}
+                                .rn-pay-actions{display:flex; justify-content:flex-end}
+                                @media (max-width:768px){
+                                    .rn-pay-row{flex-direction:column; align-items:stretch}
+                                    .rn-pay-label{width:auto; margin-bottom:6px}
+                                    .rn-pay-value .form-control{max-width:100%; margin-left:0}
+                                    .rn-pay-actions{justify-content:flex-start}
+                                }
+                            </style>
+                            <div id="paymentDetails" class="rn-pay-box">
+                                <div class="rn-pay-row">
+                                    <div class="rn-pay-label">Total:</div>
+                                    <div class="rn-pay-value">
+                                        <input type="number" class="form-control" id="totalSaleAmount" name="totalSaleAmount" value="0" readonly />
+                                    </div>
+                                </div>
+                                <div class="rn-pay-row">
+                                    <div class="rn-pay-label">Discount Amount:</div>
+                                    <div class="rn-pay-value">
+                                        <input type="number" class="form-control" id="discountAmount" data-onkeyup="getDiscountAmount()" name="discountAmount" value="0" />
+                                    </div>
+                                </div>
+                                <div class="rn-pay-row">
+                                    <div class="rn-pay-label">Additional Charge Name:</div>
+                                    <div class="rn-pay-value">
+                                        <input type="text" class="form-control" id="additionalChargeName" name="additionalChargeName" placeholder="e.g., Service Charge" />
+                                    </div>
+                                </div>
+                                <div class="rn-pay-row">
+                                    <div class="rn-pay-label">Additional Charge Amount:</div>
+                                    <div class="rn-pay-value">
+                                        <input type="number" class="form-control" id="additionalChargeAmount" name="additionalChargeAmount" value="0" oninput="try{ if(typeof window.recalcFinancials === 'function'){ window.recalcFinancials(); } }catch(e){}" />
+                                    </div>
+                                </div>
+                                <div class="rn-pay-row">
+                                    <div class="rn-pay-label">Grand Total:</div>
+                                    <div class="rn-pay-value">
+                                        <input type="number" class="form-control" id="grandTotal" name="grandTotal" value="0" readonly />
+                                    </div>
+                                </div>
+                                <div class="rn-pay-row">
+                                    <div class="rn-pay-label">Paid Amount:</div>
+                                    <div class="rn-pay-value">
+                                        <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" step="0.01" oninput="try{ if(typeof window.recalcTotals === 'function'){ window.recalcTotals(); } else if(typeof window.recalcFinancials === 'function'){ window.recalcFinancials(); } }catch(e){}" />
+                                    </div>
+                                </div>
+                                <div class="rn-pay-row">
+                                    <div class="rn-pay-label">Due Amount:</div>
+                                    <div class="rn-pay-value">
+                                        <input type="number" class="form-control" id="dueAmount" name="dueAmount" value="0" readonly />
+                                    </div>
+                                </div>
+                                <div class="rn-pay-row">
+                                    <div class="rn-pay-label">Payment By</div>
+                                    <div class="rn-pay-value">
+                                        {{ optional(auth('admin')->user())->fullName ?? '' }}
+                                    </div>
+                                </div>
+                                        <div class="rn-pay-row rn-pay-actions">
+                                            <div class="rn-pay-label"></div>
+                                            <div class="rn-pay-value">
+                                                <button type="button" id="rnReceiveAmountBtn" class="btn btn-outline-danger">Receive Amount</button>
+                                            </div>
+                                        </div>
+                            </div>
+                            <!-- Hidden operational fields to preserve calculations -->
+                            <input type="number" class="form-control d-none" id="prevDue" name="prevDue" value="0" readonly />
+                            <input type="number" class="form-control d-none" id="curDue" name="curDue" value="0" readonly />
                         </div>
-                        <div class="d-md-flex  mt-2">
+                        <div class="d-md-flex  mt-2 align-items-center">
                             <div id="saleErrorSummary" class="me-3" style="flex:1"></div>
-                            <button class="btn btn-primary btn-sm" type="submit">Save</button>
+                            <div class="text-end">
+                                <button class="btn btn-outline-secondary btn-sm me-2" type="button" id="btnSaveDraft">Save Draft</button>
+                                <button class="btn btn-outline-primary save-btn btn-sm me-w" type="submit">Save & Print</button>
+                            </div>
                         </div>
                         <div class="mt-2">
                             <span id="totalOutstandingDisplay" class="badge bg-danger">Total Outstanding: 0.00</span>
@@ -345,6 +443,23 @@
                             // visual feedback
                             try{ if(typeof showToast === 'function') showToast('Customer selected','Using Walking Customer','success'); }catch(_){}
                         }catch(e){ console.warn('useWalkingCustomer click failed', e); }
+                    });
+                }
+                // Receive Amount button: fill paidAmount with grandTotal
+                var rbtn = document.getElementById('rnReceiveAmountBtn');
+                if(rbtn){
+                    rbtn.addEventListener('click', function(){
+                        try{
+                            var gt = document.getElementById('grandTotal');
+                            var paid = document.getElementById('paidAmount');
+                            if(gt && paid){
+                                paid.value = String(gt.value || 0);
+                                if(typeof dueSaleCalculate === 'function') dueSaleCalculate();
+                                else if(typeof window.recalcTotals === 'function') window.recalcTotals();
+                                else if(typeof window.recalcFinancials === 'function') window.recalcFinancials();
+                                try{ if(typeof showToast === 'function') showToast('Payment updated','Paid set to Grand Total','info'); }catch(_){}
+                            }
+                        }catch(e){ console.warn('Receive Amount click failed', e); }
                     });
                 }
             }catch(e){ }

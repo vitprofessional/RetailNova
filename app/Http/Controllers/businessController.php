@@ -7,10 +7,21 @@ use App\Models\BusinessSetup;
 use App\Models\BusinessLocation;
 use Alert;
 use Illuminate\Support\Facades\Storage; 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Artisan;
 
 class businessController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $actor = Auth::guard('admin')->user();
+            if ($actor && in_array(strtolower($actor->role), ['storemanager'])) {
+                abort(403, 'Unauthorized');
+            }
+            return $next($request);
+        });
+    }
     //business setup page 
     public function addBusinessSetupPage(){
         $business = BusinessSetup::orderBy("id","desc")->first();

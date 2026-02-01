@@ -12,6 +12,16 @@ use Alert;
 
 class AccountManagementController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $actor = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+            if ($actor && in_array(strtolower($actor->role), ['storemanager'])) {
+                abort(403, 'Unauthorized');
+            }
+            return $next($request);
+        });
+    }
     /**
      * Display chart of accounts
      */

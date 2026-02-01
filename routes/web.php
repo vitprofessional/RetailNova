@@ -17,6 +17,11 @@ use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\AccountManagementController;
 use App\Http\Controllers\ExpenseManagementController;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\Admin\AdminUserManagementController;
+use App\Http\Controllers\Admin\SubscriptionAdminController;
+use App\Http\Controllers\Admin\StoreAdminController;
+use App\Http\Controllers\Admin\PaymentGatewayController;
+use App\Http\Controllers\Auth\SuperAdminSetupController;
 
 //user info str
 Route::get('/login',[
@@ -70,20 +75,7 @@ Route::get('/business/setup',[
     'storeCreat'
 ])->name('storeCreat');
 
-Route::post('/business/save',[
-    businessController::class,
-    'saveBusiness'
-])->name('saveBusiness');
-
-Route::post('/business/logo/save',[
-    businessController::class,
-    'saveBusinessLogo'
-])->name('saveBusinessLogo');
-
-Route::match(['get','post','delete'],'/business/logo/delete/{id}',[
-    businessController::class,
-    'delBusinessLogo'
-])->name('delBusinessLogo');
+// Moved to authenticated admin group below to ensure only Admin/Super Admin can create/update business
 
 Route::get('/user/confirm/mail',[
     userInfo::class,
@@ -104,6 +96,12 @@ Route::get('/',[
 ]);
 
 // Public AJAX endpoint for product list (no auth) — used by sale page to populate product select when
+// First-time Super Admin setup (blocked if one exists)
+Route::middleware([\App\Http\Middleware\EnsureNoSuperAdminExists::class])
+    ->group(function(){
+        Route::get('/setup/superadmin', [SuperAdminSetupController::class, 'show'])->name('superadmin.setup.show');
+        Route::post('/setup/superadmin', [SuperAdminSetupController::class, 'store'])->name('superadmin.setup.store');
+    });
 // admin session/cookies are not available to AJAX (keeps UI responsive). This returns option HTML.
 Route::get('/ajax/public/customer/{id}/products', [
     JqueryController::class,
@@ -134,8 +132,18 @@ Route::get('/ajax/public/customer/{id}/previous-due', [
     JqueryController::class,
     'getCustomerPreviousDuePublic'
 ])->name('ajax.customer.previousDue.public');
+// Public categories list for sale page filtering
+Route::get('/ajax/public/categories', [
+    JqueryController::class,
+    'getCategoriesPublic'
+])->name('ajax.categories.public');
+// Public products list filtered by category (returns option HTML similar to customer products)
+Route::get('/ajax/public/category/{id}/products', [
+    JqueryController::class,
+    'getProductsByCategoryPublic'
+])->name('ajax.category.products.public');
 // Require legacy session sync (SuperAdmin) and authenticate via admin guard
-Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group(function(){
+Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Http\Middleware\SalesOnly::class])->group(function(){
 
     // Admin profile management
     Route::get('/admin/profile', [
@@ -165,6 +173,12 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         dashboardController::class,
         'dashboard'
     ])->name('dashboard');
+
+    // Dashboard metrics API (AJAX)
+    Route::get('/dashboard/metrics', [
+        dashboardController::class,
+        'metrics'
+    ])->name('dashboard.metrics');
 
     //Coustomer&supplier Controller str
     Route::get('/add/customer',[
@@ -796,6 +810,22 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
         'addBusinessSetupPage'
     ])->name('addBusinessSetupPage');
 
+    // Business create/update (now accessible from Admin panel too)
+    Route::post('/business/save', [
+        businessController::class,
+        'saveBusiness'
+    ])->name('saveBusiness');
+
+    Route::post('/business/logo/save', [
+        businessController::class,
+        'saveBusinessLogo'
+    ])->name('saveBusinessLogo');
+
+    Route::match(['get','post','delete'],'/business/logo/delete/{id}', [
+        businessController::class,
+        'delBusinessLogo'
+    ])->name('delBusinessLogo');
+
     // Business Locations
     Route::get('business/locations', [
         businessController::class,
@@ -875,3 +905,47 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin'])->group
     Route::get('/quotation/{id}/edit', [QuotationController::class, 'edit'])->name('quotation.edit');
     Route::post('/quotation/{id}/update', [QuotationController::class, 'update'])->name('quotation.update');
 });
+
+// Super Admin prefixed routes for platform management
+Route::middleware(['auth:admin', \App\Http\Middleware\EnsureSuperAdminRole::class, \App\Http\Middleware\SalesOnly::class])
+    ->prefix('admin/super')
+    ->name('admin.super.')
+    ->group(function(){
+        // User management (Super Admin full access)
+        Route::get('/users', [AdminUserManagementController::class, 'index'])->name('users.index');
+        Route::post('/users', [AdminUserManagementController::class, 'store'])->name('users.store');
+        Route::get('/users/{id}/edit', [AdminUserManagementController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{id}', [AdminUserManagementController::class, 'update'])->name('users.update');
+        Route::delete('/users/{id}', [AdminUserManagementController::class, 'destroy'])->name('users.destroy');
+        Route::post('/users/bulk-delete', [AdminUserManagementController::class, 'bulkDelete'])->name('users.bulkDelete');
+
+        // Subscription management
+        Route::get('/subscriptions/plans', [SubscriptionAdminController::class, 'plansIndex'])->name('subscriptions.plans');
+        Route::post('/subscriptions/plans', [SubscriptionAdminController::class, 'plansStore'])->name('subscriptions.plans.store');
+        Route::delete('/subscriptions/plans/{id}', [SubscriptionAdminController::class, 'plansDelete'])->name('subscriptions.plans.delete');
+        Route::get('/subscriptions', [SubscriptionAdminController::class, 'index'])->name('subscriptions.index');
+        Route::post('/subscriptions', [SubscriptionAdminController::class, 'store'])->name('subscriptions.store');
+        Route::get('/subscriptions/{id}/cancel', [SubscriptionAdminController::class, 'cancel'])->name('subscriptions.cancel');
+
+        // Store management
+        Route::get('/stores', [StoreAdminController::class, 'index'])->name('stores.index');
+
+        // Payment gateways
+        Route::get('/gateways', [PaymentGatewayController::class, 'index'])->name('gateways.index');
+        Route::post('/gateways', [PaymentGatewayController::class, 'store'])->name('gateways.store');
+        Route::post('/gateways/{id}', [PaymentGatewayController::class, 'update'])->name('gateways.update');
+        Route::delete('/gateways/{id}', [PaymentGatewayController::class, 'destroy'])->name('gateways.destroy');
+    });
+
+// Admin & GM manageable user endpoints (role-restricted within controller)
+Route::middleware(['auth:admin', \App\Http\Middleware\SalesOnly::class])
+    ->prefix('admin/manage')
+    ->name('admin.manage.')
+    ->group(function(){
+        Route::get('/users', [AdminUserManagementController::class, 'index'])->name('users.index');
+        Route::post('/users', [AdminUserManagementController::class, 'store'])->name('users.store');
+        Route::get('/users/{id}/edit', [AdminUserManagementController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{id}', [AdminUserManagementController::class, 'update'])->name('users.update');
+        Route::delete('/users/{id}', [AdminUserManagementController::class, 'destroy'])->name('users.destroy');
+        Route::post('/users/bulk-delete', [AdminUserManagementController::class, 'bulkDelete'])->name('users.bulkDelete');
+    });

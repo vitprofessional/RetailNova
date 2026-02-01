@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 class Supplier extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, ScopesByBusiness;
     protected $fillable = [
-        'name', 'mobile', 'mail', 'city', 'area', 'country', 'state', 'openingBalance'
+        'name', 'mobile', 'mail', 'city', 'area', 'country', 'state', 'openingBalance', 'businessId'
     ];
 
     protected $casts = [

@@ -29,6 +29,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\SyncSessionUser::class,
+            \App\Http\Middleware\RestrictEditForSalesManager::class,
         ],
 
         'api' => [
@@ -58,6 +59,9 @@ class Kernel extends HttpKernel
         // Application-specific aliases
         'posAdmin' => \App\Http\Middleware\SuperAdmin::class,
         'generalAdmin' => \App\Http\Middleware\GeneralAdmin::class,
+        'superadmin' => \App\Http\Middleware\EnsureSuperAdminRole::class,
+        'noSuperadmin' => \App\Http\Middleware\EnsureNoSuperAdminExists::class,
+        'salesOnly' => \App\Http\Middleware\SalesOnly::class,
 
         // Lightweight test logger used during `testing` environment
         'testLogger' => \App\Http\Middleware\TestRequestLogger::class,

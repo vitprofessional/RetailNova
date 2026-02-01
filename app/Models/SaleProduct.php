@@ -7,11 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 class SaleProduct extends Model implements AuditableContract
 {
-    use Auditable;
+    use Auditable, ScopesByBusiness;
     protected $fillable = [
-        'customerId', 'invoiceNo', 'totalAmount', 'paidAmount', 'dueAmount', 'saleDate'
+        'customerId', 'invoiceNo', 'totalAmount', 'paidAmount', 'dueAmount', 'saleDate', 'businessId', 'salespersonId'
     ];
 
     protected $auditExclude = [
@@ -21,6 +23,11 @@ class SaleProduct extends Model implements AuditableContract
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customerId');
+    }
+
+    public function salesperson()
+    {
+        return $this->belongsTo(\App\Models\AdminUser::class, 'salespersonId');
     }
 
     public function items()

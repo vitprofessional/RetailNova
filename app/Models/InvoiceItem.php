@@ -7,12 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 class InvoiceItem extends Model implements AuditableContract
 {
-    use Auditable;
+    use Auditable, ScopesByBusiness;
     protected $fillable = [
         'saleId', 'purchaseId', 'qty', 'warranty_days', 'salePrice', 'buyPrice', 
-        'totalSale', 'totalPurchase', 'profitTotal', 'profitMargin', 'isBackorder'
+        'totalSale', 'totalPurchase', 'profitTotal', 'profitMargin', 'isBackorder', 'businessId'
     ];
 
     protected $casts = [

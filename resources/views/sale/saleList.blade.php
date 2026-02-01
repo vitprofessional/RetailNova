@@ -51,6 +51,7 @@
                                 </th>
                                 <th class="text-nowrap">Invoice</th>
                                 <th class="text-left">Customer</th>
+                                <th class="text-left">Salesperson</th>
                                 <th class="rn-number">Grand Total</th>
                                 <th class="rn-number">Paid</th>
                                 <th class="rn-number">Due</th>
@@ -85,8 +86,9 @@
                                         </td>
                                         <td class="rn-ellipsis text-nowrap">{{ $sl->invoice }}</td>
                                         <td class="text-left rn-ellipsis" title="{{ $customerName }}">{{ $customerName }}</td>
-                                        <td class="rn-number">{{ $grand }}</td>
-                                        <td class="rn-number">{{ $paid }}</td>
+                                        <td class="text-left rn-ellipsis" title="{{ optional($sl->salesperson)->fullName ?? '-' }}">{{ optional($sl->salesperson)->fullName ?? '-' }}</td>
+                                        
+                                        <td class="rn-number">{{ $grand }}</td><td class="rn-number">{{ $paid }}</td>
                                         <td class="rn-number">{{ $due }}</td>
                                         <td>
                                             @if($status === 'Paid')
@@ -101,12 +103,14 @@
                                         <td class="rn-actions text-center">
                                             <a class="btn btn-sm btn-outline-secondary" href="{{ route('invoiceGenerate',['id'=>$sl->id]) }}" title="Print"><i class="las la-print"></i></a>
                                             <a class="btn btn-sm btn-outline-secondary" href="{{ route('returnSale',['id'=>$sl->id]) }}" title="Return"><i class="las la-undo"></i></a>
+                                            @canEdit(true)
                                             <a class="btn btn-sm btn-outline-secondary" href="{{ route('sale.edit',['id'=>$sl->id]) }}" title="Edit"><i class="las la-edit"></i></a>
                                             <form method="POST" action="{{ route('delSale',['id'=>$sl->id]) }}" style="display:inline-block;">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="delete" title="Delete"><i class="las la-trash-alt"></i></button>
                                             </form>
+                                            @endcanEdit
                                         </td>
                                     </tr>
                                 @endforeach

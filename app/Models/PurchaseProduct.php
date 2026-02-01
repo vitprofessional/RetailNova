@@ -7,13 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 class PurchaseProduct extends Model implements AuditableContract
 {
-    use Auditable;
+    use Auditable, ScopesByBusiness;
     protected $fillable = [
         'productName', 'supplier', 'invoice', 'qty', 'buyPrice', 'salePriceExVat', 
         'salePriceInVat', 'vatStatus', 'totalAmount', 'grandTotal', 'paidAmount', 
-        'dueAmount', 'purchase_date', 'reference'
+        'dueAmount', 'purchase_date', 'reference', 'businessId'
     ];
 
     protected $casts = [

@@ -10,6 +10,8 @@
         if(!seed) return {};
         var newsale = seed.getAttribute('data-newsale') || '';
         var productsTpl = seed.getAttribute('data-products-template') || '';
+        var categoriesUrl = seed.getAttribute('data-categories-url') || '';
+        var categoryProductsTpl = seed.getAttribute('data-category-products-template') || '';
         var purchaseTpl = seed.getAttribute('data-purchase-template') || '';
         var purchaseByIdTpl = seed.getAttribute('data-purchase-by-id-template') || '';
         var purchaseSerialTpl = seed.getAttribute('data-purchase-serials-template') || '';
@@ -39,7 +41,7 @@
                 }
             }
         } catch(e){ /* ignore */ }
-        return { base: base, productsTpl: productsTpl, purchaseTpl: purchaseTpl, purchaseByIdTpl: purchaseByIdTpl, purchaseSerialTpl: purchaseSerialTpl };
+        return { base: base, productsTpl: productsTpl, categoriesUrl: categoriesUrl, categoryProductsTpl: categoryProductsTpl, purchaseTpl: purchaseTpl, purchaseByIdTpl: purchaseByIdTpl, purchaseSerialTpl: purchaseSerialTpl };
     }
     var ROUTES = {}; // will populate on DOMContentLoaded
     var SALE_ROW_COUNTER = 0; // per-row counter to track serial selections
@@ -62,8 +64,10 @@
         ROUTES = deriveRoutes();
         var customerSel = byId('customerName');
         var productSel = document.querySelector('.js-sale-product-select') || byId('productName');
+        var categorySel = byId('categorySelect');
         if(!productSel) return;
         productSel.disabled = true;
+        if(categorySel) categorySel.disabled = true;
         // Ensure form action posts to subfolder-aware URL
         try{
             var form = byId('saveSaleForm');
@@ -84,14 +88,29 @@
         // Wire payment inputs to recalc totals (direct and delegated for reliability)
         try{
             var dam = byId('discountAmount'); if(dam) dam.addEventListener('input', function(){ try{ recalcTotals(); }catch(e){} });
+            var addc = byId('additionalChargeAmount'); if(addc) addc.addEventListener('input', function(){ try{ recalcTotals(); }catch(e){} });
             var paid = byId('paidAmount'); if(paid) paid.addEventListener('input', function(){ try{ recalcTotals(); }catch(e){} });
         }catch(e){ }
         // Delegated fallback: ensure dynamically-added discount/paid inputs trigger recalculation
         try{
-            document.addEventListener('input', function(ev){ try{ var t = ev.target; if(!t) return; if(t.id === 'discountAmount' || t.id === 'paidAmount'){ try{ recalcTotals(); }catch(e){} } }catch(e){} }, true);
-            document.addEventListener('change', function(ev){ try{ var t = ev.target; if(!t) return; if(t.id === 'discountAmount' || t.id === 'paidAmount'){ try{ recalcTotals(); }catch(e){} } }catch(e){} }, true);
-            document.addEventListener('keyup', function(ev){ try{ var t = ev.target; if(!t) return; if(t.id === 'discountAmount'){ try{ recalcTotals(); }catch(e){} } }catch(e){} }, true);
+            document.addEventListener('input', function(ev){ try{ var t = ev.target; if(!t) return; if(t.id === 'discountAmount' || t.id === 'paidAmount' || t.id === 'additionalChargeAmount'){ try{ recalcTotals(); }catch(e){} } }catch(e){} }, true);
+            document.addEventListener('change', function(ev){ try{ var t = ev.target; if(!t) return; if(t.id === 'discountAmount' || t.id === 'paidAmount' || t.id === 'additionalChargeAmount'){ try{ recalcTotals(); }catch(e){} } }catch(e){} }, true);
+            document.addEventListener('keyup', function(ev){ try{ var t = ev.target; if(!t) return; if(t.id === 'discountAmount' || t.id === 'additionalChargeAmount'){ try{ recalcTotals(); }catch(e){} } }catch(e){} }, true);
         }catch(e){ }
+        // Autofocus the Add Customer modal's name field when modal shows
+        try{
+            var custModal = document.getElementById('customerModal');
+            if(custModal){
+                if(window.bootstrap && typeof custModal.addEventListener === 'function'){
+                    custModal.addEventListener('shown.bs.modal', function(){ try{ var fn = byId('fullName'); if(fn) fn.focus(); }catch(e){} });
+                } else if(window.jQuery){
+                    try{ window.jQuery(custModal).on('shown.bs.modal', function(){ try{ window.jQuery('#fullName').trigger('focus'); }catch(e){} }); }catch(e){}
+                } else {
+                    var plusBtn = document.querySelector('button[title="Add customer"]');
+                    if(plusBtn){ plusBtn.addEventListener('click', function(){ setTimeout(function(){ try{ var fn = byId('fullName'); if(fn) fn.focus(); }catch(e){} }, 450); }); }
+                }
+            }
+        }catch(e){}
                 if(customerSel){
             customerSel.addEventListener('change', function(){
                 var cid = this.value;
@@ -104,7 +123,7 @@
                                 .then(function(json){ try{ var v = (json && json.prevDue) ? json.prevDue : '0.00'; var prevEl = byId('prevDue'); if(prevEl) prevEl.value = v; var disp = byId('prevDueDisplay'); if(disp) disp.textContent = 'Previous Due: ' + v; }catch(e){} })
                                 .catch(function(e){ if(window.__SALEDEBUG) console.warn('prevDue fetch error', e); var prevEl = byId('prevDue'); if(prevEl) prevEl.value = 0; var disp = byId('prevDueDisplay'); if(disp) disp.textContent = 'Previous Due: 0.00'; });
                         }catch(e){ /* ignore prev due fetch errors */ }
-                if(!cid){ productSel.innerHTML = '<option value="">Select</option>'; productSel.disabled = true; return; }
+                if(!cid){ productSel.innerHTML = '<option value="">Select</option>'; productSel.disabled = true; if(categorySel){ categorySel.innerHTML = '<option value="">All Categories</option>'; categorySel.disabled = true; } return; }
                 var tpl = ROUTES.productsTpl || customerSel.getAttribute('data-products-url') || '';
                     var url = tpl ? tpl.replace('__ID__', encodeURIComponent(cid)) : (ROUTES.base + '/ajax/public/customer/'+encodeURIComponent(cid)+'/products');
                     url = safeFinalizeUrl(url);
@@ -130,14 +149,27 @@
                         try{
                             productSel.innerHTML = (data && data.data) ? data.data : '<option value="">Select</option>';
                             productSel.disabled = false;
+                            // Load categories
+                            if(categorySel){
+                                var cUrl = ROUTES.categoriesUrl || (ROUTES.base + '/ajax/public/categories');
+                                cUrl = safeFinalizeUrl(cUrl);
+                                fetch(cUrl, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
+                                  .then(function(res){ return res.json(); })
+                                  .then(function(json){ try{ categorySel.innerHTML = (json && json.data) ? json.data : '<option value="">All Categories</option>'; categorySel.disabled = false; }catch(e){} })
+                                  .catch(function(){ try{ categorySel.innerHTML = '<option value="">All Categories</option>'; categorySel.disabled = false; }catch(e){} });
+                            }
                             // If there are out-of-stock items returned, populate modal data and show note/button
                             try{
                                 var outNote = byId('outOfStockNote');
                                 var outBtn = byId('outOfStockBtn');
                                 var outList = byId('outOfStockList');
                                 var outArr = (data && data.outOfStock) ? data.outOfStock : [];
-                                if(outNote){ outNote.textContent = outArr.length > 0 ? (outArr.length + ' product(s) out of stock') : ''; }
-                                if(outBtn){ outBtn.style.display = outArr.length > 0 ? 'inline-block' : 'none'; }
+                                if(outBtn){
+                                    try{ var cnt = (outArr && outArr.length) ? outArr.length : 0; outBtn.innerText = 'View Out of Stock(' + cnt + ')'; }catch(e){}
+                                    try{ outBtn.title = (outArr && outArr.length) ? (outArr.length + ' product(s) out of stock') : 'No out-of-stock items'; }catch(e){}
+                                    try{ outBtn.style.display = (outArr && outArr.length) ? 'inline-block' : 'none'; }catch(e){}
+                                }
+                                if(outNote){ try{ outNote.style.display = 'none'; outNote.textContent = ''; }catch(e){} }
                                 if(outList){
                                     if(outArr.length === 0){ outList.innerHTML = '<p class="text-muted">No out-of-stock items.</p>'; }
                                     else {
@@ -205,6 +237,68 @@
                             }catch(e){ console.warn('sale product details parse', e); }
                         }).catch(function(e){ console.warn('getSaleProductDetails failed', e); });
         });
+
+        // When a category is selected, filter product list by that category
+        if(categorySel){
+            categorySel.addEventListener('change', function(){
+                try{
+                    var catId = this.value;
+                    if(!catId){
+                        // reload all products for selected customer
+                        var cid = customerSel && customerSel.value ? customerSel.value : '';
+                        if(!cid){ productSel.innerHTML = '<option value="">Select</option>'; return; }
+                        var tpl = ROUTES.productsTpl || customerSel.getAttribute('data-products-url') || '';
+                        var url = tpl ? tpl.replace('__ID__', encodeURIComponent(cid)) : (ROUTES.base + '/ajax/public/customer/'+encodeURIComponent(cid)+'/products');
+                        url = safeFinalizeUrl(url);
+                        fetch(url, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
+                          .then(function(res){ return res.json(); })
+                          .then(function(json){ try{ productSel.innerHTML = (json && json.data) ? json.data : '<option value="">Select</option>'; }catch(e){} });
+                        return;
+                    }
+                    var cpTpl = ROUTES.categoryProductsTpl || '';
+                    var cpUrl = cpTpl ? cpTpl.replace('__ID__', encodeURIComponent(catId)) : (ROUTES.base + '/ajax/public/category/'+encodeURIComponent(catId)+'/products');
+                    cpUrl = safeFinalizeUrl(cpUrl);
+                    fetch(cpUrl, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
+                      .then(function(res){ return res.json(); })
+                      .then(function(json){
+                        try{
+                            productSel.innerHTML = (json && json.data) ? json.data : '<option value="">Select</option>';
+                            // update out-of-stock modal list if provided
+                            var outArr = (json && json.outOfStock) ? json.outOfStock : [];
+                            var outNote = byId('outOfStockNote');
+                            var outBtn = byId('outOfStockBtn');
+                            var outList = byId('outOfStockList');
+                            if(outBtn){
+                                try{ var cnt2 = (outArr && outArr.length) ? outArr.length : 0; outBtn.innerText = 'View Out of Stock(' + cnt2 + ')'; }catch(e){}
+                                try{ outBtn.title = (outArr && outArr.length) ? (outArr.length + ' product(s) out of stock') : 'No out-of-stock items'; }catch(e){}
+                                try{ outBtn.style.display = (outArr && outArr.length) ? 'inline-block' : 'none'; }catch(e){}
+                            }
+                            if(outNote){ try{ outNote.style.display = 'none'; outNote.textContent = ''; }catch(e){} }
+                            if(outList){
+                                if(outArr.length === 0){ outList.innerHTML = '<p class="text-muted">No out-of-stock items.</p>'; }
+                                else {
+                                    var html = '<div class="list-group">';
+                                    outArr.forEach(function(it){
+                                        var pd = it.purchaseDate ? (' ['+it.purchaseDate+']') : '';
+                                        var viewLink = it.productId ? (adjustForSubfolder('/product/edit/' + encodeURIComponent(it.productId))) : '#';
+                                        html += '<div class="list-group-item d-flex justify-content-between align-items-center">'+
+                                            '<div><strong>'+ (it.productName || '') +'</strong> — '+ (it.supplierName || 'Unknown') + pd +
+                                            ' <span class="badge bg-secondary ms-2">Stock: '+ (it.currentStock || 0) +'</span></div>' +
+                                            '<div>' +
+                                                (it.productId ? '<a class="btn btn-sm btn-outline-primary me-2" href="'+viewLink+'" target="_blank">View</a>' : '') +
+                                                '<button style="display:none;" class="btn btn-sm btn-outline-success add-backorder" data-purchase-id="'+(it.purchaseId||'')+'">Add as backorder</button>' +
+                                            '</div>' +
+                                            '</div>';
+                                    });
+                                    html += '</div>';
+                                    outList.innerHTML = html;
+                                }
+                            }
+                        }catch(e){ console.warn('category filter render failed', e); }
+                      }).catch(function(err){ console.warn('category products fetch error', err); });
+                }catch(e){ console.warn('category change failed', e); }
+            });
+        }
     });
 
     function appendSaleRow(p){
@@ -499,8 +593,59 @@
         } else {
             if(note){ note.style.display = 'none'; note.textContent = ''; }
         }
-        if(mismatch){ tr.classList.add('serial-mismatch'); }
-        else { tr.classList.remove('serial-mismatch'); }
+        if(mismatch){ 
+            tr.classList.add('serial-mismatch'); 
+            // show a per-row toast to prompt user to select serials
+            try{ showRowSerialToast(tr, 'Please select serial number(s) equal to the quantity for this product.'); }catch(e){}
+        }
+        else { 
+            tr.classList.remove('serial-mismatch'); 
+            // clear per-row toast flag so future mismatches re-trigger
+            try{ tr.removeAttribute('data-serial-toast'); }catch(e){}
+        }
+        // Update global indicator whenever a row's serial state changes
+        try{ updateSerialMismatchIndicator(); }catch(e){}
+    }
+
+    // Show immediate validation when any row requires serial selection.
+    function updateSerialMismatchIndicator(){
+        try{
+            var rows = Array.prototype.slice.call(document.querySelectorAll('#productDetails tr'));
+            var mismatches = rows.filter(function(r){ return r.classList && r.classList.contains('serial-mismatch'); });
+            var count = mismatches.length;
+            var errBox = byId('saleErrorSummary');
+            var submitBtn = document.querySelector('form#saveSaleForm button[type="submit"]');
+            if(count > 0){
+                var msg = '<div class="alert alert-warning mb-0">Please select serial number(s) for '+count+' product(s) before saving.</div>';
+                if(errBox) errBox.innerHTML = msg;
+                if(submitBtn) submitBtn.disabled = true;
+            } else {
+                if(errBox) errBox.innerHTML = '';
+                // Re-evaluate save button enablement based on presence of rows
+                try{ if(submitBtn) submitBtn.disabled = (document.querySelectorAll('#productDetails tr').length === 0); }catch(e){}
+            }
+        }catch(e){ console.warn('updateSerialMismatchIndicator failed', e); }
+    }
+
+    // Show a per-row toast and highlight when a row requires serial selection
+    function showRowSerialToast(tr, message){
+        try{
+            if(!tr) return;
+            // Prevent repeated toasts for the same row until resolved
+            if(tr.getAttribute('data-serial-toast') === '1') return;
+            tr.setAttribute('data-serial-toast','1');
+            // Use global toast if available
+            try{ if(typeof showToast === 'function'){ showToast('Serial required', message, 'warning'); } }catch(e){}
+            // Add a quick visual highlight
+            var oldOutline = tr.style.boxShadow || '';
+            tr.style.boxShadow = '0 0 10px rgba(255,165,0,0.6)';
+            tr.style.transition = 'box-shadow 0.3s ease';
+            // Also pulse the serial button if present
+            try{
+                var btn = tr.querySelector('.open-sale-serials'); if(btn){ btn.classList.add('btn-outline-warning'); }
+            }catch(e){}
+            setTimeout(function(){ try{ tr.style.boxShadow = oldOutline || ''; var btn = tr.querySelector('.open-sale-serials'); if(btn){ btn.classList.remove('btn-outline-warning'); } }catch(e){} }, 2200);
+        }catch(e){ console.warn('showRowSerialToast failed', e); }
     }
 
     function reindexSaleSerialInputs(){
@@ -570,7 +715,7 @@
         try{
             var saveBtn = document.querySelector('form#saveSaleForm button[type="submit"]');
             var hasRows = document.querySelectorAll('#productDetails tr').length > 0;
-            if(saveBtn) saveBtn.disabled = !hasRows;
+            if(saveBtn) saveBtn.disabled = !hasRows || document.querySelectorAll('#productDetails tr.serial-mismatch').length > 0;
         }catch(e){}
     }
 
@@ -659,7 +804,8 @@
             if(!totals.length){ return; }
             var base = 0; totals.forEach(function(t){ base += num(t.value); });
             var discount = num(byId('discountAmount') && byId('discountAmount').value);
-            var grand = Math.max(0, base - discount);
+            var addCharge = num(byId('additionalChargeAmount') && byId('additionalChargeAmount').value);
+            var grand = Math.max(0, base - discount + addCharge);
             var paid = num(byId('paidAmount') && byId('paidAmount').value);
             var due = Math.max(0, grand - paid);
             var curDue = due; // server will recompute safely

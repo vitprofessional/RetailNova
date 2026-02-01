@@ -29,6 +29,8 @@ class SaleStoreRequest extends FormRequest
             'warranty_days.*' => ['nullable','string'],
             'totalSaleAmount' => ['required','numeric','min:0'],
             'discountAmount'  => ['nullable','numeric','min:0'],
+            'additionalChargeName'   => ['nullable','string','max:190'],
+            'additionalChargeAmount' => ['nullable','numeric','min:0'],
             'grandTotal'      => ['required','numeric','min:0'],
             'paidAmount'      => ['nullable','numeric','min:0'],
             'dueAmount'       => ['nullable','numeric','min:0'],

@@ -38,6 +38,7 @@
                     @csrf
                     <input type="hidden" name="profileId" value="{{ $profileId }}">
                     <div class="row">
+                        @include('partials.business_selector', ['businesses' => $businesses ?? [] , 'selectedBusinessId' => $profile->businessId ?? null])
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Name *</label>

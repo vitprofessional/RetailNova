@@ -26,6 +26,7 @@
                     </div>
                     <div class="card-body">
                         <div class="row align-items-center">
+                            @include('partials.business_selector', ['businesses' => $businesses ?? [] , 'selectedBusinessId' => null])
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="date" class="form-label">Date *</label>
