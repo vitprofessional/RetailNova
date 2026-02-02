@@ -6,7 +6,7 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<form action="{{ route('saveSale') }}" id="saveSaleForm" class="row sale-page" method="POST" data-action-template="{{ route('saveSale') }}">
+<form action="{{ route('saveSale') }}" id="saveSaleForm" class="sale-page" method="POST" data-action-template="{{ route('saveSale') }}">
     @csrf
     <style>
         .sale-page .card .card-body { padding: 16px; }
