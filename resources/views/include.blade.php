@@ -1444,9 +1444,9 @@
                                           $root = rtrim(request()->root(), '/');
                                           $publicPath = public_path('storage/' . $adminUser->avatar);
                                           if(file_exists($publicPath)){
-                                              $topAvatar = $root . '/public/storage/' . $adminUser->avatar . '?v=' . $timestamp;
+                                              $topAvatar = $root . '/storage/app/public/' . $adminUser->avatar . '?v=' . $timestamp;
                                           } else {
-                                              $topAvatar = $root . '/storage/' . $adminUser->avatar . '?v=' . $timestamp;
+                                              $topAvatar = $root . '/storage/app/public/' . $adminUser->avatar . '?v=' . $timestamp;
                                           }
                                       }
                                   @endphp

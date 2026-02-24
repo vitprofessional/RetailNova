@@ -22,9 +22,9 @@ class AdminProfileController extends Controller
             $publicPath = public_path('storage/' . $admin->avatar);
             if (file_exists($publicPath)) {
                 // common XAMPP dev setup: public appears in the served path
-                $avatarUrl = $root . '/public/storage/' . $admin->avatar . '?v=' . $timestamp;
+                $avatarUrl = $root . '/storage/app/public/' . $admin->avatar . '?v=' . $timestamp;
             } else {
-                $avatarUrl = $root . '/public/storage/' . $admin->avatar . '?v=' . $timestamp;
+                $avatarUrl = $root . '/storage/app/public/' . $admin->avatar . '?v=' . $timestamp;
             }
         } else {
             $avatarUrl = rtrim($request->root(), '/') . '/public/eshop/assets/images/user/1.png';

@@ -95,6 +95,8 @@ Route::get('/',[
     'userLogin'
 ]);
 
+Route::view('/brochure', 'brochure.marketing')->name('brochure.marketing');
+
 // Public AJAX endpoint for product list (no auth) — used by sale page to populate product select when
 // First-time Super Admin setup (blocked if one exists)
 Route::middleware([\App\Http\Middleware\EnsureNoSuperAdminExists::class])

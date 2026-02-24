@@ -13,7 +13,7 @@
             </div>
             <div class="col-md-9">
                 <table class="table table-borderless">
-                    <tr><th>Full name</th><td>{{ $admin->fullName }}</td></tr>
+                    <tr><th>Full names</th><td>{{ $admin->fullName }}</td></tr>
                     <tr><th>Sure name</th><td>{{ $admin->sureName }}</td></tr>
                     <tr><th>Email</th><td>{{ $admin->mail }}</td></tr>
                     <tr><th>Contact</th><td>{{ $admin->contactNumber }}</td></tr>
