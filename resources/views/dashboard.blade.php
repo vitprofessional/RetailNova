@@ -203,14 +203,16 @@ Dashboard
                 </div>
             </div>
             <div class="col-lg-12">
-                <div class="card card-block card-stretch card-height">
+                <div class="card card-block card-stretch">
                     <div class="card-header d-flex justify-content-between">
                         <div class="header-title">
                             <h4 class="card-title">Financial Report</h4>
                         </div>
                     </div>
                     <div class="card-body">
-                        <canvas id="rn-financial-chart" height="140"></canvas>
+                        <div style="position:relative;height:280px;">
+                            <canvas id="rn-financial-chart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
