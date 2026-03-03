@@ -19,9 +19,30 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
-        // Seed admin user for local testing
         $this->call([
+            // Core setup
             AdminUserSeeder::class,
+
+            // Lookup / catalogue tables (brands, categories, units)
+            CatalogSeeder::class,
+
+            // Chart of accounts
+            AccountSeeder::class,
+
+            // Expense categories
+            ExpenseCategorySeeder::class,
+
+            // People
+            SupplierSeeder::class,
+            CustomerSeeder::class,
+
+            // Products + opening stock
+            ProductSeeder::class,
+
+            // Transactions
+            PurchaseSeeder::class,
+            SaleSeeder::class,
+            ExpenseEntrySeeder::class,
         ]);
     }
 }

@@ -286,7 +286,7 @@ class AccountSeeder extends Seeder
         ];
 
         foreach ($accounts as $account) {
-            Account::create($account);
+            Account::updateOrCreate(['account_code' => $account['account_code']], $account);
         }
     }
 }

@@ -91,7 +91,7 @@ class ExpenseCategorySeeder extends Seeder
         ];
 
         foreach ($categories as $category) {
-            ExpenseCategory::create($category);
+            ExpenseCategory::updateOrCreate(['name' => $category['name']], $category);
         }
     }
 }
