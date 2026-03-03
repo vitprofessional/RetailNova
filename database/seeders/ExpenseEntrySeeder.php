@@ -142,13 +142,30 @@ class ExpenseEntrySeeder extends Seeder
         ];
 
         foreach ($entries as $entry) {
-            DB::table('expense_entries')->insert(array_merge($entry, [
+            $payload = array_merge($entry, [
                 'receipt_file'             => null,
                 'business_location_id'     => null,
                 'account_transaction_id'   => null,
-                'created_at'               => now(),
-                'updated_at'               => now(),
-            ]));
+            ]);
+
+            $referenceNo = $entry['reference_no'];
+            $existingEntry = DB::table('expense_entries')
+                ->where('reference_no', $referenceNo)
+                ->select('id')
+                ->first();
+
+            if ($existingEntry) {
+                DB::table('expense_entries')
+                    ->where('id', $existingEntry->id)
+                    ->update(array_merge($payload, [
+                        'updated_at' => now(),
+                    ]));
+            } else {
+                DB::table('expense_entries')->insert(array_merge($payload, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]));
+            }
         }
     }
 }

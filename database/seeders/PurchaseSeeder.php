@@ -154,10 +154,26 @@ class PurchaseSeeder extends Seeder
 
         foreach ($purchases as $row) {
             $now = now();
-            $id = DB::table('purchase_products')->insertGetId(array_merge($row, [
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]));
+            $invoice = $row['invoice'];
+            $existingPurchase = DB::table('purchase_products')
+                ->where('invoice', $invoice)
+                ->select('id')
+                ->first();
+
+            if ($existingPurchase) {
+                $id = $existingPurchase->id;
+
+                DB::table('purchase_products')
+                    ->where('id', $id)
+                    ->update(array_merge($row, [
+                        'updated_at' => $now,
+                    ]));
+            } else {
+                $id = DB::table('purchase_products')->insertGetId(array_merge($row, [
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]));
+            }
 
             // Link purchase to the product_stock record if no purchaseId yet
             $stockRecord = ProductStock::where('productId', $row['productName'])

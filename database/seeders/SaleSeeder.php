@@ -295,10 +295,28 @@ class SaleSeeder extends Seeder
 
         $now = now();
         foreach ($sales as $sale) {
-            $saleId = DB::table('sale_products')->insertGetId(array_merge($sale['header'], [
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]));
+            $invoice = $sale['header']['invoice'];
+            $existingSale = DB::table('sale_products')
+                ->where('invoice', $invoice)
+                ->select('id')
+                ->first();
+
+            if ($existingSale) {
+                $saleId = $existingSale->id;
+
+                DB::table('sale_products')
+                    ->where('id', $saleId)
+                    ->update(array_merge($sale['header'], [
+                        'updated_at' => $now,
+                    ]));
+
+                DB::table('invoice_items')->where('saleId', $saleId)->delete();
+            } else {
+                $saleId = DB::table('sale_products')->insertGetId(array_merge($sale['header'], [
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]));
+            }
 
             foreach ($sale['items'] as $item) {
                 DB::table('invoice_items')->insert(array_merge($item, [
