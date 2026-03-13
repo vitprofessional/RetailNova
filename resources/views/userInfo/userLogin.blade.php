@@ -83,6 +83,41 @@
          .image-right {
             max-width: 120px;
          }
+         /* ── Mobile responsiveness ── */
+         @media (max-width: 576px) {
+            .auth-card {
+               padding: 1.25rem 1rem;
+               border-radius: 10px;
+            }
+            .auth-content h2 {
+               font-size: 1.35rem;
+            }
+            .auth-content p {
+               font-size: 0.9rem;
+            }
+            .login-content {
+               padding: 1rem 0.5rem;
+               align-items: flex-start;
+               padding-top: 2rem;
+            }
+            .form-control {
+               font-size: 0.95rem;
+               padding: 0.5rem 0.5rem 0.5rem 2.2rem;
+            }
+            .btn-primary {
+               font-size: 1rem;
+               padding: 0.6rem 1rem;
+            }
+            .shop-info-card {
+               min-width: 0 !important;
+               width: 100%;
+            }
+         }
+         @media (max-width: 768px) {
+            .auth-card {
+               padding: 1.5rem 1.25rem;
+            }
+         }
       </style>
    </head>
   <body class="bg-login">
@@ -97,7 +132,7 @@
       <section class="login-content">
          <div class="container">
             <div class="row align-items-center justify-content-center height-self-center">
-               <div class="@if($config->count()>0) col-5 @else col-7 @endif">
+               <div class="@if($config->count()>0) col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 @else col-12 col-sm-10 col-md-8 col-lg-7 @endif">
                   <div class="card auth-card shadow">
                      <div class="card-body">
                         <div class="d-flex align-items-center auth-content">
@@ -106,17 +141,17 @@
                                  <div class="col-12 text-center mb-3">
                                           @php $shop = $business[0] ?? null; @endphp
                                           @if($shop)
-                                             <div class="mb-3 px-4 py-3" style="background:#f3f6fb;border-radius:12px;box-shadow:0 2px 8px rgba(60,72,120,0.07);display:inline-block;min-width:260px;">
-                                                   <div class="d-flex flex-column align-items:flex-start;justify-content:flex-start;">
+                                             <div class="mb-3 px-3 py-3 shop-info-card" style="background:#f3f6fb;border-radius:12px;box-shadow:0 2px 8px rgba(60,72,120,0.07);display:block;width:100%;max-width:400px;margin:0 auto;">
+                                                   <div class="d-flex flex-column align-items-start">
                                                    <img src="{{ asset('/public/uploads/business/' . $shop->businessLogo) ? asset('/public/uploads/business/' . $shop->businessLogo) : asset('/public/eshop/assets/images/login/01.png') }}" alt="Logo" style="max-width:70px;max-height:70px;border-radius:8px;margin-bottom:8px;">
-                                                      <h4 class="mb-1" style="color:#3b82f6;margin-bottom:0.25rem;text-align:left;width:100%;">{{ $shop->businessName ?? '' }}, <small style="font-size:12px">{{ $shop->businessLocation }}</small></h4>
-                                                   <div style="color:#64748b;font-size:1rem;">
-                                                      <div style="display:flex;justify-content:center;gap:18px;">
+                                                      <h4 class="mb-1" style="color:#3b82f6;margin-bottom:0.25rem;text-align:left;width:100%;word-break:break-word;">{{ $shop->businessName ?? '' }}, <small style="font-size:12px">{{ $shop->businessLocation }}</small></h4>
+                                                   <div style="color:#64748b;font-size:1rem;width:100%;">
+                                                      <div style="display:flex;flex-wrap:wrap;justify-content:flex-start;gap:12px;">
                                                          @if(!empty($shop->mobile))
                                                             <span style="display:flex;align-items:center;gap:6px;"><i class="ri-phone-line" style="font-size:1.15em;"></i> <span>{{ $shop->mobile }}</span></span>
                                                          @endif
                                                          @if(!empty($shop->email))
-                                                            <span style="display:flex;align-items:center;gap:6px;"><i class="ri-mail-line" style="font-size:1.15em;"></i> <span>{{ $shop->email }}</span></span>
+                                                            <span style="display:flex;align-items:center;gap:6px;word-break:break-all;"><i class="ri-mail-line" style="font-size:1.15em;flex-shrink:0;"></i> <span>{{ $shop->email }}</span></span>
                                                          @endif
                                                       </div>
                                                    </div>
