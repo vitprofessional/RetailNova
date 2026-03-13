@@ -11,7 +11,7 @@
       <title>@if($config->count()>0){{ $config[0]->businessName ?? 'Retail Nova' }}@else Retail Nova @endif | User Login</title>
       
       <!-- Favicon -->
-      <link rel="shortcut icon" href="https://templates.iqonic.design/posdash/html/assets/images/favicon.ico" />
+      <link rel="shortcut icon" href="{{asset('/public/eshop/')}}/assets/images/favicon.ico" />
       <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/backend-plugin.min.css">
       <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/backende209.css?v=1.0.0">
       <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/%40fortawesome/fontawesome-free/css/all.min.css">
@@ -188,7 +188,7 @@
                                        @endif
                                  </div>
                               </div>
-                              <h2 class="mb-2 text-center">Welcome to Retail Nova</h2>
+                              <h2 class="mb-2 text-center">Welcome to {{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h2>
                               <p class="text-center">Sign in to your account to continue</p>
                               @if($config->count()>0)
                               <form action="{{ route('adminLogin') }}" class="login-form" method="POST">

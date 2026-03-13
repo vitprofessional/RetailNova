@@ -736,7 +736,7 @@
       <div class="iq-sidebar  sidebar-default ">
           <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
               <a href="{{ route('dashboard') }}" class="header-logo">
-                  <img src="{{asset('/public/eshop/')}}/assets/images/logo.png" class="img-fluid rounded-normal light-logo" alt="logo"><h5 class="logo-title light-logo ml-3">Retail Nova</h5>
+                  <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('/public/uploads/business/' . $config[0]->businessLogo) : asset('logo.png') }}" class="img-fluid rounded-normal light-logo" alt="logo"><h5 class="logo-title light-logo ml-3">{{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h5>
               </a>
               <div class="iq-menu-bt-sidebar ml-0">
                   <i class="las la-bars wrapper-menu"></i>
@@ -1217,8 +1217,8 @@
                   <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
                       <i class="ri-menu-line wrapper-menu"></i>
                       <a href="{{route('dashboard')}}" class="header-logo">
-                          <img src="{{asset('/public/eshop/')}}/assets/images/logo.png" class="img-fluid rounded-normal" alt="logo">
-                          <h5 class="logo-title ml-3">Retail Nova</h5>
+                          <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('/public/uploads/business/' . $config[0]->businessLogo) : asset('logo.png') }}" class="img-fluid rounded-normal" alt="logo">
+                          <h5 class="logo-title ml-3">{{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h5>
       
                       </a>
                   </div>
