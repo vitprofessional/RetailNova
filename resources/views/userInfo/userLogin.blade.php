@@ -8,7 +8,7 @@
 <head>
     <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-      <title>Retail Nova | User Login</title>
+      <title>@if($config->count()>0){{ $config[0]->businessName ?? 'Retail Nova' }}@else Retail Nova @endif | User Login</title>
       
       <!-- Favicon -->
       <link rel="shortcut icon" href="https://templates.iqonic.design/posdash/html/assets/images/favicon.ico" />
@@ -159,7 +159,10 @@
                                              </div>
                                           @endif
                                        @if($config->count()>0)
-                                          <div class="mb-2">
+                                          <div class="mb-2 d-flex flex-column align-items-center">
+                                             @if(!$shop)
+                                                <img src="{{ !empty($config[0]->businessLogo ?? '') ? asset('/public/uploads/business/' . $config[0]->businessLogo) : asset('logo.png') }}" alt="Logo" style="max-width:70px;max-height:70px;border-radius:8px;margin-bottom:8px;">
+                                             @endif
                                              <h4 class="mb-1" style="color:#3b82f6;font-weight:600;">{{ $config[0]->businessName ?? '' }}</h4>
                                              <div style="color:#64748b;font-size:1rem;">
                                                 @if(!empty($config[0]->mobile))
