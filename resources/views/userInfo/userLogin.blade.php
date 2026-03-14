@@ -139,41 +139,28 @@
                            <div class="col-12 align-self-center">
                               <div class="row">
                                  <div class="col-12 text-center mb-3">
-                                          @php $shop = $business[0] ?? null; @endphp
-                                          @if($shop)
+                                          @php
+                                             $shop = $business[0] ?? null;
+                                             $displayShop = $shop ?? ($config[0] ?? null);
+                                          @endphp
+                                          @if($displayShop)
                                              <div class="mb-3 px-3 py-3 shop-info-card" style="background:#f3f6fb;border-radius:12px;box-shadow:0 2px 8px rgba(60,72,120,0.07);display:block;width:100%;max-width:400px;margin:0 auto;">
                                                    <div class="d-flex flex-column align-items-start">
-                                                   <img src="{{ !empty($shop->businessLogo) ? asset('/public/uploads/business/' . $shop->businessLogo) : asset('/public/logo.png') }}" alt="Logo" style="max-width:70px;max-height:70px;border-radius:8px;margin-bottom:8px;">
-                                                      <h4 class="mb-1" style="color:#3b82f6;margin-bottom:0.25rem;text-align:left;width:100%;word-break:break-word;">{{ $shop->businessName ?? '' }}, <small style="font-size:12px">{{ $shop->businessLocation }}</small></h4>
+                                                   <img src="{{ !empty($displayShop->businessLogo) ? asset('/public/uploads/business/' . $displayShop->businessLogo) : asset('/public/logo.png') }}" alt="Logo" style="max-width:70px;max-height:70px;border-radius:8px;margin-bottom:8px;">
+                                                      <h4 class="mb-1" style="color:#3b82f6;margin-bottom:0.25rem;text-align:left;width:100%;word-break:break-word;">{{ $displayShop->businessName ?? '' }}, <small style="font-size:12px">{{ $displayShop->businessLocation }}</small></h4>
                                                    <div style="color:#64748b;font-size:1rem;width:100%;">
                                                       <div style="display:flex;flex-wrap:wrap;justify-content:flex-start;gap:12px;">
-                                                         @if(!empty($shop->mobile))
-                                                            <span style="display:flex;align-items:center;gap:6px;"><i class="ri-phone-line" style="font-size:1.15em;"></i> <span>{{ $shop->mobile }}</span></span>
+                                                         @if(!empty($displayShop->mobile))
+                                                            <span style="display:flex;align-items:center;gap:6px;"><i class="ri-phone-line" style="font-size:1.15em;"></i> <span>{{ $displayShop->mobile }}</span></span>
                                                          @endif
-                                                         @if(!empty($shop->email))
-                                                            <span style="display:flex;align-items:center;gap:6px;word-break:break-all;"><i class="ri-mail-line" style="font-size:1.15em;flex-shrink:0;"></i> <span>{{ $shop->email }}</span></span>
+                                                         @if(!empty($displayShop->email))
+                                                            <span style="display:flex;align-items:center;gap:6px;word-break:break-all;"><i class="ri-mail-line" style="font-size:1.15em;flex-shrink:0;"></i> <span>{{ $displayShop->email }}</span></span>
                                                          @endif
                                                       </div>
                                                    </div>
                                                 </div>
                                              </div>
                                           @endif
-                                       @if($config->count()>0)
-                                          <div class="mb-2 d-flex flex-column align-items-center">
-                                             @if(!$shop)
-                                                <img src="{{ !empty($config[0]->businessLogo ?? '') ? asset('/public/uploads/business/' . $config[0]->businessLogo) : asset('logo.png') }}" alt="Logo" style="max-width:70px;max-height:70px;border-radius:8px;margin-bottom:8px;">
-                                             @endif
-                                             <h4 class="mb-1" style="color:#3b82f6;font-weight:600;">{{ $config[0]->businessName ?? '' }}</h4>
-                                             <div style="color:#64748b;font-size:1rem;">
-                                                @if(!empty($config[0]->mobile))
-                                                   <span><i class="ri-phone-line"></i> {{ $config[0]->mobile }}</span>
-                                                @endif
-                                                @if(!empty($config[0]->email))
-                                                   <span class="ml-2"><i class="ri-mail-line"></i> {{ $config[0]->email }}</span>
-                                                @endif
-                                             </div>
-                                          </div>
-                                       @endif
                                  </div>
                                  <div class="col-12">
                                        @if(session()->has('success'))
