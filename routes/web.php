@@ -75,6 +75,11 @@ Route::get('/business/setup',[
     'storeCreat'
 ])->name('storeCreat');
 
+Route::post('/business/setup',[
+    userInfo::class,
+    'saveStoreSetup'
+])->name('saveStoreSetup');
+
 // Moved to authenticated admin group below to ensure only Admin/Super Admin can create/update business
 
 Route::get('/user/confirm/mail',[
@@ -822,6 +827,11 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
         businessController::class,
         'saveBusinessLogo'
     ])->name('saveBusinessLogo');
+
+    Route::post('/business/demo/reset', [
+        businessController::class,
+        'resetDemoData'
+    ])->name('business.demo.reset');
 
     Route::match(['get','post','delete'],'/business/logo/delete/{id}', [
         businessController::class,

@@ -44,12 +44,33 @@ php artisan key:generate
 
 ```bash
 php artisan migrate
-php artisan db:seed --class=AccountSeeder
-php artisan db:seed --class=ExpenseCategorySeeder
+php artisan db:seed
 php artisan storage:link
 ```
 
-4) Run the app
+4) Seed one demo business type when needed
+
+```bash
+# Mobile shop
+php artisan db:seed --class=MobileShopSetupSeeder
+
+# Vehicle / auto parts shop
+php artisan db:seed --class=VehicleShopSetupSeeder
+
+# Computer / PC components shop
+php artisan db:seed --class=ComputerShopSetupSeeder
+
+# Electronics parts shop
+php artisan db:seed --class=ElectronicsPartsSetupSeeder
+
+# Garments shop
+php artisan db:seed --class=GarmentsShopSetupSeeder
+
+# Pharmacy / medicine shop
+php artisan db:seed --class=PharmacyShopSetupSeeder
+```
+
+5) Run the app
 
 ```bash
 # option A: run everything together
@@ -86,4 +107,4 @@ npm run dev
 
 ---
 
-Last updated: January 25, 2026
+Last updated: March 14, 2026

@@ -92,6 +92,19 @@
                                     </div>
 
                                     <div class="form-group mb-4">
+                                        <label for="businessType" class="form-label font-weight-600">
+                                            <i class="las la-layer-group mr-2"></i>Business Type
+                                        </label>
+                                        <select class="form-control" id="businessType" name="businessType">
+                                            <option value="">Select a business type</option>
+                                            @foreach(($businessTypes ?? []) as $typeValue => $typeLabel)
+                                            <option value="{{ $typeValue }}" {{ $businessType === $typeValue ? 'selected' : '' }}>{{ $typeLabel }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small class="text-muted d-block mt-2">Selecting a business type lets RetailNova load the matching demo catalog, customers, purchases, and sales.</small>
+                                    </div>
+
+                                    <div class="form-group mb-4">
                                         <label for="businessLocation" class="form-label font-weight-600">
                                             <i class="las la-map-marker mr-2"></i>Business Location
                                         </label>
@@ -151,6 +164,66 @@
                                 <!-- Full Width Sections -->
                                 <div class="col-12">
                                     <hr class="my-4">
+                                    <h6 class="font-weight-700 mb-3"><i class="las la-database mr-2"></i>Demo Data Setup</h6>
+
+                                    <div class="form-group form-check mb-4 p-3 bg-light rounded">
+                                        <input
+                                            type="checkbox"
+                                            class="form-check-input"
+                                            id="seedBusinessDemoData"
+                                            name="seedBusinessDemoData"
+                                            value="1"
+                                            {{ empty($businessType) && !empty($canSeedDemoData) ? 'checked' : '' }}
+                                            {{ empty($canSeedDemoData) ? 'disabled' : '' }}
+                                        >
+                                        <label class="form-check-label" for="seedBusinessDemoData">
+                                            <span class="font-weight-600">Load demo data for the selected business type</span>
+                                            <small class="d-block text-muted">
+                                                @if(!empty($canSeedDemoData))
+                                                On first setup, RetailNova can seed products, suppliers, customers, purchases, and sales that match the selected business type.
+                                                @else
+                                                Demo data auto-seeding is disabled because this business already has operational data.
+                                                @endif
+                                            </small>
+                                        </label>
+                                    </div>
+
+                                    {{-- ── Replace Demo Data (visible only when existing data present) ── --}}
+                                    @if(!$canSeedDemoData && !empty($business->businessType))
+                                    <div class="card border-warning mb-4">
+                                        <div class="card-header bg-warning text-dark py-2 px-3">
+                                            <i class="las la-redo-alt mr-1"></i>
+                                            <strong>Replace Demo Data</strong>
+                                        </div>
+                                        <div class="card-body py-3">
+                                            <p class="text-muted small mb-3">
+                                                This will <strong>permanently delete</strong> all current products, customers, product stocks, purchases and sales for this business, then re-seed fresh demo data for the selected type.
+                                                <strong class="text-danger">This cannot be undone.</strong>
+                                            </p>
+                                            <form action="{{ route('business.demo.reset') }}" method="POST"
+                                                  onsubmit="return confirm('⚠ WARNING: This will delete ALL products, customers, purchases and sales for this business and replace them with new demo data.\n\nAre you absolutely sure?');">
+                                                @csrf
+                                                <div class="form-row align-items-end">
+                                                    <div class="col-sm-7">
+                                                        <label class="font-weight-600 small mb-1">New Business Type</label>
+                                                        <select name="newBusinessType" class="form-control form-control-sm" required>
+                                                            <option value="">— Select —</option>
+                                                            @foreach($businessTypes as $key => $label)
+                                                                <option value="{{ $key }}" {{ $business->businessType === $key ? 'selected' : '' }}>{{ $label }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-sm-5 mt-2 mt-sm-0">
+                                                        <button type="submit" class="btn btn-warning btn-sm w-100">
+                                                            <i class="las la-sync mr-1"></i> Reset &amp; Reseed
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    @endif
+
                                     <h6 class="font-weight-700 mb-3"><i class="las la-receipt mr-2"></i>Walk-in Invoice Options</h6>
                                     @php
                                         $hideAckWalkin = config('pos.hide_ack_walkin', true);
@@ -337,13 +410,22 @@
 (function(){
     var ta = document.getElementById('invoiceTermsText');
     var prev = document.getElementById('invoiceTermsPreview');
+    var businessType = document.getElementById('businessType');
+    var seedDemo = document.getElementById('seedBusinessDemoData');
     function esc(s){
         return s.replace(/[&<>"']/g, function(c){
             return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'})[c];
         });
     }
     function update(){ if(!ta || !prev) return; prev.innerHTML = esc(ta.value).replace(/\n/g,'<br>'); }
+    function syncSeedToggle(){
+        if(!businessType || !seedDemo || seedDemo.disabled) return;
+        if(!businessType.value){
+            seedDemo.checked = false;
+        }
+    }
     if(ta && prev){ ta.addEventListener('input', update); }
+    if(businessType && seedDemo){ businessType.addEventListener('change', syncSeedToggle); }
 })();
 </script>
     </div>

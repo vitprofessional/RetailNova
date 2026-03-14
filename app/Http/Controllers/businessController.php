@@ -5,10 +5,17 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\BusinessSetup;
 use App\Models\BusinessLocation;
+use Database\Seeders\ComputerShopSeeder;
+use Database\Seeders\ElectronicsPartsSeeder;
+use Database\Seeders\GarmentsShopSeeder;
+use Database\Seeders\MobileShopSeeder;
+use Database\Seeders\PharmacyShopSeeder;
+use Database\Seeders\VehicleShopSeeder;
 use Alert;
 use Illuminate\Support\Facades\Storage; 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 
 class businessController extends Controller
 {
@@ -28,15 +35,32 @@ class businessController extends Controller
         if(!$business) {
             $business = new BusinessSetup();
         }
-        return view('business.businessSetup',['business'=>$business]);        
+
+        return view('business.businessSetup',[
+            'business' => $business,
+            'businessTypes' => $this->businessTypeOptions(),
+            'canSeedDemoData' => $this->canSeedDemoDataForBusiness((int) ($business->id ?? 1)),
+        ]);        
     }
 
     public function saveBusiness(Request $requ){
+        $selectedBusinessType = $requ->input('businessType');
+        $businessTypes = $this->businessTypeOptions();
+        $isValidBusinessType = empty($selectedBusinessType) || array_key_exists($selectedBusinessType, $businessTypes);
+
+        if (!$isValidBusinessType) {
+            Alert::error("Error", "Invalid business type selected");
+            return back()->withInput();
+        }
+
         if($requ->businessId):
             $business = BusinessSetup::find($requ->businessId);
         else:
             $business = new BusinessSetup();
         endif;
+
+        $previousBusinessType = $business->businessType;
+        $shouldAttemptDemoSeed = (bool) $requ->boolean('seedBusinessDemoData') && !empty($selectedBusinessType);
 
         $business->businessName     = $requ->businessName;
         $business->businessLocation = $requ->businessLocation;
@@ -49,6 +73,7 @@ class businessController extends Controller
         $business->twitter          = $requ->twitter;
         $business->youtube          = $requ->youtubeChannel;
         $business->linkedin         = $requ->linkedin;
+        $business->businessType     = $selectedBusinessType;
         $business->currencySymbol   = $requ->currencySymbol ?? $business->currencySymbol;
         $business->currencyPosition = $requ->currencyPosition ?? $business->currencyPosition ?? 'left';
         $business->currencyNegParentheses = isset($requ->currencyNegParentheses) ? (bool)$requ->currencyNegParentheses : ($business->currencyNegParentheses ?? true);
@@ -58,6 +83,21 @@ class businessController extends Controller
         // Editable Terms & Conditions text
         $business->invoice_terms_text = $requ->invoiceTermsText ?? $business->invoice_terms_text;
         if($business->save()):
+            $seedMessage = null;
+            $savedBusinessId = (int) ($business->id ?? 1);
+
+            if ($shouldAttemptDemoSeed) {
+                if ($savedBusinessId !== 1) {
+                    $seedMessage = 'Business details saved. Automatic demo seeding currently supports the primary business setup only.';
+                } elseif (!$this->canSeedDemoDataForBusiness($savedBusinessId)) {
+                    $seedMessage = 'Business details saved. Demo data was not seeded because products, customers, purchases, or sales already exist for this business.';
+                } elseif (!empty($previousBusinessType) && $previousBusinessType !== $selectedBusinessType) {
+                    $seedMessage = 'Business details saved. Demo data was not reseeded because this business already has a different saved business type.';
+                } else {
+                    $seedMessage = $this->seedDemoDataForBusinessType($selectedBusinessType);
+                }
+            }
+
             // Persist walk-in invoice UI toggles to .env so config picks them up
             try {
                 $hideAck = (bool)$requ->input('hideAckWalkin', 0);
@@ -71,7 +111,7 @@ class businessController extends Controller
             } catch(\Throwable $e) {
                 \Log::warning('Failed to update walk-in toggles in .env', ['error' => $e->getMessage()]);
             }
-            Alert::success("Success!","Business data saved successfully");
+            Alert::success("Success!", $seedMessage ?? "Business data saved successfully");
             return back();
         else:
             Alert::error("Sorry!","Business data failed to save");
@@ -97,6 +137,70 @@ class businessController extends Controller
             }
         }
         file_put_contents($envPath, $env);
+    }
+
+    protected function businessTypeOptions(): array
+    {
+        return [
+            'mobile_shop' => 'Mobile Shop',
+            'vehicle_shop' => 'Vehicle Shop',
+            'computer_shop' => 'Computer Shop',
+            'electronics_parts_shop' => 'Electronics Parts Shop',
+            'garments_shop' => 'Garments Shop',
+            'pharmacy_shop' => 'Pharmacy Shop',
+        ];
+    }
+
+    protected function businessTypeSeederMap(): array
+    {
+        return [
+            'mobile_shop' => MobileShopSeeder::class,
+            'vehicle_shop' => VehicleShopSeeder::class,
+            'computer_shop' => ComputerShopSeeder::class,
+            'electronics_parts_shop' => ElectronicsPartsSeeder::class,
+            'garments_shop' => GarmentsShopSeeder::class,
+            'pharmacy_shop' => PharmacyShopSeeder::class,
+        ];
+    }
+
+    protected function canSeedDemoDataForBusiness(int $businessId): bool
+    {
+        if ($businessId !== 1) {
+            return false;
+        }
+
+        return !DB::table('products')->where('businessId', $businessId)->exists()
+            && !DB::table('customers')->where('businessId', $businessId)->exists()
+            && !DB::table('product_stocks')->where('businessId', $businessId)->exists()
+            && !DB::table('purchase_products')->where('businessId', $businessId)->exists()
+            && !DB::table('sale_products')->where('businessId', $businessId)->exists();
+    }
+
+    protected function seedDemoDataForBusinessType(string $businessType, int $targetBusinessId = 1): string
+    {
+        $seeders = $this->businessTypeSeederMap();
+        $businessTypes = $this->businessTypeOptions();
+        $seederClass = $seeders[$businessType] ?? null;
+
+        if (!$seederClass) {
+            return 'Business details saved, but no demo seeder is mapped for the selected business type.';
+        }
+
+        try {
+            $seeder = app()->make($seederClass);
+            $seeder->businessId = $targetBusinessId;
+            app()->call([$seeder, 'run']);
+
+            return 'Business data saved and ' . ($businessTypes[$businessType] ?? 'selected') . ' demo data seeded successfully.';
+        } catch (\Throwable $e) {
+            \Log::error('Business demo seeding failed', [
+                'business_type' => $businessType,
+                'target_business_id' => $targetBusinessId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return 'Business data saved, but demo data seeding failed: ' . $e->getMessage();
+        }
     }
 
     public function saveBusinessLogo(Request $requ){
@@ -276,5 +380,64 @@ class businessController extends Controller
             Alert::error("Error", "Failed to delete location: " . $e->getMessage());
             return back();
         }
+    }
+
+    /**
+     * Wipe all demo/operational data for business ID 1 and re-seed with a
+     * new business type.  Restricted to SuperAdmin only.
+     */
+    public function resetDemoData(Request $request)
+    {
+        $actor = Auth::guard('admin')->user();
+        if (!$actor || strtolower($actor->role) !== 'superadmin') {
+            Alert::error("Forbidden", "Only Super Admin can reset demo data.");
+            return back();
+        }
+
+        $newType = $request->input('newBusinessType');
+        $businessTypes = $this->businessTypeOptions();
+
+        if (empty($newType) || !array_key_exists($newType, $businessTypes)) {
+            Alert::error("Error", "Please select a valid business type to re-seed.");
+            return back();
+        }
+
+        $business = BusinessSetup::find(1);
+        if (!$business) {
+            Alert::error("Error", "Primary business record not found.");
+            return back();
+        }
+
+        DB::beginTransaction();
+        try {
+            // Wipe all demo data for businessId = 1 (in safe deletion order)
+            DB::table('invoice_items')->whereIn(
+                'saleId',
+                DB::table('sale_products')->where('businessId', 1)->pluck('id')
+            )->delete();
+            DB::table('sale_products')->where('businessId', 1)->delete();
+            DB::table('purchase_products')->where('businessId', 1)->delete();
+            DB::table('product_stocks')->where('businessId', 1)->delete();
+            DB::table('products')->where('businessId', 1)->delete();
+            DB::table('customers')->where('businessId', 1)->delete();
+            // Suppliers have no businessId column – leave them to avoid data loss
+            // Brands and categories are shared; leave them too
+
+            // Update business type
+            $business->businessType = $newType;
+            $business->save();
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error('Reset demo data failed during wipe', ['error' => $e->getMessage()]);
+            Alert::error("Error", "Failed to clear existing data: " . $e->getMessage());
+            return back();
+        }
+
+        // Seed fresh demo data for the new type
+        $seedMessage = $this->seedDemoDataForBusinessType($newType, 1);
+        Alert::success("Success!", $seedMessage);
+        return back();
     }
 }

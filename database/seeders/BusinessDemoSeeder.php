@@ -7,7 +7,7 @@ use Illuminate\Database\Seeder;
 /**
  * Orchestrates all business-type demo seeders.
  *
- * Each sub-seeder is fully idempotent – safe to re-run.
+ * Each sub-seeder is fully idempotent and safe to re-run.
  *
  * Business types covered:
  *   1. Mobile Shop
@@ -22,6 +22,7 @@ class BusinessDemoSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            CoreBusinessSetupSeeder::class,
             MobileShopSeeder::class,
             VehicleShopSeeder::class,
             ComputerShopSeeder::class,

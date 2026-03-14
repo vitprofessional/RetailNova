@@ -4,15 +4,13 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 
-class DatabaseSeeder extends Seeder
+class VehicleShopSetupSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
         $this->call([
             CoreBusinessSetupSeeder::class,
+            VehicleShopSeeder::class,
         ]);
     }
 }

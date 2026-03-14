@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\AdminUser;
+use App\Models\BusinessSetup;
 use Hash;
 use Session;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
 
 
 class userInfo extends Controller
@@ -102,5 +104,60 @@ class userInfo extends Controller
     
     public function storeCreat(){
         return view('userInfo.storeCreat');
+    }
+
+    public function saveStoreSetup(Request $request)
+    {
+        $request->validate([
+            'businessName' => 'required|string|max:255',
+            'businessType' => 'nullable|in:mobile_shop,vehicle_shop,computer_shop,electronics_parts_shop,garments_shop,pharmacy_shop',
+            'mobile'       => 'nullable|string|max:30',
+            'mail'         => 'nullable|email|max:255',
+            'businessLocation' => 'nullable|string|max:500',
+            'website'      => 'nullable|url|max:255',
+        ]);
+
+        // Create or update the first (and usually only) business record
+        $business = BusinessSetup::first() ?? new BusinessSetup();
+        $business->businessName     = $request->businessName;
+        $business->mobile           = $request->mobile;
+        $business->email            = $request->mail;
+        $business->businessLocation = $request->businessLocation;
+        $business->website          = $request->website;
+        if (!empty($request->businessType)) {
+            $business->businessType = $request->businessType;
+        }
+        $business->save();
+
+        // Optionally seed demo data (only on fresh install – no existing products/customers)
+        if ($request->boolean('seedDemoData') && !empty($request->businessType)) {
+            $hasData = \Illuminate\Support\Facades\DB::table('products')
+                ->where('businessId', $business->id ?? 1)
+                ->exists();
+
+            if (!$hasData) {
+                $seederMap = [
+                    'mobile_shop'            => \Database\Seeders\MobileShopSeeder::class,
+                    'vehicle_shop'           => \Database\Seeders\VehicleShopSeeder::class,
+                    'computer_shop'          => \Database\Seeders\ComputerShopSeeder::class,
+                    'electronics_parts_shop' => \Database\Seeders\ElectronicsPartsSeeder::class,
+                    'garments_shop'          => \Database\Seeders\GarmentsShopSeeder::class,
+                    'pharmacy_shop'          => \Database\Seeders\PharmacyShopSeeder::class,
+                ];
+                $seederClass = $seederMap[$request->businessType] ?? null;
+                if ($seederClass) {
+                    try {
+                        $seeder = app()->make($seederClass);
+                        $seeder->businessId = (int) ($business->id ?? 1);
+                        app()->call([$seeder, 'run']);
+                    } catch (\Throwable $e) {
+                        \Log::error('First-run demo seeding failed', ['error' => $e->getMessage()]);
+                    }
+                }
+            }
+        }
+
+        return redirect()->route('userLogin')
+            ->with('success', 'Business setup saved successfully! You can now log in.');
     }
 }
