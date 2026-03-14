@@ -12,7 +12,6 @@ use Database\Seeders\MobileShopSeeder;
 use Database\Seeders\PharmacyShopSeeder;
 use Database\Seeders\VehicleShopSeeder;
 use Alert;
-use Illuminate\Support\Facades\Storage; 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -204,48 +203,67 @@ class businessController extends Controller
     }
 
     public function saveBusinessLogo(Request $requ){
-        if(!isset($requ->businessId) || empty($requ->businessId)):
-            Alert::error("Error","Business ID is missing");
-            return back();
-        endif;
-        
+        $requ->validate([
+            'businessId' => 'required|integer|exists:business_setups,id',
+            'businessLogo' => 'required|image|mimes:jpeg,jpg,png,gif,webp,svg|max:2048',
+        ]);
+
         $business = BusinessSetup::find($requ->businessId);
-        
         if(!$business):
             Alert::error("Error","Business setup not found");
             return back();
         endif;
-        
-        if($requ->hasFile('businessLogo')):
 
-            $file       = $requ->file('businessLogo');
-            // $filename   = time() . '_' . $file->getClientOriginalName();
-            $upFile     = $file->hashName();
+        if(!$requ->hasFile('businessLogo')):
+            Alert::error("Error","Please choose a valid logo file to upload.");
+            return back();
+        endif;
+
+        try {
+            $file = $requ->file('businessLogo');
+            $upFile = $file->hashName();
             $destinationPath = public_path('uploads/business');
 
-            // Create directory if not exists
             if (!file_exists($destinationPath)) {
                 mkdir($destinationPath, 0755, true);
             }
 
-            $file->move($destinationPath, $upFile);
+            // Replace previous file (if any) to avoid orphan logo files.
+            if (!empty($business->businessLogo)) {
+                $oldPath = public_path('uploads/business/' . $business->businessLogo);
+                if (file_exists($oldPath)) {
+                    @unlink($oldPath);
+                }
+            }
 
+            $file->move($destinationPath, $upFile);
             $business->businessLogo = $upFile;
+
             if($business->save()):
-                Alert::success("Success","Business logo updated");
-                return back();
-            else:
-                Alert::error("Sorry","Business logo failed to update");
+                Alert::success("Success","Business logo updated successfully");
                 return back();
             endif;
-        endif;
+
+            Alert::error("Sorry","Business logo failed to update");
+            return back();
+        } catch (\Throwable $e) {
+            \Log::error('Business logo upload failed', [
+                'business_id' => $requ->businessId,
+                'error' => $e->getMessage(),
+            ]);
+            Alert::error("Error","Business logo upload failed: " . $e->getMessage());
+            return back();
+        }
     }
 
     public function delBusinessLogo($id){
         try {
             $business = BusinessSetup::find($id);
             if($business && $business->businessLogo):
-                Storage::delete('public/uploads/business/'.$business->businessLogo);
+                $logoPath = public_path('uploads/business/' . $business->businessLogo);
+                if (file_exists($logoPath)) {
+                    @unlink($logoPath);
+                }
                 $business->businessLogo = null;
                 $business->save();
                 Alert::success("Success","Business logo deleted successfully");

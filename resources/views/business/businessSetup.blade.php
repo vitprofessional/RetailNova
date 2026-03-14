@@ -59,6 +59,9 @@
                                 @if(!empty($businessLogo))
                                 <img class="img-fluid rounded" src="{{ asset('/public/uploads/business/') }}/{{ $businessLogo }}" alt="{{ $businessName }}" style="max-width: 150px; max-height: 150px;">
                                 <p class="text-muted small mt-3">{{ $businessName }} Logo</p>
+                                <button type="button" class="btn btn-sm btn-info mt-2" data-toggle="modal" data-target="#logoModal">
+                                    <i class="las la-upload mr-1"></i>Change Logo
+                                </button>
                                 <a href="{{ route('delBusinessLogo',['id'=>$businessId]) }}" class="btn btn-danger btn-sm mt-2">
                                     <i class="las la-trash mr-1"></i>Remove Logo
                                 </a>
@@ -366,11 +369,30 @@
                 @csrf
                 <input type="hidden" value="{{ $businessId ?? '' }}" name="businessId">
                 <div class="modal-body">
+                    @if($errors->has('businessLogo') || $errors->has('businessId'))
+                    <div class="alert alert-danger">
+                        @error('businessId')
+                        <div>{{ $message }}</div>
+                        @enderror
+                        @error('businessLogo')
+                        <div>{{ $message }}</div>
+                        @enderror
+                    </div>
+                    @endif
                     @if(empty($businessId))
                     <div class="alert alert-warning">
                         <i class="las la-exclamation-triangle mr-2"></i>Please save business details first before uploading a logo.
                     </div>
                     @endif
+                        @if($errors->has('businessLogo') || $errors->has('businessId'))
+                        <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.jQuery) {
+            jQuery('#logoModal').modal('show');
+        }
+    });
+    </script>
+                        @endif
                     <div class="form-group">
                         <label for="businessLogo" class="form-label font-weight-600">Choose Logo File</label>
                         <div class="custom-file">
