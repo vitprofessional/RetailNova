@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Models\AdminUser;
+use App\Models\BusinessSetup;
 use Illuminate\Support\Facades\Blade;
 use App\Support\Currency;
 
@@ -32,7 +33,11 @@ class AppServiceProvider extends ServiceProvider
         view()->composer('*',function($view){
             // Avoid querying the database during early bootstrap (migrations/tests)
             try {
-                if (\Illuminate\Support\Facades\Schema::hasTable('admin_users')) {
+                if (\Illuminate\Support\Facades\Schema::hasTable('business_setups')) {
+                    $business = BusinessSetup::query()->latest('id')->first();
+                    $businessTable = $business ? collect([$business]) : collect();
+                } elseif (\Illuminate\Support\Facades\Schema::hasTable('admin_users')) {
+                    // Backward compatibility fallback if business_setups is not present
                     $businessTable = AdminUser::all();
                 } else {
                     $businessTable = collect();
@@ -102,6 +107,16 @@ class AppServiceProvider extends ServiceProvider
                     }
 
                     $brand = config('app.name', 'Retail Nova');
+                    try {
+                        if (\Illuminate\Support\Facades\Schema::hasTable('business_setups')) {
+                            $bn = BusinessSetup::query()->latest('id')->value('businessName');
+                            if (!empty($bn)) {
+                                $brand = $bn;
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        // keep fallback app name
+                    }
                     $view->with('pageTitle', $brand . ' | ' . $page);
                 });
             }

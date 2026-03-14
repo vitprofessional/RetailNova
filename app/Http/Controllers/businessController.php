@@ -86,7 +86,9 @@ class businessController extends Controller
             $savedBusinessId = (int) ($business->id ?? 1);
 
             if ($shouldAttemptDemoSeed) {
-                if ($savedBusinessId !== 1) {
+                if (app()->environment('production')) {
+                    $seedMessage = 'Business details saved. Demo data import is disabled in production.';
+                } elseif ($savedBusinessId !== 1) {
                     $seedMessage = 'Business details saved. Automatic demo seeding currently supports the primary business setup only.';
                 } elseif (!$this->canSeedDemoDataForBusiness($savedBusinessId)) {
                     $seedMessage = 'Business details saved. Demo data was not seeded because products, customers, purchases, or sales already exist for this business.';
@@ -406,6 +408,11 @@ class businessController extends Controller
      */
     public function resetDemoData(Request $request)
     {
+        if (app()->environment('production')) {
+            Alert::error("Forbidden", "Demo data reset is disabled in production.");
+            return back();
+        }
+
         $actor = Auth::guard('admin')->user();
         if (!$actor || strtolower($actor->role) !== 'superadmin') {
             Alert::error("Forbidden", "Only Super Admin can reset demo data.");

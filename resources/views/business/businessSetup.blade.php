@@ -167,6 +167,9 @@
                                 <!-- Full Width Sections -->
                                 <div class="col-12">
                                     <hr class="my-4">
+                                    @php $isProductionProject = app()->environment('production'); @endphp
+
+                                    @if(!$isProductionProject)
                                     <h6 class="font-weight-700 mb-3"><i class="las la-database mr-2"></i>Demo Data Setup</h6>
 
                                     <div class="form-group form-check mb-4 p-3 bg-light rounded">
@@ -225,6 +228,7 @@
                                             </form>
                                         </div>
                                     </div>
+                                    @endif
                                     @endif
 
                                     <h6 class="font-weight-700 mb-3"><i class="las la-receipt mr-2"></i>Walk-in Invoice Options</h6>
