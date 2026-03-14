@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 
 /**
- * Orchestrates all 5 business-type demo seeders.
+ * Orchestrates all business-type demo seeders.
  *
  * Each sub-seeder is fully idempotent – safe to re-run.
  *
@@ -15,6 +15,7 @@ use Illuminate\Database\Seeder;
  *   3. Computer / PC Components Shop
  *   4. Electronics Parts Shop
  *   5. Garments / Clothing & Fabric Shop
+ *   6. Pharmacy / Medicine Shop
  */
 class BusinessDemoSeeder extends Seeder
 {
@@ -26,6 +27,7 @@ class BusinessDemoSeeder extends Seeder
             ComputerShopSeeder::class,
             ElectronicsPartsSeeder::class,
             GarmentsShopSeeder::class,
+            PharmacyShopSeeder::class,
         ]);
     }
 }

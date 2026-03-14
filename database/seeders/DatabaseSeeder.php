@@ -49,7 +49,7 @@ class DatabaseSeeder extends Seeder
             SaleSeeder::class,
             ExpenseEntrySeeder::class,
             // Multi-business-type demo data
-            // (Mobile Shop, Vehicle Shop, Computer Shop, Electronics Parts, Garments)
+            // (Mobile, Vehicle, Computer, Electronics Parts, Garments, Pharmacy)
             BusinessDemoSeeder::class,
         ]);
     }
