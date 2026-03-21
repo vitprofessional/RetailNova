@@ -177,7 +177,7 @@
                               </div>
                               <h2 class="mb-2 text-center">Welcome to {{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h2>
                               <p class="text-center">Sign in to your account to continue</p>
-                              @if($config->count()>0)
+                                 @if($hasAdminUsers || $config->count()>0)
                               <form action="{{ route('adminLogin') }}" class="login-form" method="POST">
                                     @csrf
                                  <div class="row">
