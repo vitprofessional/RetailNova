@@ -16,6 +16,7 @@ use Illuminate\Database\Seeder;
  *   4. Electronics Parts Shop
  *   5. Garments / Clothing & Fabric Shop
  *   6. Pharmacy / Medicine Shop
+ *   7. Toy Shop
  */
 class BusinessDemoSeeder extends Seeder
 {
@@ -29,6 +30,7 @@ class BusinessDemoSeeder extends Seeder
             ElectronicsPartsSeeder::class,
             GarmentsShopSeeder::class,
             PharmacyShopSeeder::class,
+            ToyShopSeeder::class,
         ]);
     }
 }

@@ -110,7 +110,7 @@ class userInfo extends Controller
     {
         $request->validate([
             'businessName' => 'required|string|max:255',
-            'businessType' => 'nullable|in:mobile_shop,vehicle_shop,computer_shop,electronics_parts_shop,garments_shop,pharmacy_shop',
+            'businessType' => 'nullable|in:mobile_shop,vehicle_shop,computer_shop,electronics_parts_shop,garments_shop,pharmacy_shop,toy_shop',
             'mobile'       => 'nullable|string|max:30',
             'mail'         => 'nullable|email|max:255',
             'businessLocation' => 'nullable|string|max:500',
@@ -143,6 +143,7 @@ class userInfo extends Controller
                     'electronics_parts_shop' => \Database\Seeders\ElectronicsPartsSeeder::class,
                     'garments_shop'          => \Database\Seeders\GarmentsShopSeeder::class,
                     'pharmacy_shop'          => \Database\Seeders\PharmacyShopSeeder::class,
+                    'toy_shop'               => \Database\Seeders\ToyShopSeeder::class,
                 ];
                 $seederClass = $seederMap[$request->businessType] ?? null;
                 if ($seederClass) {

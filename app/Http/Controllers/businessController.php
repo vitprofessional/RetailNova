@@ -10,6 +10,7 @@ use Database\Seeders\ElectronicsPartsSeeder;
 use Database\Seeders\GarmentsShopSeeder;
 use Database\Seeders\MobileShopSeeder;
 use Database\Seeders\PharmacyShopSeeder;
+use Database\Seeders\ToyShopSeeder;
 use Database\Seeders\VehicleShopSeeder;
 use Alert;
 use Illuminate\Support\Facades\Auth;
@@ -149,6 +150,7 @@ class businessController extends Controller
             'electronics_parts_shop' => 'Electronics Parts Shop',
             'garments_shop' => 'Garments Shop',
             'pharmacy_shop' => 'Pharmacy Shop',
+            'toy_shop' => 'Toy Shop',
         ];
     }
 
@@ -161,6 +163,7 @@ class businessController extends Controller
             'electronics_parts_shop' => ElectronicsPartsSeeder::class,
             'garments_shop' => GarmentsShopSeeder::class,
             'pharmacy_shop' => PharmacyShopSeeder::class,
+            'toy_shop' => ToyShopSeeder::class,
         ];
     }
 
