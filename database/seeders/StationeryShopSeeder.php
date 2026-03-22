@@ -6,7 +6,7 @@ use Database\Seeders\Concerns\BusinessTypeSeedable;
 use Illuminate\Database\Seeder;
 
 /**
- * Backward-compatible alias for alternate spelling: "stationery".
+ * Backward-compatible alias for spelling variant: stationery.
  */
 class StationeryShopSeeder extends Seeder
 {
