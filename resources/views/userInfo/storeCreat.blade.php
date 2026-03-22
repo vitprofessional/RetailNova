@@ -74,8 +74,13 @@
                                                 <option value="vehicle_shop"          {{ old('businessType') == 'vehicle_shop'           ? 'selected' : '' }}>Vehicle / Auto Parts Shop</option>
                                                 <option value="computer_shop"         {{ old('businessType') == 'computer_shop'          ? 'selected' : '' }}>Computer Shop</option>
                                                 <option value="electronics_parts_shop"{{ old('businessType') == 'electronics_parts_shop' ? 'selected' : '' }}>Electronics Parts Shop</option>
+                                                <option value="hardware_shop"         {{ old('businessType') == 'hardware_shop'          ? 'selected' : '' }}>Hardware Shop</option>
+                                                <option value="dealership_shop"       {{ old('businessType') == 'dealership_shop'        ? 'selected' : '' }}>Dealership Shop</option>
+                                                <option value="general_shop"          {{ old('businessType') == 'general_shop'           ? 'selected' : '' }}>General Shop</option>
+                                                <option value="stationary_shop"       {{ old('businessType') == 'stationary_shop'        ? 'selected' : '' }}>Stationary Shop</option>
                                                 <option value="garments_shop"         {{ old('businessType') == 'garments_shop'          ? 'selected' : '' }}>Garments Shop</option>
                                                 <option value="pharmacy_shop"         {{ old('businessType') == 'pharmacy_shop'          ? 'selected' : '' }}>Pharmacy Shop</option>
+                                                <option value="toy_shop"              {{ old('businessType') == 'toy_shop'               ? 'selected' : '' }}>Toy Shop</option>
                                              </select>
                                              <label>Business Type</label>
                                           </div>

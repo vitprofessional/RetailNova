@@ -14,9 +14,13 @@ use Illuminate\Database\Seeder;
  *   2. Vehicle / Auto Parts Shop
  *   3. Computer / PC Components Shop
  *   4. Electronics Parts Shop
- *   5. Garments / Clothing & Fabric Shop
- *   6. Pharmacy / Medicine Shop
- *   7. Toy Shop
+ *   5. Hardware Shop
+ *   6. Dealership Shop
+ *   7. General Shop
+ *   8. Stationary Shop
+ *   9. Garments / Clothing & Fabric Shop
+ *  10. Pharmacy / Medicine Shop
+ *  11. Toy Shop
  */
 class BusinessDemoSeeder extends Seeder
 {
@@ -28,6 +32,10 @@ class BusinessDemoSeeder extends Seeder
             VehicleShopSeeder::class,
             ComputerShopSeeder::class,
             ElectronicsPartsSeeder::class,
+            HardwareShopSeeder::class,
+            DealershipShopSeeder::class,
+            GeneralShopSeeder::class,
+            StationaryShopSeeder::class,
             GarmentsShopSeeder::class,
             PharmacyShopSeeder::class,
             ToyShopSeeder::class,

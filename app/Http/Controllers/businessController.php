@@ -6,10 +6,16 @@ use Illuminate\Http\Request;
 use App\Models\BusinessSetup;
 use App\Models\BusinessLocation;
 use Database\Seeders\ComputerShopSeeder;
+use Database\Seeders\DealershipShopSeeder;
+use Database\Seeders\DellershipShopSeeder;
 use Database\Seeders\ElectronicsPartsSeeder;
+use Database\Seeders\GeneralShopSeeder;
 use Database\Seeders\GarmentsShopSeeder;
+use Database\Seeders\HardwareShopSeeder;
 use Database\Seeders\MobileShopSeeder;
 use Database\Seeders\PharmacyShopSeeder;
+use Database\Seeders\StationaryShopSeeder;
+use Database\Seeders\StationeryShopSeeder;
 use Database\Seeders\ToyShopSeeder;
 use Database\Seeders\VehicleShopSeeder;
 use Alert;
@@ -148,6 +154,11 @@ class businessController extends Controller
             'vehicle_shop' => 'Vehicle Shop',
             'computer_shop' => 'Computer Shop',
             'electronics_parts_shop' => 'Electronics Parts Shop',
+            'hardware_shop' => 'Hardware Shop',
+            'dealership_shop' => 'Dealership Shop',
+            'dellership_shop' => 'Dellership Shop',
+            'general_shop' => 'General Shop',
+            'stationary_shop' => 'Stationary Shop',
             'garments_shop' => 'Garments Shop',
             'pharmacy_shop' => 'Pharmacy Shop',
             'toy_shop' => 'Toy Shop',
@@ -161,6 +172,12 @@ class businessController extends Controller
             'vehicle_shop' => VehicleShopSeeder::class,
             'computer_shop' => ComputerShopSeeder::class,
             'electronics_parts_shop' => ElectronicsPartsSeeder::class,
+            'hardware_shop' => HardwareShopSeeder::class,
+            'dealership_shop' => DealershipShopSeeder::class,
+            'dellership_shop' => DellershipShopSeeder::class,
+            'general_shop' => GeneralShopSeeder::class,
+            'stationary_shop' => StationaryShopSeeder::class,
+            'stationery_shop' => StationeryShopSeeder::class,
             'garments_shop' => GarmentsShopSeeder::class,
             'pharmacy_shop' => PharmacyShopSeeder::class,
             'toy_shop' => ToyShopSeeder::class,

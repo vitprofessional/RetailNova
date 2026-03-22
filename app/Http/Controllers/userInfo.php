@@ -111,7 +111,7 @@ class userInfo extends Controller
     {
         $request->validate([
             'businessName' => 'required|string|max:255',
-            'businessType' => 'nullable|in:mobile_shop,vehicle_shop,computer_shop,electronics_parts_shop,garments_shop,pharmacy_shop,toy_shop',
+            'businessType' => 'nullable|in:mobile_shop,vehicle_shop,computer_shop,electronics_parts_shop,hardware_shop,dealership_shop,dellership_shop,general_shop,stationary_shop,stationery_shop,garments_shop,pharmacy_shop,toy_shop',
             'mobile'       => 'nullable|string|max:30',
             'mail'         => 'nullable|email|max:255',
             'businessLocation' => 'nullable|string|max:500',
@@ -142,6 +142,12 @@ class userInfo extends Controller
                     'vehicle_shop'           => \Database\Seeders\VehicleShopSeeder::class,
                     'computer_shop'          => \Database\Seeders\ComputerShopSeeder::class,
                     'electronics_parts_shop' => \Database\Seeders\ElectronicsPartsSeeder::class,
+                    'hardware_shop'          => \Database\Seeders\HardwareShopSeeder::class,
+                    'dealership_shop'        => \Database\Seeders\DealershipShopSeeder::class,
+                    'dellership_shop'        => \Database\Seeders\DellershipShopSeeder::class,
+                    'general_shop'           => \Database\Seeders\GeneralShopSeeder::class,
+                    'stationary_shop'        => \Database\Seeders\StationaryShopSeeder::class,
+                    'stationery_shop'        => \Database\Seeders\StationeryShopSeeder::class,
                     'garments_shop'          => \Database\Seeders\GarmentsShopSeeder::class,
                     'pharmacy_shop'          => \Database\Seeders\PharmacyShopSeeder::class,
                     'toy_shop'               => \Database\Seeders\ToyShopSeeder::class,
