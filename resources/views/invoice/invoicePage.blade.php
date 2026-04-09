@@ -62,8 +62,17 @@
   else { $paymentStatus = 'PAID'; $paymentBadge = 'success'; }
 @endphp
 
-<div class="card" id="rn-invoice-root">
+@php
+  $printVariant = strtolower((string) request()->query('printer', 'a4'));
+  if(!in_array($printVariant, ['a4', 'thermal80', 'thermal58'], true)){
+    $printVariant = 'a4';
+  }
+  $isThermal = in_array($printVariant, ['thermal80', 'thermal58'], true);
+@endphp
+
+<div class="card printer-shell" id="rn-invoice-root" data-printer-variant="{{ $printVariant }}">
   <div class="card-body">
+    <div id="invoiceBodyA4" class="invoice-body-block {{ $isThermal ? 'd-none' : '' }}">
     <!-- Professional Header -->
     <div class="invoice-header">
       <div class="row align-items-start justify-content-between">
@@ -420,10 +429,146 @@
       </div>
       @endif
 
+    </div>
+
+    <div id="invoiceBodyThermal" class="invoice-body-block thermal-body {{ $isThermal ? '' : 'd-none' }} {{ $printVariant === 'thermal58' ? 'thermal-58' : 'thermal-80' }}">
+    @php
+      $billBy = null;
+      try{
+          if(isset($invoice->salespersonId) && $invoice->salespersonId){
+              $billBy = \App\Models\AdminUser::find($invoice->salespersonId);
+          }
+      }catch(\Throwable $_){ $billBy = null; }
+
+      $thermalSubtotal = 0;
+      foreach($items as $it){
+          $thermalSubtotal += (float)($it->totalSale ?? (($it->salePrice ?? 0) * ($it->qty ?? 0)));
+      }
+      $thermalAddCharge = (float)($invoice->additionalChargeAmount ?? 0);
+      $thermalDiscount = (float)($invoice->discountAmount ?? 0);
+      $thermalGrand = (float)($invoice->grandTotal ?? max(0, $thermalSubtotal + $thermalAddCharge - $thermalDiscount));
+    @endphp
+
+    <div class="thermal-receipt-layout">
+      <div class="thermal-center">
+        <div class="thermal-company">{{ $b && $b->businessName ? $b->businessName : 'Computer Care' }}</div>
+        <div class="thermal-line">{{ $b && $b->businessLocation ? $b->businessLocation : 'Office Road, Burichong Bazar, Cumilla' }}</div>
+        <div class="thermal-line">Phone: {{ $b && $b->mobile ? $b->mobile : '0123456789' }}</div>
+      </div>
+
+      <div class="thermal-sep"></div>
+
+      <div class="thermal-meta">
+        <div><span>Invoice:</span><strong>{{ $invoice->invoice }}</strong></div>
+        <div><span>Date:</span><strong>{{ \Carbon\Carbon::parse($invoice->date)->format('d-M-Y h:i A') }}</strong></div>
+        <div><span>Customer:</span><strong>{{ $customer->name ?? '-' }}</strong></div>
+        @if(!empty($customer) && !empty($customer->mobile))
+          <div><span>Mobile:</span><strong>{{ $customer->mobile }}</strong></div>
+        @endif
+        @if($billBy)
+          <div><span>Cashier:</span><strong>{{ $billBy->fullName ?? ($billBy->mail ?? 'Staff') }}</strong></div>
+        @endif
+        <div><span>Status:</span><strong>{{ $paymentStatus }}</strong></div>
+      </div>
+
+      <div class="thermal-sep"></div>
+
+      <table class="thermal-items-table" aria-label="Thermal invoice items">
+        <colgroup>
+          <col style="width:48%">
+          <col style="width:12%">
+          <col style="width:20%">
+          <col style="width:20%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="text-center">Qty</th>
+            <th class="text-end">Rate</th>
+            <th class="text-end">Amt</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($items as $item)
+            @php $line = (float)($item->totalSale ?? (($item->salePrice ?? 0) * ($item->qty ?? 0))); @endphp
+            <tr>
+              <td>
+                <div class="thermal-item-name">{{ $item->productName }}</div>
+                @if(!empty($item->productCode))
+                  <div class="thermal-item-code">Code: {{ $item->productCode }}</div>
+                @endif
+              </td>
+              <td class="text-center">{{ (int)($item->qty ?? 0) }}</td>
+              <td class="text-end">@money($item->salePrice ?? 0)</td>
+              <td class="text-end">@money($line)</td>
+            </tr>
+          @empty
+            <tr><td colspan="4" class="text-center">No items</td></tr>
+          @endforelse
+        </tbody>
+      </table>
+
+      <div class="thermal-sep"></div>
+
+      <table class="thermal-totals-table" aria-label="Thermal invoice totals">
+        <tbody>
+          <tr>
+            <td>Subtotal</td>
+            <td class="text-end">@money($thermalSubtotal)</td>
+          </tr>
+          @if($thermalAddCharge > 0)
+            <tr>
+              <td>{{ $invoice->additionalChargeName ? e($invoice->additionalChargeName) : 'Additional' }}</td>
+              <td class="text-end">@money($thermalAddCharge)</td>
+            </tr>
+          @endif
+          @if($thermalDiscount > 0)
+            <tr>
+              <td>Discount</td>
+              <td class="text-end">- @money($thermalDiscount)</td>
+            </tr>
+          @endif
+          <tr class="thermal-grand-row">
+            <td>Grand Total</td>
+            <td class="text-end">@money($thermalGrand)</td>
+          </tr>
+          <tr>
+            <td>Paid</td>
+            <td class="text-end">@money($invoice->paidAmount ?? 0)</td>
+          </tr>
+          <tr class="thermal-due-row">
+            <td>Due</td>
+            <td class="text-end">@money($invoice->curDue ?? 0)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      @if(!empty($invoice->note))
+        <div class="thermal-note">Note: {{ $invoice->note }}</div>
+      @endif
+
+      <div class="thermal-sep"></div>
+
+      <div class="thermal-center thermal-footer">
+        <div>{{ $business && $business->invoiceFooter ? $business->invoiceFooter : 'Thank you for your business' }}</div>
+        <div>Powered by {{ config('app.name', env('APP_NAME', 'POS')) }}</div>
+      </div>
+    </div>
+    </div>
+
     <div class="d-flex justify-content-between align-items-center no-print mt-3">
       <div></div>
       <div class="action-buttons">
-        <button class="btn btn-outline-secondary btn-sm" onclick="printInvoice()"><i class="las la-print"></i> Print</button>
+        <div class="invoice-action-panel">
+          <label for="invoicePrinterProfile" class="mb-0">Printer Profile</label>
+          <select id="invoicePrinterProfile" class="form-control form-control-sm printer-select">
+            <option value="a4" {{ $printVariant === 'a4' ? 'selected' : '' }}>A4 Invoice</option>
+            <option value="thermal80" {{ $printVariant === 'thermal80' ? 'selected' : '' }}>POS Thermal 80mm</option>
+            <option value="thermal58" {{ $printVariant === 'thermal58' ? 'selected' : '' }}>POS Thermal 58mm</option>
+          </select>
+          <button class="btn btn-outline-secondary btn-sm" type="button" onclick="applyInvoicePrinterProfile()"><i class="las la-sync"></i> Update Layout</button>
+          <button class="btn btn-outline-secondary btn-sm" type="button" onclick="printSelectedInvoice()"><i class="las la-print"></i> Print Selected</button>
+        </div>
         <a class="btn btn-outline-primary btn-sm" href="{{ route('sale.items.edit', ['id' => $invoice->id]) }}"><i class="las la-edit"></i> Edit Items</a>
         <a class="btn btn-primary btn-sm" href="{{ route('saleList') }}"><i class="las la-arrow-left"></i> Back to Sales</a>
       </div>
@@ -443,15 +588,229 @@
 #rn-invoice-root {
   background: #fff;
   max-width: 980px;
-  margin: 0 auto;
+  margin: 16px auto 20px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   overflow: hidden;
 }
+.thermal-items-table tbody{
+  font-size: 8px;
+}
+
+.invoice-body-block {
+  width: 100%;
+}
+
+.invoice-body-block.thermal-body {
+  max-width: 80mm;
+  margin: 0 auto;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+  padding: 8px;
+}
+
+.invoice-body-block.thermal-body.thermal-58 {
+  max-width: 58mm;
+}
+
+#rn-invoice-root.printer-thermal {
+  max-width: 80mm;
+  margin: 10px auto 14px;
+  border-radius: 0;
+  box-shadow: none;
+  border: 1px solid #ddd;
+}
+
+#rn-invoice-root.printer-thermal.printer-thermal-58 {
+  max-width: 58mm;
+}
+
+#rn-invoice-root.printer-thermal .card-body {
+  padding: 8px;
+}
+
+#rn-invoice-root.printer-thermal .invoice-title {
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+  margin: 2px 0 4px;
+}
+
+#rn-invoice-root.printer-thermal .invoice-logo,
+#rn-invoice-root.printer-thermal .company-logo-small,
+#rn-invoice-root.printer-thermal .invoice-qr-section,
+#rn-invoice-root.printer-thermal .acknowledgement-section,
+#rn-invoice-root.printer-thermal .signature-boxes,
+#rn-invoice-root.printer-thermal .terms-conditions {
+  display: none !important;
+}
+
+#rn-invoice-root.printer-thermal .invoice-header,
+#rn-invoice-root.printer-thermal .invoice-parties,
+#rn-invoice-root.printer-thermal .row,
+#rn-invoice-root.printer-thermal .col-md-6,
+#rn-invoice-root.printer-thermal .col-md-4,
+#rn-invoice-root.printer-thermal .col-md-8,
+#rn-invoice-root.printer-thermal .col-12 {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 0 0 100% !important;
+}
+
+#rn-invoice-root.printer-thermal .company-name {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+#rn-invoice-root.printer-thermal .company-details,
+#rn-invoice-root.printer-thermal .party-detail,
+#rn-invoice-root.printer-thermal .collection-table,
+#rn-invoice-root.printer-thermal .invoice-info-table,
+#rn-invoice-root.printer-thermal .terms-text,
+#rn-invoice-root.printer-thermal .words-text,
+#rn-invoice-root.printer-thermal .invoice-items-table,
+#rn-invoice-root.printer-thermal .invoice-footer {
+  font-size: 0.72rem !important;
+  line-height: 1.25;
+}
+
+#rn-invoice-root.printer-thermal .invoice-items-table thead th,
+#rn-invoice-root.printer-thermal .invoice-items-table tbody td,
+#rn-invoice-root.printer-thermal .invoice-items-table tfoot td {
+  padding: 2px 1px;
+  font-size: 0.68rem !important;
+}
+
+#rn-invoice-root.printer-thermal .invoice-items-table th:nth-child(2),
+#rn-invoice-root.printer-thermal .invoice-items-table td:nth-child(2),
+#rn-invoice-root.printer-thermal .invoice-items-table th:nth-child(5),
+#rn-invoice-root.printer-thermal .invoice-items-table td:nth-child(5) {
+  display: none;
+}
+
+#rn-invoice-root.printer-thermal.printer-thermal-58 .invoice-items-table th:nth-child(6),
+#rn-invoice-root.printer-thermal.printer-thermal-58 .invoice-items-table td:nth-child(6) {
+  display: none;
+}
+
+.thermal-receipt-layout {
+  width: 100%;
+}
+
+.thermal-center {
+  text-align: center;
+}
+
+.thermal-company {
+  font-size: 0.96rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.thermal-line,
+.thermal-footer {
+  font-size: 0.74rem;
+  line-height: 1.3;
+}
+
+.thermal-sep {
+  border-top: 1px dashed #333;
+  margin: 6px 0;
+}
+
+.thermal-meta div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
+.thermal-meta span {
+  opacity: 0.9;
+}
+
+.thermal-items-table,
+.thermal-totals-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.thermal-items-table thead th,
+.thermal-items-table tbody td,
+.thermal-totals-table td {
+  border: none;
+  padding: 1px 0;
+  font-size: 0.68rem;
+  vertical-align: top;
+  background: transparent;
+}
+
+.thermal-items-table thead th {
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px dashed #333;
+  font-weight: 700;
+  padding-bottom: 4px;
+}
+
+.thermal-items-table tbody tr + tr td {
+  border-top: 1px dotted #ccc;
+}
+
+.thermal-items-table tbody tr:last-child td {
+  padding-bottom: 4px;
+  border-bottom: 1px dashed #333;
+}
+
+.thermal-items-table th:nth-child(2),
+.thermal-items-table th:nth-child(3),
+.thermal-items-table th:nth-child(4),
+.thermal-items-table td:nth-child(2),
+.thermal-items-table td:nth-child(3),
+.thermal-items-table td:nth-child(4),
+.thermal-totals-table td:last-child {
+  white-space: nowrap;
+}
+
+.thermal-item-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.15;
+  word-break: break-word;
+}
+
+.thermal-item-code {
+  font-size: 0.62rem;
+  opacity: 0.9;
+}
+
+.thermal-totals-table td {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.thermal-grand-row td,
+.thermal-due-row td {
+  font-weight: 700;
+}
+
+.thermal-grand-row td {
+  border-top: 1px dashed #333;
+  padding-top: 4px;
+}
+
+.thermal-note {
+  font-size: 0.7rem;
+  line-height: 1.3;
+  margin-top: 4px;
+}
 
 #rn-invoice-root .card-body {
-  padding: 20px;
+  padding: 22px;
 }
 
 .invoice-footer {
@@ -463,8 +822,30 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 .action-buttons .btn { margin: 0; }
+
+.invoice-action-panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8f9fb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.invoice-action-panel label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #222;
+  white-space: nowrap;
+}
+
+.printer-select {
+  min-width: 180px;
+}
 
 /* Header Section */
 .invoice-header {
@@ -941,6 +1322,24 @@
   #rn-invoice-root .card-body {
     padding: 12px;
   }
+
+  #rn-invoice-root {
+    margin: 8px auto 12px;
+  }
+
+  .invoice-body-block.thermal-body {
+    max-width: 100%;
+  }
+
+  .invoice-action-panel {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .printer-select {
+    min-width: 0;
+    width: 100%;
+  }
   
   .invoice-title {
     font-size: 1.8rem;
@@ -989,6 +1388,37 @@
   
   #rn-invoice-root .card-body { 
     padding: 0 !important; 
+  }
+
+  #rn-invoice-root.printer-thermal {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  #rn-invoice-root.printer-thermal.printer-thermal-58 {
+    width: 58mm !important;
+    max-width: 58mm !important;
+  }
+
+  #invoiceBodyA4.d-none,
+  #invoiceBodyThermal.d-none {
+    display: none !important;
+  }
+
+  #invoiceBodyThermal.thermal-80 {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    border: none !important;
+  }
+
+  #invoiceBodyThermal.thermal-58 {
+    width: 58mm !important;
+    max-width: 58mm !important;
+    margin: 0 auto !important;
+    border: none !important;
   }
   
   /* Keep desktop grid layout regardless of printable viewport width */
@@ -1055,12 +1485,18 @@
     visibility: visible; 
     page-break-inside: avoid; 
   }
+  #rn-invoice-root.printer-thermal #acknowledgementSection,
+  #rn-invoice-root.printer-thermal .signature-boxes,
+  #rn-invoice-root.printer-thermal .invoice-qr-section,
+  #rn-invoice-root.printer-thermal .terms-conditions {
+    display: none !important;
+  }
   /* Keep acknowledgment block intact and start it on a new page */
   #acknowledgementSection { page-break-inside: avoid; break-inside: avoid-page; }
   .print-break-before-page { page-break-before: always; break-before: page; }
   
   @page { 
-    margin: 0; 
+    margin: 8mm; 
     size: A4;
   }
   
@@ -1098,6 +1534,22 @@
   document.addEventListener('DOMContentLoaded', function(){
     var l = document.getElementById('loading');
     if (l) { l.style.display = 'none'; }
+
+    // Auto-open printable tab once when requested via query string.
+    try {
+      var params = new URLSearchParams(window.location.search || '');
+      if (params.get('autoprint') === '1') {
+        var printer = params.get('printer') || '{{ $printVariant }}';
+        setTimeout(function(){
+          try { printInvoice(printer); } catch(e){ console.warn('autoprint failed', e); }
+        }, 250);
+        try {
+          params.delete('autoprint');
+          var next = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '') + (window.location.hash || '');
+          window.history.replaceState({}, document.title, next);
+        } catch(e){}
+      }
+    } catch(e){}
   });
 
   function collectStyles() {
@@ -1111,14 +1563,89 @@
     return html;
   }
 
-  function printInvoice(){
+  function normalizePrinterProfile(v){
+    var pv = String(v || '').toLowerCase();
+    if(['a4','thermal80','thermal58'].indexOf(pv) === -1){ pv = 'a4'; }
+    return pv;
+  }
+
+  function getSelectedPrinterProfile(){
     try{
+      var sel = document.getElementById('invoicePrinterProfile');
+      return normalizePrinterProfile(sel ? sel.value : (document.getElementById('rn-invoice-root') || {}).getAttribute('data-printer-variant'));
+    }catch(e){ return normalizePrinterProfile('{{ $printVariant }}'); }
+  }
+
+  function setInvoiceLayoutVariant(variant){
+    try{
+      var pv = normalizePrinterProfile(variant);
+      var root = document.getElementById('rn-invoice-root');
+      var a4 = document.getElementById('invoiceBodyA4');
+      var thermal = document.getElementById('invoiceBodyThermal');
+      if(!root || !a4 || !thermal) return;
+
+      if(pv === 'a4'){
+        a4.classList.remove('d-none');
+        thermal.classList.add('d-none');
+      }else{
+        a4.classList.add('d-none');
+        thermal.classList.remove('d-none');
+        thermal.classList.toggle('thermal-58', pv === 'thermal58');
+        thermal.classList.toggle('thermal-80', pv !== 'thermal58');
+      }
+
+      root.setAttribute('data-printer-variant', pv);
+      try{
+        var sel = document.getElementById('invoicePrinterProfile');
+        if(sel) sel.value = pv;
+      }catch(_e){}
+    }catch(e){ console.warn('setInvoiceLayoutVariant failed', e); }
+  }
+
+  function applyInvoicePrinterProfile(){
+    try{
+      var pv = getSelectedPrinterProfile();
+      setInvoiceLayoutVariant(pv);
+    }catch(e){ console.warn('applyInvoicePrinterProfile failed', e); }
+  }
+
+  function printSelectedInvoice(){
+    try{
+      var pv = getSelectedPrinterProfile();
+      return printInvoice(pv);
+    }catch(e){ console.warn('printSelectedInvoice failed', e); }
+  }
+
+  function printInvoice(variant){
+    try{
+      var pv = normalizePrinterProfile(variant);
+      setInvoiceLayoutVariant(pv);
+      var thermalMode = (pv === 'thermal80' || pv === 'thermal58');
+      var paperWidth = (pv === 'thermal58') ? '58mm' : (pv === 'thermal80' ? '80mm' : '210mm');
+      var pageSizeCss = thermalMode ? (paperWidth + ' auto') : 'A4';
+      var pageMarginCss = thermalMode ? '2mm' : '8mm';
       // Ensure acknowledgment section breaks only if it won't fit
       try{ setAckBreakClass(); }catch(e){}
       var root = document.getElementById('rn-invoice-root');
       var footer = document.querySelector('.print-only-footer');
       if(!root) return window.print();
-      var content = root.outerHTML + (footer ? footer.outerHTML : '');
+      var printableRoot = root.cloneNode(true);
+      try{
+        var pA4 = printableRoot.querySelector('#invoiceBodyA4');
+        var pThermal = printableRoot.querySelector('#invoiceBodyThermal');
+        if(pA4 && pThermal){
+          if(thermalMode){
+            pA4.classList.add('d-none');
+            pThermal.classList.remove('d-none');
+            pThermal.classList.toggle('thermal-58', pv === 'thermal58');
+            pThermal.classList.toggle('thermal-80', pv !== 'thermal58');
+          }else{
+            pA4.classList.remove('d-none');
+            pThermal.classList.add('d-none');
+          }
+        }
+      }catch(_e){}
+      var content = printableRoot.outerHTML + (footer ? footer.outerHTML : '');
       var styleHtml = collectStyles();
       var w = window.open('', '_blank');
       if(!w) return alert('Popup blocked. Allow popups for this site to print.');
@@ -1128,7 +1655,9 @@
       doc.write(styleHtml);
       // minimal print helper: hide interactive-only elements; rely on page styles for layout
       // Force marginless printing in the popup regardless of browser defaults
-      doc.write('<style>@page{margin:0; size:A4;} html,body{margin:0;padding:0;print-color-adjust:exact;-webkit-print-color-adjust:exact;} #rn-invoice-root{margin:0!important;padding:0!important;box-shadow:none!important;border:none!important;width:100%!important}</style>');
+      doc.write('<style>@page{margin:'+pageMarginCss+'; size:'+pageSizeCss+';} html,body{margin:0;padding:0;print-color-adjust:exact;-webkit-print-color-adjust:exact;} #rn-invoice-root{margin:0 auto!important;padding:0!important;box-shadow:none!important;border:none!important;width:'+(thermalMode ? paperWidth : '100%')+'!important;max-width:'+(thermalMode ? paperWidth : '100%')+'!important} #rn-invoice-root .card-body{padding:'+(thermalMode ? '2mm' : '3mm')+'!important;}'+
+        (thermalMode ? '#rn-invoice-root .invoice-qr-section,#rn-invoice-root .signature-boxes,#rn-invoice-root #acknowledgementSection,#rn-invoice-root .terms-conditions{display:none!important;} #rn-invoice-root .row{display:block!important} #rn-invoice-root .col-md-6,#rn-invoice-root .col-md-4,#rn-invoice-root .col-md-8,#rn-invoice-root .col-12{display:block!important;width:100%!important;max-width:100%!important;flex:0 0 100%!important} #rn-invoice-root .invoice-items-table th:nth-child(2),#rn-invoice-root .invoice-items-table td:nth-child(2),#rn-invoice-root .invoice-items-table th:nth-child(5),#rn-invoice-root .invoice-items-table td:nth-child(5){display:none!important;}'+(pv === 'thermal58' ? '#rn-invoice-root .invoice-items-table th:nth-child(6),#rn-invoice-root .invoice-items-table td:nth-child(6){display:none!important;}' : '')+' #rn-invoice-root,#rn-invoice-root *{font-size:11px!important;line-height:1.25!important;}' : '')+
+      '</style>');
       doc.write('<style>.no-print{display:none !important}</style>');
       doc.write('</head><body>');
       doc.write(content);

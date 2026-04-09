@@ -59,27 +59,30 @@
     
     <style>
         body {
-        font-family: 'Segoe UI', sans-serif;
-        background-color: #f4f6f8;
-        padding: 30px;
-        color: #333;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f8;
+            padding: 30px;
+            color: #333;
+        }
+
+        .form-inline {
+            margin: 0 10px;
         }
         .invoice-box {
-        background-color: #fff;
-        padding: 25px;
-        border-radius: 12px;
-        max-width: 800px;
-        margin: auto;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 800px;
+            margin: auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
         .header {
-        border-bottom: 2px solid #4CAF50;
-        padding-bottom: 10px;
-        margin-bottom: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;    
         }
         .invoice-items-table tbody td,.invoice-items-table tfoot td {
             line-height: 0 !important;
@@ -89,12 +92,12 @@
             line-height: 1.2 !important;
         }
         .header .store-info {
-        font-size: 14px;
+            font-size: 14px;
         }
         .header .invoice-title {
-        font-size: 28px;
-        color: #4CAF50;
-        font-weight: bold;
+            font-size: 28px;
+            color: #4CAF50;
+            font-weight: bold;
         }
         .info-table, .product-table, .summary-table {
         width: 100%;
@@ -736,7 +739,7 @@
       <div class="iq-sidebar  sidebar-default ">
           <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
               <a href="{{ route('dashboard') }}" class="header-logo">
-                  <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('/public/uploads/business/' . $config[0]->businessLogo) : asset('logo.png') }}" class="img-fluid rounded-normal light-logo" alt="logo"><h5 class="logo-title light-logo ml-3">{{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h5>
+                  <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('/public/uploads/business/' . $config[0]->businessLogo) : asset('public/logo.png') }}" class="img-fluid rounded-normal light-logo" alt="logo"><h5 class="logo-title light-logo ml-3">{{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h5>
               </a>
               <div class="iq-menu-bt-sidebar ml-0">
                   <i class="las la-bars wrapper-menu"></i>
@@ -892,6 +895,11 @@
                                               <i class="las la-minus"></i><span>Unit</span>
                                           </a>
                                   </li>
+                                  <li class="{{ request()->routeIs('barcode.index','barcode.generate') ? 'active' : '' }}">
+                                          <a href="{{route('barcode.index')}}">
+                                              <i class="las la-minus"></i><span>Barcodes</span>
+                                          </a>
+                                  </li>
                           </ul>
                       </li>
                       
@@ -922,7 +930,12 @@
                           </ul>
                       </li>
                       
-                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
+                      @php
+                          $__adminUser = $__adminUser ?? Auth::guard('admin')->user();
+                          $__businessType = $config->count() > 0 ? $config[0]->businessType : null;
+                          $__showService = in_array($__businessType, ['mobile_shop', 'vehicle_shop', 'computer_shop', 'electronics_parts_shop', 'hardware_shop', 'dealership_shop']);
+                      @endphp
+                      @if($__showService)
                       <li class=" ">
                           <a href="#service" class="{{ request()->routeIs('provideService','addServiceName','serviceProvideList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('provideService','addServiceName','serviceProvideList') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash6" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -951,8 +964,14 @@
                               </li>
                           </ul>
                       </li>
+                      @endif
                       
-                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
+                      @php
+                          $__adminUser = $__adminUser ?? Auth::guard('admin')->user();
+                          $__businessType = $config->count() > 0 ? $config[0]->businessType : null;
+                          $__showWarranty = in_array($__businessType, ['mobile_shop', 'vehicle_shop', 'computer_shop', 'electronics_parts_shop', 'hardware_shop', 'dealership_shop']);
+                      @endphp
+                      @if($__showWarranty)
                       <li class=" ">
                           <a href="#warranty" class="{{ request()->routeIs('rma','serialList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('rma','serialList') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash6" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -976,8 +995,14 @@
                           </li>
                       </ul>
                       </li>
+                      @endif
                       
-                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
+                      @php
+                          $__adminUser = $__adminUser ?? Auth::guard('admin')->user();
+                          $__businessType = $config->count() > 0 ? $config[0]->businessType : null;
+                          $__showQuotations = in_array($__businessType, ['vehicle_shop', 'computer_shop', 'electronics_parts_shop', 'hardware_shop', 'dealership_shop', 'stationary_shop', 'garments_shop']);
+                      @endphp
+                      @if($__showQuotations)
                       <li class=" ">
                           <a href="#quotations" class="{{ request()->routeIs('quotation.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('quotation.*') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-quotation" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1002,6 +1027,7 @@
                               </li>
                           </ul>
                       </li>
+                      @endif
                       
                       @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       <li class=" ">
@@ -1217,7 +1243,7 @@
                   <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
                       <i class="ri-menu-line wrapper-menu"></i>
                       <a href="{{route('dashboard')}}" class="header-logo">
-                          <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('/public/uploads/business/' . $config[0]->businessLogo) : asset('logo.png') }}" class="img-fluid rounded-normal" alt="logo">
+                          <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('/public/uploads/business/' . $config[0]->businessLogo) : asset('/public/logo.png') }}" class="img-fluid rounded-normal" alt="logo">
                           <h5 class="logo-title ml-3">{{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h5>
       
                       </a>

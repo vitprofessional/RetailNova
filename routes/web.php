@@ -17,6 +17,7 @@ use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\AccountManagementController;
 use App\Http\Controllers\ExpenseManagementController;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\Admin\AdminUserManagementController;
 use App\Http\Controllers\Admin\SubscriptionAdminController;
 use App\Http\Controllers\Admin\StoreAdminController;
@@ -642,6 +643,11 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
         'calculateGrandTotal'
     ])->name('calculate.grand.total');
 
+    Route::post('/product/find-by-barcode', [
+        JqueryController::class,
+        'findProductByBarcode'
+    ])->name('product.findByBarcode');
+
     // endsupplierbalance
 
     
@@ -876,6 +882,12 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
         'invoicePage'
     ])->name('invoicePage');
 
+    //invoice thermal printer print
+    Route::get('/invoice/thermal-print',[
+        invoiceController::class,
+        'thermalPrint'
+    ])->name('invoiceThermalPrint');
+
     // audits viewer
     Route::get('/audits',[\App\Http\Controllers\AuditController::class,'index'])->name('audits.index');
     Route::get('/audits/export',[\App\Http\Controllers\AuditController::class,'export'])->name('audits.export');
@@ -913,6 +925,15 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
     Route::post('/quotation/store', [QuotationController::class, 'store'])->name('quotation.store');
     Route::get('/quotation/list', [QuotationController::class, 'index'])->name('quotation.list');
     Route::get('/quotation/{id}', [QuotationController::class, 'show'])->name('quotation.show');
+
+    // Barcode System Routes
+    Route::prefix('barcode')->group(function () {
+        Route::get('/', [\App\Http\Controllers\BarcodeController::class, 'index'])->name('barcode.index');
+        Route::get('/generate/{id}', [\App\Http\Controllers\BarcodeController::class, 'generateBarcode'])->name('barcode.generate');
+        Route::get('/generate-all-missing', [\App\Http\Controllers\BarcodeController::class, 'generateAllMissing'])->name('generateAllMissingBarcodes');
+        Route::post('/print', [\App\Http\Controllers\BarcodeController::class, 'printBarcodes'])->name('barcode.print');
+        Route::post('/update/{id}', [\App\Http\Controllers\BarcodeController::class, 'updateBarcode'])->name('barcode.update');
+    });
     Route::get('/quotation/{id}/print', [QuotationController::class, 'print'])->name('quotation.print');
     Route::get('/quotation/{id}/edit', [QuotationController::class, 'edit'])->name('quotation.edit');
     Route::post('/quotation/{id}/update', [QuotationController::class, 'update'])->name('quotation.update');

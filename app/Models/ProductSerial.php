@@ -10,6 +10,10 @@ class ProductSerial extends Model
         'productId',
         'purchaseId',
         'serialNumber',
+        'barCode',
+        'saleId',
+        'sold_at',
+        'status',
     ];
 
     // keep default table name 'product_serials'

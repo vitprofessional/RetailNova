@@ -26,6 +26,18 @@ class saleController extends Controller
         $customer = Customer::orderBy('id','DESC')->get();
         $product = Product::orderBy('id','DESC')->get();
         $businesses = \App\Models\BusinessSetup::orderBy('id','asc')->get();
+        $defaultPrinter = (string) config('pos.default_invoice_printer', 'thermal80');
+        if(!in_array($defaultPrinter, ['a4','thermal80','thermal58'], true)){
+            $defaultPrinter = 'thermal80';
+        }
+        $actor = auth('admin')->user();
+        $printerSessionKey = $actor && isset($actor->id)
+            ? ('sale_printer_profile_admin_' . (int)$actor->id)
+            : 'sale_printer_profile_admin_guest';
+        $rememberedPrinter = (string) session($printerSessionKey, $defaultPrinter);
+        if(!in_array($rememberedPrinter, ['a4','thermal80','thermal58'], true)){
+            $rememberedPrinter = $defaultPrinter;
+        }
         // Generate a random invoice number (format: INV + ymd + 4 random digits)
         $randomInvoiceNumber = 'INV' . date('ymd') . rand(1000,9999);
         return view('sale.newsale',[
@@ -33,7 +45,8 @@ class saleController extends Controller
             'productList'=>$product,
             'walkingCustomerId' => $walking ? $walking->id : null,
             'businesses' => $businesses,
-            'randomInvoiceNumber' => $randomInvoiceNumber
+            'randomInvoiceNumber' => $randomInvoiceNumber,
+            'defaultInvoicePrinter' => $rememberedPrinter,
         ]);
 
     }

@@ -82,6 +82,12 @@
                             @include('partials.business_selector', ['businesses' => $businesses ?? [] , 'selectedBusinessId' => null])
                         </div>
                         <div class="row mt-3">
+                            <!-- Barcode Scanner Component -->
+                            <div class="col-md-12">
+                                @include('components.barcode-scanner')
+                            </div>
+                        </div>
+                        <div class="row mt-3">
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Product Category</label>
@@ -257,6 +263,22 @@
                                     <div class="rn-pay-label">Payment By</div>
                                     <div class="rn-pay-value">
                                         {{ optional(auth('admin')->user())->fullName ?? '' }}
+                                    </div>
+                                </div>
+                                @php
+                                    $defaultInvoicePrinter = isset($defaultInvoicePrinter) ? (string)$defaultInvoicePrinter : (string) config('pos.default_invoice_printer', 'thermal80');
+                                    if(!in_array($defaultInvoicePrinter, ['a4','thermal80','thermal58'], true)){
+                                        $defaultInvoicePrinter = 'thermal80';
+                                    }
+                                @endphp
+                                <div class="rn-pay-row">
+                                    <div class="rn-pay-label">Printer Profile</div>
+                                    <div class="rn-pay-value">
+                                        <select class="form-control" id="printerProfile" name="printerProfile">
+                                            <option value="a4" {{ $defaultInvoicePrinter === 'a4' ? 'selected' : '' }}>A4 Invoice</option>
+                                            <option value="thermal80" {{ $defaultInvoicePrinter === 'thermal80' ? 'selected' : '' }}>POS Thermal 80mm</option>
+                                            <option value="thermal58" {{ $defaultInvoicePrinter === 'thermal58' ? 'selected' : '' }}>POS Thermal 58mm</option>
+                                        </select>
                                     </div>
                                 </div>
                                         <div class="rn-pay-row rn-pay-actions">

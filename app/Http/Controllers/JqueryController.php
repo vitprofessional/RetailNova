@@ -854,6 +854,7 @@ class JqueryController extends Controller
         // Validation handled by FormRequest
         $stockService = app(StockService::class);
         $invoiceService = app(InvoiceService::class);
+        $createdSaleId = null;
 
         $items = $requ->qty ?? [];
         // Get raw serial input
@@ -878,7 +879,7 @@ class JqueryController extends Controller
         }
 
         try {
-            DB::transaction(function() use ($requ, $items, $stockService, $invoiceService, $serialMapByPurchase, $serialIdsInput, $serialNumbersInput, &$message) {
+            DB::transaction(function() use ($requ, $items, $stockService, $invoiceService, $serialMapByPurchase, $serialIdsInput, $serialNumbersInput, &$createdSaleId) {
                 $sales = new SaleProduct();
                 // Generate a sequenced sale invoice (replaces client-provided invoice)
                 $sales->invoice         = $invoiceService->generateSaleInvoice();
@@ -911,6 +912,7 @@ class JqueryController extends Controller
                 if(!$sales->save()){
                     throw new \Exception('Failed to save sale');
                 }
+                $createdSaleId = (int)$sales->id;
 
                 $backorders = $requ->backorder ?? [];
                 if(!is_array($backorders)) $backorders = [$backorders];
@@ -1031,7 +1033,23 @@ class JqueryController extends Controller
                 }
             });
 
-            $message = Alert::success('Success!','Data saved successfully');
+            Alert::success('Success!','Data saved successfully');
+            if($createdSaleId > 0){
+                $defaultPrinter = (string) config('pos.default_invoice_printer', 'thermal80');
+                if(!in_array($defaultPrinter, ['a4', 'thermal80', 'thermal58'], true)){
+                    $defaultPrinter = 'thermal80';
+                }
+                $selectedPrinter = (string) $requ->input('printerProfile', $defaultPrinter);
+                if(!in_array($selectedPrinter, ['a4', 'thermal80', 'thermal58'], true)){
+                    $selectedPrinter = $defaultPrinter;
+                }
+                $actor = auth('admin')->user();
+                $printerSessionKey = $actor && isset($actor->id)
+                    ? ('sale_printer_profile_admin_' . (int)$actor->id)
+                    : 'sale_printer_profile_admin_guest';
+                session([$printerSessionKey => $selectedPrinter]);
+                return redirect()->route('invoiceGenerate', ['id' => $createdSaleId, 'autoprint' => 1, 'printer' => $selectedPrinter]);
+            }
             return back();
         } catch (\Exception $e) {
             // Log exception
@@ -1157,5 +1175,75 @@ class JqueryController extends Controller
         }
 
         return response()->json(['status' => 'success', 'created' => $created, 'skipped' => $skipped]);
+    }
+
+    /**
+     * Find product by barcode (AJAX)
+     * Returns product details including pricing and stock
+     */
+    public function findProductByBarcode(Request $request)
+    {
+        $barcode = trim($request->input('barcode', ''));
+        
+        if (empty($barcode)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Barcode cannot be empty'
+            ], 400);
+        }
+
+        try {
+            // Find product by barcode
+            $product = Product::where('barCode', $barcode)
+                ->orWhere('barCode', strtoupper($barcode))
+                ->orWhere('barCode', strtolower($barcode))
+                ->first();
+
+            if (!$product) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Product not found',
+                    'barcode'  => $barcode
+                ], 404);
+            }
+
+            // Get stock and pricing info
+            $stockHistory = ProductStock::where('productId', $product->id)->get();
+            $currentStock = $stockHistory ? $stockHistory->sum('currentStock') : 0;
+
+            // Get brand info
+            $brand = Brand::find($product->brand);
+            $brandName = $brand ? $brand->name : '';
+            $productName = $product->name;
+            $productWithBrand = $productName . ($brandName ? ' - ' . $brandName : '');
+
+            // Get latest purchase pricing
+            $lastPurchase = PurchaseProduct::where('productName', $product->id)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $buyPrice = $lastPurchase ? ($lastPurchase->buyPrice ?? '') : '';
+            $salePrice = $lastPurchase ? ($lastPurchase->salePriceExVat ?? '') : '';
+            $vatStatus = $lastPurchase ? ($lastPurchase->vatStatus ?? '') : '';
+
+            return response()->json([
+                'status' => 'success',
+                'product' => [
+                    'id' => $product->id,
+                    'name' => $productWithBrand,
+                    'barcode' => $product->barCode,
+                    'currentStock' => $currentStock,
+                    'buyPrice' => $buyPrice,
+                    'salePrice' => $salePrice,
+                    'vatStatus' => $vatStatus
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('findProductByBarcode error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error searching product'
+            ], 500);
+        }
     }
 }

@@ -194,41 +194,6 @@
                                         </label>
                                     </div>
 
-                                    {{-- ── Replace Demo Data (visible only when existing data present) ── --}}
-                                    @if(!$canSeedDemoData && !empty($business->businessType))
-                                    <div class="card border-warning mb-4">
-                                        <div class="card-header bg-warning text-dark py-2 px-3">
-                                            <i class="las la-redo-alt mr-1"></i>
-                                            <strong>Replace Demo Data</strong>
-                                        </div>
-                                        <div class="card-body py-3">
-                                            <p class="text-muted small mb-3">
-                                                This will <strong>permanently delete</strong> all current products, customers, product stocks, purchases and sales for this business, then re-seed fresh demo data for the selected type.
-                                                <strong class="text-danger">This cannot be undone.</strong>
-                                            </p>
-                                            <form action="{{ route('business.demo.reset') }}" method="POST"
-                                                  onsubmit="return confirm('⚠ WARNING: This will delete ALL products, customers, purchases and sales for this business and replace them with new demo data.\n\nAre you absolutely sure?');">
-                                                @csrf
-                                                <div class="form-row align-items-end">
-                                                    <div class="col-sm-7">
-                                                        <label class="font-weight-600 small mb-1">New Business Type</label>
-                                                        <select name="newBusinessType" class="form-control form-control-sm" required>
-                                                            <option value="">— Select —</option>
-                                                            @foreach($businessTypes as $key => $label)
-                                                                <option value="{{ $key }}" {{ $business->businessType === $key ? 'selected' : '' }}>{{ $label }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-sm-5 mt-2 mt-sm-0">
-                                                        <button type="submit" class="btn btn-warning btn-sm w-100">
-                                                            <i class="las la-sync mr-1"></i> Reset &amp; Reseed
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                    @endif
                                     @endif
 
                                     <h6 class="font-weight-700 mb-3"><i class="las la-receipt mr-2"></i>Walk-in Invoice Options</h6>
@@ -354,6 +319,52 @@
                 </div>
             </div>
         </div>
+        
+        {{-- ── Replace Demo Data Form (outside main form to avoid nesting) ── --}}
+        @if(!empty($config) && $config->count() > 0 && !($config[0]->count() > 0 || $config[0]->businessName ? true : false))
+        @php
+            $business = $business ?? new \App\Models\BusinessSetup();
+            $canSeedDemoData = $canSeedDemoData ?? true;
+        @endphp
+        @endif
+        @if(!$canSeedDemoData && !empty($business->businessType))
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning text-dark py-2 px-3">
+                        <i class="las la-redo-alt mr-1"></i>
+                        <strong>Replace Demo Data</strong>
+                    </div>
+                    <div class="card-body py-3">
+                        <p class="text-muted small mb-3">
+                            This will <strong>permanently delete</strong> all current products, customers, product stocks, purchases and sales for this business, then re-seed fresh demo data for the selected type.
+                            <strong class="text-danger">This cannot be undone.</strong>
+                        </p>
+                        <form action="{{ route('business.demo.reset') }}" method="POST"
+                              onsubmit="return confirm('⚠ WARNING: This will delete ALL products, customers, purchases and sales for this business and replace them with new demo data.\n\nAre you absolutely sure?');">
+                            @csrf
+                            <div class="form-row align-items-end">
+                                <div class="col-sm-7">
+                                    <label class="font-weight-600 small mb-1">New Business Type</label>
+                                    <select name="newBusinessType" class="form-control form-control-sm" required>
+                                        <option value="">— Select —</option>
+                                        @foreach($businessTypes as $key => $label)
+                                            <option value="{{ $key }}" {{ $business->businessType === $key ? 'selected' : '' }}>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-sm-5 mt-2 mt-sm-0">
+                                    <button type="submit" class="btn btn-warning btn-sm w-100">
+                                        <i class="las la-sync mr-1"></i> Reset &amp; Reseed
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 
