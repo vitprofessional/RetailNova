@@ -13,7 +13,11 @@ class SaleProduct extends Model implements AuditableContract
 {
     use Auditable, ScopesByBusiness;
     protected $fillable = [
-        'customerId', 'invoiceNo', 'totalAmount', 'paidAmount', 'dueAmount', 'saleDate', 'businessId', 'salespersonId'
+        'customerId', 'invoiceNo', 'totalAmount', 'paidAmount', 'dueAmount', 'saleDate', 'businessId', 'salespersonId', 'totalVat'
+    ];
+
+    protected $casts = [
+        'totalVat' => 'decimal:2',
     ];
 
     protected $auditExclude = [

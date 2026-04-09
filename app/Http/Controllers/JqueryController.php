@@ -451,6 +451,7 @@ class JqueryController extends Controller
             $buyPrices = is_array($requ->get('buyPrice')) ? $requ->get('buyPrice') : [$requ->get('buyPrice')];
             $salePrices = is_array($requ->get('salePriceExVat')) ? $requ->get('salePriceExVat') : [$requ->get('salePriceExVat')];
             $vatStatuses = is_array($requ->get('vatStatus')) ? $requ->get('vatStatus') : [$requ->get('vatStatus')];
+            $vatPercents = is_array($requ->get('vatPercent')) ? $requ->get('vatPercent') : [$requ->get('vatPercent')];
             $profitMargins = is_array($requ->get('profitMargin')) ? $requ->get('profitMargin') : [$requ->get('profitMargin')];
             $totals = is_array($requ->get('totalAmount')) ? $requ->get('totalAmount') : [$requ->get('totalAmount')];
             $serialsInput = $requ->input('serialNumber', []);
@@ -479,7 +480,12 @@ class JqueryController extends Controller
                         $purchase->buyPrice         = isset($buyPrices[$idx]) ? $buyPrices[$idx] : null;
                         $purchase->salePriceExVat   = isset($salePrices[$idx]) ? $salePrices[$idx] : null;
                         $purchase->vatStatus        = isset($vatStatuses[$idx]) ? $vatStatuses[$idx] : null;
-                        $purchase->salePriceInVat   = null;
+                        $purchase->vatPercent       = isset($vatPercents[$idx]) ? $vatPercents[$idx] : 0;
+                        // Calculate salePriceInVat based on salePriceExVat and vatPercent
+                        $exVat = floatval(isset($salePrices[$idx]) ? $salePrices[$idx] : 0);
+                        $vatPct = floatval(isset($vatPercents[$idx]) ? $vatPercents[$idx] : 0);
+                        $isVatIncluded = isset($vatStatuses[$idx]) ? $vatStatuses[$idx] : 0;
+                        $purchase->salePriceInVat = ($isVatIncluded && $vatPct > 0 && $exVat > 0) ? round($exVat * (1 + ($vatPct/100)), 2) : $exVat;
                         $purchase->profit           = isset($profitMargins[$idx]) ? $profitMargins[$idx] : null;
                         $purchase->totalAmount      = isset($totals[$idx]) ? $totals[$idx] : null;
                         $purchase->disType          = $requ->get('discountStatus');
@@ -551,7 +557,12 @@ class JqueryController extends Controller
                     $tmp = isset($salePrices[$idx]) ? $salePrices[$idx] : $purchase->salePriceExVat;
                     $purchase->salePriceExVat = ($tmp === '' ? null : $tmp);
                     $purchase->vatStatus        = isset($vatStatuses[$idx]) ? $vatStatuses[$idx] : $purchase->vatStatus;
-                    $purchase->salePriceInVat   = $requ->get('salePriceInVat');
+                    $purchase->vatPercent       = isset($vatPercents[$idx]) ? $vatPercents[$idx] : $purchase->vatPercent;
+                    // Calculate salePriceInVat based on salePriceExVat and vatPercent
+                    $exVat = floatval($purchase->salePriceExVat ?? 0);
+                    $vatPct = floatval($purchase->vatPercent ?? 0);
+                    $isVatIncluded = $purchase->vatStatus ? 1 : 0;
+                    $purchase->salePriceInVat = ($isVatIncluded && $vatPct > 0 && $exVat > 0) ? round($exVat * (1 + ($vatPct/100)), 2) : $exVat;
                     $tmp = isset($profitMargins[$idx]) ? $profitMargins[$idx] : $purchase->profit;
                     $purchase->profit = ($tmp === '' ? null : $tmp);
                     $tmp = isset($totals[$idx]) ? $totals[$idx] : $purchase->totalAmount;
@@ -864,6 +875,10 @@ class JqueryController extends Controller
         // Normalize serial arrays to zero-based indexes so they align with qty/purchaseData ordering
         $serialIdsInput = array_values($rawSerialIds);
         $serialNumbersInput = array_values($rawSerialNumbers);
+        
+        // Extract VAT data from request (same pattern as savePurchase)
+        $vatPercents = is_array($requ->get('vatPercent')) ? $requ->get('vatPercent') : [$requ->get('vatPercent')];
+        $vatIncludeds = is_array($requ->get('includeVat')) ? $requ->get('includeVat') : [$requ->get('includeVat')];
 
         // Build a purchaseId-keyed lookup for serials to survive any client-side reindex mismatches
         $serialMapByPurchase = [];
@@ -879,7 +894,7 @@ class JqueryController extends Controller
         }
 
         try {
-            DB::transaction(function() use ($requ, $items, $stockService, $invoiceService, $serialMapByPurchase, $serialIdsInput, $serialNumbersInput, &$createdSaleId) {
+            DB::transaction(function() use ($requ, $items, $stockService, $invoiceService, $serialMapByPurchase, $serialIdsInput, $serialNumbersInput, $vatPercents, $vatIncludeds, &$createdSaleId) {
                 $sales = new SaleProduct();
                 // Generate a sequenced sale invoice (replaces client-provided invoice)
                 $sales->invoice         = $invoiceService->generateSaleInvoice();
@@ -933,6 +948,22 @@ class JqueryController extends Controller
                         try{ $invoice->warranty_days = isset($requ->warranty_days[$index]) ? $requ->warranty_days[$index] : null; }catch(\Throwable $_){ $invoice->warranty_days = null; }
                         $invoice->salePrice = $requ->salePrice[$index];
                         $invoice->buyPrice = $requ->buyPrice[$index];
+                        
+                        // Set VAT data from request
+                        $vatPct = isset($vatPercents[$index]) ? floatval($vatPercents[$index]) : 0;
+                        $isVatIncluded = isset($vatIncludeds[$index]) ? $vatIncludeds[$index] : 0;
+                        $invoice->vatPercent = $vatPct;
+                        $invoice->vatIncluded = $isVatIncluded ? 1 : 0;
+                        
+                        // Calculate VAT amount and salePriceIncVat
+                        $basePrice = floatval($requ->salePrice[$index]);
+                        if($isVatIncluded && $vatPct > 0) {
+                            $invoice->salePriceIncVat = round($basePrice * (1 + ($vatPct / 100)), 2);
+                            $invoice->vatAmount = round($basePrice * ($vatPct / 100) * $item, 2);
+                        } else {
+                            $invoice->salePriceIncVat = $basePrice;
+                            $invoice->vatAmount = 0;
+                        }
 
                         $totalSale      = $requ->salePrice[$index]*$item;
                         $totalPurchase  = $requ->buyPrice[$index]*$item;
@@ -1030,6 +1061,11 @@ class JqueryController extends Controller
                             }
                         }
                     }
+                    
+                    // Calculate total VAT from all invoice items and save to SaleProduct
+                    $totalVat = InvoiceItem::where('saleId', $sales->id)->sum('vatAmount');
+                    $sales->totalVat = $totalVat;
+                    $sales->save();
                 }
             });
 

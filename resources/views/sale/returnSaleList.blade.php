@@ -36,7 +36,10 @@
                                         $sale = $return->sale;
                                         $customer = $sale ? \App\Models\Customer::find($sale->customerId) : null;
                                         $customerName = $customer ? $customer->name : '-';
-                                        $itemCount = $return->items ? $return->items->count() : 0;
+                                        $totalQtyReturned = 0;
+                                        if ($return->items) {
+                                            $totalQtyReturned = $return->items->sum('qty');
+                                        }
                                         $createdBy = $sale && $sale->salesperson ? $sale->salesperson->fullName : '-';
                                         $returnAmount = \App\Support\Currency::format($return->totalReturnAmount ?? 0);
                                         $adjustAmount = \App\Support\Currency::format($return->adjustAmount ?? 0);
@@ -57,7 +60,7 @@
                                         <td>{{ $customerName }}</td>
                                         <td>{{ $returnAmount }}</td>
                                         <td>{{ $adjustAmount }}</td>
-                                        <td><span class="badge bg-info">{{ $itemCount }}</span></td>
+                                        <td><span class="badge bg-info">{{ $totalQtyReturned }}</span></td>
                                         <td>{{ $createdBy }}</td>
                                         <td>{{ $dateFmt }}</td>
                                         <td>

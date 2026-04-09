@@ -11,7 +11,7 @@ class SaleReturn extends Model implements AuditableContract
 {
     use Auditable;
     protected $fillable = [
-        'saleId','totalReturnAmount','adjustAmount'
+        'saleId','totalReturnAmount','adjustAmount','returnNote'
     ];
 
     protected $auditExclude = [

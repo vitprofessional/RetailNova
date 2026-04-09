@@ -494,24 +494,38 @@ class saleController extends Controller
     }
     
     public function saleReturnSave(Request $requ){
-        // Validate that quantities are integers
         $requ->validate([
-            'totalQty.*' => 'integer|min:0'
+            'totalQty' => 'required|array',
+            'totalQty.*' => 'integer|min:0',
+            'saleId' => 'required|array',
+            'productId' => 'required|array',
+            'purchaseId' => 'required|array',
         ]);
 
-        // Ownership check: ensure actor has permission to create return
         $actor = auth('admin')->user();
+        $saleIds = is_array($requ->input('saleId')) ? $requ->input('saleId') : [];
+        $productIds = is_array($requ->input('productId')) ? $requ->input('productId') : [];
+        $purchaseIds = is_array($requ->input('purchaseId')) ? $requ->input('purchaseId') : [];
+        $qtyItems = is_array($requ->input('totalQty')) ? $requ->input('totalQty') : [];
+
         $resolvedSaleId = null;
-        
-        if (isset($requ->saleId) && is_array($requ->saleId) && count($requ->saleId) > 0) {
-            $resolvedSaleId = (int) $requ->saleId[0];
-        } elseif (!empty($requ->invoiceId)) {
+        foreach($saleIds as $sid){
+            if((int)$sid > 0){
+                $resolvedSaleId = (int)$sid;
+                break;
+            }
+        }
+        if(!$resolvedSaleId && !empty($requ->invoiceId)){
             $found = SaleProduct::where('invoice', $requ->invoiceId)->first();
-            $resolvedSaleId = $found ? $found->id : null;
+            $resolvedSaleId = $found ? (int)$found->id : null;
         }
 
-        // Check if user has permission to return for this sale
-        if ($resolvedSaleId && $actor && !in_array(strtolower($actor->role), ['admin','superadmin'])) {
+        if(!$resolvedSaleId){
+            Alert::error('Sorry!','Invalid sale reference for return');
+            return back();
+        }
+
+        if ($actor && !in_array(strtolower($actor->role), ['admin','superadmin'])) {
             $sale = SaleProduct::find($resolvedSaleId);
             if ($sale && (int)$sale->salespersonId !== (int)$actor->id) {
                 Alert::error('Unauthorized','You are not allowed to return items for this sale');
@@ -519,37 +533,68 @@ class saleController extends Controller
             }
         }
 
-        $history = new SaleReturn();
-        $history->saleId = $resolvedSaleId;
-        $history->totalReturnAmount = $requ->input('totalReturnAmount', 0);
-        $history->adjustAmount = $requ->input('adjustAmount', 0);
-
-        if($history->save()){
-            $service = new StockService();
-            $items = $requ->totalQty ?? [];
-            if(is_array($items) && count($items) > 0){
-                foreach($items as $index => $item){
-                    $qty = (int)$item;
-                    if($qty <= 0){
-                        continue;
-                    }
-                    $returnItem = new ReturnSaleItem();
-                    $returnItem->returnId   = $history->id;
-                    $returnItem->saleId     = $requ->saleId[$index];
-                    $returnItem->productId  = $requ->productId[$index];
-                    $returnItem->purchaseId = $requ->purchaseId[$index];
-                    $returnItem->customerId = $requ->customerId;
-                    $returnItem->qty        = $qty;
-                    if($returnItem->save()){
-                        $service->applySaleReturnItem($returnItem);
-                    }
-                }
+        $hasAnyReturnQty = false;
+        foreach($qtyItems as $q){
+            if((int)$q > 0){
+                $hasAnyReturnQty = true;
+                break;
             }
-            Alert::success('Success!','Sale return saved successfully');
+        }
+        if(!$hasAnyReturnQty){
+            Alert::error('Sorry!','Please select at least one item quantity to return');
             return back();
         }
-        Alert::error('Sorry!','Data failed to save');
-        return back();
+
+        DB::beginTransaction();
+        try {
+            $history = new SaleReturn();
+            $history->saleId = $resolvedSaleId;
+            $history->totalReturnAmount = $requ->input('totalReturnAmount', 0);
+            $history->adjustAmount = $requ->input('adjustAmount', 0);
+            $history->returnNote = $requ->input('returnNote', '');
+            $history->save();
+
+            $service = new StockService();
+
+            foreach($qtyItems as $index => $item){
+                $qty = (int)$item;
+                if($qty <= 0){
+                    continue;
+                }
+
+                if(!isset($saleIds[$index], $productIds[$index], $purchaseIds[$index])){
+                    throw new \Exception('Invalid return row data at index '.$index);
+                }
+
+                $rowSaleId = (int)$saleIds[$index];
+                if($rowSaleId !== $resolvedSaleId){
+                    throw new \Exception('Mismatched sale row detected');
+                }
+
+                $returnItem = new ReturnSaleItem();
+                $returnItem->returnId   = $history->id;
+                $returnItem->saleId     = $rowSaleId;
+                $returnItem->productId  = (int)$productIds[$index];
+                $returnItem->purchaseId = (int)$purchaseIds[$index];
+                $returnItem->customerId = (int)$requ->customerId;
+                $returnItem->qty        = $qty;
+                $returnItem->save();
+
+                $service->applySaleReturnItem($returnItem);
+            }
+
+            DB::commit();
+            Alert::success('Success!','Sale return saved successfully');
+            return back();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('saleReturnSave failed: '.$e->getMessage(), [
+                'saleId' => $resolvedSaleId,
+                'payload' => $requ->all(),
+            ]);
+            Alert::error('Sorry!','Sale return failed. Please try again.');
+            return back();
+        }
     }
 
     public function returnSaleList(){

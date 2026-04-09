@@ -14,7 +14,8 @@ class InvoiceItem extends Model implements AuditableContract
     use Auditable, ScopesByBusiness;
     protected $fillable = [
         'saleId', 'purchaseId', 'qty', 'warranty_days', 'salePrice', 'buyPrice', 
-        'totalSale', 'totalPurchase', 'profitTotal', 'profitMargin', 'isBackorder', 'businessId'
+        'totalSale', 'totalPurchase', 'profitTotal', 'profitMargin', 'isBackorder', 
+        'vatPercent', 'vatAmount', 'salePriceIncVat', 'vatIncluded', 'businessId'
     ];
 
     protected $casts = [
@@ -25,7 +26,11 @@ class InvoiceItem extends Model implements AuditableContract
         'totalPurchase' => 'decimal:2',
         'profitTotal' => 'decimal:2',
         'profitMargin' => 'decimal:2',
+        'vatPercent' => 'decimal:2',
+        'vatAmount' => 'decimal:2',
+        'salePriceIncVat' => 'decimal:2',
         'isBackorder' => 'boolean',
+        'vatIncluded' => 'boolean',
     ];
 
     protected $auditExclude = [

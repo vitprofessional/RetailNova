@@ -14,7 +14,7 @@ class PurchaseProduct extends Model implements AuditableContract
     use Auditable, ScopesByBusiness;
     protected $fillable = [
         'productName', 'supplier', 'invoice', 'qty', 'buyPrice', 'salePriceExVat', 
-        'salePriceInVat', 'vatStatus', 'totalAmount', 'grandTotal', 'paidAmount', 
+        'salePriceInVat', 'vatStatus', 'vatPercent', 'totalAmount', 'grandTotal', 'paidAmount', 
         'dueAmount', 'purchase_date', 'reference', 'businessId'
     ];
 
@@ -23,6 +23,7 @@ class PurchaseProduct extends Model implements AuditableContract
         'buyPrice' => 'decimal:2',
         'salePriceExVat' => 'decimal:2',
         'salePriceInVat' => 'decimal:2',
+        'vatPercent' => 'decimal:2',
         'profit' => 'decimal:2',
         'totalAmount' => 'decimal:2',
         'disAmount' => 'decimal:2',

@@ -81,7 +81,7 @@
                             <td><input type="number" step="0.01" id="salePrice{{$sl}}" class="form-control form-control-sm price" value="{{ $item->salePrice }}" readonly /></td>
                             <td>{{ number_format($item->totalSale ?? 0, 2, '.', ',') }}</td>
                             <td><input type="checkbox" class="return-checkbox" data-row="{{ $sl }}" /></td>
-                            <td><input type="number" name="totalQty[]" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" value="" min="0" step="1" disabled /></td>
+                            <td><input type="number" name="totalQty[]" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" value="0" min="0" step="1" disabled /></td>
                             <td><input type="number" class="form-control form-control-sm return-amount" value="0" id="returnAmount{{$sl}}" readonly /></td>
                             <td></td>
                         </tr>
@@ -164,9 +164,11 @@
                     if (this.checked) {
                         qtyInput.disabled = false;
                         qtyInput.focus();
+                        qtyInput.value = '1';
+                        calculateReturnAmounts();
                     } else {
                         qtyInput.disabled = true;
-                        qtyInput.value = '';
+                        qtyInput.value = '0';
                         calculateReturnAmounts();
                     }
                 });
@@ -199,9 +201,25 @@
                     }
                     
                     if (confirm('Return amount: ' + finalAmount.toFixed(2) + '\n\nProceed with return and refund?')) {
+                        const allQtyInputs = document.querySelectorAll('input[name="totalQty[]"]');
+                        allQtyInputs.forEach(input => {
+                            input.disabled = false;
+                        });
                         // Submit the form
                         document.querySelector('form').submit();
                     }
+                });
+            
+            // Add form submit handler to ensure all fields are enabled for submission
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    // Enable all disabled quantity fields
+                    const allQtyInputs = document.querySelectorAll('input[name="totalQty[]"]');
+                    allQtyInputs.forEach(input => {
+                        input.disabled = false;
+                    });
+                    // Form will proceed to submit naturally
                 });
             }
         }

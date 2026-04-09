@@ -65,7 +65,19 @@ class StockService
             }
             $invoiceItem = InvoiceItem::where(['saleId' => $returnItem->saleId, 'purchaseId' => $returnItem->purchaseId])->lockForUpdate()->first();
             if($invoiceItem){
-                $invoiceItem->qty = max(0, (int)$invoiceItem->qty - (int)$returnItem->qty);
+                $oldQty = (int)$invoiceItem->qty;
+                $newQty = max(0, $oldQty - (int)$returnItem->qty);
+                $invoiceItem->qty = $newQty;
+            
+                // Recalculate totals based on new quantity
+                $salePrice = floatval($invoiceItem->salePrice ?? 0);
+                $buyPrice = floatval($invoiceItem->buyPrice ?? 0);
+                $invoiceItem->totalSale = $newQty * $salePrice;
+                $invoiceItem->totalPurchase = $newQty * $buyPrice;
+                $invoiceItem->profitTotal = $invoiceItem->totalSale - $invoiceItem->totalPurchase;
+                $profitMargin = $invoiceItem->totalPurchase != 0 ? (($invoiceItem->profitTotal / $invoiceItem->totalPurchase) * 100) : 0;
+                $invoiceItem->profitMargin = number_format($profitMargin, 2);
+            
                 $invoiceItem->save();
             }
             return true;
