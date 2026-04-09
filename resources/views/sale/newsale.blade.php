@@ -295,8 +295,7 @@
                         <div class="d-md-flex  mt-2 align-items-center">
                             <div id="saleErrorSummary" class="me-3" style="flex:1"></div>
                             <div class="text-end">
-                                <button class="btn btn-outline-secondary btn-sm me-2" type="button" id="btnSaveDraft">Save Draft</button>
-                                <button class="btn btn-outline-primary save-btn btn-sm me-w" type="submit">Save & Print</button>
+                                <button class="btn btn-outline-primary save-btn btn-sm me-w" type="submit">Save and Print</button>
                             </div>
                         </div>
                         <div class="mt-2">

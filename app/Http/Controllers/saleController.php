@@ -498,29 +498,33 @@ class saleController extends Controller
         $requ->validate([
             'totalQty.*' => 'integer|min:0'
         ]);
-        $history = new SaleReturn();
-        // Prefer numeric sale id from the form (saleId[] per item). If not available,
-        // attempt to resolve the sale id by invoice string.
+
+        // Ownership check: ensure actor has permission to create return
+        $actor = auth('admin')->user();
         $resolvedSaleId = null;
+        
         if (isset($requ->saleId) && is_array($requ->saleId) && count($requ->saleId) > 0) {
             $resolvedSaleId = (int) $requ->saleId[0];
         } elseif (!empty($requ->invoiceId)) {
             $found = SaleProduct::where('invoice', $requ->invoiceId)->first();
             $resolvedSaleId = $found ? $found->id : null;
         }
+
+        // Check if user has permission to return for this sale
+        if ($resolvedSaleId && $actor && !in_array(strtolower($actor->role), ['admin','superadmin'])) {
+            $sale = SaleProduct::find($resolvedSaleId);
+            if ($sale && (int)$sale->salespersonId !== (int)$actor->id) {
+                Alert::error('Unauthorized','You are not allowed to return items for this sale');
+                return back();
+            }
+        }
+
+        $history = new SaleReturn();
         $history->saleId = $resolvedSaleId;
-        $history->totalReturnAmount = $requ->totalReturnAmount;
-        $history->adjustAmount      = $requ->adjustAmount;
+        $history->totalReturnAmount = $requ->input('totalReturnAmount', 0);
+        $history->adjustAmount = $requ->input('adjustAmount', 0);
 
         if($history->save()){
-            // Ownership check: ensure actor may create return for that sale
-            $actor = auth('admin')->user();
-            if($actor && !in_array(strtolower($actor->role), ['admin','superadmin'])){
-                if($resolvedSaleId && (int)$resolvedSaleId !== (int)$actor->id){
-                    Alert::error('Unauthorized','You are not allowed to return items for this sale');
-                    return back();
-                }
-            }
             $service = new StockService();
             $items = $requ->totalQty ?? [];
             if(is_array($items) && count($items) > 0){
@@ -548,8 +552,21 @@ class saleController extends Controller
         return back();
     }
 
-     public function returnSaleList(){
-        return view('sale.returnSaleList');
+    public function returnSaleList(){
+        $actor = auth('admin')->user();
+        $returns = SaleReturn::with(['sale', 'items'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        // Filter returns based on user role
+        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin'])){
+            // Store managers only see returns for their sales
+            $returns = $returns->filter(function($return) use ($actor) {
+                return $return->sale && (int)$return->sale->salespersonId === (int)$actor->id;
+            });
+        }
+        
+        return view('sale.returnSaleList', ['returns' => $returns]);
     }
 
     /**

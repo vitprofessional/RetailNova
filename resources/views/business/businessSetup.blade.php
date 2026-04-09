@@ -23,6 +23,7 @@
     $businessStatus     = $business->status;
     $businessType       = $business->businessType;
     $businessLogo       = $business->businessLogo;
+    $hideInvoiceAcknowledgement = $business->hide_invoice_acknowledgement ?? false;
 @endphp
 @else
 @php
@@ -41,6 +42,7 @@
     $businessStatus     = "";
     $businessType       = "";
     $businessLogo       = "";
+    $hideInvoiceAcknowledgement = false;
 @endphp
 @endif
 
@@ -222,6 +224,14 @@
                                             <i class="las la-file-invoice mr-2"></i>Invoice Footer Note
                                         </label>
                                         <textarea class="form-control" id="invoiceFooter" name="invoiceFooter" placeholder="Enter invoice footer note here" rows="3">{{ $invoiceFooter }}</textarea>
+                                    </div>
+
+                                    <div class="form-group form-check mb-4 p-3 bg-light rounded">
+                                        <input type="checkbox" class="form-check-input" id="hideInvoiceAcknowledgement" name="hideInvoiceAcknowledgement" value="1" {{ $hideInvoiceAcknowledgement ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="hideInvoiceAcknowledgement">
+                                            <span class="font-weight-600">Hide Acknowledgement on Sale Invoice Print</span>
+                                            <small class="d-block text-muted">When enabled, the acknowledgement section is hidden for all printed sale invoices from this business.</small>
+                                        </label>
                                     </div>
 
                                     <div class="form-group form-check mb-4 p-3 bg-light rounded">

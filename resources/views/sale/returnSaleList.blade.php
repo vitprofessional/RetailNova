@@ -13,53 +13,74 @@
                     <table class="data-tables table mb-0 table-bordered rn-table-pro">
                         <thead class="bg-white text-uppercase">
                             <tr>
-                                <th>
+                                <th style="width: 50px;">
                                     <div class="checkbox d-inline-block">
-                                        <input type="checkbox" class="checkbox-input" id="checkbox1" />
-                                        <label for="checkbox1" class="mb-0"></label>
+                                        <input type="checkbox" class="checkbox-input" id="selectAllReturns" />
+                                        <label for="selectAllReturns" class="mb-0"></label>
                                     </div>
                                 </th>
-                                <th>Reference</th>
-                                <th>Name</th>
-                                <th>Grand Total</th>
-                                <th>Paid Amount</th>
-                                <th>Due</th>
+                                <th>Sale ID</th>
+                                <th>Customer</th>
+                                <th>Return Amount</th>
+                                <th>Adjust Amount</th>
+                                <th>Items Returned</th>
                                 <th>Created By</th>
                                 <th>Date</th>
-                                <th>Return</th>
-                                <th>Delete</th>
-                                <th>Details</th>
+                                <th style="width: 100px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>
-                                    <div class="checkbox d-inline-block">
-                                        <input type="checkbox" class="checkbox-input" id="checkbox2" />
-                                        <label for="checkbox2" class="mb-0"></label>
-                                    </div>
-                                </td>
-                                <td>PUR-234</td>
-                                <td>Hasnat Saimun</td>
-                                <td>45000</td>
-                                <td>400000</td>
-                                <td>00</td>
-                                <td>Sobuj</td>
-                                <td>14.5.2025</td>
-                                <td>
-                                    <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="View"
-                                        href="#"><i class="ri-eye-line mr-0"></i>
-                                </td>
-                                <td>
-                                    <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="View"
-                                        href="#"><i class="ri-eye-line mr-0"></i>
-                                </td>
-                                <td>
-                                    <div class="list-action">
-                                        <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
-                                    </div>
-                                </td>
-                            </tr>
+                            @if($returns && count($returns) > 0)
+                                @foreach($returns as $return)
+                                    @php
+                                        $sale = $return->sale;
+                                        $customer = $sale ? \App\Models\Customer::find($sale->customerId) : null;
+                                        $customerName = $customer ? $customer->name : '-';
+                                        $itemCount = $return->items ? $return->items->count() : 0;
+                                        $createdBy = $sale && $sale->salesperson ? $sale->salesperson->fullName : '-';
+                                        $returnAmount = \App\Support\Currency::format($return->totalReturnAmount ?? 0);
+                                        $adjustAmount = \App\Support\Currency::format($return->adjustAmount ?? 0);
+                                        try { 
+                                            $dateFmt = \Carbon\Carbon::parse($return->created_at)->format('d M Y');
+                                        } catch (\Exception $e) { 
+                                            $dateFmt = (string)($return->created_at ?? '-');
+                                        }
+                                    @endphp
+                                    <tr>
+                                        <td>
+                                            <div class="checkbox d-inline-block">
+                                                <input type="checkbox" class="checkbox-input bulk-select" value="{{ $return->id }}" />
+                                                <label class="mb-0"></label>
+                                            </div>
+                                        </td>
+                                        <td>{{ $sale ? $sale->invoice : '-' }}</td>
+                                        <td>{{ $customerName }}</td>
+                                        <td>{{ $returnAmount }}</td>
+                                        <td>{{ $adjustAmount }}</td>
+                                        <td><span class="badge bg-info">{{ $itemCount }}</span></td>
+                                        <td>{{ $createdBy }}</td>
+                                        <td>{{ $dateFmt }}</td>
+                                        <td>
+                                            <div style="display: flex; gap: 4px; justify-content: center;">
+                                                <a href="{{ route('returnSale', ['id' => $return->saleId]) }}" class="btn btn-sm btn-outline-secondary" title="View" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="ri-eye-line"></i>
+                                                </a>
+                                                <form method="POST" action="{{ route('delSale', ['id' => $return->saleId]) }}" style="display: inline-block;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="delete" title="Delete" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                        <i class="ri-delete-bin-line"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @else
+                                <tr>
+                                    <td colspan="9" class="text-center">No sale returns found</td>
+                                </tr>
+                            @endif
                         </tbody>
                     </table>
                 </div>
@@ -67,4 +88,38 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+    @include('customScript')
+    <script>
+        (function() {
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize select all checkbox
+                const selectAllCheckbox = document.getElementById('selectAllReturns');
+                const bulkSelects = document.querySelectorAll('.bulk-select');
+                
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.addEventListener('change', function() {
+                        bulkSelects.forEach(checkbox => {
+                            checkbox.checked = this.checked;
+                        });
+                    });
+                }
+
+                // Initialize DataTable if available
+                try {
+                    if (window.jQuery && $.fn.DataTable) {
+                        $('#returnSalesTable').DataTable({
+                            responsive: true,
+                            order: [[7, 'desc']],
+                            columnDefs: [
+                                { orderable: false, targets: [0, 8] }
+                            ]
+                        });
+                    }
+                } catch(e) {}
+            });
+        })();
+    </script>
 @endsection

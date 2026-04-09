@@ -321,7 +321,8 @@
     @php
       // Walk-in and config-driven display toggles for signatures and acknowledgement
       $isWalking = isset($customer) && is_string($customer->name ?? null) && strcasecmp(trim($customer->name), 'Walking Customer') === 0;
-      $hideAck = $isWalking && config('pos.hide_ack_walkin', true);
+      $hideAckByBusiness = $b && isset($b->hide_invoice_acknowledgement) ? (bool) $b->hide_invoice_acknowledgement : false;
+      $hideAck = $hideAckByBusiness || ($isWalking && config('pos.hide_ack_walkin', true));
       $hideSignatures = $isWalking && config('pos.hide_signatures_walkin', true);
     @endphp
     @if(!$hideSignatures)

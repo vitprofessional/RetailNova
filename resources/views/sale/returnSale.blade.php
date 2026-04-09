@@ -71,9 +71,8 @@
                         $sl = 1;
                         @endphp
                         @foreach($items as $item)
-                        
                         <input type="hidden" name="productId[]" value="{{ $item->productId }}">
-                        <input type="hidden" name="purchaseId[]" value="{{ $item->purchaseId   }}">
+                        <input type="hidden" name="purchaseId[]" value="{{ $item->purchaseId }}">
                         <input type="hidden" name="saleId[]" value="{{ $item->saleId }}">
                         <tr class="product-row">
                             <td>{{ $sl }}</td>
@@ -81,9 +80,9 @@
                             <td><input type="number" id="avlQty{{$sl}}" class="form-control form-control-sm" value="{{ $item->qty }}" readonly /></td>
                             <td><input type="number" step="0.01" id="salePrice{{$sl}}" class="form-control form-control-sm price" value="{{ $item->salePrice }}" readonly /></td>
                             <td>{{ number_format($item->totalSale ?? 0, 2, '.', ',') }}</td>
-                            <td><input type="checkbox" /></td>
-                            <td><input type="number" name="totalQty[]" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" data-onkeyup="returnQtyCalculate('avlQty{{$sl}}','rtnqty{{$sl}}','salePrice{{$sl}}','returnAmount{{$sl}}')" value="" min="0" step="1" /></td>
-                            <td><input type="number" class="form-control form-control-sm" value="0" id="returnAmount{{$sl}}" /></td>
+                            <td><input type="checkbox" class="return-checkbox" data-row="{{ $sl }}" /></td>
+                            <td><input type="number" name="totalQty[]" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" value="" min="0" step="1" disabled /></td>
+                            <td><input type="number" class="form-control form-control-sm return-amount" value="0" id="returnAmount{{$sl}}" readonly /></td>
                             <td></td>
                         </tr>
                         
@@ -112,38 +111,32 @@
             <div class="col-6">
                 <div class="input-group mb-3">
                     <span class="input-group-text rounded-0 p-0 px-2 bg-light">Total Return:</span>
-                    <input type="number" id="grandTotal" name="returnAmount" class="form-control" value="0" readonly name="grandTotal">
+                    <input type="number" id="totalReturnAmount" name="totalReturnAmount" class="form-control" value="0" readonly>
                 </div>
             </div>
             <div class="col-6">
                 <div class="input-group mb-3">
                     <span class="input-group-text rounded-0 p-0 px-2 bg-light">Adjust Amount</span>
-                    <input type="number" name="adjustAmount" id="adjustAmount" data-onchange="adjustDue('grandTotal','adjustAmount')" class="form-control" value="0" @if($invoice->curDue == 0) readonly @endif>
+                    <input type="number" name="adjustAmount" id="adjustAmount" class="form-control" value="0" @if($invoice->curDue == 0) readonly @endif>
                 </div>
             </div>
-            
         </div>
         
         <div class="row shadow p-3">
             <div class="col-12">
-                <h5 class="card-title">Return Details(Optional)</h5>
-                <form>
-                    <div class="row">
-                        <div class="col-md-6 mb-3"><textarea class="form-control" placeholder="Enter return note if any" rows="2"></textarea>
+                <h5 class="card-title">Return Details (Optional)</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Return Note</label>
+                        <textarea class="form-control" name="returnNote" placeholder="Enter return note if any" rows="2"></textarea>
                     </div>
-                    <div class="col-md-3 d-flex align-items-center">
-                        <div class="d-flex gap-4 w-100">
-                            <button type="submit" class="btn btn-success w-100">Submit Return</button>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="d-flex gap-2 w-100">
+                            <button type="submit" class="btn btn-success flex-grow-1">Submit Return</button>
+                            <button type="button" class="btn btn-primary flex-grow-1" id="returnAndRefundBtn">Return & Refund</button>
                         </div>
                     </div>
-                    
-                    <div class="col-md-3 d-flex align-items-center">
-                        <div class="d-flex gap-4 w-100">
-                            <button type="button" class="btn btn-success w-100">Return And Refund</button>
-                        </div>
-                    </div>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
@@ -152,4 +145,138 @@
 
 @section('scripts')
     @include('customScript')
+    <script>
+    (function() {
+        // Initialize return functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeReturnForm();
+        });
+
+        function initializeReturnForm() {
+            // Get all checkboxes
+            const checkboxes = document.querySelectorAll('.return-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const rowNum = this.getAttribute('data-row');
+                    const qtyInput = document.getElementById('rtnqty' + rowNum);
+                    
+                    if (this.checked) {
+                        qtyInput.disabled = false;
+                        qtyInput.focus();
+                    } else {
+                        qtyInput.disabled = true;
+                        qtyInput.value = '';
+                        calculateReturnAmounts();
+                    }
+                });
+            });
+
+            // Setup quantity input listeners
+            const quantityInputs = document.querySelectorAll('.quantity');
+            quantityInputs.forEach(input => {
+                input.addEventListener('input', calculateReturnAmounts);
+            });
+
+            // Setup adjust amount listener
+            const adjustInput = document.getElementById('adjustAmount');
+            if (adjustInput) {
+                adjustInput.addEventListener('change', calculateReturnAmounts);
+            }
+
+            // Return & Refund button
+            const refundBtn = document.getElementById('returnAndRefundBtn');
+            if (refundBtn) {
+                refundBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const totalReturnAmount = parseFloat(document.getElementById('totalReturnAmount').value) || 0;
+                    const adjustAmount = parseFloat(document.getElementById('adjustAmount').value) || 0;
+                    const finalAmount = totalReturnAmount + adjustAmount;
+                    
+                    if (finalAmount <= 0) {
+                        alert('Please select items to return');
+                        return;
+                    }
+                    
+                    if (confirm('Return amount: ' + finalAmount.toFixed(2) + '\n\nProceed with return and refund?')) {
+                        // Submit the form
+                        document.querySelector('form').submit();
+                    }
+                });
+            }
+        }
+
+        function calculateReturnAmounts() {
+            let totalReturn = 0;
+            let itemCount = 0;
+
+            // Find all quantity inputs that have values
+            const quantityInputs = document.querySelectorAll('.quantity:not(:disabled)');
+            quantityInputs.forEach((input, index) => {
+                const qty = parseInt(input.value) || 0;
+                if (qty > 0) {
+                    itemCount++;
+                    // Find the corresponding price and return amount fields
+                    const match = input.id.match(/rtnqty(\d+)/);
+                    if (match) {
+                        const rowNum = match[1];
+                        const priceInput = document.getElementById('salePrice' + rowNum);
+                        const availQtyInput = document.getElementById('avlQty' + rowNum);
+                        const returnAmountInput = document.getElementById('returnAmount' + rowNum);
+
+                        if (priceInput && returnAmountInput) {
+                            const price = parseFloat(priceInput.value) || 0;
+                            const availQty = parseInt(availQtyInput.value) || 0;
+
+                            // Validate quantity
+                            if (qty > availQty) {
+                                input.value = availQty;
+                                alert('Return quantity cannot exceed available quantity (' + availQty + ')');
+                            }
+
+                            const returnAmount = qty * price;
+                            returnAmountInput.value = returnAmount.toFixed(2);
+                            totalReturn += returnAmount;
+                        }
+                    }
+                }
+            });
+
+            // Update total return amount
+            const totalReturnInput = document.getElementById('totalReturnAmount');
+            if (totalReturnInput) {
+                totalReturnInput.value = totalReturn.toFixed(2);
+            }
+
+            // Add adjust amount
+            const adjustInput = document.getElementById('adjustAmount');
+            if (adjustInput) {
+                const adjustAmount = parseFloat(adjustInput.value) || 0;
+                const dueAmount = document.getElementById('dueAmount');
+                if (dueAmount) {
+                    const finalAmount = totalReturn + adjustAmount;
+                    // Note: You can add logic here to show remaining due if needed
+                }
+            }
+        }
+
+        // Expose function to window for inline handlers if needed
+        window.returnQtyCalculate = function(avlQtyId, rtnQtyId, salePriceId, returnAmountId) {
+            const availQty = parseInt(document.getElementById(avlQtyId).value) || 0;
+            const rtnQty = parseInt(document.getElementById(rtnQtyId).value) || 0;
+            const salePrice = parseFloat(document.getElementById(salePriceId).value) || 0;
+            const returnAmountInput = document.getElementById(returnAmountId);
+
+            if (rtnQty > availQty) {
+                document.getElementById(rtnQtyId).value = availQty;
+                alert('Return quantity cannot exceed available quantity');
+                return;
+            }
+
+            const returnAmount = rtnQty * salePrice;
+            returnAmountInput.value = returnAmount.toFixed(2);
+            calculateReturnAmounts();
+        };
+    })();
+    </script>
 @endsection
