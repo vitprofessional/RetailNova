@@ -60,7 +60,7 @@ Purchase Report
             <div class="card-body text-white">
                 <h6 class="mb-2">Total Purchases</h6>
                 <h3>@money($totalPurchases)</h3>
-                <p class="mb-0">{{ $purchases->total() }} Transactions</p>
+                <p class="mb-0">{{ $totals['transactions'] ?? $purchases->total() }} Transactions</p>
             </div>
         </div>
     </div>
@@ -82,28 +82,36 @@ Purchase Report
                                 <th>Date</th>
                                 <th>Invoice No</th>
                                 <th>Supplier</th>
+                                <th class="text-center">Items</th>
                                 <th class="text-right">Sub Total</th>
                                 <th class="text-right">Discount</th>
                                 <th class="text-right">Grand Total</th>
+                                <th class="text-right">Paid</th>
+                                <th class="text-right">Due</th>
                                 <th>Payment Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($purchases as $purchase)
+                                @php
+                                    $reportDate = $purchase->purchase_date ?: $purchase->sort_date;
+                                    $due = floatval($purchase->due_total ?? 0);
+                                    $paid = floatval($purchase->paid_total ?? 0);
+                                @endphp
                                 <tr>
-                                    <td>{{ \Carbon\Carbon::parse($purchase->purchase_date)->format('d M Y') }}</td>
-                                    <td>{{ $purchase->invoice ?? 'N/A' }}</td>
-                                    <td>{{ $purchase->supplier->name ?? 'Unknown Supplier' }}</td>
-                                    <td class="text-right">@money($purchase->totalAmount ?? 0)</td>
-                                    <td class="text-right">@money($purchase->disAmount ?? 0)</td>
-                                    <td class="text-right"><strong>@money($purchase->grandTotal)</strong></td>
+                                    <td>{{ $reportDate ? \Carbon\Carbon::parse($reportDate)->format('d M Y') : '-' }}</td>
+                                    <td>{{ $purchase->invoice_no ?? 'N/A' }}</td>
+                                    <td>{{ $purchase->supplier_name ?? 'Unknown Supplier' }}</td>
+                                    <td class="text-center">{{ intval($purchase->line_items ?? 0) }}</td>
+                                    <td class="text-right">@money($purchase->sub_total ?? 0)</td>
+                                    <td class="text-right">@money($purchase->discount_total ?? 0)</td>
+                                    <td class="text-right"><strong>@money($purchase->grand_total ?? 0)</strong></td>
+                                    <td class="text-right">@money($purchase->paid_total ?? 0)</td>
+                                    <td class="text-right">@money($purchase->due_total ?? 0)</td>
                                     <td>
-                                        @php
-                                            $due = floatval($purchase->dueAmount ?? 0);
-                                        @endphp
                                         @if($due <= 0)
                                             <span class="badge bg-success">Paid</span>
-                                        @elseif($purchase->paidAmount > 0)
+                                        @elseif($paid > 0)
                                             <span class="badge bg-warning">Partial</span>
                                         @else
                                             <span class="badge bg-danger">Unpaid</span>
@@ -112,15 +120,19 @@ Purchase Report
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">No purchases found for the selected period.</td>
+                                    <td colspan="10" class="text-center">No purchases found for the selected period.</td>
                                 </tr>
                             @endforelse
                         </tbody>
                         @if($purchases->count() > 0)
                             <tfoot class="bg-light">
                                 <tr>
-                                    <th colspan="5" class="text-right">Total:</th>
-                                    <th class="text-right">@money($totalPurchases)</th>
+                                    <th colspan="4" class="text-right">Total:</th>
+                                    <th class="text-right">@money($totals['sub_total'] ?? 0)</th>
+                                    <th class="text-right">@money($totals['discount'] ?? 0)</th>
+                                    <th class="text-right">@money($totals['grand_total'] ?? 0)</th>
+                                    <th class="text-right">@money($totals['paid_total'] ?? 0)</th>
+                                    <th class="text-right">@money($totals['due_total'] ?? 0)</th>
                                     <th></th>
                                 </tr>
                             </tfoot>

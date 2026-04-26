@@ -16,7 +16,7 @@ class EnsureSuperAdminRole
     {
         try {
             $user = Auth::guard('admin')->user();
-            if ($user && ($user->role === 'superadmin')) {
+            if ($user && method_exists($user, 'hasSuperAdminPrivileges') && $user->hasSuperAdminPrivileges()) {
                 return $next($request);
             }
         } catch (\Throwable $e) {

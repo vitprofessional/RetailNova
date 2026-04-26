@@ -52,10 +52,10 @@ class PharmacyShopSeeder extends Seeder
         $brand = fn(string $name) => (string) (DB::table('brands')->where('name', $name)->value('id') ?? 1);
         $category = fn(string $name) => (string) (DB::table('categories')->where('name', $name)->value('id') ?? 1);
         $unit = fn(string $name) => (string) (DB::table('product_units')->where('name', $name)->value('id') ?? 1);
-        $supplierId = fn(string $mail) => DB::table('suppliers')->where('mail', $mail)->value('id');
-        $customerId = fn(string $mail) => DB::table('customers')->where('mail', $mail)->value('id');
-        $purchaseId = fn(string $invoice) => DB::table('purchase_products')->where('invoice', $invoice)->value('id');
-        $productId = fn(string $barcode) => DB::table('products')->where('barCode', $barcode)->value('id');
+        $supplierId = fn(string $mail) => DB::table('suppliers')->where('businessId', $bid)->where('mail', $mail)->value('id');
+        $customerId = fn(string $mail) => DB::table('customers')->where('businessId', $bid)->where('mail', $mail)->value('id');
+        $purchaseId = fn(string $invoice) => DB::table('purchase_products')->where('businessId', $bid)->where('invoice', $invoice)->value('id');
+        $productId = fn(string $barcode) => DB::table('products')->where('businessId', $bid)->where('barCode', $barcode)->value('id');
 
         $suppliers = [
             ['name' => 'Square Pharma Distribution', 'mail' => 'supply@squarepharma.com', 'mobile' => '0311-7001001', 'country' => 'Bangladesh', 'state' => 'Dhaka', 'city' => 'Dhaka', 'area' => 'Tejgaon', 'openingBalance' => 0],
@@ -64,7 +64,8 @@ class PharmacyShopSeeder extends Seeder
         ];
 
         foreach ($suppliers as $supplier) {
-            Supplier::updateOrCreate(['mail' => $supplier['mail']], $supplier);
+            $supplier['businessId'] = $bid;
+            Supplier::updateOrCreate(['mail' => $supplier['mail'], 'businessId' => $bid], $supplier);
         }
 
         $customers = [
@@ -76,7 +77,8 @@ class PharmacyShopSeeder extends Seeder
         ];
 
         foreach ($customers as $customer) {
-            Customer::updateOrCreate(['mail' => $customer['mail']], $customer);
+            $customer['businessId'] = $bid;
+            Customer::updateOrCreate(['mail' => $customer['mail'], 'businessId' => $bid], $customer);
         }
 
         $products = [
@@ -98,7 +100,7 @@ class PharmacyShopSeeder extends Seeder
             $stock = $data['stock'];
             unset($data['stock'], $data['buy'], $data['sell']);
 
-            $product = Product::updateOrCreate(['barCode' => $data['barCode']], $data);
+            $product = Product::updateOrCreate(['barCode' => $data['barCode'], 'businessId' => $bid], $data);
 
             if ($product->stocks()->sum('currentStock') == 0) {
                 ProductStock::create([
@@ -125,7 +127,7 @@ class PharmacyShopSeeder extends Seeder
 
         $now = now();
         foreach ($purchases as $row) {
-            $existing = DB::table('purchase_products')->where('invoice', $row['invoice'])->first();
+            $existing = DB::table('purchase_products')->where('businessId', $bid)->where('invoice', $row['invoice'])->first();
             if ($existing) {
                 DB::table('purchase_products')->where('id', $existing->id)->update(array_merge($row, ['updated_at' => $now]));
                 $id = $existing->id;
@@ -179,7 +181,7 @@ class PharmacyShopSeeder extends Seeder
 
         foreach ($sales as $sale) {
             $invoice = $sale['header']['invoice'];
-            $existing = DB::table('sale_products')->where('invoice', $invoice)->select('id')->first();
+            $existing = DB::table('sale_products')->where('businessId', $bid)->where('invoice', $invoice)->select('id')->first();
 
             if ($existing) {
                 DB::table('sale_products')->where('id', $existing->id)->update(array_merge($sale['header'], ['updated_at' => $now]));
@@ -199,3 +201,6 @@ class PharmacyShopSeeder extends Seeder
         }
     }
 }
+
+
+

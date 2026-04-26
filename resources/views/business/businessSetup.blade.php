@@ -353,6 +353,7 @@
                         <form action="{{ route('business.demo.reset') }}" method="POST"
                               onsubmit="return confirm('⚠ WARNING: This will delete ALL products, customers, purchases and sales for this business and replace them with new demo data.\n\nAre you absolutely sure?');">
                             @csrf
+                                                        <input type="hidden" name="businessId" value="{{ (int)($business->id ?? 0) }}">
                             <div class="form-row align-items-end">
                                 <div class="col-sm-7">
                                     <label class="font-weight-600 small mb-1">New Business Type</label>

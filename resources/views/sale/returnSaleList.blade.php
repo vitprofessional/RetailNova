@@ -65,7 +65,7 @@
                                         <td>{{ $dateFmt }}</td>
                                         <td>
                                             <div style="display: flex; gap: 4px; justify-content: center;">
-                                                <a href="{{ route('returnSale', ['id' => $return->saleId]) }}" class="btn btn-sm btn-outline-secondary" title="View" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                <a href="{{ route('saleReturnDetails', ['id' => $return->id]) }}" class="btn btn-sm btn-outline-secondary" title="View" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;">
                                                     <i class="ri-eye-line"></i>
                                                 </a>
                                                 <form method="POST" action="{{ route('delSale', ['id' => $return->saleId]) }}" style="display: inline-block;">

@@ -38,9 +38,9 @@ class ComputerShopSeeder extends Seeder
         $brand   = fn(string $n) => (string)(DB::table('brands')->where('name', $n)->value('id') ?? 1);
         $cat     = fn(string $n) => (string)(DB::table('categories')->where('name', $n)->value('id') ?? 1);
         $unit    = fn(string $n) => (string)(DB::table('product_units')->where('name', $n)->value('id') ?? 1);
-        $supId   = fn(string $mail) => DB::table('suppliers')->where('mail', $mail)->value('id');
-        $custId  = fn(string $mail) => DB::table('customers')->where('mail', $mail)->value('id');
-        $purId   = fn(string $inv)  => DB::table('purchase_products')->where('invoice', $inv)->value('id');
+        $supId   = fn(string $mail) => DB::table('suppliers')->where('businessId', $bid)->where('mail', $mail)->value('id');
+        $custId  = fn(string $mail) => DB::table('customers')->where('businessId', $bid)->where('mail', $mail)->value('id');
+        $purId   = fn(string $inv)  => DB::table('purchase_products')->where('businessId', $bid)->where('invoice', $inv)->value('id');
 
         // ── Suppliers ────────────────────────────────────────────────────────
         $suppliers = [
@@ -49,7 +49,8 @@ class ComputerShopSeeder extends Seeder
             ['name' => 'Digital Traders Co',      'mail' => 'sales@digitaltraders.com','mobile' => '0313-6003003', 'country' => 'Bangladesh', 'state' => 'Chattogram', 'city' => 'Chattogram', 'area' => 'Agrabad',    'openingBalance' => 0],
         ];
         foreach ($suppliers as $s) {
-            Supplier::updateOrCreate(['mail' => $s['mail']], $s);
+            $s['businessId'] = $bid;
+            Supplier::updateOrCreate(['mail' => $s['mail'], 'businessId' => $bid], $s);
         }
 
         // ── Customers ────────────────────────────────────────────────────────
@@ -61,7 +62,8 @@ class ComputerShopSeeder extends Seeder
             ['name' => 'Smart Office Systems','mail' => 'smartoffice@systems.com',   'mobile' => '0323-7005005', 'country' => 'Bangladesh', 'state' => 'Chattogram', 'city' => 'Chattogram', 'area' => 'GEC Circle',    'openingBalance' => 0,     'businessId' => $bid],
         ];
         foreach ($customers as $c) {
-            Customer::updateOrCreate(['mail' => $c['mail']], $c);
+            $c['businessId'] = $bid;
+            Customer::updateOrCreate(['mail' => $c['mail'], 'businessId' => $bid], $c);
         }
 
         // ── Products ─────────────────────────────────────────────────────────
@@ -82,14 +84,14 @@ class ComputerShopSeeder extends Seeder
 
         foreach ($products as $data) {
             $stock = $data['stock']; unset($data['stock'], $data['buy'], $data['sell']);
-            $p = Product::updateOrCreate(['barCode' => $data['barCode']], $data);
+            $p = Product::updateOrCreate(['barCode' => $data['barCode'], 'businessId' => $bid], $data);
             if ($p->stocks()->sum('currentStock') == 0) {
                 ProductStock::create(['productId' => $p->id, 'purchaseId' => null, 'currentStock' => $stock, 'businessId' => $bid]);
             }
         }
 
         // ── Purchases ────────────────────────────────────────────────────────
-        $pId  = fn($bc) => DB::table('products')->where('barCode', $bc)->value('id');
+        $pId  = fn($bc) => DB::table('products')->where('businessId', $bid)->where('barCode', $bc)->value('id');
         $base = Carbon::now()->subDays(48);
 
         $purchases = [
@@ -142,7 +144,7 @@ class ComputerShopSeeder extends Seeder
 
         $now = now();
         foreach ($purchases as $row) {
-            $existing = DB::table('purchase_products')->where('invoice', $row['invoice'])->first();
+            $existing = DB::table('purchase_products')->where('businessId', $bid)->where('invoice', $row['invoice'])->first();
             if ($existing) {
                 DB::table('purchase_products')->where('id', $existing->id)->update(array_merge($row, ['updated_at' => $now]));
                 $id = $existing->id;
@@ -229,7 +231,7 @@ class ComputerShopSeeder extends Seeder
         $now = now();
         foreach ($sales as $sale) {
             $invoice = $sale['header']['invoice'];
-            $existing = DB::table('sale_products')->where('invoice', $invoice)->select('id')->first();
+            $existing = DB::table('sale_products')->where('businessId', $bid)->where('invoice', $invoice)->select('id')->first();
             if ($existing) {
                 DB::table('sale_products')->where('id', $existing->id)->update(array_merge($sale['header'], ['updated_at' => $now]));
                 DB::table('invoice_items')->where('saleId', $existing->id)->delete();
@@ -243,3 +245,7 @@ class ComputerShopSeeder extends Seeder
         }
     }
 }
+
+
+
+

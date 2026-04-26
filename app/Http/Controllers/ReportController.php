@@ -118,24 +118,54 @@ class ReportController extends Controller
         $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
         $supplierId = $request->input('supplier_id');
 
-        $query = PurchaseProduct::with(['supplier']);
+        $startDateTime = Carbon::parse($startDate)->startOfDay();
+        $endDateTime = Carbon::parse($endDate)->endOfDay();
+
+        $baseQuery = PurchaseProduct::query()
+            ->leftJoin('suppliers', 'suppliers.id', '=', 'purchase_products.supplier');
 
         if ($supplierId) {
-            $query->where('supplier', $supplierId);
+            $baseQuery->where('purchase_products.supplier', $supplierId);
         }
 
-        // Date filtering with null check
-        $query->where(function($q) use ($startDate, $endDate) {
-            $q->whereBetween('created_at', [$startDate, $endDate])
-              ->orWhereBetween('purchase_date', [$startDate, $endDate]);
+        // Filter by both timestamp and explicit purchase date field.
+        $baseQuery->where(function($q) use ($startDateTime, $endDateTime, $startDate, $endDate) {
+            $q->whereBetween('purchase_products.created_at', [$startDateTime, $endDateTime])
+              ->orWhereBetween('purchase_products.purchase_date', [$startDate, $endDate]);
         });
 
-        $purchases = $query->orderBy('created_at', 'desc')->paginate(50);
-        
-        $totalPurchases = (clone $query)->sum('grandTotal');
-        $suppliers = Supplier::orderBy('name')->get();
+        // Purchases are saved per product row; aggregate them to one transaction row per invoice.
+        $groupedQuery = (clone $baseQuery)
+            ->selectRaw("\n                COALESCE(NULLIF(purchase_products.invoice, ''), CONCAT('ROW-', purchase_products.id)) as invoice_no,\n                MAX(purchase_products.purchase_date) as purchase_date,\n                MAX(purchase_products.created_at) as sort_date,\n                purchase_products.supplier as supplier_id,\n                MAX(suppliers.name) as supplier_name,\n                SUM(COALESCE(purchase_products.totalAmount, 0)) as sub_total,\n                MAX(COALESCE(purchase_products.disAmount, 0)) as discount_total,\n                MAX(COALESCE(purchase_products.grandTotal, 0)) as grand_total,\n                MAX(COALESCE(purchase_products.paidAmount, 0)) as paid_total,\n                MAX(COALESCE(purchase_products.dueAmount, 0)) as due_total,\n                COUNT(purchase_products.id) as line_items\n            ")
+            ->groupByRaw("COALESCE(NULLIF(purchase_products.invoice, ''), CONCAT('ROW-', purchase_products.id)), purchase_products.supplier");
 
-        return view('reports.purchase-report', compact('purchases', 'totalPurchases', 'startDate', 'endDate', 'suppliers', 'supplierId'));
+        $summary = DB::query()
+            ->fromSub(clone $groupedQuery, 'purchase_report')
+            ->selectRaw('COALESCE(SUM(sub_total), 0) as total_sub_total')
+            ->selectRaw('COALESCE(SUM(discount_total), 0) as total_discount_total')
+            ->selectRaw('COALESCE(SUM(grand_total), 0) as total_grand_total')
+            ->selectRaw('COALESCE(SUM(paid_total), 0) as total_paid_total')
+            ->selectRaw('COALESCE(SUM(due_total), 0) as total_due_total')
+            ->selectRaw('COUNT(*) as total_transactions')
+            ->first();
+
+        $purchases = DB::query()
+            ->fromSub($groupedQuery, 'purchase_report')
+            ->orderByDesc('sort_date')
+            ->paginate(50);
+
+        $totalPurchases = (float) ($summary->total_grand_total ?? 0);
+        $suppliers = Supplier::orderBy('name')->get();
+        $totals = [
+            'sub_total' => (float) ($summary->total_sub_total ?? 0),
+            'discount' => (float) ($summary->total_discount_total ?? 0),
+            'grand_total' => $totalPurchases,
+            'paid_total' => (float) ($summary->total_paid_total ?? 0),
+            'due_total' => (float) ($summary->total_due_total ?? 0),
+            'transactions' => (int) ($summary->total_transactions ?? 0),
+        ];
+
+        return view('reports.purchase-report', compact('purchases', 'totalPurchases', 'startDate', 'endDate', 'suppliers', 'supplierId', 'totals'));
     }
 
     /**

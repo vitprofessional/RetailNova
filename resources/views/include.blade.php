@@ -64,7 +64,9 @@
             padding: 30px;
             color: #333;
         }
-
+        .login-form .form-control, .floating-label .floating-input {
+            padding-left: 0 !important;
+        }
         .form-inline {
             margin: 0 10px;
         }
@@ -158,6 +160,7 @@
             -o-border-radius: 10px;
             border-radius: 0;
             box-shadow: none;
+            padding-left: 0 !important;
         }
         .form-check-input {
             position: absolute;
@@ -1490,7 +1493,11 @@
                                                   <img src="{{ $topAvatar }}" alt="profile-img" class="rounded profile-img img-fluid avatar-70" style="margin-top:-36px;border:4px solid #fff;">
                                               </div>
                                               <div class="p-3">
-                                                  @php $displayName = ($adminUser->fullName ?? '') . ($adminUser->sureName ? ' ' . $adminUser->sureName : ''); @endphp
+                                                  @php
+                                                      $firstName = trim((string)($adminUser->fullName ?? ''));
+                                                      $lastName = trim((string)($adminUser->sureName ?? ''));
+                                                      $displayName = trim($firstName . ' ' . $lastName);
+                                                  @endphp
                                                   <h5 class="mb-1">{{ $displayName ?: ($adminUser->mail ?? 'Admin User') }}</h5>
                                                   <p class="mb-0">{{ $adminUser->mail ?? '' }}</p>
                                                   <p class="mb-0">Since {{ optional($adminUser->created_at)->format('j M, Y') ?? '' }}</p>

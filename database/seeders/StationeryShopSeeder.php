@@ -19,3 +19,7 @@ class StationeryShopSeeder extends Seeder
         app()->call([$seeder, 'run']);
     }
 }
+
+
+
+

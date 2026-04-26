@@ -563,6 +563,11 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
         'returnSaleList'
     ])->name('returnSaleList');
 
+    Route::get('/return/sale/details/{id}',[
+        saleController::class,
+        'saleReturnDetails'
+    ])->name('saleReturnDetails');
+
 
     Route::post('sale/return/save',[
         saleController::class,

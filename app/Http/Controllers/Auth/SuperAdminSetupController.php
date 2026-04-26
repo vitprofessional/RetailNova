@@ -14,7 +14,7 @@ class SuperAdminSetupController extends Controller
     public function show()
     {
         // If already exists, the route middleware should block; but double-check
-        if (AdminUser::where('role','superadmin')->exists()) {
+        if (AdminUser::superAdminExists()) {
             return redirect()->route('userLogin');
         }
         return view('auth.superadmin_setup');
@@ -23,7 +23,7 @@ class SuperAdminSetupController extends Controller
     public function store(Request $request)
     {
         // Block if superadmin exists
-        if (AdminUser::where('role','superadmin')->exists()) {
+        if (AdminUser::superAdminExists()) {
             Alert::error('Error','Super Admin already exists');
             return redirect()->route('userLogin');
         }

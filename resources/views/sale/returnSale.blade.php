@@ -2,6 +2,13 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
+@if(!empty($readOnlyReturnHistory))
+<div class="col-12 mb-3">
+    <div class="alert alert-info mb-0">
+        This sale has already been returned and the original invoice lines were cleared. The page is shown in history-only mode.
+    </div>
+</div>
+@endif
 <form class="card form" action="{{ route('saleReturnSave') }}" method="POST">
     @csrf
     <input type="hidden" name="customerId" value="{{ $customer->id }}">
@@ -71,6 +78,7 @@
                         $sl = 1;
                         @endphp
                         @foreach($items as $item)
+                        @php $historyOnly = !empty($readOnlyReturnHistory); @endphp
                         <input type="hidden" name="productId[]" value="{{ $item->productId }}">
                         <input type="hidden" name="purchaseId[]" value="{{ $item->purchaseId }}">
                         <input type="hidden" name="saleId[]" value="{{ $item->saleId }}">
@@ -80,8 +88,8 @@
                             <td><input type="number" id="avlQty{{$sl}}" class="form-control form-control-sm" value="{{ $item->qty }}" readonly /></td>
                             <td><input type="number" step="0.01" id="salePrice{{$sl}}" class="form-control form-control-sm price" value="{{ $item->salePrice }}" readonly /></td>
                             <td>{{ number_format($item->totalSale ?? 0, 2, '.', ',') }}</td>
-                            <td><input type="checkbox" class="return-checkbox" data-row="{{ $sl }}" /></td>
-                            <td><input type="number" name="totalQty[]" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" value="0" min="0" step="1" disabled /></td>
+                            <td><input type="checkbox" class="return-checkbox" data-row="{{ $sl }}" @if($historyOnly) disabled @endif /></td>
+                            <td><input type="number" name="totalQty[]" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" value="0" min="0" max="{{ (int)($item->qty ?? 0) }}" step="1" disabled @if($historyOnly) readonly disabled @endif /></td>
                             <td><input type="number" class="form-control form-control-sm return-amount" value="0" id="returnAmount{{$sl}}" readonly /></td>
                             <td></td>
                         </tr>
@@ -117,7 +125,7 @@
             <div class="col-6">
                 <div class="input-group mb-3">
                     <span class="input-group-text rounded-0 p-0 px-2 bg-light">Adjust Amount</span>
-                    <input type="number" name="adjustAmount" id="adjustAmount" class="form-control" value="0" @if($invoice->curDue == 0) readonly @endif>
+                    <input type="number" name="adjustAmount" id="adjustAmount" class="form-control" value="0" @if($invoice->curDue == 0 || !empty($readOnlyReturnHistory)) readonly @endif>
                 </div>
             </div>
         </div>
@@ -132,8 +140,12 @@
                     </div>
                     <div class="col-md-6 d-flex align-items-end">
                         <div class="d-flex gap-2 w-100">
-                            <button type="submit" class="btn btn-success flex-grow-1">Submit Return</button>
-                            <button type="button" class="btn btn-primary flex-grow-1" id="returnAndRefundBtn">Return & Refund</button>
+                            @if(empty($readOnlyReturnHistory))
+                                <button type="submit" class="btn btn-success flex-grow-1">Submit Return</button>
+                                <button type="button" class="btn btn-primary flex-grow-1" id="returnAndRefundBtn">Return & Refund</button>
+                            @else
+                                <button type="button" class="btn btn-secondary flex-grow-1" disabled>Return already recorded</button>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -147,154 +159,165 @@
     @include('customScript')
     <script>
     (function() {
-        // Initialize return functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeReturnForm();
-        });
+        function toNumber(value) {
+            const parsed = parseFloat(value);
+            return isNaN(parsed) ? 0 : parsed;
+        }
 
-        function initializeReturnForm() {
-            // Get all checkboxes
-            const checkboxes = document.querySelectorAll('.return-checkbox');
-            
-            checkboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const rowNum = this.getAttribute('data-row');
-                    const qtyInput = document.getElementById('rtnqty' + rowNum);
-                    
-                    if (this.checked) {
-                        qtyInput.disabled = false;
-                        qtyInput.focus();
-                        qtyInput.value = '1';
-                        calculateReturnAmounts();
-                    } else {
-                        qtyInput.disabled = true;
-                        qtyInput.value = '0';
-                        calculateReturnAmounts();
-                    }
-                });
-            });
+        function toInt(value) {
+            const parsed = parseInt(value, 10);
+            return isNaN(parsed) ? 0 : parsed;
+        }
 
-            // Setup quantity input listeners
-            const quantityInputs = document.querySelectorAll('.quantity');
-            quantityInputs.forEach(input => {
-                input.addEventListener('input', calculateReturnAmounts);
-            });
-
-            // Setup adjust amount listener
-            const adjustInput = document.getElementById('adjustAmount');
-            if (adjustInput) {
-                adjustInput.addEventListener('change', calculateReturnAmounts);
+        function clampQty(input, rowNum) {
+            const availQtyInput = document.getElementById('avlQty' + rowNum);
+            const maxQty = availQtyInput ? toInt(availQtyInput.value) : 0;
+            let qty = toInt(input.value);
+            if (qty < 0) {
+                qty = 0;
             }
-
-            // Return & Refund button
-            const refundBtn = document.getElementById('returnAndRefundBtn');
-            if (refundBtn) {
-                refundBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const totalReturnAmount = parseFloat(document.getElementById('totalReturnAmount').value) || 0;
-                    const adjustAmount = parseFloat(document.getElementById('adjustAmount').value) || 0;
-                    const finalAmount = totalReturnAmount + adjustAmount;
-                    
-                    if (finalAmount <= 0) {
-                        alert('Please select items to return');
-                        return;
-                    }
-                    
-                    if (confirm('Return amount: ' + finalAmount.toFixed(2) + '\n\nProceed with return and refund?')) {
-                        const allQtyInputs = document.querySelectorAll('input[name="totalQty[]"]');
-                        allQtyInputs.forEach(input => {
-                            input.disabled = false;
-                        });
-                        // Submit the form
-                        document.querySelector('form').submit();
-                    }
-                });
-            
-            // Add form submit handler to ensure all fields are enabled for submission
-            const form = document.querySelector('form');
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    // Enable all disabled quantity fields
-                    const allQtyInputs = document.querySelectorAll('input[name="totalQty[]"]');
-                    allQtyInputs.forEach(input => {
-                        input.disabled = false;
-                    });
-                    // Form will proceed to submit naturally
-                });
+            if (qty > maxQty) {
+                qty = maxQty;
+                alert('Return quantity cannot exceed available quantity (' + maxQty + ')');
             }
+            input.value = String(qty);
+            return qty;
         }
 
         function calculateReturnAmounts() {
             let totalReturn = 0;
-            let itemCount = 0;
 
-            // Find all quantity inputs that have values
-            const quantityInputs = document.querySelectorAll('.quantity:not(:disabled)');
-            quantityInputs.forEach((input, index) => {
-                const qty = parseInt(input.value) || 0;
-                if (qty > 0) {
-                    itemCount++;
-                    // Find the corresponding price and return amount fields
-                    const match = input.id.match(/rtnqty(\d+)/);
-                    if (match) {
-                        const rowNum = match[1];
-                        const priceInput = document.getElementById('salePrice' + rowNum);
-                        const availQtyInput = document.getElementById('avlQty' + rowNum);
-                        const returnAmountInput = document.getElementById('returnAmount' + rowNum);
-
-                        if (priceInput && returnAmountInput) {
-                            const price = parseFloat(priceInput.value) || 0;
-                            const availQty = parseInt(availQtyInput.value) || 0;
-
-                            // Validate quantity
-                            if (qty > availQty) {
-                                input.value = availQty;
-                                alert('Return quantity cannot exceed available quantity (' + availQty + ')');
-                            }
-
-                            const returnAmount = qty * price;
-                            returnAmountInput.value = returnAmount.toFixed(2);
-                            totalReturn += returnAmount;
-                        }
-                    }
+            document.querySelectorAll('.quantity').forEach(function(input) {
+                const match = (input.id || '').match(/rtnqty(\d+)/);
+                if (!match) {
+                    return;
                 }
+
+                const rowNum = match[1];
+                const qty = input.disabled ? 0 : clampQty(input, rowNum);
+                const priceInput = document.getElementById('salePrice' + rowNum);
+                const amountInput = document.getElementById('returnAmount' + rowNum);
+                const price = priceInput ? toNumber(priceInput.value) : 0;
+                const amount = qty * price;
+
+                if (amountInput) {
+                    amountInput.value = amount.toFixed(2);
+                }
+                totalReturn += amount;
             });
 
-            // Update total return amount
             const totalReturnInput = document.getElementById('totalReturnAmount');
             if (totalReturnInput) {
                 totalReturnInput.value = totalReturn.toFixed(2);
             }
 
-            // Add adjust amount
             const adjustInput = document.getElementById('adjustAmount');
-            if (adjustInput) {
-                const adjustAmount = parseFloat(adjustInput.value) || 0;
-                const dueAmount = document.getElementById('dueAmount');
-                if (dueAmount) {
-                    const finalAmount = totalReturn + adjustAmount;
-                    // Note: You can add logic here to show remaining due if needed
+            const dueInput = document.getElementById('dueAmount');
+            if (adjustInput && !adjustInput.readOnly) {
+                const dueAmount = dueInput ? toNumber(dueInput.value) : 0;
+                const maxAdjust = Math.min(totalReturn, dueAmount);
+                let adjustAmount = toNumber(adjustInput.value);
+                if (adjustAmount < 0) {
+                    adjustAmount = 0;
                 }
+                if (adjustAmount > maxAdjust) {
+                    adjustAmount = maxAdjust;
+                }
+                adjustInput.value = adjustAmount.toFixed(2);
             }
         }
 
-        // Expose function to window for inline handlers if needed
-        window.returnQtyCalculate = function(avlQtyId, rtnQtyId, salePriceId, returnAmountId) {
-            const availQty = parseInt(document.getElementById(avlQtyId).value) || 0;
-            const rtnQty = parseInt(document.getElementById(rtnQtyId).value) || 0;
-            const salePrice = parseFloat(document.getElementById(salePriceId).value) || 0;
-            const returnAmountInput = document.getElementById(returnAmountId);
+        function enableAllQtyForSubmit(form) {
+            form.querySelectorAll('input[name="totalQty[]"]').forEach(function(input) {
+                input.disabled = false;
+            });
+        }
 
-            if (rtnQty > availQty) {
-                document.getElementById(rtnQtyId).value = availQty;
-                alert('Return quantity cannot exceed available quantity');
+        function hasAnyReturnQty(form) {
+            return Array.from(form.querySelectorAll('input[name="totalQty[]"]')).some(function(input) {
+                return toInt(input.value) > 0;
+            });
+        }
+
+        function initializeReturnForm() {
+            const form = document.querySelector('form.card.form');
+            if (!form) {
                 return;
             }
 
-            const returnAmount = rtnQty * salePrice;
-            returnAmountInput.value = returnAmount.toFixed(2);
+            document.querySelectorAll('.return-checkbox').forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    const rowNum = this.getAttribute('data-row');
+                    const qtyInput = document.getElementById('rtnqty' + rowNum);
+                    if (!qtyInput) {
+                        return;
+                    }
+
+                    if (this.checked) {
+                        qtyInput.disabled = false;
+                        if (toInt(qtyInput.value) <= 0) {
+                            qtyInput.value = '1';
+                        }
+                        qtyInput.focus();
+                    } else {
+                        qtyInput.value = '0';
+                        qtyInput.disabled = true;
+                    }
+                    calculateReturnAmounts();
+                });
+            });
+
+            document.querySelectorAll('.quantity').forEach(function(input) {
+                input.addEventListener('input', function() {
+                    const match = (this.id || '').match(/rtnqty(\d+)/);
+                    if (match) {
+                        clampQty(this, match[1]);
+                    }
+                    calculateReturnAmounts();
+                });
+            });
+
+            const adjustInput = document.getElementById('adjustAmount');
+            if (adjustInput) {
+                adjustInput.addEventListener('input', calculateReturnAmounts);
+            }
+
+            form.addEventListener('submit', function(e) {
+                calculateReturnAmounts();
+                if (!hasAnyReturnQty(form)) {
+                    e.preventDefault();
+                    alert('Please select at least one item quantity to return.');
+                    return;
+                }
+                enableAllQtyForSubmit(form);
+            });
+
+            const refundBtn = document.getElementById('returnAndRefundBtn');
+            if (refundBtn) {
+                refundBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    calculateReturnAmounts();
+
+                    const totalReturnAmount = toNumber(document.getElementById('totalReturnAmount').value);
+                    const adjustAmount = toNumber((document.getElementById('adjustAmount') || {}).value);
+                    const finalAmount = totalReturnAmount + adjustAmount;
+
+                    if (totalReturnAmount <= 0) {
+                        alert('Please select items to return');
+                        return;
+                    }
+
+                    if (confirm('Return amount: ' + finalAmount.toFixed(2) + '\n\nProceed with return and refund?')) {
+                        enableAllQtyForSubmit(form);
+                        form.submit();
+                    }
+                });
+            }
+
             calculateReturnAmounts();
-        };
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeReturnForm);
     })();
     </script>
 @endsection

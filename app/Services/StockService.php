@@ -58,28 +58,42 @@ class StockService
     public function applySaleReturnItem(ReturnSaleItem $returnItem): bool
     {
         return DB::transaction(function () use ($returnItem) {
+            $qty = (int)$returnItem->qty;
+            if($qty <= 0){
+                return false;
+            }
+
             $stock = ProductStock::where('purchaseId', $returnItem->purchaseId)->lockForUpdate()->first();
-            if($stock){
-                $stock->currentStock = (int)$stock->currentStock + (int)$returnItem->qty;
-                $stock->save();
+            if(!$stock){
+                return false;
             }
+            $stock->currentStock = (int)$stock->currentStock + $qty;
+            $stock->save();
+
             $invoiceItem = InvoiceItem::where(['saleId' => $returnItem->saleId, 'purchaseId' => $returnItem->purchaseId])->lockForUpdate()->first();
-            if($invoiceItem){
-                $oldQty = (int)$invoiceItem->qty;
-                $newQty = max(0, $oldQty - (int)$returnItem->qty);
-                $invoiceItem->qty = $newQty;
-            
-                // Recalculate totals based on new quantity
-                $salePrice = floatval($invoiceItem->salePrice ?? 0);
-                $buyPrice = floatval($invoiceItem->buyPrice ?? 0);
-                $invoiceItem->totalSale = $newQty * $salePrice;
-                $invoiceItem->totalPurchase = $newQty * $buyPrice;
-                $invoiceItem->profitTotal = $invoiceItem->totalSale - $invoiceItem->totalPurchase;
-                $profitMargin = $invoiceItem->totalPurchase != 0 ? (($invoiceItem->profitTotal / $invoiceItem->totalPurchase) * 100) : 0;
-                $invoiceItem->profitMargin = number_format($profitMargin, 2);
-            
-                $invoiceItem->save();
+            if(!$invoiceItem){
+                return false;
             }
+
+            $oldQty = (int)$invoiceItem->qty;
+            if($oldQty < $qty){
+                return false;
+            }
+
+            $newQty = $oldQty - $qty;
+            $invoiceItem->qty = $newQty;
+
+            // Recalculate totals based on new quantity
+            $salePrice = (float)($invoiceItem->salePrice ?? 0);
+            $buyPrice = (float)($invoiceItem->buyPrice ?? 0);
+            $invoiceItem->totalSale = $newQty * $salePrice;
+            $invoiceItem->totalPurchase = $newQty * $buyPrice;
+            $invoiceItem->profitTotal = $invoiceItem->totalSale - $invoiceItem->totalPurchase;
+            $invoiceItem->profitMargin = $invoiceItem->totalSale > 0
+                ? round(($invoiceItem->profitTotal / $invoiceItem->totalSale) * 100, 2)
+                : 0;
+
+            $invoiceItem->save();
             return true;
         });
     }

@@ -20,6 +20,20 @@ use Illuminate\Support\Facades\DB;
 
 class saleController extends Controller
 {
+    private function hasAdminPrivileges($actor): bool
+    {
+        if (!$actor) {
+            return false;
+        }
+
+        if (method_exists($actor, 'hasSuperAdminPrivileges')) {
+            return (bool) $actor->hasSuperAdminPrivileges();
+        }
+
+        $normalizedRole = preg_replace('/[^a-z]/', '', strtolower((string) ($actor->role ?? '')));
+        return in_array($normalizedRole, ['admin', 'superadmin'], true);
+    }
+
     Public function newsale (){
         // Ensure a default Walking Customer exists for quick walk-in sales
         try{ $walking = Customer::ensureWalkingCustomer(); }catch(\Throwable $e){ $walking = null; }
@@ -55,7 +69,7 @@ class saleController extends Controller
         $actor = auth('admin')->user();
         $query = SaleProduct::with('salesperson')->orderBy('id','desc');
         // Non-admin users should only see their own generated bills
-        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin'])){
+        if($actor && !$this->hasAdminPrivileges($actor)){
             $query->where('salespersonId', $actor->id);
         }
         $saleList = $query->get();
@@ -74,7 +88,7 @@ class saleController extends Controller
         }
         // Ownership check: non-admins can only edit their own sales
         $actor = auth('admin')->user();
-        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin']) && (int)$sale->salespersonId !== (int)$actor->id){
+        if($actor && !$this->hasAdminPrivileges($actor) && (int)$sale->salespersonId !== (int)$actor->id){
             Alert::error('Unauthorized','You are not allowed to edit this sale');
             return back();
         }
@@ -94,7 +108,7 @@ class saleController extends Controller
         }
         // Ownership check
         $actor = auth('admin')->user();
-        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin']) && (int)$sale->salespersonId !== (int)$actor->id){
+        if($actor && !$this->hasAdminPrivileges($actor) && (int)$sale->salespersonId !== (int)$actor->id){
             Alert::error('Unauthorized','You are not allowed to edit items of this sale');
             return back();
         }
@@ -144,7 +158,7 @@ class saleController extends Controller
 
         // Ownership check
         $actor = auth('admin')->user();
-        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin']) && (int)$sale->salespersonId !== (int)$actor->id){
+        if($actor && !$this->hasAdminPrivileges($actor) && (int)$sale->salespersonId !== (int)$actor->id){
             Alert::error('Unauthorized','You are not allowed to update this sale');
             return back();
         }
@@ -206,7 +220,7 @@ class saleController extends Controller
 
         // Ownership check
         $actor = auth('admin')->user();
-        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin']) && (int)$sale->salespersonId !== (int)$actor->id){
+        if($actor && !$this->hasAdminPrivileges($actor) && (int)$sale->salespersonId !== (int)$actor->id){
             Alert::error('Unauthorized','You are not allowed to update items of this sale');
             return back();
         }
@@ -421,7 +435,7 @@ class saleController extends Controller
         if($invoice):
             // Ownership check for viewing invoices
             $actor = auth('admin')->user();
-            if($actor && !in_array(strtolower($actor->role), ['admin','superadmin']) && (int)$invoice->salespersonId !== (int)$actor->id){
+            if($actor && !$this->hasAdminPrivileges($actor) && (int)$invoice->salespersonId !== (int)$actor->id){
                 Alert::error('Unauthorized','You are not allowed to view this invoice');
                 return back();
             }
@@ -467,7 +481,7 @@ class saleController extends Controller
         if($invoice):
             // Ownership check
             $actor = auth('admin')->user();
-            if($actor && !in_array(strtolower($actor->role), ['admin','superadmin']) && (int)$invoice->salespersonId !== (int)$actor->id){
+            if($actor && !$this->hasAdminPrivileges($actor) && (int)$invoice->salespersonId !== (int)$actor->id){
                 Alert::error('Unauthorized','You are not allowed to access returns for this sale');
                 return back();
             }
@@ -486,20 +500,119 @@ class saleController extends Controller
                 'invoice_items.qty',
                 'invoice_items.totalSale',
             )->orderBy('totalSale','desc')->get();
-            return view('sale.returnSale',['invoice'=>$invoice,'items'=>$items,'customer'=>$customer,'saleId'=>$id]);
+
+            $returnHistory = null;
+            $readOnlyReturnHistory = false;
+            if($items->isEmpty()){
+                $returnHistory = SaleReturn::with(['items.product', 'items.purchase'])
+                    ->where('saleId', $id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                if($returnHistory && $returnHistory->items && $returnHistory->items->isNotEmpty()){
+                    $readOnlyReturnHistory = true;
+                    $items = $returnHistory->items->map(function($item){
+                        return (object) [
+                            'purchaseId' => (int)$item->purchaseId,
+                            'productId' => (int)$item->productId,
+                            'productName' => optional($item->product)->name ?? '-',
+                            'invoiceId' => null,
+                            'saleId' => (int)$item->saleId,
+                            'salePrice' => (float)($item->saleReturn && $item->saleReturn->totalReturnAmount ? 0 : 0),
+                            'buyPrice' => (float)0,
+                            'qty' => (int)$item->qty,
+                            'totalSale' => (float)0,
+                            'returnQty' => (int)$item->qty,
+                        ];
+                    });
+                }
+            }
+
+            if($items->isEmpty()){
+                Alert::error('Sorry!','No invoice items found');
+                return back();
+            }
+
+            return view('sale.returnSale',[
+                'invoice' => $invoice,
+                'items' => $items,
+                'customer' => $customer,
+                'saleId' => $id,
+                'readOnlyReturnHistory' => $readOnlyReturnHistory,
+                'returnHistory' => $returnHistory,
+            ]);
         else:
             $message = Alert::error('Sorry!','No invoice items found');
             return back();
         endif;
     }
+
+    public function saleReturnDetails($id)
+    {
+        $return = SaleReturn::with(['sale.salesperson', 'items.product', 'items.purchase', 'items.customer'])
+            ->find($id);
+
+        if(!$return){
+            Alert::error('Sorry!','Return record not found');
+            return back();
+        }
+
+        $actor = auth('admin')->user();
+        if ($actor && !in_array(strtolower($actor->role), ['admin', 'superadmin'])) {
+            $sale = $return->sale;
+            if ($sale && (int)$sale->salespersonId !== (int)$actor->id) {
+                Alert::error('Unauthorized','You are not allowed to access this return');
+                return back();
+            }
+        }
+
+        $sale = $return->sale;
+        $customer = $sale ? Customer::find($sale->customerId) : ($return->items->first() ? $return->items->first()->customer : null);
+        $displaySale = $sale ?: (object) [
+            'invoice' => 'RETURN-' . $return->id,
+            'date' => $return->created_at,
+            'reference' => null,
+            'note' => $return->returnNote ?? null,
+            'totalSale' => $return->totalReturnAmount ?? 0,
+            'paidAmount' => 0,
+            'curDue' => 0,
+        ];
+
+        $items = $return->items->map(function($item){
+            return (object) [
+                'purchaseId' => (int)$item->purchaseId,
+                'productId' => (int)$item->productId,
+                'productName' => optional($item->product)->name ?? '-',
+                'saleId' => (int)$item->saleId,
+                'salePrice' => 0,
+                'buyPrice' => 0,
+                'qty' => (int)$item->qty,
+                'totalSale' => 0,
+            ];
+        });
+
+        return view('sale.returnSaleDetails', [
+            'invoice' => $displaySale,
+            'returnRecord' => $return,
+            'items' => $items,
+            'customer' => $customer,
+            'readOnlyReturnHistory' => true,
+        ]);
+    }
     
     public function saleReturnSave(Request $requ){
         $requ->validate([
-            'totalQty' => 'required|array',
+            'customerId' => 'required|integer|exists:customers,id',
+            'totalQty' => 'required|array|min:1',
             'totalQty.*' => 'integer|min:0',
-            'saleId' => 'required|array',
-            'productId' => 'required|array',
-            'purchaseId' => 'required|array',
+            'saleId' => 'required|array|min:1',
+            'saleId.*' => 'required|integer|exists:sale_products,id',
+            'productId' => 'required|array|min:1',
+            'productId.*' => 'required|integer|exists:products,id',
+            'purchaseId' => 'required|array|min:1',
+            'purchaseId.*' => 'required|integer|exists:purchase_products,id',
+            'adjustAmount' => 'nullable|numeric|min:0',
+            'returnNote' => 'nullable|string|max:1000',
         ]);
 
         $actor = auth('admin')->user();
@@ -525,8 +638,18 @@ class saleController extends Controller
             return back();
         }
 
-        if ($actor && !in_array(strtolower($actor->role), ['admin','superadmin'])) {
-            $sale = SaleProduct::find($resolvedSaleId);
+        $sale = SaleProduct::find($resolvedSaleId);
+        if(!$sale){
+            Alert::error('Sorry!','Sale not found for return');
+            return back();
+        }
+
+        if((int)$sale->customerId !== (int)$requ->customerId){
+            Alert::error('Sorry!','Customer mismatch for sale return');
+            return back();
+        }
+
+        if ($actor && !$this->hasAdminPrivileges($actor)) {
             if ($sale && (int)$sale->salespersonId !== (int)$actor->id) {
                 Alert::error('Unauthorized','You are not allowed to return items for this sale');
                 return back();
@@ -545,43 +668,95 @@ class saleController extends Controller
             return back();
         }
 
+        $rowsToReturn = [];
+        foreach($qtyItems as $index => $item){
+            $qty = (int)$item;
+            if($qty <= 0){
+                continue;
+            }
+            if(!isset($saleIds[$index], $productIds[$index], $purchaseIds[$index])){
+                Alert::error('Sorry!','Invalid return row data');
+                return back();
+            }
+            $rowsToReturn[] = [
+                'index' => $index,
+                'qty' => $qty,
+                'saleId' => (int)$saleIds[$index],
+                'productId' => (int)$productIds[$index],
+                'purchaseId' => (int)$purchaseIds[$index],
+            ];
+        }
+
+        if(empty($rowsToReturn)){
+            Alert::error('Sorry!','Please select at least one valid return row');
+            return back();
+        }
+
         DB::beginTransaction();
         try {
+            $computedReturnAmount = 0;
+            foreach($rowsToReturn as $row){
+                if($row['saleId'] !== $resolvedSaleId){
+                    throw new \Exception('Mismatched sale row detected');
+                }
+                $invoiceItem = InvoiceItem::where('saleId', $resolvedSaleId)
+                    ->where('purchaseId', $row['purchaseId'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if(!$invoiceItem){
+                    throw new \Exception('Sale item not found for purchase #'.$row['purchaseId']);
+                }
+                if((int)$invoiceItem->qty < (int)$row['qty']){
+                    throw new \Exception('Return quantity exceeds available sold quantity for purchase #'.$row['purchaseId']);
+                }
+                $computedReturnAmount += ((float)$invoiceItem->salePrice * (int)$row['qty']);
+            }
+
+            $currentDue = max(0, (float)($sale->curDue ?? 0));
+            $requestedAdjust = max(0, (float)$requ->input('adjustAmount', 0));
+            $effectiveAdjust = min($requestedAdjust, $currentDue, $computedReturnAmount);
+
             $history = new SaleReturn();
             $history->saleId = $resolvedSaleId;
-            $history->totalReturnAmount = $requ->input('totalReturnAmount', 0);
-            $history->adjustAmount = $requ->input('adjustAmount', 0);
-            $history->returnNote = $requ->input('returnNote', '');
+            $history->totalReturnAmount = round($computedReturnAmount, 2);
+            $history->adjustAmount = round($effectiveAdjust, 2);
+            if(\Schema::hasColumn('sale_returns', 'returnNote')){
+                $history->returnNote = trim((string)$requ->input('returnNote', ''));
+            }
             $history->save();
 
             $service = new StockService();
 
-            foreach($qtyItems as $index => $item){
-                $qty = (int)$item;
-                if($qty <= 0){
-                    continue;
-                }
-
-                if(!isset($saleIds[$index], $productIds[$index], $purchaseIds[$index])){
-                    throw new \Exception('Invalid return row data at index '.$index);
-                }
-
-                $rowSaleId = (int)$saleIds[$index];
-                if($rowSaleId !== $resolvedSaleId){
-                    throw new \Exception('Mismatched sale row detected');
-                }
-
+            foreach($rowsToReturn as $row){
                 $returnItem = new ReturnSaleItem();
                 $returnItem->returnId   = $history->id;
-                $returnItem->saleId     = $rowSaleId;
-                $returnItem->productId  = (int)$productIds[$index];
-                $returnItem->purchaseId = (int)$purchaseIds[$index];
+                $returnItem->saleId     = $row['saleId'];
+                $returnItem->productId  = $row['productId'];
+                $returnItem->purchaseId = $row['purchaseId'];
                 $returnItem->customerId = (int)$requ->customerId;
-                $returnItem->qty        = $qty;
+                $returnItem->qty        = (int)$row['qty'];
                 $returnItem->save();
 
-                $service->applySaleReturnItem($returnItem);
+                $applied = $service->applySaleReturnItem($returnItem);
+                if(!$applied){
+                    throw new \Exception('Failed to apply stock/invoice update for purchase #'.$row['purchaseId']);
+                }
             }
+
+            $sum = (float)InvoiceItem::where('saleId', $sale->id)->sum('totalSale');
+            $discount = (float)($sale->discountAmount ?? 0);
+            if($discount < 0){ $discount = 0; }
+            if($discount > $sum){ $discount = $sum; }
+            $grand = max(0, $sum - $discount);
+            $paid = (float)($sale->paidAmount ?? 0);
+            $newDue = max(0, $grand - $paid - $effectiveAdjust);
+
+            $sale->totalSale = $sum;
+            $sale->grandTotal = $grand;
+            $sale->curDue = $newDue;
+            $sale->invoiceDue = $newDue;
+            $sale->save();
 
             DB::commit();
             Alert::success('Success!','Sale return saved successfully');
@@ -604,7 +779,7 @@ class saleController extends Controller
             ->get();
         
         // Filter returns based on user role
-        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin'])){
+        if($actor && !$this->hasAdminPrivileges($actor)){
             // Store managers only see returns for their sales
             $returns = $returns->filter(function($return) use ($actor) {
                 return $return->sale && (int)$return->sale->salespersonId === (int)$actor->id;

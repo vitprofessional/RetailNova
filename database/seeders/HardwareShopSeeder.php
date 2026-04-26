@@ -22,3 +22,7 @@ class HardwareShopSeeder extends Seeder
         app()->call([$seeder, 'run']);
     }
 }
+
+
+
+

@@ -32,7 +32,7 @@ class AuthServiceProvider extends ServiceProvider
 
         Gate::define('manageSuperAdmin', function($user){
             if(!$user) return false;
-            return $user->role === 'superadmin';
+            return method_exists($user, 'hasSuperAdminPrivileges') && $user->hasSuperAdminPrivileges();
         });
     }
 }

@@ -22,6 +22,7 @@ use Alert;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class businessController extends Controller
 {
@@ -96,14 +97,12 @@ class businessController extends Controller
             if ($shouldAttemptDemoSeed) {
                 if (app()->environment('production')) {
                     $seedMessage = 'Business details saved. Demo data import is disabled in production.';
-                } elseif ($savedBusinessId !== 1) {
-                    $seedMessage = 'Business details saved. Automatic demo seeding currently supports the primary business setup only.';
                 } elseif (!$this->canSeedDemoDataForBusiness($savedBusinessId)) {
                     $seedMessage = 'Business details saved. Demo data was not seeded because products, customers, purchases, or sales already exist for this business.';
                 } elseif (!empty($previousBusinessType) && $previousBusinessType !== $selectedBusinessType) {
                     $seedMessage = 'Business details saved. Demo data was not reseeded because this business already has a different saved business type.';
                 } else {
-                    $seedMessage = $this->seedDemoDataForBusinessType($selectedBusinessType);
+                    $seedMessage = $this->seedDemoDataForBusinessType($selectedBusinessType, $savedBusinessId);
                 }
             }
 
@@ -187,8 +186,15 @@ class businessController extends Controller
 
     protected function canSeedDemoDataForBusiness(int $businessId): bool
     {
-        if ($businessId !== 1) {
+        if ($businessId <= 0) {
             return false;
+        }
+
+        $tables = ['products', 'customers', 'product_stocks', 'purchase_products', 'sale_products'];
+        foreach ($tables as $tableName) {
+            if (!Schema::hasTable($tableName) || !Schema::hasColumn($tableName, 'businessId')) {
+                return false;
+            }
         }
 
         return !DB::table('products')->where('businessId', $businessId)->exists()
@@ -196,6 +202,99 @@ class businessController extends Controller
             && !DB::table('product_stocks')->where('businessId', $businessId)->exists()
             && !DB::table('purchase_products')->where('businessId', $businessId)->exists()
             && !DB::table('sale_products')->where('businessId', $businessId)->exists();
+    }
+
+    protected function wipeBusinessOperationalData(int $businessId): void
+    {
+        if ($businessId <= 0) {
+            throw new \RuntimeException('Invalid business selected for reset.');
+        }
+
+        $required = ['products', 'customers', 'product_stocks', 'purchase_products', 'sale_products'];
+        foreach ($required as $tableName) {
+            if (!Schema::hasTable($tableName) || !Schema::hasColumn($tableName, 'businessId')) {
+                throw new \RuntimeException('Cannot safely reset selected store. Missing businessId on table: ' . $tableName);
+            }
+        }
+
+        $saleIds = DB::table('sale_products')->where('businessId', $businessId)->pluck('id');
+        $purchaseIds = DB::table('purchase_products')->where('businessId', $businessId)->pluck('id');
+        $productIds = DB::table('products')->where('businessId', $businessId)->pluck('id');
+        $customerIds = DB::table('customers')->where('businessId', $businessId)->pluck('id');
+
+        if (Schema::hasTable('return_sale_items') && $saleIds->isNotEmpty()) {
+            DB::table('return_sale_items')->whereIn('saleId', $saleIds)->delete();
+        }
+        if (Schema::hasTable('sale_returns') && $saleIds->isNotEmpty()) {
+            DB::table('sale_returns')->whereIn('saleId', $saleIds)->delete();
+        }
+
+        if (Schema::hasTable('invoice_items')) {
+            if (Schema::hasColumn('invoice_items', 'businessId')) {
+                DB::table('invoice_items')->where('businessId', $businessId)->delete();
+            } elseif ($saleIds->isNotEmpty()) {
+                DB::table('invoice_items')->whereIn('saleId', $saleIds)->delete();
+            }
+        }
+
+        if (Schema::hasTable('product_serials')) {
+            $serialDelete = DB::table('product_serials');
+            $canDelete = false;
+            if (Schema::hasColumn('product_serials', 'purchaseId') && $purchaseIds->isNotEmpty()) {
+                $serialDelete->whereIn('purchaseId', $purchaseIds);
+                $canDelete = true;
+            }
+            if (Schema::hasColumn('product_serials', 'saleId') && $saleIds->isNotEmpty()) {
+                $serialDelete->{$canDelete ? 'orWhereIn' : 'whereIn'}('saleId', $saleIds);
+                $canDelete = true;
+            }
+            if (!$canDelete && Schema::hasColumn('product_serials', 'productId') && $productIds->isNotEmpty()) {
+                $serialDelete->whereIn('productId', $productIds);
+                $canDelete = true;
+            }
+            if ($canDelete) {
+                $serialDelete->delete();
+            }
+        }
+
+        if (Schema::hasTable('return_purchase_items') && $purchaseIds->isNotEmpty()) {
+            DB::table('return_purchase_items')->whereIn('purchaseId', $purchaseIds)->delete();
+        }
+        if (Schema::hasTable('purchase_returns') && $purchaseIds->isNotEmpty()) {
+            DB::table('purchase_returns')->whereIn('purchaseId', $purchaseIds)->delete();
+        }
+
+        if ($saleIds->isNotEmpty()) {
+            DB::table('sale_products')->whereIn('id', $saleIds)->delete();
+        }
+        if ($purchaseIds->isNotEmpty()) {
+            DB::table('purchase_products')->whereIn('id', $purchaseIds)->delete();
+        }
+
+        if (Schema::hasColumn('product_stocks', 'businessId')) {
+            DB::table('product_stocks')->where('businessId', $businessId)->delete();
+        } elseif ($purchaseIds->isNotEmpty() || $productIds->isNotEmpty()) {
+            $stockDelete = DB::table('product_stocks');
+            $hasFilter = false;
+            if (Schema::hasColumn('product_stocks', 'purchaseId') && $purchaseIds->isNotEmpty()) {
+                $stockDelete->whereIn('purchaseId', $purchaseIds);
+                $hasFilter = true;
+            }
+            if (Schema::hasColumn('product_stocks', 'productId') && $productIds->isNotEmpty()) {
+                $stockDelete->{$hasFilter ? 'orWhereIn' : 'whereIn'}('productId', $productIds);
+                $hasFilter = true;
+            }
+            if ($hasFilter) {
+                $stockDelete->delete();
+            }
+        }
+
+        if ($productIds->isNotEmpty()) {
+            DB::table('products')->whereIn('id', $productIds)->delete();
+        }
+        if ($customerIds->isNotEmpty()) {
+            DB::table('customers')->whereIn('id', $customerIds)->delete();
+        }
     }
 
     protected function seedDemoDataForBusinessType(string $businessType, int $targetBusinessId = 1): string
@@ -434,13 +533,19 @@ class businessController extends Controller
             return back();
         }
 
+        $request->validate([
+            'businessId' => 'required|integer|exists:business_setups,id',
+            'newBusinessType' => 'required|string',
+        ]);
+
         $actor = Auth::guard('admin')->user();
-        if (!$actor || strtolower($actor->role) !== 'superadmin') {
+        if (!$actor || !method_exists($actor, 'hasSuperAdminPrivileges') || !$actor->hasSuperAdminPrivileges()) {
             Alert::error("Forbidden", "Only Super Admin can reset demo data.");
             return back();
         }
 
         $newType = $request->input('newBusinessType');
+        $targetBusinessId = (int)$request->input('businessId');
         $businessTypes = $this->businessTypeOptions();
 
         if (empty($newType) || !array_key_exists($newType, $businessTypes)) {
@@ -448,26 +553,16 @@ class businessController extends Controller
             return back();
         }
 
-        $business = BusinessSetup::find(1);
+        $business = BusinessSetup::find($targetBusinessId);
         if (!$business) {
-            Alert::error("Error", "Primary business record not found.");
+            Alert::error("Error", "Selected business record not found.");
             return back();
         }
 
         DB::beginTransaction();
         try {
-            // Wipe all demo data for businessId = 1 (in safe deletion order)
-            DB::table('invoice_items')->whereIn(
-                'saleId',
-                DB::table('sale_products')->where('businessId', 1)->pluck('id')
-            )->delete();
-            DB::table('sale_products')->where('businessId', 1)->delete();
-            DB::table('purchase_products')->where('businessId', 1)->delete();
-            DB::table('product_stocks')->where('businessId', 1)->delete();
-            DB::table('products')->where('businessId', 1)->delete();
-            DB::table('customers')->where('businessId', 1)->delete();
-            // Suppliers have no businessId column – leave them to avoid data loss
-            // Brands and categories are shared; leave them too
+            // Wipe only the selected business data (safe scoped deletion order).
+            $this->wipeBusinessOperationalData($targetBusinessId);
 
             // Update business type
             $business->businessType = $newType;
@@ -482,7 +577,7 @@ class businessController extends Controller
         }
 
         // Seed fresh demo data for the new type
-        $seedMessage = $this->seedDemoDataForBusinessType($newType, 1);
+        $seedMessage = $this->seedDemoDataForBusinessType($newType, $targetBusinessId);
         Alert::success("Success!", $seedMessage);
         return back();
     }
