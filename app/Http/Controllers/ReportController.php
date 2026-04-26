@@ -10,6 +10,7 @@ use App\Models\Supplier;
 use App\Models\Product;
 use App\Models\InvoiceItem;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Carbon\Carbon;
 
 class ReportController extends Controller
@@ -121,51 +122,89 @@ class ReportController extends Controller
         $startDateTime = Carbon::parse($startDate)->startOfDay();
         $endDateTime = Carbon::parse($endDate)->endOfDay();
 
-        $baseQuery = PurchaseProduct::query()
-            ->leftJoin('suppliers', 'suppliers.id', '=', 'purchase_products.supplier');
+        $rows = PurchaseProduct::query()
+            ->leftJoin('suppliers', 'suppliers.id', '=', 'purchase_products.supplier')
+            ->when($supplierId, function ($q) use ($supplierId) {
+                $q->where('purchase_products.supplier', $supplierId);
+            })
+            ->where(function ($q) use ($startDateTime, $endDateTime, $startDate, $endDate) {
+                $q->whereBetween('purchase_products.created_at', [$startDateTime, $endDateTime])
+                    ->orWhereBetween('purchase_products.purchase_date', [$startDate, $endDate]);
+            })
+            ->select(
+                'purchase_products.id',
+                'purchase_products.invoice',
+                'purchase_products.purchase_date',
+                'purchase_products.created_at',
+                'purchase_products.supplier',
+                'purchase_products.totalAmount',
+                'purchase_products.disAmount',
+                'purchase_products.grandTotal',
+                'purchase_products.paidAmount',
+                'purchase_products.dueAmount',
+                'suppliers.name as supplier_name'
+            )
+            ->orderByDesc('purchase_products.created_at')
+            ->get();
 
-        if ($supplierId) {
-            $baseQuery->where('purchase_products.supplier', $supplierId);
-        }
+        $transactions = $rows->groupBy(function ($row) {
+            if (!empty($row->invoice)) {
+                return 'invoice:' . $row->invoice . '|supplier:' . $row->supplier;
+            }
 
-        // Filter by both timestamp and explicit purchase date field.
-        $baseQuery->where(function($q) use ($startDateTime, $endDateTime, $startDate, $endDate) {
-            $q->whereBetween('purchase_products.created_at', [$startDateTime, $endDateTime])
-              ->orWhereBetween('purchase_products.purchase_date', [$startDate, $endDate]);
-        });
+            return 'row:' . $row->id;
+        })->map(function ($items) {
+            $first = $items->first();
+            $latest = $items->sortByDesc(function ($item) {
+                return strtotime((string) ($item->purchase_date ?: $item->created_at));
+            })->first();
 
-        // Purchases are saved per product row; aggregate them to one transaction row per invoice.
-        $groupedQuery = (clone $baseQuery)
-            ->selectRaw("\n                COALESCE(NULLIF(purchase_products.invoice, ''), CONCAT('ROW-', purchase_products.id)) as invoice_no,\n                MAX(purchase_products.purchase_date) as purchase_date,\n                MAX(purchase_products.created_at) as sort_date,\n                purchase_products.supplier as supplier_id,\n                MAX(suppliers.name) as supplier_name,\n                SUM(COALESCE(purchase_products.totalAmount, 0)) as sub_total,\n                MAX(COALESCE(purchase_products.disAmount, 0)) as discount_total,\n                MAX(COALESCE(purchase_products.grandTotal, 0)) as grand_total,\n                MAX(COALESCE(purchase_products.paidAmount, 0)) as paid_total,\n                MAX(COALESCE(purchase_products.dueAmount, 0)) as due_total,\n                COUNT(purchase_products.id) as line_items\n            ")
-            ->groupBy('purchase_products.supplier')
-            ->groupByRaw("CASE\n                WHEN purchase_products.invoice IS NULL OR purchase_products.invoice = ''\n                    THEN purchase_products.id\n                ELSE 0\n            END")
-            ->groupByRaw("CASE\n                WHEN purchase_products.invoice IS NULL OR purchase_products.invoice = ''\n                    THEN ''\n                ELSE purchase_products.invoice\n            END");
+            $invoiceNo = !empty($first->invoice) ? $first->invoice : 'ROW-' . $first->id;
+            $purchaseDate = $latest->purchase_date ?: $latest->created_at;
+            $isInvoiceGroup = !empty($first->invoice);
 
-        $summary = DB::query()
-            ->fromSub(clone $groupedQuery, 'purchase_report')
-            ->selectRaw('COALESCE(SUM(sub_total), 0) as total_sub_total')
-            ->selectRaw('COALESCE(SUM(discount_total), 0) as total_discount_total')
-            ->selectRaw('COALESCE(SUM(grand_total), 0) as total_grand_total')
-            ->selectRaw('COALESCE(SUM(paid_total), 0) as total_paid_total')
-            ->selectRaw('COALESCE(SUM(due_total), 0) as total_due_total')
-            ->selectRaw('COUNT(*) as total_transactions')
-            ->first();
+            return (object) [
+                'invoice_no' => $invoiceNo,
+                'purchase_date' => $purchaseDate,
+                'sort_date' => $latest->created_at,
+                'supplier_id' => $first->supplier,
+                'supplier_name' => $first->supplier_name ?: 'Unknown Supplier',
+                'line_items' => $items->count(),
+                'sub_total' => $isInvoiceGroup
+                    ? (float) $items->sum(fn ($item) => (float) ($item->totalAmount ?? 0))
+                    : (float) ($first->totalAmount ?? 0),
+                'discount_total' => (float) ($first->disAmount ?? 0),
+                'grand_total' => (float) ($first->grandTotal ?? 0),
+                'paid_total' => (float) ($first->paidAmount ?? 0),
+                'due_total' => (float) ($first->dueAmount ?? 0),
+            ];
+        })->values();
 
-        $purchases = DB::query()
-            ->fromSub($groupedQuery, 'purchase_report')
-            ->orderByDesc('sort_date')
-            ->paginate(50);
-
-        $totalPurchases = (float) ($summary->total_grand_total ?? 0);
-        $suppliers = Supplier::orderBy('name')->get();
         $totals = [
-            'sub_total' => (float) ($summary->total_sub_total ?? 0),
-            'discount' => (float) ($summary->total_discount_total ?? 0),
-            'grand_total' => $totalPurchases,
-            'paid_total' => (float) ($summary->total_paid_total ?? 0),
-            'due_total' => (float) ($summary->total_due_total ?? 0),
-            'transactions' => (int) ($summary->total_transactions ?? 0),
+            'sub_total' => (float) $transactions->sum('sub_total'),
+            'discount' => (float) $transactions->sum('discount_total'),
+            'grand_total' => (float) $transactions->sum('grand_total'),
+            'paid_total' => (float) $transactions->sum('paid_total'),
+            'due_total' => (float) $transactions->sum('due_total'),
+            'transactions' => (int) $transactions->count(),
         ];
+
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $perPage = 50;
+        $currentItems = $transactions->slice(($page - 1) * $perPage, $perPage)->values();
+        $purchases = new LengthAwarePaginator(
+            $currentItems,
+            $transactions->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
+
+        $totalPurchases = (float) $totals['grand_total'];
+        $suppliers = Supplier::orderBy('name')->get();
 
         return view('reports.purchase-report', compact('purchases', 'totalPurchases', 'startDate', 'endDate', 'suppliers', 'supplierId', 'totals'));
     }
