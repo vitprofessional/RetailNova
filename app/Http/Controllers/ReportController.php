@@ -137,7 +137,9 @@ class ReportController extends Controller
         // Purchases are saved per product row; aggregate them to one transaction row per invoice.
         $groupedQuery = (clone $baseQuery)
             ->selectRaw("\n                COALESCE(NULLIF(purchase_products.invoice, ''), CONCAT('ROW-', purchase_products.id)) as invoice_no,\n                MAX(purchase_products.purchase_date) as purchase_date,\n                MAX(purchase_products.created_at) as sort_date,\n                purchase_products.supplier as supplier_id,\n                MAX(suppliers.name) as supplier_name,\n                SUM(COALESCE(purchase_products.totalAmount, 0)) as sub_total,\n                MAX(COALESCE(purchase_products.disAmount, 0)) as discount_total,\n                MAX(COALESCE(purchase_products.grandTotal, 0)) as grand_total,\n                MAX(COALESCE(purchase_products.paidAmount, 0)) as paid_total,\n                MAX(COALESCE(purchase_products.dueAmount, 0)) as due_total,\n                COUNT(purchase_products.id) as line_items\n            ")
-            ->groupByRaw("COALESCE(NULLIF(purchase_products.invoice, ''), CONCAT('ROW-', purchase_products.id)), purchase_products.supplier");
+            ->groupBy('purchase_products.supplier')
+            ->groupByRaw("CASE\n                WHEN purchase_products.invoice IS NULL OR purchase_products.invoice = ''\n                    THEN purchase_products.id\n                ELSE 0\n            END")
+            ->groupByRaw("CASE\n                WHEN purchase_products.invoice IS NULL OR purchase_products.invoice = ''\n                    THEN ''\n                ELSE purchase_products.invoice\n            END");
 
         $summary = DB::query()
             ->fromSub(clone $groupedQuery, 'purchase_report')
