@@ -219,10 +219,10 @@
                                             <small class="text-muted">Grand total is calculated from Buy Price × Qty. Sale Price affects profit only.</small>
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" data-onkeyup="dueCalculate()" />
+                                            <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" min="0" step="0.01" data-onkeyup="dueCalculate()" />
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="dueAmount" name="dueAmount" readonly />
+                                            <input type="number" class="form-control" id="dueAmount" name="dueAmount" readonly min="0" step="0.01" />
                                         </td>
                                         <td>
                                             <textarea class="form-control" id="specialNote" name="specialNote"></textarea>

@@ -78,6 +78,21 @@ class PurchaseSaveRequest extends FormRequest
     }
 
     /**
+     * Add cross-field validation for the payment fields.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $grandTotal = $this->input('grandTotal');
+            $paidAmount = $this->input('paidAmount');
+
+            if (is_numeric($grandTotal) && is_numeric($paidAmount) && (float) $paidAmount > (float) $grandTotal) {
+                $validator->errors()->add('paidAmount', 'Paid amount cannot exceed grand total.');
+            }
+        });
+    }
+
+    /**
      * Log validation failures to help debugging in tests.
      *
      * @param  \Illuminate\Contracts\Validation\Validator  $validator

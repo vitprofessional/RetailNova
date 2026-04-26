@@ -250,10 +250,10 @@
                                             <input type="number" class="form-control" id="grandTotal" name="grandTotal" value="{{ $purchaseData->grandTotal ?? '' }}"  />
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="{{ $purchaseData->paidAmount ?? 0 }}" data-onkeyup="dueCalculate()"  />
+                                            <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="{{ $purchaseData->paidAmount ?? 0 }}" min="0" step="0.01" data-onkeyup="dueCalculate()"  />
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control" id="dueAmount" name="dueAmount" value="{{ $purchaseData->dueAmount ?? '' }}"  />
+                                            <input type="number" class="form-control" id="dueAmount" name="dueAmount" value="{{ $purchaseData->dueAmount ?? '' }}" min="0" step="0.01" readonly  />
                                         </td>
                                         <td>
                                             <textarea class="form-control" id="specialNote" name="specialNote" >{{ $purchaseData->specialNote ?? '' }}</textarea>

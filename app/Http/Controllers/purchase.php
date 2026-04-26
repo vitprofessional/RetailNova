@@ -260,6 +260,51 @@ class purchase extends Controller
                 'discountPercent' => ['nullable','numeric','min:0'],
             ]);
 
+            $normalizeMoney = function ($value): float {
+                if ($value === null || $value === '') {
+                    return 0.0;
+                }
+                if (is_string($value)) {
+                    $value = str_replace([',', ' '], '', $value);
+                }
+                return (float) $value;
+            };
+
+            $rawTotal = $request->input('totalAmount', $request->grandTotal ?? 0);
+            if (is_array($rawTotal)) {
+                $baseTotal = 0.0;
+                foreach ($rawTotal as $item) {
+                    $baseTotal += $normalizeMoney($item);
+                }
+            } else {
+                $baseTotal = $normalizeMoney($rawTotal);
+            }
+
+            $discountType = (string) $request->input('discountStatus', '');
+            $discountAmountInput = $normalizeMoney($request->input('discountAmount'));
+            $discountPercentInput = $normalizeMoney($request->input('discountPercent'));
+            $discountAmount = 0.0;
+
+            if ($discountType === '1') {
+                $discountAmount = max(0, $discountAmountInput);
+            } elseif ($discountType === '2') {
+                $discountAmount = max(0, ($baseTotal * $discountPercentInput) / 100);
+            } else {
+                if ($discountAmountInput > 0) {
+                    $discountAmount = $discountAmountInput;
+                } elseif ($discountPercentInput > 0) {
+                    $discountAmount = max(0, ($baseTotal * $discountPercentInput) / 100);
+                }
+            }
+
+            $grandTotal = max(0, $baseTotal - $discountAmount);
+            $paidAmount = max(0, $normalizeMoney($request->paidAmount));
+            if ($paidAmount > $grandTotal) {
+                Alert::error('Sorry!', 'Paid amount cannot exceed grand total.');
+                return back();
+            }
+            $dueAmount = max(0, $grandTotal - $paidAmount);
+
             $oldQty = (int)$purchase->qty;
             $newQty = (int)$request->quantity;
             
@@ -280,12 +325,12 @@ class purchase extends Controller
             $purchase->vatStatus        = $request->vatStatus;
             $purchase->qty              = $newQty;
             $purchase->totalAmount      = $request->totalAmount;
-            $purchase->grandTotal       = $request->grandTotal;
-            $purchase->paidAmount       = $request->paidAmount;
-            $purchase->dueAmount        = $request->dueAmount;
+            $purchase->grandTotal       = $grandTotal;
+            $purchase->paidAmount       = $paidAmount;
+            $purchase->dueAmount        = $dueAmount;
             $purchase->profit           = $request->profitMargin ?? $purchase->profit;
             $purchase->disType          = $request->discountStatus ?? $purchase->disType;
-            $purchase->disAmount        = $request->discountAmount ?? $purchase->disAmount;
+            $purchase->disAmount        = $discountAmount;
             $purchase->disParcent       = $request->discountPercent ?? $purchase->disParcent;
             $purchase->specialNote      = $request->specialNote ?? $purchase->specialNote;
 

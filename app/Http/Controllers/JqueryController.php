@@ -444,6 +444,52 @@ class JqueryController extends Controller
         // debug logging removed
         // temporary file-based debug removed; framework logging retained above
 
+        $normalizeMoney = function ($value): float {
+            if ($value === null || $value === '') {
+                return 0.0;
+            }
+            if (is_string($value)) {
+                $value = str_replace([',', ' '], '', $value);
+            }
+            return (float) $value;
+        };
+
+        $rowTotals = $requ->input('totalAmount', []);
+        if (!is_array($rowTotals)) {
+            $rowTotals = [$rowTotals];
+        }
+
+        $baseTotal = 0.0;
+        foreach ($rowTotals as $rowTotal) {
+            $baseTotal += $normalizeMoney($rowTotal);
+        }
+
+        $discountStatus = (string) $requ->input('discountStatus', '');
+        $discountAmountInput = $normalizeMoney($requ->input('discountAmount'));
+        $discountPercentInput = $normalizeMoney($requ->input('discountPercent'));
+        $discountAmount = 0.0;
+
+        if ($discountStatus === '1') {
+            $discountAmount = max(0, $discountAmountInput);
+        } elseif ($discountStatus === '2') {
+            $discountAmount = max(0, ($baseTotal * $discountPercentInput) / 100);
+        } else {
+            if ($discountAmountInput > 0) {
+                $discountAmount = $discountAmountInput;
+            } elseif ($discountPercentInput > 0) {
+                $discountAmount = max(0, ($baseTotal * $discountPercentInput) / 100);
+            }
+        }
+
+        $grandTotal = max(0, $baseTotal - $discountAmount);
+        $paidAmount = max(0, $normalizeMoney($requ->input('paidAmount')));
+        if ($paidAmount > $grandTotal) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'paidAmount' => 'Paid amount cannot exceed grand total.',
+            ]);
+        }
+        $dueAmount = max(0, $grandTotal - $paidAmount);
+
         // Update path (editing existing purchase). Support single or multiple purchaseId values.
         if(!empty($requ->purchaseId)):
             $purchaseIds = is_array($requ->purchaseId) ? $requ->purchaseId : [$requ->purchaseId];
@@ -489,11 +535,11 @@ class JqueryController extends Controller
                         $purchase->profit           = isset($profitMargins[$idx]) ? $profitMargins[$idx] : null;
                         $purchase->totalAmount      = isset($totals[$idx]) ? $totals[$idx] : null;
                         $purchase->disType          = $requ->get('discountStatus');
-                        $purchase->disAmount        = $requ->get('discountAmount');
+                        $purchase->disAmount        = $discountAmount;
                         $purchase->disParcent       = $requ->get('discountPercent');
-                        $purchase->grandTotal       = $requ->get('grandTotal');
-                        $purchase->paidAmount       = $requ->get('paidAmount');
-                        $purchase->dueAmount        = $requ->get('dueAmount');
+                        $purchase->grandTotal       = $grandTotal;
+                        $purchase->paidAmount       = $paidAmount;
+                        $purchase->dueAmount        = $dueAmount;
                         $purchase->specialNote      = $requ->get('specialNote');
                         // Assign businessId from request for admin/superadmin
                         $actor = auth('admin')->user();
@@ -568,11 +614,11 @@ class JqueryController extends Controller
                     $tmp = isset($totals[$idx]) ? $totals[$idx] : $purchase->totalAmount;
                     $purchase->totalAmount = ($tmp === '' ? null : $tmp);
                     $purchase->disType          = $requ->get('discountStatus');
-                    $purchase->disAmount        = $requ->get('discountAmount');
+                    $purchase->disAmount        = $discountAmount;
                     $purchase->disParcent       = $requ->get('discountPercent');
-                    $purchase->grandTotal       = $requ->get('grandTotal');
-                    $purchase->paidAmount       = $requ->get('paidAmount');
-                    $purchase->dueAmount        = $requ->get('dueAmount');
+                    $purchase->grandTotal       = $grandTotal;
+                    $purchase->paidAmount       = $paidAmount;
+                    $purchase->dueAmount        = $dueAmount;
                     $purchase->specialNote      = $requ->get('specialNote');
 
                     // Assign/override businessId from request for admin/superadmin (optional on update)
@@ -702,11 +748,11 @@ class JqueryController extends Controller
                     $purchase->totalAmount = ($tmp === '' ? null : $tmp);
                     // global discount/paid/due stored on each row for compatibility
                     $purchase->disType          = $requ->get('discountStatus');
-                    $purchase->disAmount        = $requ->get('discountAmount');
+                    $purchase->disAmount        = $discountAmount;
                     $purchase->disParcent       = $requ->get('discountPercent');
-                    $purchase->grandTotal       = $requ->get('grandTotal');
-                    $purchase->paidAmount       = $requ->get('paidAmount');
-                    $purchase->dueAmount        = $requ->get('dueAmount');
+                    $purchase->grandTotal       = $grandTotal;
+                    $purchase->paidAmount       = $paidAmount;
+                    $purchase->dueAmount        = $dueAmount;
                     $purchase->specialNote      = $requ->get('specialNote');
 
                     // Assign businessId from request for admin/superadmin
