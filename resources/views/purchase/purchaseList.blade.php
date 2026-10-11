@@ -1,17 +1,17 @@
 @extends('include') @section('backTitle') purchase list @endsection @section('container')
 <div class="row">
-    
+
     <div class="col-md-12 col-sm-12 col-lg-12">
         <div class="card">
             <div class="card-body">
                 <div class="col-12 p-0 mt-0 mb-4 d-flex justify-content-between align-items-center">
-                    <h4>Purchase List</h4>
+                    <h4>{{ __('purchases.purchase_list') }}</h4>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-secondary" onclick="printPurchaseList()" title="Print list">
-                            <i class="fa-solid fa-print"></i> Print
+                        <button type="button" class="btn btn-outline-secondary" onclick="printPurchaseList()" title="{{ __('common.print_list') }}">
+                            <i class="fa-solid fa-print"></i> {{ __('purchases.print') }}
                         </button>
                         <a href="{{ route('returnPurchaseList') }}" class="btn btn-info">
-                            <i class="ri-arrow-go-back-line"></i> View Returns
+                            <i class="ri-arrow-go-back-line"></i> {{ __('purchases.view_returns') }}
                         </a>
                     </div>
                 </div>
@@ -35,15 +35,15 @@
                         <thead class="bg-white text-uppercase small">
                             <tr>
                                 <th style="width:34px"> <input type="checkbox" id="selectAllPurchases" /></th>
-                                <th>Invoice</th>
-                                <th>Purchase Date</th>
-                                <th>Product</th>
-                                <th class="text-right">Grand Total</th>
-                                <th class="text-right">Paid</th>
-                                <th class="text-right">Due</th>
-                                <th class="text-right">Current Stock</th>
-                                <th>Supplier</th>
-                                <th class="text-center">Actions</th>
+                                <th>{{ __('purchases.invoice') }}</th>
+                                <th>{{ __('purchases.purchase_date') }}</th>
+                                <th>{{ __('purchases.product') }}</th>
+                                <th class="text-right">{{ __('purchases.grand_total') }}</th>
+                                <th class="text-right">{{ __('purchases.paid') }}</th>
+                                <th class="text-right">{{ __('purchases.due') }}</th>
+                                <th class="text-right">{{ __('purchases.current_stock') }}</th>
+                                <th>{{ __('purchases.supplier') }}</th>
+                                <th class="text-center">{{ __('purchases.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="small">
@@ -71,27 +71,27 @@
                                         <td>{{ $purchase->productName ?? '-' }}</td>
                                         <td class="text-right">{{ number_format($adjustedGrand, 2) }}
                                             @if($returnedAmount > 0)
-                                                <span class="badge bg-warning" title="Returned">-{{ number_format($returnedAmount, 2) }}</span>
+                                                <span class="badge bg-warning" title="{{ __('purchases.returned') }}">-{{ number_format($returnedAmount, 2) }}</span>
                                             @endif
                                         </td>
                                         <td class="text-right">{{ number_format($p, 2) }}</td>
                                         <td class="text-right">{{ number_format($d, 2) }}</td>
                                         <td class="text-right">{{ number_format($adjustedStock) }}
                                             @if($returnedQty > 0)
-                                                <span class="badge bg-warning" title="Returned">-{{ $returnedQty }}</span>
+                                                <span class="badge bg-warning" title="{{ __('purchases.returned') }}">-{{ $returnedQty }}</span>
                                             @endif
                                         </td>
                                         <td>{{ $purchase->supplierName ?? '-' }}</td>
                                         <td class="text-center">
-                                            <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
-                                                <a href="{{ route('purchaseView',['id'=>$pid]) }}" class="btn btn-outline-primary" title="View"><i class="fa-solid fa-eye"></i></a>
-                                                <a href="{{ route('returnPurchase',['id'=>$pid]) }}" class="btn btn-outline-warning" title="Return"><i class="fa-regular fa-turn-down-left"></i></a>
+                                            <div class="btn-group btn-group-sm" role="group" aria-label="{{ __('purchases.actions') }}">
+                                                <a href="{{ route('purchaseView',['id'=>$pid]) }}" class="btn btn-outline-primary" title="{{ __('purchases.view') }}"><i class="fa-solid fa-eye"></i></a>
+                                                <a href="{{ route('returnPurchase',['id'=>$pid]) }}" class="btn btn-outline-warning" title="{{ __('common.return') }}"><i class="fa-regular fa-turn-down-left"></i></a>
                                                 @canEdit(false)
-                                                <a href="{{ route('editPurchase',['id'=>$pid]) }}" class="btn btn-outline-success" title="Edit"><i class="ri-pencil-line"></i></a>
+                                                <a href="{{ route('editPurchase',['id'=>$pid]) }}" class="btn btn-outline-success" title="{{ __('purchases.edit') }}"><i class="ri-pencil-line"></i></a>
                                                 <form method="POST" action="{{ route('delPurchase',['id'=>$pid]) }}" style="display:inline">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-outline-danger" title="Delete" data-confirm="Are you sure to delete this purchase?"><i class="fa-solid fa-trash"></i></button>
+                                                    <button type="submit" class="btn btn-outline-danger" title="{{ __('purchases.delete') }}" data-confirm="Are you sure to delete this purchase?"><i class="fa-solid fa-trash"></i></button>
                                                 </form>
                                                 @endcanEdit
                                             </div>
@@ -100,14 +100,14 @@
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="10" class="text-center">No purchase records found</td>
+                                    <td colspan="10" class="text-center">{{ __('purchases.no_purchase_records_found') }}</td>
                                 </tr>
                             @endif
                         </tbody>
                         @if(!empty($purchaseList) && $purchaseList->count()>0)
                         <tfoot class="bg-light small">
                             <tr>
-                                <th colspan="4" class="text-right">Totals</th>
+                                <th colspan="4" class="text-right">{{ __('purchases.totals') }}</th>
                                 <th class="text-right">{{ number_format($totalGrand,2) }}</th>
                                 <th class="text-right">{{ number_format($totalPaid,2) }}</th>
                                 <th class="text-right">{{ number_format($totalDue,2) }}</th>
@@ -180,7 +180,7 @@
                         function printPurchaseList(){
                             try{
                                 var root = document.getElementById('rn-purchase-root');
-                                if(!root){ alert('Nothing to print'); return; }
+                                if(!root){ alert(window.RNTranslate('common.client_nothing_to_print')); return; }
 
                                 // Collect stylesheets and inline styles
                                 var headNodes = document.querySelectorAll('link[rel="stylesheet"], style');
@@ -194,7 +194,7 @@
                                 });
 
                                 var w = window.open('', '_blank');
-                                if(!w){ alert('Please allow popups to print'); return; }
+                                if(!w){ alert(window.RNTranslate('common.client_please_allow_popups_to_print')); return; }
 
                                 var doc = w.document.open();
                                 var title = document.title || 'Purchase List';
@@ -203,7 +203,7 @@
                                 doc.close();
                                 w.focus();
                                 setTimeout(function(){ try{ w.print(); w.close(); }catch(e){ console.warn('print failed', e); } }, 600);
-                            }catch(e){ console.warn('printPurchaseList error', e); alert('Unable to print'); }
+                            }catch(e){ console.warn('printPurchaseList error', e); alert(window.RNTranslate('common.client_unable_to_print')); }
                         }
                     </script>
                 @endsection

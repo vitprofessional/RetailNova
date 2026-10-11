@@ -124,7 +124,7 @@ Route::get('/ajax/public/purchase/{id}/details', [
 Route::get('/ajax/public/purchase/{id}/serials', [
     JqueryController::class,
     'getPurchaseSerialsPublic'
-])->name('ajax.purchase.serials.public');
+])->name('ajax.purchase.serials.public')->middleware('auth:admin');
 // Public product details for dynamic pages (returns JSON)
 Route::get('/ajax/public/product/details/{id}', [
     JqueryController::class,
@@ -152,6 +152,10 @@ Route::get('/ajax/public/category/{id}/products', [
 ])->name('ajax.category.products.public');
 // Require legacy session sync (SuperAdmin) and authenticate via admin guard
 Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Http\Middleware\SalesOnly::class])->group(function(){
+
+    Route::get('/business/language-settings', [\App\Http\Controllers\LanguageSettingsController::class, 'edit'])->name('language.settings.edit');
+    Route::post('/business/language-settings', [\App\Http\Controllers\LanguageSettingsController::class, 'update'])->name('language.settings.update');
+    Route::post('/language/preference', [\App\Http\Controllers\LanguageSettingsController::class, 'preference'])->name('language.preference');
 
     // Admin profile management
     Route::get('/admin/profile', [
@@ -819,6 +823,9 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
         JqueryController::class,
         'saveSale'
     ])->name('saveSale');
+
+    Route::get('/business/sales-settings', [\App\Http\Controllers\SalesSettingsController::class, 'edit'])->name('sales.settings.edit');
+    Route::post('/business/sales-settings', [\App\Http\Controllers\SalesSettingsController::class, 'update'])->name('sales.settings.update');
 
     //Business set up --------------------
 

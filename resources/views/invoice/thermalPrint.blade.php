@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thermal Receipt - {{ $invoice->invoice ?? 'Invoice' }}</title>
+    <title>{{ __('common.thermal_receipt') }} {{ $invoice->invoice ?? 'Invoice' }}</title>
     <style>
         * {
             margin: 0;
@@ -275,6 +275,7 @@
             size: 58mm auto;
         }
     </style>
+@include('partials.localization')
 </head>
 <body>
     @php
@@ -282,20 +283,20 @@
         $paidAmount = (float)($invoice->paidAmount ?? 0);
         $grandTotal = (float)($invoice->grandTotal ?? 0);
         $currentDue = (float)($invoice->curDue ?? max($grandTotal - $paidAmount, 0));
-        
+
         // Determine payment status
-        if ($currentDue <= 0 && $grandTotal > 0) { 
-            $paymentStatus = 'PAID'; 
-        } elseif ($grandTotal <= 0) { 
-            $paymentStatus = 'PAID'; 
-        } elseif ($paidAmount <= 0 && $currentDue > 0) { 
-            $paymentStatus = 'DUE'; 
-        } elseif ($paidAmount > 0 && $currentDue > 0) { 
-            $paymentStatus = 'PARTIAL'; 
-        } else { 
-            $paymentStatus = 'PAID'; 
+        if ($currentDue <= 0 && $grandTotal > 0) {
+            $paymentStatus = 'PAID';
+        } elseif ($grandTotal <= 0) {
+            $paymentStatus = 'PAID';
+        } elseif ($paidAmount <= 0 && $currentDue > 0) {
+            $paymentStatus = 'DUE';
+        } elseif ($paidAmount > 0 && $currentDue > 0) {
+            $paymentStatus = 'PARTIAL';
+        } else {
+            $paymentStatus = 'PAID';
         }
-        
+
         $thermalSubtotal = 0;
         foreach($items as $it){
             $thermalSubtotal += (float)($it->totalSale ?? (($it->salePrice ?? 0) * ($it->qty ?? 0)));
@@ -312,7 +313,7 @@
                 <div class="business-name">{{ $b && $b->businessName ? $b->businessName : 'Computer Care' }}</div>
                 <div class="business-details">
                     <div>{{ $b && $b->businessLocation ? $b->businessLocation : 'Office Road, Burichong Bazar, Cumilla' }}</div>
-                    <div>Phone: {{ $b && $b->mobile ? $b->mobile : '0123456789' }}</div>
+                    <div>{{ __('common.phone') }}: {{ $b && $b->mobile ? $b->mobile : '0123456789' }}</div>
                 </div>
             </div>
 
@@ -321,20 +322,20 @@
             <!-- Invoice Info -->
             <div class="info-section">
                 <div class="info-row">
-                    <span class="info-label">Invoice:</span>
+                    <span class="info-label">{{ __('common.invoice') }}:</span>
                     <span class="info-value"><strong>{{ $invoice->invoice }}</strong></span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Date:</span>
+                    <span class="info-label">{{ __('common.date') }}:</span>
                     <span class="info-value"><strong>{{ \Carbon\Carbon::parse($invoice->date)->format('d-M-Y h:i A') }}</strong></span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Customer:</span>
+                    <span class="info-label">{{ __('common.customer') }}:</span>
                     <span class="info-value"><strong>{{ $customer->name ?? '-' }}</strong></span>
                 </div>
                 @if(!empty($customer) && !empty($customer->mobile))
                     <div class="info-row">
-                        <span class="info-label">Mobile:</span>
+                        <span class="info-label">{{ __('common.mobile') }}:</span>
                         <span class="info-value"><strong>{{ $customer->mobile }}</strong></span>
                     </div>
                 @endif
@@ -344,13 +345,13 @@
                     @endphp
                     @if($billBy)
                         <div class="info-row">
-                            <span class="info-label">Cashier:</span>
-                            <span class="info-value"><strong>{{ $billBy->fullName ?? ($billBy->mail ?? 'Staff') }}</strong></span>
+                            <span class="info-label">{{ __('invoices.cashier') }}:</span>
+                            <span class="info-value"><strong>{{ $billBy->fullName ?? ($billBy->mail ?? __('common.staff')) }}</strong></span>
                         </div>
                     @endif
                 @endif
                 <div class="info-row">
-                    <span class="info-label">Status:</span>
+                    <span class="info-label">{{ __('common.status') }}:</span>
                     <span class="info-value"><strong>{{ $paymentStatus ?? 'DUE' }}</strong></span>
                 </div>
             </div>
@@ -360,21 +361,21 @@
             <!-- Items -->
             <div class="items-section">
                 <div class="items-header">
-                    <div class="items-header-cell">ITEM</div>
-                    <div class="items-header-cell">QTY</div>
-                    <div class="items-header-cell">RATE</div>
-                    <div class="items-header-cell">AMT</div>
+                    <div class="items-header-cell">{{ __('invoices.item') }}</div>
+                    <div class="items-header-cell">{{ __('invoices.qty') }}</div>
+                    <div class="items-header-cell">{{ __('invoices.rate') }}</div>
+                    <div class="items-header-cell">{{ __('invoices.amt') }}</div>
                 </div>
 
                 @forelse($items as $item)
-                    @php 
+                    @php
                         $lineAmount = (float)($item->totalSale ?? (($item->salePrice ?? 0) * ($item->qty ?? 0)));
                     @endphp
                     <div class="item-row">
                         <div>
                             <div class="item-name">{{ $item->productName }}</div>
                             @if(!empty($item->productCode))
-                                <div class="item-code">Code: {{ $item->productCode }}</div>
+                                <div class="item-code">{{ __('common.code') }}: {{ $item->productCode }}</div>
                             @endif
                         </div>
                         <div class="qty">{{ (int)($item->qty ?? 0) }}</div>
@@ -383,7 +384,7 @@
                     </div>
                 @empty
                     <div class="item-row">
-                        <div colspan="4" style="text-align: center;">No items</div>
+                        <div colspan="4" style="text-align: center;">{{ __('invoices.no_items') }}</div>
                     </div>
                 @endforelse
             </div>
@@ -393,44 +394,45 @@
             <!-- Totals -->
             <div class="totals-section">
                 <div class="total-row subtotal-row">
-                    <span class="total-label">Subtotal</span>
+                    <span class="total-label">{{ __('invoices.subtotal') }}</span>
                     <span class="total-value">@money($thermalSubtotal)</span>
                 </div>
 
                 @if($thermalAddCharge > 0)
                     <div class="total-row">
-                        <span class="total-label">{{ $invoice->additionalChargeName ? e($invoice->additionalChargeName) : 'Additional' }}</span>
+                        <span class="total-label">{{ $invoice->additionalChargeName ? e($invoice->additionalChargeName) : __('common.additional_charge') }}</span>
                         <span class="total-value">@money($thermalAddCharge)</span>
                     </div>
                 @endif
 
                 @if($thermalDiscount > 0)
                     <div class="total-row">
-                        <span class="total-label">Discount</span>
+                        <span class="total-label">{{ __('invoices.discount') }}</span>
                         <span class="total-value">- @money($thermalDiscount)</span>
                     </div>
                 @endif
 
                 <div class="total-row grand-total-row">
-                    <span class="total-label">Grand Total</span>
+                    <span class="total-label">{{ __('invoices.grand_total') }}</span>
                     <span class="total-value">@money($grandTotal)</span>
                 </div>
 
                 <div class="total-row paid-row">
-                    <span class="total-label">Paid</span>
+                    <span class="total-label">{{ __('invoices.paid') }}</span>
                     <span class="total-value">@money($paidAmount)</span>
                 </div>
 
                 <div class="total-row due-row">
-                    <span class="total-label">Due</span>
+                    <span class="total-label">{{ __('invoices.due') }}</span>
                     <span class="total-value">@money($currentDue)</span>
                 </div>
             </div>
 
+            <div class="thermal-amount-words">{{ \App\Support\AmountInWords::money($grandTotal) }}</div>
             <!-- Notes -->
             @if(!empty($invoice->note))
                 <div class="notes-section">
-                    <div class="note-label">Note:</div> {{ $invoice->note }}
+                    <div class="note-label">{{ __('common.note') }}:</div> {{ $invoice->note }}
                 </div>
             @endif
 
@@ -438,8 +440,8 @@
 
             <!-- Footer -->
             <div class="receipt-footer">
-                <div class="footer-text">Thank you for your business</div>
-                <div class="footer-text">Powered by RetailNova</div>
+                <div class="footer-text">{{ __('invoices.thank_you_for_your_business') }}</div>
+                <div class="footer-text">{{ __('invoices.powered_by_retailnova') }}</div>
             </div>
 
         </div>
@@ -448,7 +450,7 @@
     <script>
         // Auto-print when page loads
         window.addEventListener('load', function() {
-            window.print();
+            document.fonts.ready.then(function(){ window.print(); });
         });
     </script>
 </body>

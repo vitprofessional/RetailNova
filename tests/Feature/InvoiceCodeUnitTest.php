@@ -10,8 +10,7 @@ class InvoiceCodeUnitTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function invoice_shows_product_barcode_as_code_and_unit_name()
+    public function test_invoice_shows_barcode_and_warranty_and_loads_the_product_unit()
     {
         // Create unit
         $unitId = DB::table('product_units')->insertGetId([
@@ -87,9 +86,14 @@ class InvoiceCodeUnitTest extends TestCase
         $response = $this->get(route('invoiceGenerate', ['id' => $saleId]));
         $response->assertStatus(200);
 
-        // Assert barcode (Code) and unit name appear in the rendered invoice
+        // ae81261 replaced the printed Unit column with Warranty (days).
+        // Keep the unit fixture to verify the controller join without restoring that column.
+        $response->assertViewHas('items', function ($items) {
+            return $items->count() === 1 && $items->first()->unit === 'UnitX'
+                && (string)$items->first()->warranty_days === '365';
+        });
         $response->assertSee('SKU-123ABC');
-        $response->assertSee('UnitX');
         $response->assertSee('Warranty (days)');
+        $response->assertSee('<td class="text-center">365</td>', false);
     }
 }

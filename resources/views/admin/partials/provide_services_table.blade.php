@@ -3,14 +3,14 @@
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Service</th>
-                    <th>Amount</th>
-                    <th>Qty</th>
-                    <th>Rate</th>
-                    <th>Note</th>
-                    <th>Created</th>
+                    <th>{{ __('common.id') }}</th>
+                    <th>{{ __('common.customer') }}</th>
+                    <th>{{ __('common.service') }}</th>
+                    <th>{{ __('common.amount') }}</th>
+                    <th>{{ __('common.qty') }}</th>
+                    <th>{{ __('common.rate') }}</th>
+                    <th>{{ __('common.note') }}</th>
+                    <th>{{ __('common.created') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -26,7 +26,7 @@
                         <td>{{ $r->created_at }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="text-center">No rows found</td></tr>
+                    <tr><td colspan="8" class="text-center">{{ __('common.no_rows_found') }}</td></tr>
                 @endforelse
             </tbody>
         </table>

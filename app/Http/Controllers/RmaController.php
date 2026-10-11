@@ -54,7 +54,7 @@ class RmaController extends Controller
 
         $rma = Rma::create($data);
 
-        return redirect()->route('rma.index')->with('success', 'RMA created');
+        return redirect()->route('rma.index')->with('success', __('common.notification_rma_created'));
     }
 
     public function edit($id)
@@ -84,14 +84,14 @@ class RmaController extends Controller
         }
 
         $rma->update($data);
-        return redirect()->route('rma.index')->with('success', 'RMA updated');
+        return redirect()->route('rma.index')->with('success', __('common.notification_rma_updated'));
     }
 
     public function destroy($id)
     {
         $rma = Rma::findOrFail($id);
         $rma->delete();
-        return redirect()->route('rma.index')->with('success', 'RMA deleted');
+        return redirect()->route('rma.index')->with('success', __('common.notification_rma_deleted'));
     }
 
     public function show($id)

@@ -1,7 +1,5 @@
 @extends('include')
-@section('backTitle')
-Stock Report
-@endsection
+@section('backTitle'){{ __('common.heading_stock_report') }}@endsection
 @section('container')
 <div class="row">
     <div class="col-lg-12">
@@ -9,79 +7,79 @@ Stock Report
             <div class="card-body p-0 mt-lg-2 mt-0">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h3 class="mb-3">Stock & Low Stock Report</h3>
-                        <p class="mb-0">View current inventory levels and identify low stock products.</p>
+                        <h3 class="mb-3">{{ __('reports.stock_low_stock_report') }}</h3>
+                        <p class="mb-0">{{ __('reports.view_current_inventory_levels_and_identify_low_stock_products') }}</p>
                     </div>
                     <a href="{{ route('reports.index') }}" class="btn btn-secondary">
-                        <i class="ri-arrow-left-line"></i> Back to Reports
+                        <i class="ri-arrow-left-line"></i> {{ __('reports.back_to_reports') }}
                     </a>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Summary Cards -->
     <div class="col-lg-12">
         <div class="row">
             <div class="col-lg-4">
                 <div class="card card-block card-stretch card-height bg-primary">
                     <div class="card-body text-white">
-                        <h6 class="mb-2">Total Products</h6>
+                        <h6 class="mb-2">{{ __('reports.total_products') }}</h6>
                         <h3>{{ $totalProducts }}</h3>
-                        <p class="mb-0">In Inventory</p>
+                        <p class="mb-0">{{ __('reports.in_inventory') }}</p>
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-lg-4">
                 <div class="card card-block card-stretch card-height bg-warning">
                     <div class="card-body text-white">
-                        <h6 class="mb-2">Low Stock Products</h6>
+                        <h6 class="mb-2">{{ __('reports.low_stock_products') }}</h6>
                         <h3>{{ $lowStockCount }}</h3>
                         <p class="mb-0">10 or Fewer Items</p>
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-lg-4">
                 <div class="card card-block card-stretch card-height bg-danger">
                     <div class="card-body text-white">
-                        <h6 class="mb-2">Out of Stock</h6>
+                        <h6 class="mb-2">{{ __('reports.out_of_stock') }}</h6>
                         <h3>{{ $outOfStockCount }}</h3>
-                        <p class="mb-0">Zero Quantity</p>
+                        <p class="mb-0">{{ __('reports.zero_quantity') }}</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Filters -->
     <div class="col-lg-12 mt-3">
         <div class="card">
             <div class="card-body">
                 <form method="GET" action="{{ route('reports.stock') }}" class="row align-items-end">
                     <div class="col-md-4">
-                        <label class="form-label">Filter by Status</label>
+                        <label class="form-label">{{ __('reports.filter_by_status') }}</label>
                         <select name="filter" class="form-control">
-                            <option value="all" {{ $filter == 'all' ? 'selected' : '' }}>All Products</option>
-                            <option value="low" {{ $filter == 'low' ? 'selected' : '' }}>Low Stock Only</option>
-                            <option value="out" {{ $filter == 'out' ? 'selected' : '' }}>Out of Stock Only</option>
+                            <option value="all" {{ $filter == 'all' ? 'selected' : '' }}>{{ __('reports.all_products') }}</option>
+                            <option value="low" {{ $filter == 'low' ? 'selected' : '' }}>{{ __('reports.low_stock_only') }}</option>
+                            <option value="out" {{ $filter == 'out' ? 'selected' : '' }}>{{ __('reports.out_of_stock_only') }}</option>
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Search Product</label>
-                        <input type="text" name="search" class="form-control" placeholder="Product name or barcode" value="{{ $search ?? '' }}">
+                        <label class="form-label">{{ __('reports.search_product') }}</label>
+                        <input type="text" name="search" class="form-control" placeholder="{{ __('common.product_name_or_barcode') }}" value="{{ $search ?? '' }}">
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="ri-filter-3-line"></i> Filter
+                            <i class="ri-filter-3-line"></i> {{ __('reports.filter') }}
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    
+
     <!-- Stock Table -->
     <div class="col-lg-12 mt-3">
         <div class="card">
@@ -96,7 +94,7 @@ Stock Report
                     @endif
                 </h5>
                 <button onclick="window.print()" class="btn btn-sm btn-primary">
-                    <i class="ri-printer-line"></i> Print
+                    <i class="ri-printer-line"></i> {{ __('reports.print') }}
                 </button>
             </div>
             <div class="card-body">
@@ -104,13 +102,13 @@ Stock Report
                     <table class="table table-bordered table-hover rn-table-pro">
                         <thead class="bg-light">
                             <tr>
-                                <th>Product Name</th>
-                                <th>Barcode</th>
-                                <th>Brand</th>
-                                <th>Category</th>
-                                <th>Unit</th>
-                                <th class="text-center">Current Stock</th>
-                                <th class="text-center">Status</th>
+                                <th>{{ __('reports.product_name') }}</th>
+                                <th>{{ __('reports.barcode') }}</th>
+                                <th>{{ __('reports.brand') }}</th>
+                                <th>{{ __('reports.category') }}</th>
+                                <th>{{ __('reports.unit') }}</th>
+                                <th class="text-center">{{ __('reports.current_stock') }}</th>
+                                <th class="text-center">{{ __('reports.status') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -119,7 +117,7 @@ Stock Report
                                     $quantity = intval($product->quantity ?? 0);
                                     $status = 'normal';
                                     $statusClass = 'success';
-                                    
+
                                     if($quantity <= 0) {
                                         $status = 'Out of Stock';
                                         $statusClass = 'danger';
@@ -146,29 +144,29 @@ Stock Report
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">No products found matching the selected criteria.</td>
+                                    <td colspan="7" class="text-center">{{ __('reports.no_products_found_matching_the_selected_criteria') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
-                
+
                 <div class="mt-3">
                     {{ $products->appends(request()->query())->links() }}
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Quick Actions -->
     @if($lowStockCount > 0 || $outOfStockCount > 0)
         <div class="col-lg-12 mt-3">
             <div class="alert alert-warning">
-                <h6><i class="ri-alert-line"></i> Stock Alert</h6>
+                <h6><i class="ri-alert-line"></i> {{ __('reports.stock_alert') }}</h6>
                 <p class="mb-0">
-                    You have <strong>{{ $lowStockCount }}</strong> low stock products and 
-                    <strong>{{ $outOfStockCount }}</strong> out of stock products. 
-                    Consider restocking these items to avoid sales disruptions.
+                    {{ __('reports.you_have') }} <strong>{{ $lowStockCount }}</strong> {{ __('reports.low_stock_products_and') }}
+                    <strong>{{ $outOfStockCount }}</strong> {{ __('reports.out_of_stock_products') }}
+                    {{ __('reports.restock_advice') }}
                 </p>
             </div>
         </div>

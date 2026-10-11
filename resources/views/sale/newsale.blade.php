@@ -1,7 +1,7 @@
-@extends('include') 
-    @section('backTitle') 
-        new sale 
-    @endsection 
+@extends('include')
+    @section('backTitle')
+        new sale
+    @endsection
 @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
@@ -41,7 +41,7 @@
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label>Date</label>
+                                    <label>{{ __('sales.date') }}</label>
                                     <input type="date" class="form-control" value="{{ date('Y-m-d') }}" name="date" placeholder="" required />
                                     <div class="help-block with-errors"></div>
                                 </div>
@@ -49,32 +49,32 @@
                             <!-- add customer button moved inline beside the select -->
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="invoice" class="form-label">Invoice *</label>
+                                    <label for="invoice" class="form-label">{{ __('common.invoice') }} *</label>
                                     <input type="text" class="form-control" id="invoice" name="invoice" value="{{ $randomInvoiceNumber }}" readonly />
                                 </div>
                             </div>
                             <div class="col-md-6 text-md-end mt-3 mt-md-0">
                                 <div class="form-group">
-                                    <label>Select Customer * <span class="small text-muted">(use Walk-in for quick sale)</span></label>
-                                    <label for="customerName" class="form-label">Customer</label>
+                                    <label>{{ __('sales.select_customer') }} * <span class="small text-muted">(use Walk-in for quick sale)</span></label>
+                                    <label for="customerName" class="form-label">{{ __('sales.customer') }}</label>
                                     <div class="input-group">
                                         <select id="customerName" name="customerId" class="form-control" data-onchange="actSaleProduct()"
                                             data-products-url="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}">
-                                                <option value="">Select customer</option>
+                                                <option value="">{{ __('sales.select_customer') }}</option>
                                           @if(!empty($customerList) && count($customerList)>0)
                                           @foreach($customerList as $customerData)
                                             <option value="{{$customerData->id}}" {{ (isset($walkingCustomerId) && $walkingCustomerId === $customerData->id) ? 'selected' : '' }}>{{$customerData->name}}</option>
                                             @endforeach
                                             @endif
                                         </select>
-                                        <button type="button" class="btn btn-outline-primary rn-btn-plus rounded-0" title="Add customer" data-toggle="modal" data-target="#customerModal">
+                                        <button type="button" class="btn btn-outline-primary rn-btn-plus rounded-0" title="{{ __('common.add_customer') }}" data-toggle="modal" data-target="#customerModal">
                                             <i class="las la-plus"></i>
                                         </button>
                                     </div>
                                     <div class="my-2">
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="useWalkingCustomerBtn">Use Walk-in Customer</button>
-                                        <span id="prevDueDisplay" class="badge bg-warning text-dark mx-2">Previous Due: 0.00</span>
-                                        <button id="outOfStockBtn" type="button" class="btn btn-outline-danger btn-sm mx-2" style="display:none; height:30px; padding:4px 8px;" data-toggle="modal" data-target="#outOfStockModal" title="0 product(s) out of stock">View Out of Stock(0)</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="useWalkingCustomerBtn">{{ __('sales.use_walk_in_customer') }}</button>
+                                        <span id="prevDueDisplay" class="badge bg-warning text-dark mx-2">{{ __('common.previous_due') }}: 0.00</span>
+                                        <button id="outOfStockBtn" type="button" class="btn btn-outline-danger btn-sm mx-2" style="display:none; height:30px; padding:4px 8px;" data-toggle="modal" data-target="#outOfStockModal" title="0 product(s) out of stock">{{ __('sales.view_out_of_stock_0') }}</button>
                                         <span id="outOfStockNote" class="text-muted small ms-2" style="display:none">&nbsp;</span>
                                     </div>
                                 </div>
@@ -90,19 +90,19 @@
                         <div class="row mt-3">
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Product Category</label>
+                                    <label>{{ __('sales.product_category') }}</label>
                                     <select id="categorySelect" name="categoryId" class="form-control" disabled>
-                                        <option value="">All Categories</option>
+                                        <option value="">{{ __('sales.all_categories') }}</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="form-group">
-                                <label>Select Product*</label>
-                                <select id="productName" name="productName" class="form-control js-sale-product-select" disabled 
+                                <label>{{ __('common.select_product') }}*</label>
+                                <select id="productName" name="productName" class="form-control js-sale-product-select" disabled
                                     data-purchase-url="{{ route('getSaleProductDetails', ['id' => '__ID__']) }}">
                                    <!--  form option show proccessing -->
-                                            <option value="">Select</option>
+                                            <option value="">{{ __('sales.select') }}</option>
                                   @if(!empty($productList) && count($productList)>0)
                                   @foreach($productList as $productData)
                                     <option value="{{$productData->id}}">{{$productData->name}}</option>
@@ -112,8 +112,8 @@
                             </div>
                             </div>
                             <div class="col-8">
-                                <label for="note">Note(if applicable)</label>
-                                <textarea class="form-control" id="note" name="note" placeholder="Enter some notes if you have"></textarea>
+                                <label for="note">{{ __('sales.note_if_applicable') }}</label>
+                                <textarea class="form-control" id="note" name="note" placeholder="{{ __('common.enter_some_notes_if_you_have') }}"></textarea>
                             </div>
                         </div>
                     </div>
@@ -123,7 +123,7 @@
          <div class="card ">
             <div class="card-body  product-table">
                 <div class="header-title">
-                    <h6 class="card-title">Product Details</h6>
+                    <h6 class="card-title">{{ __('sales.product_details') }}</h6>
                 </div>
                 <style>
                     .rn-table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch}
@@ -145,45 +145,24 @@
                         width:100% !important;
                         min-width:0 !important;
                     }
-                    @media (max-width: 992px){
-                        .rn-table-pro{min-width:720px}
-                        .rn-table-pro thead th:nth-child(3),
-                        .rn-table-pro tbody td:nth-child(3),
-                        .rn-table-pro thead th:nth-child(4),
-                        .rn-table-pro tbody td:nth-child(4),
-                        .rn-table-pro thead th:nth-child(5),
-                        .rn-table-pro tbody td:nth-child(5),
-                        .rn-table-pro thead th:nth-child(9),
-                        .rn-table-pro tbody td:nth-child(9),
-                        .rn-table-pro thead th:nth-child(10),
-                        .rn-table-pro tbody td:nth-child(10),
-                        .rn-table-pro thead th:nth-child(11),
-                        .rn-table-pro tbody td:nth-child(11),
-                        .rn-table-pro thead th:nth-child(12),
-                        .rn-table-pro tbody td:nth-child(12){display:none}
-                    }
-                    @media (max-width: 576px){
-                        .rn-table-pro{min-width:540px}
-                        .rn-table-pro thead th:nth-child(8),
-                        .rn-table-pro tbody td:nth-child(8){display:none}
-                    }
                 </style>
+                @include('sale.mobile-styles')
                 <div class="table-responsive rn-table-wrap">
-                    <table class="table table-sm mb-0 table-bordered rounded-0 rn-table-pro">
+                    <table class="table table-sm mb-0 table-bordered rounded-0 rn-table-pro rn-sale-mobile-table">
                         <thead class="bg-white text-uppercase">
                             <tr>
-                                <th>Remove</th>
-                                <th>Product Name</th>
-                                <th>Purchase Data</th>
-                                <th>Serials</th>
-                                <th>Warranty (days)</th>
-                                <th>Qty</th>
-                                <th>Sale Price</th>
-                                <th>Total</th>
-                                <th>Purchase</th>
-                                <th>Purchase Total</th>
-                                <th>Profit Margin</th>
-                                <th>Profit Total</th>
+                                <th>{{ __('sales.remove') }}</th>
+                                <th>{{ __('sales.product_name') }}</th>
+                                <th>{{ __('sales.purchase_data') }}</th>
+                                <th>{{ __('sales.serials') }}</th>
+                                <th>{{ __('sales.warranty_days') }}</th>
+                                <th>{{ __('sales.qty') }}</th>
+                                <th>{{ __('sales.sale_price') }}</th>
+                                <th>{{ __('sales.total') }}</th>
+                                <th>{{ __('sales.purchase') }}</th>
+                                <th>{{ __('sales.purchase_total') }}</th>
+                                <th>{{ __('sales.profit_margin') }}</th>
+                                <th>{{ __('sales.profit_total') }}</th>
                             </tr>
                         </thead>
                         <tbody id="productDetails">
@@ -199,7 +178,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="header-title">
-                            <h6 class="card-title">Payment Details</h6>
+                            <h6 class="card-title">{{ __('sales.payment_details') }}</h6>
                         </div>
                         <div class="mb-3 product-table">
                             <style>
@@ -218,49 +197,49 @@
                             </style>
                             <div id="paymentDetails" class="rn-pay-box">
                                 <div class="rn-pay-row">
-                                    <div class="rn-pay-label">Total:</div>
+                                    <div class="rn-pay-label">{{ __('common.total') }}:</div>
                                     <div class="rn-pay-value">
                                         <input type="number" class="form-control" id="totalSaleAmount" name="totalSaleAmount" value="0" readonly />
                                     </div>
                                 </div>
                                 <div class="rn-pay-row">
-                                    <div class="rn-pay-label">Discount Amount:</div>
+                                    <div class="rn-pay-label">{{ __('common.discount_amount') }}:</div>
                                     <div class="rn-pay-value">
                                         <input type="number" class="form-control" id="discountAmount" data-onkeyup="getDiscountAmount()" name="discountAmount" value="0" />
                                     </div>
                                 </div>
                                 <div class="rn-pay-row">
-                                    <div class="rn-pay-label">Additional Charge Name:</div>
+                                    <div class="rn-pay-label">{{ __('sales.additional_charge_name') }}:</div>
                                     <div class="rn-pay-value">
-                                        <input type="text" class="form-control" id="additionalChargeName" name="additionalChargeName" placeholder="e.g., Service Charge" />
+                                        <input type="text" class="form-control" id="additionalChargeName" name="additionalChargeName" placeholder="{{ __('common.e_g_service_charge') }}" />
                                     </div>
                                 </div>
                                 <div class="rn-pay-row">
-                                    <div class="rn-pay-label">Additional Charge Amount:</div>
+                                    <div class="rn-pay-label">{{ __('sales.additional_charge_amount') }}:</div>
                                     <div class="rn-pay-value">
                                         <input type="number" class="form-control" id="additionalChargeAmount" name="additionalChargeAmount" value="0" oninput="try{ if(typeof window.recalcFinancials === 'function'){ window.recalcFinancials(); } }catch(e){}" />
                                     </div>
                                 </div>
                                 <div class="rn-pay-row">
-                                    <div class="rn-pay-label">Grand Total:</div>
+                                    <div class="rn-pay-label">{{ __('common.grand_total') }}:</div>
                                     <div class="rn-pay-value">
                                         <input type="number" class="form-control" id="grandTotal" name="grandTotal" value="0" readonly />
                                     </div>
                                 </div>
                                 <div class="rn-pay-row">
-                                    <div class="rn-pay-label">Paid Amount:</div>
+                                    <div class="rn-pay-label">{{ __('common.paid_amount') }}:</div>
                                     <div class="rn-pay-value">
                                         <input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" step="0.01" oninput="try{ if(typeof window.recalcTotals === 'function'){ window.recalcTotals(); } else if(typeof window.recalcFinancials === 'function'){ window.recalcFinancials(); } }catch(e){}" />
                                     </div>
                                 </div>
                                 <div class="rn-pay-row">
-                                    <div class="rn-pay-label">Due Amount:</div>
+                                    <div class="rn-pay-label">{{ __('common.due_amount') }}:</div>
                                     <div class="rn-pay-value">
                                         <input type="number" class="form-control" id="dueAmount" name="dueAmount" value="0" readonly />
                                     </div>
                                 </div>
                                 <div class="rn-pay-row">
-                                    <div class="rn-pay-label">Payment By</div>
+                                    <div class="rn-pay-label">{{ __('sales.payment_by') }}</div>
                                     <div class="rn-pay-value">
                                         {{ optional(auth('admin')->user())->fullName ?? '' }}
                                     </div>
@@ -272,19 +251,19 @@
                                     }
                                 @endphp
                                 <div class="rn-pay-row">
-                                    <div class="rn-pay-label">Printer Profile</div>
+                                    <div class="rn-pay-label">{{ __('sales.printer_profile') }}</div>
                                     <div class="rn-pay-value">
                                         <select class="form-control" id="printerProfile" name="printerProfile">
-                                            <option value="a4" {{ $defaultInvoicePrinter === 'a4' ? 'selected' : '' }}>A4 Invoice</option>
-                                            <option value="thermal80" {{ $defaultInvoicePrinter === 'thermal80' ? 'selected' : '' }}>POS Thermal 80mm</option>
-                                            <option value="thermal58" {{ $defaultInvoicePrinter === 'thermal58' ? 'selected' : '' }}>POS Thermal 58mm</option>
+                                            <option value="a4" {{ $defaultInvoicePrinter === 'a4' ? 'selected' : '' }}>{{ __('sales.a4_invoice') }}</option>
+                                            <option value="thermal80" {{ $defaultInvoicePrinter === 'thermal80' ? 'selected' : '' }}>{{ __('sales.pos_thermal_80mm') }}</option>
+                                            <option value="thermal58" {{ $defaultInvoicePrinter === 'thermal58' ? 'selected' : '' }}>{{ __('sales.pos_thermal_58mm') }}</option>
                                         </select>
                                     </div>
                                 </div>
                                         <div class="rn-pay-row rn-pay-actions">
                                             <div class="rn-pay-label"></div>
                                             <div class="rn-pay-value">
-                                                <button type="button" id="rnReceiveAmountBtn" class="btn btn-outline-danger">Receive Amount</button>
+                                                <button type="button" id="rnReceiveAmountBtn" class="btn btn-outline-danger">{{ __('sales.receive_amount') }}</button>
                                             </div>
                                         </div>
                             </div>
@@ -293,13 +272,16 @@
                             <input type="number" class="form-control d-none" id="curDue" name="curDue" value="0" readonly />
                         </div>
                         <div class="d-md-flex  mt-2 align-items-center">
+                            @if($errors->any())
+                            <div class="alert alert-danger" role="alert">{{ $errors->first() }} {{ __('common.reopen_serial_selection_and_retry_with_the_current_sales_policy') }}</div>
+                            @endif
                             <div id="saleErrorSummary" class="me-3" style="flex:1"></div>
                             <div class="text-end">
-                                <button class="btn btn-outline-primary save-btn btn-sm me-w" type="submit">Save and Print</button>
+                                <button class="btn btn-outline-primary save-btn btn-sm me-w" type="submit">{{ __('sales.save_and_print') }}</button>
                             </div>
                         </div>
                         <div class="mt-2">
-                            <span id="totalOutstandingDisplay" class="badge bg-danger">Total Outstanding: 0.00</span>
+                            <span id="totalOutstandingDisplay" class="badge bg-danger">{{ __('common.total_outstanding_0_00') }}</span>
                         </div>
                     </div>
                 </div>
@@ -313,24 +295,24 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title" id="saleSerialModalLabel">Select Serials</h6>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                <h6 class="modal-title" id="saleSerialModalLabel">{{ __('sales.select_serials') }}</h6>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="{{ __('sales.close') }}"></button>
             </div>
             <div class="modal-body">
-                <div id="saleSerialStatus" class="alert alert-info mb-2">Loading available serials...</div>
+                <div id="saleSerialStatus" class="alert alert-info mb-2">{{ __('sales.loading_available_serials') }}</div>
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="small text-muted" id="saleSerialMeta"></div>
-                    <div class="btn-group btn-group-sm" role="group" aria-label="Serial actions">
-                        <button type="button" class="btn btn-outline-secondary" id="saleSerialSelectAll">Select All</button>
-                        <button type="button" class="btn btn-outline-secondary" id="saleSerialClear">Clear</button>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="{{ __('common.serial_actions') }}">
+                        <button type="button" class="btn btn-outline-secondary" id="saleSerialSelectAll">{{ __('sales.select_all') }}</button>
+                        <button type="button" class="btn btn-outline-secondary" id="saleSerialClear">{{ __('sales.clear') }}</button>
                     </div>
                 </div>
                 <div id="saleSerialList" class="list-group" style="max-height:320px; overflow:auto;"></div>
             </div>
             <div class="modal-footer">
                 <div class="text-muted me-auto small" id="saleSerialHint"></div>
-                <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="applySaleSerials">Apply Serials</button>
+                <button type="button" class="btn btn-light" data-dismiss="modal">{{ __('sales.cancel') }}</button>
+                <button type="button" class="btn btn-primary" id="applySaleSerials">{{ __('sales.apply_serials') }}</button>
             </div>
         </div>
     </div>
@@ -341,8 +323,8 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title fs-5" id="customerModal">Create Customer</h6>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                <h6 class="modal-title fs-5" id="customerModal">{{ __('sales.create_customer') }}</h6>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="{{ __('sales.close') }}"></button>
             </div>
             <div class="modal-body">
                 <div class="card">
@@ -351,71 +333,71 @@
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>Name *</label>
-                                        <input type="text" class="form-control" placeholder="Enter Name" id="fullName" name="fullName" required />
+                                        <label>{{ __('common.name') }} *</label>
+                                        <input type="text" class="form-control" placeholder="{{ __('common.enter_name') }}" id="fullName" name="fullName" required />
                                         <div class="help-block with-errors"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>Email *</label>
-                                        <input type="email" class="form-control" placeholder="Enter Email" id="mail" name="mail" />
+                                        <label>{{ __('common.email') }} *</label>
+                                        <input type="email" class="form-control" placeholder="{{ __('common.enter_email') }}" id="mail" name="mail" />
                                         <div class="help-block with-errors"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>Phone Number</label>
-                                        <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" />
+                                        <label>{{ __('sales.phone_number') }}</label>
+                                        <input type="text" class="form-control" placeholder="{{ __('common.enter_phone_number') }}" id="mobile" name="mobile" />
                                         <div class="help-block with-errors"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="inputState" class="form-label">Country</label>
+                                        <label for="inputState" class="form-label">{{ __('sales.country') }}</label>
 
-                                        <input type="text" class="form-control" placeholder="Enter The Country" id="country" name="country" />
+                                        <input type="text" class="form-control" placeholder="{{ __('common.enter_the_country') }}" id="country" name="country" />
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="inputState" class="form-label">State</label>
+                                        <label for="inputState" class="form-label">{{ __('sales.state') }}</label>
 
-                                        <input type="text" class="form-control" placeholder="Enter The State" id="state" name="state" />
+                                        <input type="text" class="form-control" placeholder="{{ __('common.enter_the_state') }}" id="state" name="state" />
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="inputState" class="form-label">City</label>
+                                        <label for="inputState" class="form-label">{{ __('sales.city') }}</label>
 
-                                        <input type="text" class="form-control" placeholder="Enter The City" id="city" name="city" />
+                                        <input type="text" class="form-control" placeholder="{{ __('common.enter_the_city') }}" id="city" name="city" />
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="inputState" class="form-label">Area</label>
+                                        <label for="inputState" class="form-label">{{ __('sales.area') }}</label>
 
-                                        <input type="text" class="form-control" placeholder="Enter The area" id="area" name="area" />
+                                        <input type="text" class="form-control" placeholder="{{ __('common.enter_the_area') }}" id="area" name="area" />
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="openingBalance" class="form-label">Opening Balance
-                                            <span class="ml-1" data-toggle="tooltip" title="Positive = customer owes you. Negative = you owe customer. Leave 0 for new customers.">
+                                        <label for="openingBalance" class="form-label">{{ __('sales.opening_balance') }}
+                                            <span class="ml-1" data-toggle="tooltip" title="{{ __('common.positive_customer_owes_you_negative_you_owe_customer_leave_0_for_new_customers') }}">
                                                 <i class="ri-information-line"></i>
                                             </span>
                                         </label>
                                         <input type="number" step="1" class="form-control" placeholder="0" id="openingBalance" name="openingBalance" value="0" />
-                                        <small class="text-muted">Use positive for receivable, negative for payable.</small>
+                                        <small class="text-muted">{{ __('sales.use_positive_for_receivable_negative_for_payable') }}</small>
                                     </div>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary mr-2" id="add-customer">Add Customer</button>
-                            <button type="reset" class="btn btn-danger">Reset</button>
+                            <button type="submit" class="btn btn-primary mr-2" id="add-customer">{{ __('sales.add_customer') }}</button>
+                            <button type="reset" class="btn btn-danger">{{ __('sales.reset') }}</button>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-light" data-dismiss="modal">{{ __('sales.cancel') }}</button>
                     </div>
                 </div>
             </div>
@@ -429,16 +411,16 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="outOfStockModalLabel">Out of Stock Items</h5>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="outOfStockModalLabel">{{ __('sales.out_of_stock_items') }}</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="{{ __('sales.close') }}"></button>
             </div>
             <div class="modal-body">
                 <div id="outOfStockList">
-                    <p class="text-muted">No out-of-stock items.</p>
+                    <p class="text-muted">{{ __('sales.no_out_of_stock_items') }}</p>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('sales.close') }}</button>
             </div>
         </div>
     </div>
@@ -462,7 +444,7 @@
                             // trigger change to load products and previous due
                             try{ var ev = new Event('change', { bubbles: true }); sel.dispatchEvent(ev); }catch(_){ }
                             // visual feedback
-                            try{ if(typeof showToast === 'function') showToast('Customer selected','Using Walking Customer','success'); }catch(_){}
+                            try{ if(typeof showToast === 'function') showToast(window.RNTranslate('common.client_customer_selected'),window.RNTranslate('common.client_using_walking_customer'),'success'); }catch(_){}
                         }catch(e){ console.warn('useWalkingCustomer click failed', e); }
                     });
                 }
@@ -478,7 +460,7 @@
                                 if(typeof dueSaleCalculate === 'function') dueSaleCalculate();
                                 else if(typeof window.recalcTotals === 'function') window.recalcTotals();
                                 else if(typeof window.recalcFinancials === 'function') window.recalcFinancials();
-                                try{ if(typeof showToast === 'function') showToast('Payment updated','Paid set to Grand Total','info'); }catch(_){}
+                                try{ if(typeof showToast === 'function') showToast(window.RNTranslate('common.client_payment_updated'),window.RNTranslate('common.client_paid_set_to_grand_total'),'info'); }catch(_){}
                             }
                         }catch(e){ console.warn('Receive Amount click failed', e); }
                     });

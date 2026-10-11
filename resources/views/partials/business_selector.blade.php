@@ -9,14 +9,14 @@
 @if($isAdminLike)
 <div class="col-md-4">
     <div class="form-group">
-        <label for="businessId" class="form-label">Business / Store</label>
+        <label for="businessId" class="form-label">{{ __('settings.business_store') }}</label>
         <select id="businessId" name="businessId" class="form-control">
-            <option value="">All / Unassigned</option>
+            <option value="">{{ __('settings.all_unassigned') }}</option>
             @foreach($bizList as $biz)
                 <option value="{{ $biz->id }}" {{ (string)$selectedBizId === (string)$biz->id ? 'selected' : '' }}>{{ $biz->businessName }}</option>
             @endforeach
         </select>
-        <small class="text-muted">Choose target business for this record.</small>
+        <small class="text-muted">{{ __('settings.choose_target_business_for_this_record') }}</small>
     </div>
 </div>
 @else

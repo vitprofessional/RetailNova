@@ -1,4 +1,4 @@
-@extends('include') @section('backTitle')Stock Product@endsection @section('container')
+@extends('include') @section('backTitle'){{ __('common.heading_stock_product') }}@endsection @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -7,7 +7,7 @@
                 <div class="rounded mb-3 table-responsive product-table">
                     <div class="row">
                         <div class="col-12 mb-3">
-                            <h4>Stock Product</h4>
+                            <h4>{{ __('inventory.stock_product') }}</h4>
                         </div>
                     </div>
                     <table class="data-tables table mb-0 table-bordered rn-table-pro">
@@ -19,13 +19,13 @@
                                         <label for="checkbox1" class="mb-0"></label>
                                     </div>
                                 </th>
-                                <th>Product Name</th>
-                                <th>Supplier</th>
-                                <th>Stock Quantity</th>
-                                <th>Purchase Price</th>
-                                <th>Sale Price</th>
-                                <th>Dp</th>
-                                <th>Action</th>
+                                <th>{{ __('inventory.product_name') }}</th>
+                                <th>{{ __('inventory.supplier') }}</th>
+                                <th>{{ __('inventory.stock_quantity') }}</th>
+                                <th>{{ __('inventory.purchase_price') }}</th>
+                                <th>{{ __('inventory.sale_price') }}</th>
+                                <th>{{ __('common.dp') }}</th>
+                                <th>{{ __('inventory.action') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -51,13 +51,13 @@
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="8" class="text-center">No products available.</td>
+                                    <td colspan="8" class="text-center">{{ __('inventory.no_products_available') }}</td>
                                 </tr>
                             @endif
                         </tbody>
                     </table>
                 </div>
-            
+
             </div>
         </div>
 @endsection

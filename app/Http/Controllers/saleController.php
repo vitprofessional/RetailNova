@@ -83,13 +83,13 @@ class saleController extends Controller
     {
         $sale = SaleProduct::find($id);
         if(!$sale){
-            Alert::error('Error', 'Sale not found');
+            Alert::error(__('common.notification_error'), __('common.notification_sale_not_found'));
             return back();
         }
         // Ownership check: non-admins can only edit their own sales
         $actor = auth('admin')->user();
         if($actor && !$this->hasAdminPrivileges($actor) && (int)$sale->salespersonId !== (int)$actor->id){
-            Alert::error('Unauthorized','You are not allowed to edit this sale');
+            Alert::error(__('common.notification_unauthorized'),__('common.notification_you_are_not_allowed_to_edit_this_sale'));
             return back();
         }
         $customer = Customer::find($sale->customerId);
@@ -103,13 +103,18 @@ class saleController extends Controller
     {
         $sale = SaleProduct::find($id);
         if(!$sale){
-            Alert::error('Error', 'Sale not found');
+            Alert::error(__('common.notification_error'), __('common.notification_sale_not_found'));
             return back();
         }
         // Ownership check
         $actor = auth('admin')->user();
+        // The legacy first-user privilege must not expose another business's serials.
+        if ($actor && !in_array(strtolower(trim($actor->role)), ['admin','superadmin'], true)
+            && (int)$sale->businessId > 0 && (int)$sale->businessId !== (int)$actor->businessId) {
+            abort(403, 'This sale belongs to another business.');
+        }
         if($actor && !$this->hasAdminPrivileges($actor) && (int)$sale->salespersonId !== (int)$actor->id){
-            Alert::error('Unauthorized','You are not allowed to edit items of this sale');
+            Alert::error(__('common.notification_unauthorized'),__('common.notification_you_are_not_allowed_to_edit_items_of_this_sale'));
             return back();
         }
         $customer = Customer::find($sale->customerId);
@@ -152,14 +157,14 @@ class saleController extends Controller
     {
         $sale = SaleProduct::find($id);
         if(!$sale){
-            Alert::error('Error', 'Sale not found');
+            Alert::error(__('common.notification_error'), __('common.notification_sale_not_found'));
             return back();
         }
 
         // Ownership check
         $actor = auth('admin')->user();
         if($actor && !$this->hasAdminPrivileges($actor) && (int)$sale->salespersonId !== (int)$actor->id){
-            Alert::error('Unauthorized','You are not allowed to update this sale');
+            Alert::error(__('common.notification_unauthorized'),__('common.notification_you_are_not_allowed_to_update_this_sale'));
             return back();
         }
 
@@ -174,7 +179,7 @@ class saleController extends Controller
         $validator->after(function($v) use ($grand) {
             $paid = (float)request('paidAmount');
             if($paid > $grand){
-                $v->errors()->add('paidAmount', 'Paid amount cannot exceed grand total ('.number_format($grand,2).').');
+                $v->errors()->add('paidAmount', __('sales.payment_exceeds', ['total'=>number_format($grand,2)]));
             }
         });
 
@@ -200,10 +205,10 @@ class saleController extends Controller
         }
 
         if($sale->save()){
-            Alert::success('Updated','Sale updated successfully');
+            Alert::success(__('common.notification_updated'),__('common.notification_sale_updated_successfully'));
             return redirect()->route('saleList');
         }
-        Alert::error('Error','Failed to update sale');
+        Alert::error(__('common.notification_error'),__('common.notification_failed_to_update_sale'));
         return back();
     }
 
@@ -214,24 +219,45 @@ class saleController extends Controller
     {
         $sale = SaleProduct::find($id);
         if(!$sale){
-            Alert::error('Error', 'Sale not found');
+            Alert::error(__('common.notification_error'), __('common.notification_sale_not_found'));
             return back();
         }
 
         // Ownership check
         $actor = auth('admin')->user();
         if($actor && !$this->hasAdminPrivileges($actor) && (int)$sale->salespersonId !== (int)$actor->id){
-            Alert::error('Unauthorized','You are not allowed to update items of this sale');
+            Alert::error(__('common.notification_unauthorized'),__('common.notification_you_are_not_allowed_to_update_items_of_this_sale'));
             return back();
+        }
+
+        if ($actor && !in_array(strtolower(trim($actor->role)), ['admin','superadmin'], true)
+            && ((int)$actor->businessId <= 0 || (int)$sale->businessId !== (int)$actor->businessId)) {
+            abort(403, 'This sale belongs to another business.');
         }
 
         $itemsInput = (array)$req->input('items', []);
         $addInput   = (array)$req->input('add', []);
 
         $service = new StockService();
+        $serialPolicy = app(\App\Services\SalesSerialPolicy::class);
+        $req->validate([
+            'items' => ['sometimes','array'], 'items.*.qty' => ['sometimes','integer','min:0'],
+            'items.*.salePrice' => ['sometimes','numeric','min:0'], 'add.qty' => ['nullable','integer','min:1'],
+            'serialIdByItem' => ['sometimes','array'], 'serialIdByItem.*' => ['array'], 'serialIdByItem.*.*' => ['integer','min:1'],
+            'serialIdByPurchase' => ['sometimes','array'], 'serialIdByPurchase.*' => ['array'], 'serialIdByPurchase.*.*' => ['integer','min:1'],
+        ]);
 
         DB::beginTransaction();
         try {
+            $sale = SaleProduct::withoutGlobalScopes()->lockForUpdate()->findOrFail($sale->id);
+            // Allocation is sale + purchase based. Do not corrupt ambiguous legacy duplicate lines.
+            $duplicates = InvoiceItem::where('saleId', $sale->id)->select('purchaseId')
+                ->groupBy('purchaseId')->havingRaw('COUNT(*) > 1')->pluck('purchaseId');
+            foreach ($duplicates as $purchaseId) {
+                if (\App\Models\ProductSerial::where('purchaseId', $purchaseId)->exists()) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['items' => __('common.notification_this_legacy_invoice_has_duplicate_serialized_purchase_lines_review_its_allocations_before_editing')]);
+                }
+            }
             // Update existing items
             foreach($itemsInput as $itemId => $payload){
                 $payloadQty  = isset($payload['qty']) ? (int)$payload['qty'] : null;
@@ -245,20 +271,25 @@ class saleController extends Controller
                 $newQty = is_null($payloadQty) ? $oldQty : max(0, $payloadQty);
 
                 // Handle qty change and stock reconciliation
-                if($newQty !== $oldQty){
+                $serialPolicy->purchase((int)$invItem->purchaseId, $sale->businessId, "items.$itemId");
+                if($newQty !== $oldQty && !$invItem->isBackorder){
                     $delta = $newQty - $oldQty;
                     if($delta > 0){
                         // Need to consume additional stock
                         $ok = $service->decreaseStockForSale((int)$invItem->purchaseId, $delta);
                         if(!$ok){
-                            throw new \Exception('Insufficient stock to increase quantity for item ID '.$invItem->id);
+                            throw new \Exception(__('sales.edit_stock_insufficient', ['item' => $invItem->id]));
                         }
                     } elseif($delta < 0){
                         // Return stock for reduced quantity
-                        $service->increaseStockForSaleReturn((int)$invItem->purchaseId, abs($delta));
+                        if (!$service->increaseStockForSaleReturn((int)$invItem->purchaseId, abs($delta))) {
+                            throw new \Exception(__('sales.edit_stock_restore_failed'));
+                        }
                     }
                     $invItem->qty = $newQty;
                 }
+
+                $invItem->qty = $newQty;
 
                 // Update price if provided
                 if(!is_null($payloadPrice) && $payloadPrice >= 0){
@@ -270,64 +301,10 @@ class saleController extends Controller
                     $invItem->warranty_days = trim($payloadWarranty);
                 }
 
-                // Serial management: enforce and sync selection to match qty where serials exist
-                $hasSerialsForPurchase = \App\Models\ProductSerial::where('purchaseId', $invItem->purchaseId)->exists();
-                if($hasSerialsForPurchase){
-                    // Current assignments for this sale & purchase
-                    $current = \App\Models\ProductSerial::where('purchaseId', $invItem->purchaseId)
-                        ->where('saleId', $sale->id)
-                        ->pluck('id')
-                        ->map(function($v){ return (int)$v; })
-                        ->toArray();
-                    // Prefer item-specific selection to avoid collisions when multiple rows share a purchaseId
-                    $selected = (array)$req->input('serialIdByItem.'.(int)$invItem->id, []);
-                    if(empty($selected)){
-                        // Fallback to purchase-based selection if item-specific array not present
-                        $selected = (array)$req->input('serialIdByPurchase.'.(int)$invItem->purchaseId, []);
-                    }
-                    // Clean values to ints
-                    $selected = array_values(array_filter(array_map('intval', $selected), function($v){ return $v > 0; }));
-                    // If no selection was submitted, and the current assignments already match the desired qty, accept as-is
-                    if(empty($selected) && count($current) === (int)$invItem->qty){
-                        $selected = $current;
-                    }
-                    if(count($selected) !== (int)$invItem->qty){
-                        throw new \Exception('Select exactly '.(int)$invItem->qty.' serial(s) for purchase #'.(int)$invItem->purchaseId);
-                    }
-                    // Determine changes
-                    $toRelease = array_diff($current, $selected);
-                    $toAssign  = array_diff($selected, $current);
-                    if(!empty($toRelease)){
-                        $rels = \App\Models\ProductSerial::whereIn('id', $toRelease)->lockForUpdate()->get();
-                        foreach($rels as $sr){
-                            $sr->saleId = null;
-                            if(\Schema::hasColumn('product_serials','status')){ $sr->status = null; }
-                            if(\Schema::hasColumn('product_serials','sold_at')){ $sr->sold_at = null; }
-                            $sr->save();
-                        }
-                    }
-                    if(!empty($toAssign)){
-                        $assignRows = \App\Models\ProductSerial::whereIn('id', $toAssign)->lockForUpdate()->get();
-                        if($assignRows->count() !== count($toAssign)){
-                            throw new \Exception('Invalid serial selection');
-                        }
-                        foreach($assignRows as $sr){
-                            if((int)$sr->purchaseId !== (int)$invItem->purchaseId){
-                                throw new \Exception('Serial '.$sr->serialNumber.' does not belong to this purchase');
-                            }
-                            $soldStatus = \Schema::hasColumn('product_serials','status') ? strtolower((string)$sr->status) : '';
-                            if($sr->saleId || $soldStatus === 'sold'){
-                                throw new \Exception('Serial '.$sr->serialNumber.' is already sold');
-                            }
-                        }
-                        foreach($assignRows as $sr){
-                            $sr->saleId = $sale->id;
-                            if(\Schema::hasColumn('product_serials','status')){ $sr->status = 'sold'; }
-                            if(\Schema::hasColumn('product_serials','sold_at')){ $sr->sold_at = now(); }
-                            $sr->save();
-                        }
-                    }
-                }
+                $selected = (array)$req->input('serialIdByItem.'.(int)$invItem->id,
+                    $req->input('serialIdByPurchase.'.(int)$invItem->purchaseId, []));
+                $serialPolicy->sync($sale, (int)$invItem->purchaseId, $newQty, $selected, [],
+                    'serialIdByItem.'.(int)$invItem->id, true, (bool)$invItem->isBackorder);
 
                 // Recompute totals
                 $invItem->totalSale     = (float)$invItem->salePrice * (int)$invItem->qty;
@@ -337,9 +314,6 @@ class saleController extends Controller
 
                 // If quantity became 0, delete the line to keep invoice clean
                 if((int)$invItem->qty === 0){
-                    // Release any serials tied to this purchase in this sale
-                    \App\Models\ProductSerial::where('purchaseId', $invItem->purchaseId)->where('saleId', $sale->id)
-                        ->update(['saleId' => null] + (\Schema::hasColumn('product_serials','status') ? ['status'=>null] : []) + (\Schema::hasColumn('product_serials','sold_at') ? ['sold_at'=>null] : []));
                     $invItem->delete();
                 } else {
                     $invItem->save();
@@ -353,16 +327,22 @@ class saleController extends Controller
                 $salePrice  = (float)($addInput['salePrice'] ?? 0);
                 $warrantyDays = isset($addInput['warranty_days']) ? (string)$addInput['warranty_days'] : null;
                 if($purchaseId > 0 && $qty > 0 && $salePrice > 0){
+                    $serialPolicy->purchase($purchaseId, $sale->businessId, 'add.purchaseId');
+                    if (InvoiceItem::where('saleId', $sale->id)->where('purchaseId', $purchaseId)->exists()
+                        && \App\Models\ProductSerial::where('purchaseId', $purchaseId)->exists()) {
+                        throw \Illuminate\Validation\ValidationException::withMessages(['add.purchaseId' => __('common.notification_update_the_existing_serialized_purchase_line_instead_of_adding_it_twice')]);
+                    }
                     $ok = $service->decreaseStockForSale($purchaseId, $qty);
                     if(!$ok){
-                        throw new \Exception('Insufficient stock to add new item from purchase #'.$purchaseId);
+                        throw new \Exception(__('sales.edit_new_stock_insufficient', ['purchase' => $purchaseId]));
                     }
                     $purchase = \App\Models\PurchaseProduct::find($purchaseId);
                     if(!$purchase){
-                        throw new \Exception('Purchase row not found for new item');
+                        throw new \Exception(__('sales.edit_purchase_missing'));
                     }
                     $invItem = new InvoiceItem();
                     $invItem->saleId      = $sale->id;
+                    $invItem->businessId = $sale->businessId;
                     $invItem->purchaseId  = $purchaseId;
                     $invItem->qty         = $qty;
                     $invItem->salePrice   = $salePrice;
@@ -374,34 +354,9 @@ class saleController extends Controller
                     $invItem->profitMargin  = $invItem->totalSale > 0 ? round(($invItem->profitTotal / $invItem->totalSale) * 100, 2) : 0;
                     $invItem->save();
 
-                    // Serial handling for new item
-                    $hasSerialsForPurchase = \App\Models\ProductSerial::where('purchaseId', $purchaseId)->exists();
-                    if($hasSerialsForPurchase){
-                        $selected = (array)$req->input('serialIdByPurchase.'.(int)$purchaseId, []);
-                        $selected = array_values(array_filter(array_map('intval', $selected), function($v){ return $v > 0; }));
-                        if(count($selected) !== (int)$qty){
-                            throw new \Exception('Select exactly '.$qty.' serial(s) for purchase #'.$purchaseId);
-                        }
-                        $assignRows = \App\Models\ProductSerial::whereIn('id', $selected)->lockForUpdate()->get();
-                        if($assignRows->count() !== count($selected)){
-                            throw new \Exception('Invalid serial selection');
-                        }
-                        foreach($assignRows as $sr){
-                            if((int)$sr->purchaseId !== (int)$purchaseId){
-                                throw new \Exception('Serial '.$sr->serialNumber.' does not belong to this purchase');
-                            }
-                            $soldStatus = \Schema::hasColumn('product_serials','status') ? strtolower((string)$sr->status) : '';
-                            if($sr->saleId || $soldStatus === 'sold'){
-                                throw new \Exception('Serial '.$sr->serialNumber.' is already sold');
-                            }
-                        }
-                        foreach($assignRows as $sr){
-                            $sr->saleId = $sale->id;
-                            if(\Schema::hasColumn('product_serials','status')){ $sr->status = 'sold'; }
-                            if(\Schema::hasColumn('product_serials','sold_at')){ $sr->sold_at = now(); }
-                            $sr->save();
-                        }
-                    }
+                    $serialPolicy->sync($sale, $purchaseId, $qty,
+                        (array)$req->input('serialIdByPurchase.'.$purchaseId, []), [], 'serialIdByPurchase.'.$purchaseId);
+
                 }
             }
 
@@ -421,11 +376,12 @@ class saleController extends Controller
             $sale->save();
 
             DB::commit();
-            Alert::success('Updated', 'Sale items updated successfully');
+            Alert::success(__('common.notification_updated'), __('common.notification_sale_items_updated_successfully'));
             return redirect()->route('invoiceGenerate', ['id' => $sale->id]);
         } catch(\Exception $e){
             DB::rollBack();
             \Log::error('updateSaleItems failed: '.$e->getMessage());
+            if ($e instanceof \Illuminate\Validation\ValidationException) { throw $e; }
             return back()->withErrors(['items' => $e->getMessage()])->withInput();
         }
     }
@@ -435,8 +391,12 @@ class saleController extends Controller
         if($invoice):
             // Ownership check for viewing invoices
             $actor = auth('admin')->user();
+            if ($actor && !in_array(strtolower(trim($actor->role)), ['admin','superadmin'], true)
+                && (int)$invoice->businessId > 0 && (int)$invoice->businessId !== (int)$actor->businessId) {
+                abort(403, 'This sale belongs to another business.');
+            }
             if($actor && !$this->hasAdminPrivileges($actor) && (int)$invoice->salespersonId !== (int)$actor->id){
-                Alert::error('Unauthorized','You are not allowed to view this invoice');
+                Alert::error(__('common.notification_unauthorized'),__('common.notification_you_are_not_allowed_to_view_this_invoice'));
                 return back();
             }
             $customer = Customer::find($invoice->customerId);
@@ -470,7 +430,7 @@ class saleController extends Controller
             try{ $business = \App\Models\BusinessSetup::first(); }catch(\Exception $e){ $business = null; }
             return view('invoice.invoicePage',[ 'invoice'=>$invoice, 'items'=>$items, 'customer'=>$customer, 'business' => $business, 'serialsByPurchase' => $serialsByPurchase ]);
         else:
-            $message = Alert::error('Sorry!','No invoice items found');
+            $message = Alert::error(__('common.notification_sorry'),__('common.no_invoice_items'));
             return back();
         endif;
     }
@@ -482,7 +442,7 @@ class saleController extends Controller
             // Ownership check
             $actor = auth('admin')->user();
             if($actor && !$this->hasAdminPrivileges($actor) && (int)$invoice->salespersonId !== (int)$actor->id){
-                Alert::error('Unauthorized','You are not allowed to access returns for this sale');
+                Alert::error(__('common.notification_unauthorized'),__('common.notification_you_are_not_allowed_to_access_returns_for_this_sale'));
                 return back();
             }
             $customer = Customer::find($invoice->customerId);
@@ -529,7 +489,7 @@ class saleController extends Controller
             }
 
             if($items->isEmpty()){
-                Alert::error('Sorry!','No invoice items found');
+                Alert::error(__('common.notification_sorry'),__('common.no_invoice_items'));
                 return back();
             }
 
@@ -542,7 +502,7 @@ class saleController extends Controller
                 'returnHistory' => $returnHistory,
             ]);
         else:
-            $message = Alert::error('Sorry!','No invoice items found');
+            $message = Alert::error(__('common.notification_sorry'),__('common.no_invoice_items'));
             return back();
         endif;
     }
@@ -553,7 +513,7 @@ class saleController extends Controller
             ->find($id);
 
         if(!$return){
-            Alert::error('Sorry!','Return record not found');
+            Alert::error(__('common.notification_sorry'),__('common.notification_return_record_not_found'));
             return back();
         }
 
@@ -561,7 +521,7 @@ class saleController extends Controller
         if ($actor && !in_array(strtolower($actor->role), ['admin', 'superadmin'])) {
             $sale = $return->sale;
             if ($sale && (int)$sale->salespersonId !== (int)$actor->id) {
-                Alert::error('Unauthorized','You are not allowed to access this return');
+                Alert::error(__('common.notification_unauthorized'),__('common.notification_you_are_not_allowed_to_access_this_return'));
                 return back();
             }
         }
@@ -634,24 +594,24 @@ class saleController extends Controller
         }
 
         if(!$resolvedSaleId){
-            Alert::error('Sorry!','Invalid sale reference for return');
+            Alert::error(__('common.notification_sorry'),__('common.notification_invalid_sale_reference_for_return'));
             return back();
         }
 
         $sale = SaleProduct::find($resolvedSaleId);
         if(!$sale){
-            Alert::error('Sorry!','Sale not found for return');
+            Alert::error(__('common.notification_sorry'),__('common.notification_sale_not_found_for_return'));
             return back();
         }
 
         if((int)$sale->customerId !== (int)$requ->customerId){
-            Alert::error('Sorry!','Customer mismatch for sale return');
+            Alert::error(__('common.notification_sorry'),__('common.notification_customer_mismatch_for_sale_return'));
             return back();
         }
 
         if ($actor && !$this->hasAdminPrivileges($actor)) {
             if ($sale && (int)$sale->salespersonId !== (int)$actor->id) {
-                Alert::error('Unauthorized','You are not allowed to return items for this sale');
+                Alert::error(__('common.notification_unauthorized'),__('common.notification_you_are_not_allowed_to_return_items_for_this_sale'));
                 return back();
             }
         }
@@ -664,7 +624,7 @@ class saleController extends Controller
             }
         }
         if(!$hasAnyReturnQty){
-            Alert::error('Sorry!','Please select at least one item quantity to return');
+            Alert::error(__('common.notification_sorry'),__('common.notification_please_select_at_least_one_item_quantity_to_return'));
             return back();
         }
 
@@ -675,7 +635,7 @@ class saleController extends Controller
                 continue;
             }
             if(!isset($saleIds[$index], $productIds[$index], $purchaseIds[$index])){
-                Alert::error('Sorry!','Invalid return row data');
+                Alert::error(__('common.notification_sorry'),__('common.notification_invalid_return_row_data'));
                 return back();
             }
             $rowsToReturn[] = [
@@ -688,7 +648,7 @@ class saleController extends Controller
         }
 
         if(empty($rowsToReturn)){
-            Alert::error('Sorry!','Please select at least one valid return row');
+            Alert::error(__('common.notification_sorry'),__('common.notification_please_select_at_least_one_valid_return_row'));
             return back();
         }
 
@@ -759,7 +719,7 @@ class saleController extends Controller
             $sale->save();
 
             DB::commit();
-            Alert::success('Success!','Sale return saved successfully');
+            Alert::success(__('common.notification_success'),__('common.notification_sale_return_saved_successfully'));
             return back();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -767,7 +727,7 @@ class saleController extends Controller
                 'saleId' => $resolvedSaleId,
                 'payload' => $requ->all(),
             ]);
-            Alert::error('Sorry!','Sale return failed. Please try again.');
+            Alert::error(__('common.notification_sorry'),__('common.notification_sale_return_failed_please_try_again'));
             return back();
         }
     }
@@ -796,7 +756,7 @@ class saleController extends Controller
     {
         $sale = SaleProduct::find($id);
         if (!$sale) {
-            Alert::error('Error', 'Sale not found');
+            Alert::error(__('common.notification_error'), __('common.notification_sale_not_found'));
             return back();
         }
 
@@ -817,12 +777,12 @@ class saleController extends Controller
             $sale->delete();
 
             DB::commit();
-            Alert::success('Deleted', 'Sale deleted and stock reverted');
+            Alert::success(__('common.notification_deleted'), __('common.notification_sale_deleted_and_stock_reverted'));
             return redirect()->route('saleList');
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('delSale failed: ' . $e->getMessage());
-            Alert::error('Error', 'Failed to delete sale');
+            Alert::error(__('common.notification_error'), __('common.notification_failed_to_delete_sale'));
             return back();
         }
     }
@@ -830,7 +790,7 @@ class saleController extends Controller
     /** Bulk delete sales (reverting stock for each sale similar to single delete) */
     public function bulkDeleteSales(Request $req){
         $ids = (array)$req->input('ids', $req->input('selected', []));
-        if(empty($ids)){ return back()->with('error','No sales selected'); }
+        if(empty($ids)){ return back()->with('error',__('common.notification_no_sales_selected')); }
         $service = new StockService();
         DB::beginTransaction();
         try {
@@ -845,11 +805,11 @@ class saleController extends Controller
                 $sale->delete();
             }
             DB::commit();
-            Alert::success('Deleted','Selected sales deleted and stock reverted');
+            Alert::success(__('common.notification_deleted'),__('common.notification_selected_sales_deleted_and_stock_reverted'));
         } catch(\Exception $e){
             DB::rollBack();
             \Log::error('bulkDeleteSales failed: '.$e->getMessage());
-            Alert::error('Error','Failed to bulk delete sales');
+            Alert::error(__('common.notification_error'),__('common.bulk_sales_failed'));
         }
         return back();
     }

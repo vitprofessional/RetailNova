@@ -93,7 +93,7 @@ class purchase extends Controller
                 'purchaseId' => $id
             ]);
         else:
-            Alert::error('Sorry!','No purchase found');
+            Alert::error(__('common.notification_sorry'),__('common.notification_no_purchase_found'));
             return back();
         endif;
     }
@@ -110,7 +110,7 @@ class purchase extends Controller
 
         $service = new StockService();
         if(!$service->validatePurchaseReturn($validated['purchaseId'], (int)$validated['returnQty'])){
-            Alert::error('Sorry!','Return quantity exceeds available purchase quantity');
+            Alert::error(__('common.notification_sorry'),__('common.notification_return_quantity_exceeds_available_purchase_quantity'));
             return back();
         }
 
@@ -129,10 +129,10 @@ class purchase extends Controller
             if($returnItem->save()){
                 $service->decreaseStockForPurchaseReturn($validated['purchaseId'], (int)$validated['returnQty']);
             }
-            Alert::success('Success!','Purchase return saved successfully');
+            Alert::success(__('common.notification_success'),__('common.notification_purchase_return_saved_successfully'));
             return redirect()->route('purchaseList');
         }
-        Alert::error('Sorry!','Failed to save purchase return');
+        Alert::error(__('common.notification_sorry'),__('common.purchase_return_failed'));
         return back();
     }
 
@@ -192,7 +192,7 @@ class purchase extends Controller
                 'purchaseId' => $id
             ]);
         else:
-            Alert::error('Sorry!','Purchase not found');
+            Alert::error(__('common.notification_sorry'),__('common.notification_purchase_not_found'));
             return back();
         endif;
     }
@@ -233,7 +233,7 @@ class purchase extends Controller
                 'generatedInvoice' => $generatedInvoice,
             ]);
         else:
-            Alert::error('Sorry!','Purchase not found');
+            Alert::error(__('common.notification_sorry'),__('common.notification_purchase_not_found'));
             return back();
         endif;
     }
@@ -300,7 +300,7 @@ class purchase extends Controller
             $grandTotal = max(0, $baseTotal - $discountAmount);
             $paidAmount = max(0, $normalizeMoney($request->paidAmount));
             if ($paidAmount > $grandTotal) {
-                Alert::error('Sorry!', 'Paid amount cannot exceed grand total.');
+                Alert::error(__('common.notification_sorry'), __('common.notification_paid_amount_cannot_exceed_grand_total'));
                 return back();
             }
             $dueAmount = max(0, $grandTotal - $paidAmount);
@@ -340,7 +340,7 @@ class purchase extends Controller
                 $result = $service->adjustStockForPurchaseQtyChange($purchase->id, $oldQty, $newQty);
                 if(!$result['success']):
                     \Log::error('updatePurchase: stock adjustment failed', ['purchaseId' => $purchase->id, 'error' => $result['message']]);
-                    Alert::error('Sorry!',$result['message']);
+                    Alert::error(__('common.notification_sorry'),$result['message']);
                     return redirect()->route('editPurchase',['id'=>$purchase->id]);
                 endif;
 
@@ -383,7 +383,7 @@ class purchase extends Controller
                     $totalSerialsAfter = $existingCount + $newUniqueToAdd;
                     if ($newQty > $totalSerialsAfter) {
                         \Log::warning('updatePurchase: qty exceeds total serials', ['purchaseId' => $purchase->id, 'qty' => $newQty, 'existing' => $existingCount, 'newUniqueToAdd' => $newUniqueToAdd, 'totalAfter' => $totalSerialsAfter]);
-                        Alert::error('Validation','Quantity ('.$newQty.') exceeds total serials ('.$totalSerialsAfter.'). Please add more serials.');
+                        Alert::error(__('common.notification_validation'),__('purchases.quantity_exceeds_serials', ['qty'=>$newQty,'count'=>$totalSerialsAfter]));
                         return redirect()->route('editPurchase', ['id' => $purchase->id])->withInput();
                     }
 
@@ -428,16 +428,16 @@ class purchase extends Controller
                     endif;
                 endif;
 
-                Alert::success('Success!','Purchase updated successfully');
+                Alert::success(__('common.notification_success'),__('common.notification_purchase_updated_successfully'));
                 return redirect()->route('editPurchase', ['id' => $purchase->id]);
             else:
                 \Log::error('updatePurchase: purchase->save() failed', ['purchaseId' => $purchase->id]);
-                Alert::error('Sorry!','Failed to update purchase');
+                Alert::error(__('common.notification_sorry'),__('common.notification_failed_to_update_purchase'));
                 return redirect()->route('editPurchase', ['id' => $purchase->id])->withInput();
             endif;
         else:
             \Log::warning('updatePurchase: purchase not found', ['purchaseId' => $request->purchaseId]);
-            Alert::error('Sorry!','Purchase not found');
+            Alert::error(__('common.notification_sorry'),__('common.notification_purchase_not_found'));
             return back();
         endif;
     }
@@ -453,10 +453,10 @@ class purchase extends Controller
             PurchaseReturn::where('purchaseId', $id)->delete();
             
             $purchase->delete();
-            Alert::success('Success!','Purchase deleted successfully');
+            Alert::success(__('common.notification_success'),__('common.notification_purchase_deleted_successfully'));
             return redirect()->route('purchaseList');
         else:
-            Alert::error('Sorry!','Purchase not found');
+            Alert::error(__('common.notification_sorry'),__('common.notification_purchase_not_found'));
             return back();
         endif;
     }
@@ -464,7 +464,7 @@ class purchase extends Controller
         /** Bulk delete purchases (simple hard delete with related cleanup) */
         public function bulkDeletePurchases(Request $req){
             $ids = (array)$req->input('ids', $req->input('selected', []));
-            if(empty($ids)){ return back()->with('error','No purchases selected'); }
+            if(empty($ids)){ return back()->with('error',__('common.notification_no_purchases_selected')); }
             try{
                 foreach($ids as $id){
                     $purchase = PurchaseProduct::find($id);
@@ -474,10 +474,10 @@ class purchase extends Controller
                     PurchaseReturn::where('purchaseId', $id)->delete();
                     $purchase->delete();
                 }
-                Alert::success('Deleted','Selected purchases deleted');
+                Alert::success(__('common.notification_deleted'),__('common.notification_selected_purchases_deleted'));
             }catch(\Exception $e){
                 \Log::error('bulkDeletePurchases failed: '.$e->getMessage());
-                Alert::error('Error','Failed to delete selected purchases');
+                Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_selected_purchases'));
             }
             return back();
         }

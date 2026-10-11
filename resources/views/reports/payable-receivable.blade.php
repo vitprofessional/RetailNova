@@ -9,49 +9,49 @@ Payable & Receivable
             <div class="card-body p-0 mt-lg-2 mt-0">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h3 class="mb-3">Payable & Receivable Report</h3>
-                        <p class="mb-0">Monitor outstanding payments from customers and to suppliers.</p>
+                        <h3 class="mb-3">{{ __('reports.payable_receivable_report') }}</h3>
+                        <p class="mb-0">{{ __('reports.monitor_outstanding_payments_from_customers_and_to_suppliers') }}</p>
                     </div>
                     <a href="{{ route('reports.index') }}" class="btn btn-secondary">
-                        <i class="ri-arrow-left-line"></i> Back to Reports
+                        <i class="ri-arrow-left-line"></i> {{ __('reports.back_to_reports') }}
                     </a>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Summary Cards -->
     <div class="col-lg-12">
         <div class="row">
             <div class="col-lg-6">
                 <div class="card card-block card-stretch card-height bg-success">
                     <div class="card-body text-white">
-                        <h6 class="mb-2">Total Receivables</h6>
+                        <h6 class="mb-2">{{ __('reports.total_receivables') }}</h6>
                         <h3>@money($totalReceivable)</h3>
-                        <p class="mb-0">From {{ $receivables->count() }} Customers</p>
+                        <p class="mb-0">{{ __('common.from') }} {{ $receivables->count() }} {{ __('common.customers') }}</p>
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-lg-6">
                 <div class="card card-block card-stretch card-height bg-danger">
                     <div class="card-body text-white">
-                        <h6 class="mb-2">Total Payables</h6>
+                        <h6 class="mb-2">{{ __('reports.total_payables') }}</h6>
                         <h3>@money($totalPayable)</h3>
-                        <p class="mb-0">To {{ $payables->count() }} Suppliers</p>
+                        <p class="mb-0">{{ __('common.to') }} {{ $payables->count() }} {{ __('common.suppliers') }}</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Receivables Section -->
     <div class="col-lg-12 mt-3">
         <div class="card">
             <div class="card-header bg-success text-white d-flex justify-content-between">
-                <h5 class="mb-0">Accounts Receivable (From Customers)</h5>
+                <h5 class="mb-0">{{ __('reports.accounts_receivable_from_customers') }}</h5>
                 <button onclick="window.print()" class="btn btn-sm btn-light">
-                    <i class="ri-printer-line"></i> Print
+                    <i class="ri-printer-line"></i> {{ __('reports.print') }}
                 </button>
             </div>
             <div class="card-body">
@@ -60,10 +60,10 @@ Payable & Receivable
                         <thead class="bg-light">
                             <tr>
                                 <th>#</th>
-                                <th>Customer Name</th>
-                                <th>Email</th>
-                                <th>Mobile</th>
-                                <th class="text-right">Outstanding Balance</th>
+                                <th>{{ __('reports.customer_name') }}</th>
+                                <th>{{ __('reports.email') }}</th>
+                                <th>{{ __('reports.mobile') }}</th>
+                                <th class="text-right">{{ __('reports.outstanding_balance') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -79,14 +79,14 @@ Payable & Receivable
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center">No outstanding receivables from customers.</td>
+                                    <td colspan="5" class="text-center">{{ __('reports.no_outstanding_receivables_from_customers') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>
                         @if($receivables->count() > 0)
                             <tfoot class="bg-light">
                                 <tr>
-                                    <th colspan="4" class="text-right">Total Receivable:</th>
+                                    <th colspan="4" class="text-right">{{ __('reports.total_receivable') }}:</th>
                                     <th class="text-right text-success">@money($totalReceivable)</th>
                                 </tr>
                             </tfoot>
@@ -96,14 +96,14 @@ Payable & Receivable
             </div>
         </div>
     </div>
-    
+
     <!-- Payables Section -->
     <div class="col-lg-12 mt-3">
         <div class="card">
             <div class="card-header bg-danger text-white d-flex justify-content-between">
-                <h5 class="mb-0">Accounts Payable (To Suppliers)</h5>
+                <h5 class="mb-0">{{ __('reports.accounts_payable_to_suppliers') }}</h5>
                 <button onclick="window.print()" class="btn btn-sm btn-light">
-                    <i class="ri-printer-line"></i> Print
+                    <i class="ri-printer-line"></i> {{ __('reports.print') }}
                 </button>
             </div>
             <div class="card-body">
@@ -112,10 +112,10 @@ Payable & Receivable
                         <thead class="bg-light">
                             <tr>
                                 <th>#</th>
-                                <th>Supplier Name</th>
-                                <th>Email</th>
-                                <th>Mobile</th>
-                                <th class="text-right">Outstanding Balance</th>
+                                <th>{{ __('reports.supplier_name') }}</th>
+                                <th>{{ __('reports.email') }}</th>
+                                <th>{{ __('reports.mobile') }}</th>
+                                <th class="text-right">{{ __('reports.outstanding_balance') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -131,14 +131,14 @@ Payable & Receivable
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center">No outstanding payables to suppliers.</td>
+                                    <td colspan="5" class="text-center">{{ __('reports.no_outstanding_payables_to_suppliers') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>
                         @if($payables->count() > 0)
                             <tfoot class="bg-light">
                                 <tr>
-                                    <th colspan="4" class="text-right">Total Payable:</th>
+                                    <th colspan="4" class="text-right">{{ __('reports.total_payable') }}:</th>
                                     <th class="text-right text-danger">@money($totalPayable)</th>
                                 </tr>
                             </tfoot>
@@ -148,22 +148,22 @@ Payable & Receivable
             </div>
         </div>
     </div>
-    
+
     <!-- Net Position -->
     <div class="col-lg-12 mt-3">
         <div class="card">
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-4">
-                        <h6>Total Receivable:</h6>
+                        <h6>{{ __('reports.total_receivable') }}:</h6>
                         <h4 class="text-success">@money($totalReceivable)</h4>
                     </div>
                     <div class="col-md-4">
-                        <h6>Total Payable:</h6>
+                        <h6>{{ __('reports.total_payable') }}:</h6>
                         <h4 class="text-danger">@money($totalPayable)</h4>
                     </div>
                     <div class="col-md-4">
-                        <h6>Net Position:</h6>
+                        <h6>{{ __('reports.net_position') }}:</h6>
                         @php
                             $netPosition = $totalReceivable - $totalPayable;
                         @endphp

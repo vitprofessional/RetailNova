@@ -24,8 +24,8 @@ class EnsureSuperAdminRole
         }
 
         if ($request->ajax() || $request->expectsJson()) {
-            return response()->json(['error' => 'Forbidden'], 403);
+            return response()->json(['error' => __('common.api_forbidden')], 403);
         }
-        return redirect()->route('dashboard')->with('error', 'Access denied: Super Admins only');
+        return redirect()->route('dashboard')->with('error', __('common.notification_access_denied_super_admins_only'));
     }
 }

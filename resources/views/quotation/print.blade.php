@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Quotation {{ $quote->quote_number }}</title>
+  <title>{{ __('common.quotation') }} {{ $quote->quote_number }}</title>
   <style>
     @page{ size: A4 portrait; margin: 10mm; }
     body{ font-family: Arial, Helvetica, sans-serif; font-size: 12px; }
@@ -27,6 +27,7 @@
     .flex{ display:flex; justify-content: space-between; align-items: flex-start; }
     .sig-line{ height:26px; border-bottom:1px solid #888; margin-bottom:4px; }
   </style>
+@include('partials.localization')
 </head>
 <body>
   <style>
@@ -91,16 +92,16 @@
             @endif
             <h4 class="company-name">{{ optional($business)->businessName ?? config('app.name') }}</h4>
             <div>{{ optional($business)->businessLocation }}</div>
-            @if(!empty($business) && !empty($business->mobile))<div>Phone: {{ $business->mobile }}</div>@endif
-            @if(!empty($business) && !empty($business->email))<div>Email: {{ $business->email }}</div>@endif
+            @if(!empty($business) && !empty($business->mobile))<div>{{ __('common.phone') }}: {{ $business->mobile }}</div>@endif
+            @if(!empty($business) && !empty($business->email))<div>{{ __('common.email') }}: {{ $business->email }}</div>@endif
           </div>
           <div class="col-md-4 text-end">
-            <h2 class="invoice-title">Quotation</h2>
+            <h2 class="invoice-title">{{ __('common.quotation') }}</h2>
             <table class="invoice-info-table" style="float:right;">
-              <tr><td><strong>No:</strong></td><td>{{ $quote->quote_number }}</td></tr>
-              <tr><td><strong>Date:</strong></td><td>{{ optional($quote->date)->format('d-M-Y') }}</td></tr>
-              <tr><td><strong>Validity:</strong></td><td>{{ $quote->validity_days }} days</td></tr>
-              <tr><td><strong>Status:</strong></td><td>{{ ucfirst($quote->status) }}</td></tr>
+              <tr><td><strong>{{ __('common.no') }}:</strong></td><td>{{ $quote->quote_number }}</td></tr>
+              <tr><td><strong>{{ __('common.date') }}:</strong></td><td>{{ optional($quote->date)->format('d-M-Y') }}</td></tr>
+              <tr><td><strong>{{ __('common.validity') }}:</strong></td><td>{{ $quote->validity_days }} {{ __('common.days') }}</td></tr>
+              <tr><td><strong>{{ __('common.status') }}:</strong></td><td>{{ ucfirst($quote->status) }}</td></tr>
             </table>
           </div>
         </div>
@@ -120,29 +121,29 @@
             }
           @endphp
           @if(!empty($addr))<div>{{ $addr }}</div>@endif
-          @if(!empty($customer) && !empty($customer->mobile))<div>Contact: {{ $customer->mobile }}</div>@endif
+          @if(!empty($customer) && !empty($customer->mobile))<div>{{ __('common.contact') }}: {{ $customer->mobile }}</div>@endif
         </div>
                 @if(!empty($addr))<div class="party-detail">{{ $addr }}</div>@endif
-                @if(!empty($customer) && !empty($customer->mobile))<div class="party-detail">Contact: {{ $customer->mobile }}</div>@endif
+                @if(!empty($customer) && !empty($customer->mobile))<div class="party-detail">{{ __('common.contact') }}: {{ $customer->mobile }}</div>@endif
         <div class="party-box">
-          <div class="party-label">QUOTATION INFORMATION:</div>
-          <div>Subtotal: <strong>{{ number_format($quote->subtotal,2) }}</strong></div>
-          <div>Discount: <strong>{{ number_format($quote->discount_total,2) }}</strong></div>
-                <h6 class="party-label">QUOTATION INFORMATION:</h6>
-                <div class="party-detail">Subtotal: <strong>{{ number_format($quote->subtotal,2) }}</strong></div>
-                <div class="party-detail">Discount: <strong>{{ number_format($quote->discount_total,2) }}</strong></div>
-                <div class="party-detail">Grand Total: <strong>{{ number_format($quote->grand_total,2) }}</strong></div>
+          <div class="party-label">{{ __('common.quotation_information') }}:</div>
+          <div>{{ __('common.subtotal') }}: <strong>{{ number_format($quote->subtotal,2) }}</strong></div>
+          <div>{{ __('common.discount') }}: <strong>{{ number_format($quote->discount_total,2) }}</strong></div>
+                <h6 class="party-label">{{ __('common.quotation_information') }}:</h6>
+                <div class="party-detail">{{ __('common.subtotal') }}: <strong>{{ number_format($quote->subtotal,2) }}</strong></div>
+                <div class="party-detail">{{ __('common.discount') }}: <strong>{{ number_format($quote->discount_total,2) }}</strong></div>
+                <div class="party-detail">{{ __('common.grand_total') }}: <strong>{{ number_format($quote->grand_total,2) }}</strong></div>
 
   <table class="table" style="margin-top:10px;">
     <thead>
       <tr>
         <div class="invoice-items table-responsive">
           <table class="table invoice-items-table" style="margin-top:10px;">
-        <th>Product/Description</th>
-        <th class="text-end">Qty</th>
-        <th class="text-end">Unit Price ({{ $currencySymbol }})</th>
-        <th class="text-end">Discount</th>
-        <th class="text-end">Line Total ({{ $currencySymbol }})</th>
+        <th>{{ __('common.product_description') }}</th>
+        <th class="text-end">{{ __('common.qty') }}</th>
+        <th class="text-end">{{ __('common.unit_price') }} ({{ $currencySymbol }})</th>
+        <th class="text-end">{{ __('common.discount') }}</th>
+        <th class="text-end">{{ __('common.line_total') }} ({{ $currencySymbol }})</th>
       </tr>
     </thead>
     <tbody>
@@ -158,21 +159,21 @@
       @endforeach
     </tbody>
     <tfoot>
-      <tr><td colspan="5" class="text-end"><strong>Subtotal</strong></td><td class="text-end"><strong>{{ number_format($quote->subtotal,2) }}</strong></td></tr>
-      <tr><td colspan="5" class="text-end"><strong>Discount Total</strong></td><td class="text-end"><strong>{{ number_format($quote->discount_total,2) }}</strong></td></tr>
-      <tr class="grand"><td colspan="5" class="text-end"><strong>Grand Total</strong></td><td class="text-end"><strong>{{ number_format($quote->grand_total,2) }}</strong></td></tr>
+      <tr><td colspan="5" class="text-end"><strong>{{ __('common.subtotal') }}</strong></td><td class="text-end"><strong>{{ number_format($quote->subtotal,2) }}</strong></td></tr>
+      <tr><td colspan="5" class="text-end"><strong>{{ __('common.discount_total') }}</strong></td><td class="text-end"><strong>{{ number_format($quote->discount_total,2) }}</strong></td></tr>
+      <tr class="grand"><td colspan="5" class="text-end"><strong>{{ __('common.grand_total') }}</strong></td><td class="text-end"><strong>{{ number_format($quote->grand_total,2) }}</strong></td></tr>
     </tfoot>
   </table>
-            <tr class="grandtotal-row"><td colspan="5" class="text-end"><strong>Grand Total</strong></td><td class="text-end"><strong>{{ number_format($quote->grand_total,2) }}</strong></td></tr>
+            <tr class="grandtotal-row"><td colspan="5" class="text-end"><strong>{{ __('common.grand_total') }}</strong></td><td class="text-end"><strong>{{ number_format($quote->grand_total,2) }}</strong></td></tr>
   @if(!empty($quote->notes))
           </table>
         </div>
   @endif
-  <div style="margin-top:8px;"><strong>Amount in Words:</strong> <span>@if($currencyName){{ $currencyName }} @endif{{ $amountWords }}@if($amountFrac>0) and {{ $amountFrac }}/100 @endif Only</span></div>
-  
+  <div style="margin-top:8px;"><strong>{{ __('common.amount_in_words') }}:</strong> <span>@if($currencyName){{ $currencyName }} @endif{{ $amountWords }}@if($amountFrac>0) and {{ $amountFrac }}/100 @endif Only</span></div>
 
-        <div class="amount-in-words"><strong>Amount in Words:</strong> <span>@if($currencyName){{ $currencyName }} @endif{{ $amountWords }}@if($amountFrac>0) and {{ $amountFrac }}/100 @endif Only</span></div>
-  
+
+        <div class="amount-in-words"><strong>{{ __('common.amount_in_words') }}:</strong> <span>@if($currencyName){{ $currencyName }} @endif{{ $amountWords }}@if($amountFrac>0) and {{ $amountFrac }}/100 @endif Only</span></div>
+
         <div class="invoice-footer" style="margin-top:14px;">
           <div style="text-align:center; font-size:0.92rem; color:#333;">{{ optional($business)->invoiceFooter }}</div>
         </div>
@@ -186,7 +187,7 @@
               </div>
               <div class="signature-box">
                 <div class="signature-line"></div>
-                <div class="signature-label">Authorized Signature</div>
+                <div class="signature-label">{{ __('common.authorized_signature') }}</div>
               </div>
             </div>
           </div>

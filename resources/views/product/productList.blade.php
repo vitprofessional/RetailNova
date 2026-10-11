@@ -1,10 +1,10 @@
-@extends('include') @section('backTitle') Product List @endsection @section('container')
+@extends('include') @section('backTitle'){{ __('common.heading_product_list') }}@endsection @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
  <div class="card">
             <div class="card-body">
-               <h4>Product List</h4>
+               <h4>{{ __('inventory.product_list') }}</h4>
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                     @include('partials.table-filters', [
                         'tableId' => 'productTable',
@@ -28,15 +28,15 @@
                                         <label for="selectAllProducts" class="mb-0"></label>
                                     </div>
                                 </th>
-                                <th>Product Name</th>
-                                <th>Brand</th>
-                                <th>Category</th>
-                                <th>Unit</th>
-                                <th>Alert Quantity</th>
-                                <th>Current Stock</th>
-                                <th>Barcode</th>
-                                <th>Deatils</th>
-                                <th>Action</th>
+                                <th>{{ __('inventory.product_name') }}</th>
+                                <th>{{ __('inventory.brand') }}</th>
+                                <th>{{ __('inventory.category') }}</th>
+                                <th>{{ __('inventory.unit') }}</th>
+                                <th>{{ __('inventory.alert_quantity') }}</th>
+                                <th>{{ __('inventory.current_stock') }}</th>
+                                <th>{{ __('inventory.barcode') }}</th>
+                                <th>{{ __('inventory.deatils') }}</th>
+                                <th>{{ __('inventory.action') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -54,7 +54,7 @@
                                 <td>{{ $productList->unitModel->name ?? '-' }}</td>
                                 <td>{{$productList->quantity}}</td>
                                 <td>
-                                    <span class="badge 
+                                    <span class="badge
                                         @if($productList->is_out_of_stock)
                                             bg-danger
                                         @elseif($productList->is_low_stock)
@@ -71,32 +71,32 @@
                                         @endif
                                     </span>
                                     @if($productList->is_low_stock && !$productList->is_out_of_stock)
-                                        <br><small class="text-danger"><i class="ri-alert-line"></i> Low product in stock</small>
+                                        <br><small class="text-danger"><i class="ri-alert-line"></i> {{ __('inventory.low_product_in_stock') }}</small>
                                     @endif
                                 </td>
                                 <td>{{$productList->barCode}}</td>
                                 <td>{{$productList->details}}</td>
                                 <td><div class="d-flex align-items-center list-action">
-                                    
+
 
                                     @canEdit(false)
-                                    <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit"
+                                    <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('inventory.edit') }}"
                                         href="{{route('editProduct',['id'=>$productList->id])}}"><i class="ri-pencil-line mr-0"></i></a>
 
                                     <form method="POST" action="{{ route('delProduct',['id'=>$productList->id]) }}" style="display:inline" data-onsubmit="confirm" data-confirm="Delete this product?">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
+                                        <button type="submit" class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title="{{ __('inventory.delete') }}"><i class="ri-delete-bin-line mr-0"></i></button>
                                     </form>
                                     @endcanEdit
                                 </div></td>
                             </tr>
-                        @endforeach 
+                        @endforeach
                         @endif
                         </tbody>
                     </table>
                 </div>
-            
+
             </div>
         </div>
 @endsection

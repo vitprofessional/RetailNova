@@ -47,7 +47,7 @@ class productController extends Controller
 
         $data = $req->profileId ? Product::find($req->profileId) : new Product();
         if($req->profileId && !$data){
-            Alert::error('Failed!','Product not found for update');
+            Alert::error(__('common.notification_failed'),__('common.notification_product_not_found_for_update'));
             return redirect()->route('addProduct');
         }
 
@@ -67,11 +67,11 @@ class productController extends Controller
         }
 
         if($data->save()){
-            $msg = $req->profileId ? 'Product updated successfully' : 'Product created successfully';
-            Alert::success('Success!', $msg);
+            $msg = $req->profileId ? __('common.product_updated') : __('common.product_created');
+            Alert::success(__('common.notification_success'), $msg);
             return redirect(route('addProduct'));
         }
-        Alert::error('Failed!','Product save failed');
+        Alert::error(__('common.notification_failed'),__('common.notification_product_save_failed'));
         return back();
     }
 
@@ -91,10 +91,10 @@ class productController extends Controller
             // Authorization hook
             $this->authorize('delete', $data);
             $data->delete();
-                Alert::success('Success!','Product delete successfully');
+                Alert::success(__('common.notification_success'),__('common.notification_product_delete_successfully'));
                 return back();
         else:
-                Alert::error('Failed!','Product delete failed');
+                Alert::error(__('common.notification_failed'),__('common.notification_product_delete_failed'));
                 return back();
         endif;
     }
@@ -125,7 +125,7 @@ class productController extends Controller
         if($validator->fails()){
             return [
                 'data' => '',
-                'message' => 'Validation failed',
+                'message' => __('common.api_validation_failed'),
                 'errors' => $validator->errors()->toArray(),
             ];
         }
@@ -154,9 +154,9 @@ class productController extends Controller
                     $option .= '<option value="'.$d->id.'">'.$d->name.'</option>';
                 }
             }
-            return ['data' => $option, 'message' => 'Success! Product created'];
+            return ['data' => $option, 'message' => __('common.api_success_product_created')];
         }
-        return ['data' => $option, 'message' => 'Error! Failed to create product'];
+        return ['data' => $option, 'message' => __('common.api_error_failed_to_create_product')];
     }
 
     //product list page
@@ -178,68 +178,68 @@ class productController extends Controller
      */
     public function bulkDeleteProducts(Request $req){
         $ids = (array)$req->input('ids', $req->input('selected', []));
-        if(empty($ids)){ return back()->with('error','No products selected'); }
+        if(empty($ids)){ return back()->with('error',__('common.notification_no_products_selected')); }
         try{
             DB::transaction(function() use ($ids){
                 ProductStock::whereIn('productId',$ids)->delete();
                 Product::whereIn('id',$ids)->delete();
             });
-            Alert::success('Deleted','Selected products deleted');
+            Alert::success(__('common.notification_deleted'),__('common.notification_selected_products_deleted'));
         }catch(\Exception $e){
             \Log::error('bulkDeleteProducts failed: '.$e->getMessage());
-            Alert::error('Error','Failed to delete selected products');
+            Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_selected_products'));
         }
         return back();
     }
 
     public function bulkDeleteBrands(Request $req){
         $ids = (array)$req->input('ids', $req->input('selected', []));
-        if(empty($ids)){ return back()->with('error','No brands selected'); }
+        if(empty($ids)){ return back()->with('error',__('common.notification_no_brands_selected')); }
         try{
             Brand::whereIn('id',$ids)->delete();
-            Alert::success('Deleted','Selected brands deleted');
+            Alert::success(__('common.notification_deleted'),__('common.notification_selected_brands_deleted'));
         }catch(\Exception $e){
             \Log::error('bulkDeleteBrands failed: '.$e->getMessage());
-            Alert::error('Error','Failed to delete selected brands');
+            Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_selected_brands'));
         }
         return back();
     }
 
     public function bulkDeleteCategories(Request $req){
         $ids = (array)$req->input('ids', $req->input('selected', []));
-        if(empty($ids)){ return back()->with('error','No categories selected'); }
+        if(empty($ids)){ return back()->with('error',__('common.notification_no_categories_selected')); }
         try{
             Category::whereIn('id',$ids)->delete();
-            Alert::success('Deleted','Selected categories deleted');
+            Alert::success(__('common.notification_deleted'),__('common.notification_selected_categories_deleted'));
         }catch(\Exception $e){
             \Log::error('bulkDeleteCategories failed: '.$e->getMessage());
-            Alert::error('Error','Failed to delete selected categories');
+            Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_selected_categories'));
         }
         return back();
     }
 
     public function bulkDeleteUnits(Request $req){
         $ids = (array)$req->input('ids', $req->input('selected', []));
-        if(empty($ids)){ return back()->with('error','No units selected'); }
+        if(empty($ids)){ return back()->with('error',__('common.notification_no_units_selected')); }
         try{
             ProductUnit::whereIn('id',$ids)->delete();
-            Alert::success('Deleted','Selected units deleted');
+            Alert::success(__('common.notification_deleted'),__('common.notification_selected_units_deleted'));
         }catch(\Exception $e){
             \Log::error('bulkDeleteUnits failed: '.$e->getMessage());
-            Alert::error('Error','Failed to delete selected units');
+            Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_selected_units'));
         }
         return back();
     }
 
     public function bulkDeleteDamageProducts(Request $req){
         $ids = (array)$req->input('ids', $req->input('selected', []));
-        if(empty($ids)){ return back()->with('error','No damage records selected'); }
+        if(empty($ids)){ return back()->with('error',__('common.notification_no_damage_records_selected')); }
         try{
             DamageProduct::whereIn('id',$ids)->delete();
-            Alert::success('Deleted','Selected damage records deleted');
+            Alert::success(__('common.notification_deleted'),__('common.notification_selected_damage_records_deleted'));
         }catch(\Exception $e){
             \Log::error('bulkDeleteDamageProducts failed: '.$e->getMessage());
-            Alert::error('Error','Failed to delete selected damage records');
+            Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_selected_damage_records'));
         }
         return back();
     }
@@ -278,7 +278,7 @@ class productController extends Controller
         ]);
 
         if($validator->fails()){
-            Alert::error('Validation failed', implode(', ', $validator->errors()->all()));
+            Alert::error(__('common.notification_validation_failed'), implode(', ', $validator->errors()->all()));
             return back()->withInput();
         }
 
@@ -287,7 +287,7 @@ class productController extends Controller
 
         $totalStock = ProductStock::where('productId', $productId)->sum('currentStock');
         if($qty > $totalStock){
-            Alert::error('Insufficient stock','Requested damage quantity ('.$qty.') exceeds current stock ('.$totalStock.').');
+            Alert::error(__('common.notification_insufficient_stock'),__('inventory.damage_exceeds_stock', ['qty'=>$qty,'stock'=>$totalStock]));
             return back()->withInput();
         }
 
@@ -321,11 +321,11 @@ class productController extends Controller
                 $damage->admin_id = auth('admin')->id() ?? null;
                 $damage->save();
             });
-            Alert::success('Success!','Damage record saved and stock updated.');
+            Alert::success(__('common.notification_success'),__('common.notification_damage_record_saved_and_stock_updated'));
             return redirect()->route('damageProductList');
         }catch(\Exception $e){
             \Log::error('damageProductSave failed: '.$e->getMessage());
-            Alert::error('Error','Failed to save damage record.');
+            Alert::error(__('common.notification_error'),__('common.notification_failed_to_save_damage_record'));
             return back()->withInput();
         }
     }
@@ -334,7 +334,7 @@ class productController extends Controller
     public function damageProductView($id){
         $damage = DamageProduct::with(['product','admin'])->find($id);
         if(!$damage){
-            Alert::error('Not found','Damage record not found');
+            Alert::error(__('common.notification_not_found'),__('common.notification_damage_record_not_found'));
             return redirect()->route('damageProductList');
         }
         return view('product.damageProductView',['damage'=>$damage]);
@@ -344,7 +344,7 @@ class productController extends Controller
     public function damageProductPrint($id){
         $damage = DamageProduct::with(['product','admin'])->find($id);
         if(!$damage){
-            Alert::error('Not found','Damage record not found');
+            Alert::error(__('common.notification_not_found'),__('common.notification_damage_record_not_found'));
             return redirect()->route('damageProductList');
         }
         return view('product.damageProductPrint',['damage'=>$damage]);
@@ -354,7 +354,7 @@ class productController extends Controller
     public function damageProductDelete($id){
         $d = DamageProduct::find($id);
         if(!$d){
-            Alert::error('Not found','Damage record not found');
+            Alert::error(__('common.notification_not_found'),__('common.notification_damage_record_not_found'));
             return back();
         }
         try{
@@ -367,11 +367,11 @@ class productController extends Controller
                 ]);
                 $d->delete();
             });
-            Alert::success('Deleted','Damage record removed and stock restored.');
+            Alert::success(__('common.notification_deleted'),__('common.notification_damage_record_removed_and_stock_restored'));
             return redirect()->route('damageProductList');
         }catch(\Exception $e){
             \Log::error('damageProductDelete failed: '.$e->getMessage());
-            Alert::error('Error','Failed to delete damage record.');
+            Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_damage_record'));
             return back();
         }
     }
@@ -410,10 +410,10 @@ class productController extends Controller
             $data->name          = $req->validated()['name'];
 
             if($data->save()):
-                Alert::success('Success!','Brand created successfully');
+                Alert::success(__('common.notification_success'),__('common.notification_brand_created_successfully'));
                 return redirect(route('addBrand'));
             else:
-                Alert::error('Failed!','Brand creation failed');
+                Alert::error(__('common.notification_failed'),__('common.notification_brand_creation_failed'));
                 return back();
             endif;
     }
@@ -431,10 +431,10 @@ class productController extends Controller
         if(!empty($data)):
             $this->authorize('delete', $data);
             $data->delete();
-                Alert::success('Success!','Brand delete successfully');
+                Alert::success(__('common.notification_success'),__('common.notification_brand_delete_successfully'));
                 return back();
         else:
-                Alert::error('Failed!','Brand delete failed');
+                Alert::error(__('common.notification_failed'),__('common.notification_brand_delete_failed'));
                 return back();
         endif;
     }
@@ -456,9 +456,9 @@ class productController extends Controller
                     endforeach;
                 endif;
                 
-                return ['data' => $option, 'message'=>'Success ! Form successfully subjmit.'];
+                return ['data' => $option, 'message'=>__('common.api_success_form_successfully_subjmit')];
             else:
-                return ['data' => $option, 'message'=>'Error ! There is an error. Please try agin.'];
+                return ['data' => $option, 'message'=>__('common.api_error_there_is_an_error_please_try_agin')];
             endif;
     }
 
@@ -479,10 +479,10 @@ class productController extends Controller
             $data->name          = $req->validated()['name'];
 
             if($data->save()):
-                Alert::success('Success!','Category created successfully');
+                Alert::success(__('common.notification_success'),__('common.notification_category_created_successfully'));
                 return redirect(route('addCategory'));
             else:
-                Alert::error('Failed!','Category creation failed');
+                Alert::error(__('common.notification_failed'),__('common.notification_category_creation_failed'));
                 return back();
             endif;
     }
@@ -500,10 +500,10 @@ class productController extends Controller
         if(!empty($data)):
             $this->authorize('delete', $data);
             $data->delete();
-                Alert::success('Success!','Category delete successfully');
+                Alert::success(__('common.notification_success'),__('common.notification_category_delete_successfully'));
                 return back();
         else:
-                Alert::error('Failed!','Category delete failed');
+                Alert::error(__('common.notification_failed'),__('common.notification_category_delete_failed'));
                 return back();
         endif;
     }
@@ -524,9 +524,9 @@ class productController extends Controller
                     endforeach;
                 endif;
                 
-                return ['data' => $option, 'message'=>'Success ! Form successfully subjmit.'];
+                return ['data' => $option, 'message'=>__('common.api_success_form_successfully_subjmit')];
             else:
-                return ['data' => $option, 'message'=>'Error ! There is an error. Please try agin.'];
+                return ['data' => $option, 'message'=>__('common.api_error_there_is_an_error_please_try_agin')];
             endif;
     }
 
@@ -546,10 +546,10 @@ class productController extends Controller
             $data->name          = $req->validated()['name'];
 
             if($data->save()):
-                Alert::success('Success!','Product unit created successfully');
+                Alert::success(__('common.notification_success'),__('common.notification_product_unit_created_successfully'));
                 return redirect(route('addProductUnit'));
             else:
-                Alert::error('Failed!','Product unit creation failed');
+                Alert::error(__('common.notification_failed'),__('common.notification_product_unit_creation_failed'));
                 return back();
             endif;
     }
@@ -567,10 +567,10 @@ class productController extends Controller
         if(!empty($data)):
             $this->authorize('delete', $data);
             $data->delete();
-                Alert::success('Success!','Product unit delete successfully');
+                Alert::success(__('common.notification_success'),__('common.notification_product_unit_delete_successfully'));
                 return back();
         else:
-                Alert::error('Failed!','Product unit delete failed');
+                Alert::error(__('common.notification_failed'),__('common.notification_product_unit_delete_failed'));
                 return back();
         endif;
     }
@@ -591,9 +591,9 @@ class productController extends Controller
                     endforeach;
                 endif;
                 
-                return ['data' => $option, 'message'=>'Success ! Form successfully subjmit.'];
+                return ['data' => $option, 'message'=>__('common.api_success_form_successfully_subjmit')];
             else:
-                return ['data' => $option, 'message'=>'Error ! There is an error. Please try agin.'];
+                return ['data' => $option, 'message'=>__('common.api_error_there_is_an_error_please_try_agin')];
             endif;
     }
 

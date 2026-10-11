@@ -94,7 +94,7 @@ class QuotationController extends Controller
             ]);
         }
 
-        Alert::success('Success','Quotation created');
+        Alert::success(__('common.notification_success'),__('common.notification_quotation_created'));
         return redirect()->route('quotation.show', ['id' => $quote->id]);
     }
 
@@ -116,7 +116,7 @@ class QuotationController extends Controller
     public function edit($id){
         $quote = Quotation::findOrFail($id);
         if($quote->status !== 'draft'){
-            Alert::error('Locked','Only draft quotations can be edited');
+            Alert::error(__('common.notification_locked'),__('common.notification_only_draft_quotations_can_be_edited'));
             return redirect()->route('quotation.show', ['id'=>$quote->id]);
         }
         $quote->load(['items.product','customer']);
@@ -134,7 +134,7 @@ class QuotationController extends Controller
     public function update(Request $req, $id){
         $quote = Quotation::findOrFail($id);
         if($quote->status !== 'draft'){
-            Alert::error('Locked','Only draft quotations can be updated');
+            Alert::error(__('common.notification_locked'),__('common.notification_only_draft_quotations_can_be_updated'));
             return redirect()->route('quotation.show', ['id'=>$quote->id]);
         }
         $req->validate([
@@ -196,7 +196,7 @@ class QuotationController extends Controller
             ]);
         }
 
-        Alert::success('Updated','Quotation updated');
+        Alert::success(__('common.notification_updated'),__('common.notification_quotation_updated'));
         return redirect()->route('quotation.show', ['id' => $quote->id]);
     }
 }

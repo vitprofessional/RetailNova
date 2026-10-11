@@ -1,17 +1,17 @@
 @extends('include')
-@section('backTitle') Print Barcodes @endsection
+@section('backTitle'){{ __('common.heading_print_barcodes') }}@endsection
 @section('container')
 
 <div class="col-12">
     <div class="card shadow-sm">
         <div class="card-header bg-gradient py-3">
             <h5 class="card-title mb-0">
-                <i class="las la-print mr-2"></i>Print Product Barcodes
+                <i class="las la-print mr-2"></i>{{ __('common.print_product_barcodes') }}
             </h5>
         </div>
         <div class="card-body">
             <p class="text-muted mb-4">
-                Total products: <strong>{{ count($products) }}</strong>
+                {{ __('common.total_products') }}: <strong>{{ count($products) }}</strong>
             </p>
 
             <!-- Print Grid -->
@@ -32,10 +32,10 @@
             <!-- Actions -->
             <div class="mt-4">
                 <button type="button" class="btn btn-primary btn-lg" onclick="window.print()">
-                    <i class="las la-print mr-2"></i>Print All Barcodes
+                    <i class="las la-print mr-2"></i>{{ __('common.print_all_barcodes') }}
                 </button>
                 <a href="{{ route('barcode.index') }}" class="btn btn-secondary btn-lg ml-2">
-                    <i class="las la-arrow-left mr-2"></i>Back
+                    <i class="las la-arrow-left mr-2"></i>{{ __('common.back') }}
                 </a>
             </div>
         </div>

@@ -120,34 +120,34 @@
                             prevTpl = safeFinalizeUrl(prevTpl);
                             fetch(prevTpl, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                                 .then(function(res){ if(res.status >= 400) throw new Error('prevDue fetch failed'); return res.json(); })
-                                .then(function(json){ try{ var v = (json && json.prevDue) ? json.prevDue : '0.00'; var prevEl = byId('prevDue'); if(prevEl) prevEl.value = v; var disp = byId('prevDueDisplay'); if(disp) disp.textContent = 'Previous Due: ' + v; }catch(e){} })
-                                .catch(function(e){ if(window.__SALEDEBUG) console.warn('prevDue fetch error', e); var prevEl = byId('prevDue'); if(prevEl) prevEl.value = 0; var disp = byId('prevDueDisplay'); if(disp) disp.textContent = 'Previous Due: 0.00'; });
+                                .then(function(json){ try{ var v = (json && json.prevDue) ? json.prevDue : '0.00'; var prevEl = byId('prevDue'); if(prevEl) prevEl.value = v; var disp = byId('prevDueDisplay'); if(disp) disp.textContent = window.RNTranslate('previous_due_value',{amount:v}); }catch(e){} })
+                                .catch(function(e){ if(window.__SALEDEBUG) console.warn('prevDue fetch error', e); var prevEl = byId('prevDue'); if(prevEl) prevEl.value = 0; var disp = byId('prevDueDisplay'); if(disp) disp.textContent = window.RNTranslate('previous_due_value',{amount:'0.00'}); });
                         }catch(e){ /* ignore prev due fetch errors */ }
-                if(!cid){ productSel.innerHTML = '<option value="">Select</option>'; productSel.disabled = true; if(categorySel){ categorySel.innerHTML = '<option value="">All Categories</option>'; categorySel.disabled = true; } return; }
+                if(!cid){ productSel.innerHTML = ('<option value="">' + window.RNTranslate('common.select') + '</option>'); productSel.disabled = true; if(categorySel){ categorySel.innerHTML = ('<option value="">' + window.RNTranslate('common.all_categories') + '</option>'); categorySel.disabled = true; } return; }
                 var tpl = ROUTES.productsTpl || customerSel.getAttribute('data-products-url') || '';
                     var url = tpl ? tpl.replace('__ID__', encodeURIComponent(cid)) : (ROUTES.base + '/ajax/public/customer/'+encodeURIComponent(cid)+'/products');
                     url = safeFinalizeUrl(url);
                     if(window.__SALEDEBUG) console.debug('[SALE] Products final URL:', url);
                     // Guard: do not accidentally call auth routes which may destroy session
-                    try{ var low = String(url).toLowerCase(); if(low.indexOf('/logout')!==-1 || low.indexOf('/login')!==-1){ console.warn('[SALE] Aborting AJAX to auth route:', url); showToast && showToast('AJAX blocked','Invalid products URL','error'); productSel.disabled = false; return; } }catch(e){}
+                    try{ var low = String(url).toLowerCase(); if(low.indexOf('/logout')!==-1 || low.indexOf('/login')!==-1){ console.warn('[SALE] Aborting AJAX to auth route:', url); showToast && showToast(window.RNTranslate('common.client_ajax_blocked'),window.RNTranslate('common.client_invalid_products_url'),'error'); productSel.disabled = false; return; } }catch(e){}
                     fetch(url, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                     .then(function(res){
                         // If redirected to login or unauthorized, abort and notify
-                        if(res.redirected || res.status === 302 || res.status === 401 || res.status === 403){
-                            try{ showToast('Products fetch blocked','Authentication required or redirected','error'); }catch(_){}
+                        if(!res.ok || res.redirected){
+                            try{ showToast(window.RNTranslate('common.client_products_fetch_blocked'),window.RNTranslate('common.client_authentication_required_or_redirected'),'error'); }catch(_){}
                             throw new Error('Products fetch redirected or unauthorized');
                         }
                         var ct = res.headers.get('content-type') || '';
                         if(ct.indexOf('application/json') === -1){
                             // often an HTML login page or 404; bail out
-                            try{ showToast('Products fetch invalid','Server returned non-JSON response','error'); }catch(_){}
+                            try{ showToast(window.RNTranslate('common.client_products_fetch_invalid'),window.RNTranslate('common.client_server_returned_non_json_response'),'error'); }catch(_){}
                             throw new Error('Non-JSON response');
                         }
                         return res.json();
                     })
                     .then(function(data){
                         try{
-                            productSel.innerHTML = (data && data.data) ? data.data : '<option value="">Select</option>';
+                            productSel.innerHTML = (data && data.data) ? data.data : ('<option value="">' + window.RNTranslate('common.select') + '</option>');
                             productSel.disabled = false;
                             // Load categories
                             if(categorySel){
@@ -155,8 +155,8 @@
                                 cUrl = safeFinalizeUrl(cUrl);
                                 fetch(cUrl, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                                   .then(function(res){ return res.json(); })
-                                  .then(function(json){ try{ categorySel.innerHTML = (json && json.data) ? json.data : '<option value="">All Categories</option>'; categorySel.disabled = false; }catch(e){} })
-                                  .catch(function(){ try{ categorySel.innerHTML = '<option value="">All Categories</option>'; categorySel.disabled = false; }catch(e){} });
+                                  .then(function(json){ try{ categorySel.innerHTML = (json && json.data) ? json.data : ('<option value="">' + window.RNTranslate('common.all_categories') + '</option>'); categorySel.disabled = false; }catch(e){} })
+                                  .catch(function(){ try{ categorySel.innerHTML = ('<option value="">' + window.RNTranslate('common.all_categories') + '</option>'); categorySel.disabled = false; }catch(e){} });
                             }
                             // If there are out-of-stock items returned, populate modal data and show note/button
                             try{
@@ -181,7 +181,7 @@
                                                 '<div><strong>'+ (it.productName || '') +'</strong> — '+ (it.supplierName || 'Unknown') + pd +
                                                 ' <span class="badge bg-secondary ms-2">Stock: '+ (it.currentStock || 0) +'</span></div>' +
                                                 '<div>' +
-                                                    (it.productId ? '<a class="btn btn-sm btn-outline-primary me-2" href="'+viewLink+'" target="_blank">View</a>' : '') +
+                                                    (it.productId ? '<a class="btn btn-sm btn-outline-primary me-2" href="'+viewLink+'" target="_blank">'+window.RNTranslate('view')+'</a>' : '') +
                                                     '<button style="display:none;" class="btn btn-sm btn-outline-success add-backorder" data-purchase-id="'+(it.purchaseId||'')+'">Add as backorder</button>' +
                                                 '</div>' +
                                                 '</div>';
@@ -215,23 +215,23 @@
             }
             url2 = safeFinalizeUrl(url2);
             if(window.__SALEDEBUG) console.debug('[SALE] Fetch purchase details URL:', url2, 'isPurchaseRow:', isPurchaseRow);
-            try{ var low2 = String(url2).toLowerCase(); if(low2.indexOf('/logout')!==-1 || low2.indexOf('/login')!==-1){ console.warn('[SALE] Aborting AJAX to auth route:', url2); showToast && showToast('AJAX blocked','Invalid product details URL','error'); return; } }catch(e){}
+            try{ var low2 = String(url2).toLowerCase(); if(low2.indexOf('/logout')!==-1 || low2.indexOf('/login')!==-1){ console.warn('[SALE] Aborting AJAX to auth route:', url2); showToast && showToast(window.RNTranslate('common.client_ajax_blocked'),window.RNTranslate('common.client_invalid_product_details_url'),'error'); return; } }catch(e){}
             fetch(url2, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                         .then(function(res){
-                            if(res.redirected || res.status === 302 || res.status === 401 || res.status === 403){
-                                try{ showToast('Product details blocked','Authentication required or redirected','error'); }catch(_){}
+                            if(!res.ok || res.redirected){
+                                try{ showToast(window.RNTranslate('common.client_product_details_blocked'),window.RNTranslate('common.client_authentication_required_or_redirected'),'error'); }catch(_){}
                                 throw new Error('Purchase details fetch redirected/unauthorized');
                             }
                             var ct = res.headers.get('content-type') || '';
                             if(ct.indexOf('application/json') === -1){
-                                try{ showToast('Product details invalid','Server returned non-JSON response','error'); }catch(_){}
+                                try{ showToast(window.RNTranslate('common.client_product_details_invalid'),window.RNTranslate('common.client_server_returned_non_json_response'),'error'); }catch(_){}
                                 throw new Error('Non-JSON response for purchase details');
                             }
                             return res.json();
                         })
                         .then(function(res){
                             try{
-                                if(!res || !res.getData || !res.getData.length){ showToast('No purchase found','This product has no purchase rows','warning'); return; }
+                                if(!res || !res.getData || !res.getData.length){ showToast(window.RNTranslate('common.client_no_purchase_found'),window.RNTranslate('common.client_this_product_has_no_purchase_rows'),'warning'); return; }
                                 appendSaleRow(res.getData[0]);
                                 recalcTotals();
                             }catch(e){ console.warn('sale product details parse', e); }
@@ -246,13 +246,13 @@
                     if(!catId){
                         // reload all products for selected customer
                         var cid = customerSel && customerSel.value ? customerSel.value : '';
-                        if(!cid){ productSel.innerHTML = '<option value="">Select</option>'; return; }
+                        if(!cid){ productSel.innerHTML = ('<option value="">' + window.RNTranslate('common.select') + '</option>'); return; }
                         var tpl = ROUTES.productsTpl || customerSel.getAttribute('data-products-url') || '';
                         var url = tpl ? tpl.replace('__ID__', encodeURIComponent(cid)) : (ROUTES.base + '/ajax/public/customer/'+encodeURIComponent(cid)+'/products');
                         url = safeFinalizeUrl(url);
                         fetch(url, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                           .then(function(res){ return res.json(); })
-                          .then(function(json){ try{ productSel.innerHTML = (json && json.data) ? json.data : '<option value="">Select</option>'; }catch(e){} });
+                          .then(function(json){ try{ productSel.innerHTML = (json && json.data) ? json.data : ('<option value="">' + window.RNTranslate('common.select') + '</option>'); }catch(e){} });
                         return;
                     }
                     var cpTpl = ROUTES.categoryProductsTpl || '';
@@ -262,7 +262,7 @@
                       .then(function(res){ return res.json(); })
                       .then(function(json){
                         try{
-                            productSel.innerHTML = (json && json.data) ? json.data : '<option value="">Select</option>';
+                            productSel.innerHTML = (json && json.data) ? json.data : ('<option value="">' + window.RNTranslate('common.select') + '</option>');
                             // update out-of-stock modal list if provided
                             var outArr = (json && json.outOfStock) ? json.outOfStock : [];
                             var outNote = byId('outOfStockNote');
@@ -285,7 +285,7 @@
                                             '<div><strong>'+ (it.productName || '') +'</strong> — '+ (it.supplierName || 'Unknown') + pd +
                                             ' <span class="badge bg-secondary ms-2">Stock: '+ (it.currentStock || 0) +'</span></div>' +
                                             '<div>' +
-                                                (it.productId ? '<a class="btn btn-sm btn-outline-primary me-2" href="'+viewLink+'" target="_blank">View</a>' : '') +
+                                                (it.productId ? '<a class="btn btn-sm btn-outline-primary me-2" href="'+viewLink+'" target="_blank">'+window.RNTranslate('view')+'</a>' : '') +
                                                 '<button style="display:none;" class="btn btn-sm btn-outline-success add-backorder" data-purchase-id="'+(it.purchaseId||'')+'">Add as backorder</button>' +
                                             '</div>' +
                                             '</div>';
@@ -318,18 +318,18 @@
                             if(currentStock <= 0){
                                 // show friendly UI message and do not add
                                 try{ var errBox = byId('saleErrorSummary'); if(errBox) errBox.innerHTML = '<div class="alert alert-warning mb-0">Product "'+(p.productName||'')+'" is out of stock and cannot be added.</div>'; setTimeout(function(){ try{ errBox.innerHTML=''; }catch(_){} },4000); }catch(e){}
-                                showToast && showToast('Out of stock','Product "'+(p.productName||'')+'" has no stock','error');
+                                showToast && showToast(window.RNTranslate('common.client_out_of_stock'),'Product "'+(p.productName||'')+'" has no stock','error');
                                 return;
                             }
                             if(newQty > currentStock){
                                 try{ var errBox2 = byId('saleErrorSummary'); if(errBox2) errBox2.innerHTML = '<div class="alert alert-danger mb-0">Cannot increase quantity beyond available stock ('+currentStock+').</div>'; setTimeout(function(){ try{ errBox2.innerHTML=''; }catch(_){} },4000); }catch(e){}
-                                showToast && showToast('Low stock','Cannot increase quantity beyond available stock','error');
+                                showToast && showToast(window.RNTranslate('common.client_low_stock'),window.RNTranslate('common.client_cannot_increase_quantity_beyond_available_stock'),'error');
                                 return;
                             }
                             qtyEl.value = newQty;
                             recalcRow(row, p.currentStock || 0);
                             recalcTotals();
-                            showToast && showToast('Updated','Increased quantity for existing row','success');
+                            showToast && showToast(window.RNTranslate('common.client_updated'),window.RNTranslate('common.client_increased_quantity_for_existing_row'),'success');
                             return;
                         }
                     }catch(e){ /* fallback to adding a new row */ }
@@ -346,30 +346,30 @@
             tr.setAttribute('data-purchase-id', purchaseId);
             tr.setAttribute('data-serial-available', '0');
             tr.innerHTML = `
-                <td><button type="button" class="btn btn-sm btn-danger remove-row">Remove</button></td>
-                <td><input type="text" class="form-control" value="${p.productName || ''}" readonly></td>
-                <td>
+                <td data-label="${window.RNTranslate('remove')}"><button type="button" class="btn btn-sm btn-danger remove-row">${window.RNTranslate('remove')}</button></td>
+                <td data-label="${window.RNTranslate('product')}"><input type="text" class="form-control" value="${p.productName || ''}" readonly></td>
+                <td data-label="${window.RNTranslate('purchase_stock')}">
                     <input type="hidden" name="purchaseData[]" value="${purchaseId}">
-                    <div class="small">Supplier: ${p.supplierName || ''}</div>
-                    <div class="small">Invoice: ${p.invoice || ''}</div>
-                    <div class="small">Stock: <span class="row-stock">${p.currentStock || 0}</span></div>
+                    <div class="small">${window.RNTranslate('common.supplier')}: ${p.supplierName || ''}</div>
+                    <div class="small">${window.RNTranslate('common.invoice')}: ${p.invoice || ''}</div>
+                    <div class="small">${window.RNTranslate('common.stock')}: <span class="row-stock">${p.currentStock || 0}</span></div>
                 </td>
-                <td>
+                <td data-label="${window.RNTranslate('serial_numbers')}">
                     <div class="d-flex align-items-center">
-                        <button type="button" class="btn btn-sm btn-outline-primary open-sale-serials" data-idx="${idx}" data-purchase-id="${purchaseId}">Serials</button>
-                        <span class="badge bg-secondary ms-2 serial-count-badge" data-idx="${idx}">0 selected</span>
+                        <button type="button" class="btn btn-sm btn-outline-primary open-sale-serials" data-idx="${idx}" data-purchase-id="${purchaseId}">${window.RNTranslate('serials')}</button>
+                        <span class="badge bg-secondary ms-2 serial-count-badge" data-idx="${idx}">${window.RNTranslate('selected_count',{count:0})}</span>
                     </div>
                     <div class="text-danger small serial-note" style="display:none;"></div>
                     <div class="serial-hidden" style="display:none"></div>
                 </td>
-                <td><input type="text" class="form-control warrantyDays" name="warranty_days[]" placeholder="e.g. 365"></td>
-                <td><input type="number" class="form-control qty" name="qty[]" min="1" step="1" value="1"></td>
-                <td><input type="number" class="form-control salePrice" name="salePrice[]" value="${salePrice}" readonly></td>
-                <td><input type="number" class="form-control totalSale" readonly></td>
-                <td><input type="number" class="form-control buyPrice" name="buyPrice[]" value="${buyPrice}" readonly></td>
-                <td><input type="number" class="form-control totalPurchase" readonly></td>
-                <td><input type="text" class="form-control profitMargin" readonly></td>
-                <td><input type="number" class="form-control profitTotal" readonly></td>
+                <td data-label="${window.RNTranslate('warranty_days')}"><input type="text" class="form-control warrantyDays" name="warranty_days[]" placeholder="e.g. 365"></td>
+                <td data-label="${window.RNTranslate('quantity')}"><input type="number" class="form-control qty" name="qty[]" min="1" step="1" value="1"></td>
+                <td data-label="${window.RNTranslate('sale_price')}"><input type="number" class="form-control salePrice" name="salePrice[]" value="${salePrice}" readonly></td>
+                <td data-label="${window.RNTranslate('line_total')}"><input type="number" class="form-control totalSale" readonly></td>
+                <td data-label="${window.RNTranslate('purchase_price')}"><input type="number" class="form-control buyPrice" name="buyPrice[]" value="${buyPrice}" readonly></td>
+                <td data-label="${window.RNTranslate('purchase_total')}"><input type="number" class="form-control totalPurchase" readonly></td>
+                <td data-label="${window.RNTranslate('profit_margin')}"><input type="text" class="form-control profitMargin" readonly></td>
+                <td data-label="${window.RNTranslate('profit_total')}"><input type="number" class="form-control profitTotal" readonly></td>
             `;
             // If this row was created as a backorder, mark it and include hidden marker for server
             try{
@@ -385,7 +385,7 @@
             var stockAvailable = parseInt(p.currentStock || 0, 10);
             if(stockAvailable <= 0){
                 try{ var errBox3 = byId('saleErrorSummary'); if(errBox3) errBox3.innerHTML = '<div class="alert alert-warning mb-0">Product "'+(p.productName||'')+'" is out of stock and cannot be added.</div>'; setTimeout(function(){ try{ errBox3.innerHTML=''; }catch(_){} },4000); }catch(e){}
-                showToast && showToast('Out of stock','Product "'+(p.productName||'')+'" has no stock','error');
+                showToast && showToast(window.RNTranslate('common.client_out_of_stock'),'Product "'+(p.productName||'')+'" has no stock','error');
                 return;
             }
             tbody.appendChild(tr);
@@ -406,7 +406,7 @@
             fetchAvailableSerials(purchaseId).then(function(serials){
                 try{ tr.setAttribute('data-serial-available', (serials && serials.length) ? serials.length : 0); }catch(e){}
                 validateSerialsForRow(tr);
-            }).catch(function(){ /* ignore */ });
+            }).catch(function(){ tr.dataset.serialPolicyError = '1'; validateSerialsForRow(tr); });
             toggleSaveButton();
         }catch(e){ console.warn('appendSaleRow error', e); }
     }
@@ -418,12 +418,34 @@
         return fetch(url, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
             .then(function(res){
                 var ct = res.headers.get('content-type') || '';
-                if(res.redirected || res.status === 302 || res.status === 401 || res.status === 403) throw new Error('unauthorized');
+                if(!res.ok || res.redirected) throw new Error('unauthorized');
                 if(ct.indexOf('application/json') === -1) throw new Error('invalid-response');
                 return res.json();
             })
-            .then(function(json){ return (json && json.serials) ? json.serials : []; });
+            .then(function(json){
+                if (!json || json.status !== 'ok') throw new Error('invalid-response');
+                document.querySelectorAll('#productDetails tr[data-purchase-id="'+purchaseId+'"]').forEach(function(row){
+                    row.dataset.serialRequired = json.selection_required === false ? '0' : '1';
+                    row.dataset.serialized = json.serialized === true ? '1' : (json.serials.length ? '1' : '0');
+                    row.dataset.serialAvailable = json.serials.length;
+                    row.dataset.serialPolicyError = '0';
+                    validateSerialsForRow(row);
+                });
+                return json.serials;
+            });
     }
+
+    // Refresh on return to this tab and periodically while a form remains open.
+    // The transaction always resolves the database setting again at submission.
+    function refreshSerialPolicies(){
+        document.querySelectorAll('#productDetails tr[data-purchase-id]').forEach(function(row){
+            fetchAvailableSerials(row.dataset.purchaseId).catch(function(){
+                row.dataset.serialPolicyError = '1'; validateSerialsForRow(row);
+            });
+        });
+    }
+    window.addEventListener('focus', refreshSerialPolicies);
+    setInterval(function(){ if(!document.hidden) refreshSerialPolicies(); }, 30000);
 
     function renderSerialList(serials, selectedIds){
         var list = byId('saleSerialList');
@@ -431,12 +453,12 @@
         var meta = byId('saleSerialMeta');
         if(list) list.innerHTML = '';
         if(!serials || serials.length === 0){
-            if(status){ status.className = 'alert alert-warning mb-2'; status.textContent = 'No available serials for this purchase.'; }
+            if(status){ status.className = 'alert alert-warning mb-2'; status.textContent = window.RNTranslate('no_available_serials_for_this_purchase'); }
             if(meta) meta.textContent = '';
             return;
         }
-        if(status){ status.className = 'alert alert-success mb-2'; status.textContent = 'Available serials: ' + serials.length; }
-        if(meta) meta.textContent = 'Select the serials to assign to this sale row.';
+        if(status){ status.className = 'alert alert-success mb-2'; status.textContent = window.RNTranslate('available_count', {count:serials.length}); }
+        if(meta) meta.textContent = window.RNTranslate('select_the_serials_to_assign_to_this_sale_row');
         serials.forEach(function(s){
             var li = document.createElement('label');
             li.className = 'list-group-item d-flex justify-content-between align-items-center';
@@ -512,7 +534,7 @@
     function openSaleSerialModal(idx, purchaseId){
         var modal = byId('saleSerialModal'); if(!modal) return;
         var list = byId('saleSerialList'); if(list) list.innerHTML = '';
-        var status = byId('saleSerialStatus'); if(status){ status.className = 'alert alert-info mb-2'; status.textContent = 'Loading available serials...'; }
+        var status = byId('saleSerialStatus'); if(status){ status.className = 'alert alert-info mb-2'; status.textContent = window.RNTranslate('loading_available_serials'); }
         var hint = byId('saleSerialHint'); if(hint) hint.textContent = '';
         var row = document.querySelector('tr[data-idx="'+idx+'"]');
         var qty = num((row && row.querySelector('.qty')) ? row.querySelector('.qty').value : 0);
@@ -533,12 +555,12 @@
             modal.setAttribute('data-available-count', avail);
             if(row) row.setAttribute('data-serial-available', avail);
             renderSerialList(serials, existing);
-            if(hint && qty){ hint.textContent = 'Select exactly '+qty+' serial(s).'; }
+            if(hint && qty){ hint.textContent = row.dataset.serialRequired === '0' ? window.RNTranslate('optional_exact', {qty:qty}) : window.RNTranslate('select_exact', {qty:qty}); }
             enforceSerialLimit();
             showSaleSerialModal(modal);
         }).catch(function(err){
             console.warn('fetchAvailableSerials failed', err);
-            if(status){ status.className = 'alert alert-danger mb-2'; status.textContent = 'Failed to load serials. Please retry.'; }
+            if(status){ status.className = 'alert alert-danger mb-2'; status.textContent = window.RNTranslate('failed_to_load_serials_please_retry'); }
             showSaleSerialModal(modal);
         });
     }
@@ -555,9 +577,9 @@
             // Prefer current row order when writing hidden inputs so server arrays align after reindexing
             var targetIdx = (rowOrder !== null && rowOrder !== '' ? rowOrder : idx);
             var picks = Array.prototype.slice.call(document.querySelectorAll('#saleSerialModal input.serial-pick:checked'));
-            if(avail > 0 && qty > 0 && picks.length !== qty){
+            if(qty > 0 && picks.length !== qty && !(row.dataset.serialRequired === '0' && picks.length === 0)){
                 var status = byId('saleSerialStatus');
-                if(status){ status.className = 'alert alert-warning mb-2'; status.textContent = 'Select exactly '+qty+' serial(s). Selected '+picks.length+'.'; }
+                if(status){ status.className = 'alert alert-warning mb-2'; status.textContent = window.RNTranslate('select_prefix')+qty+' serial(s). Selected '+picks.length+'.'; }
                 return;
             }
             // clear previous hidden serial inputs within the serial container (safer than direct tr children)
@@ -571,7 +593,7 @@
             });
             reindexSaleSerialInputs();
             validateSerialsForRow(row);
-            showToast && showToast('Serials applied', picks.length+' serial(s) assigned to this row', 'success');
+            showToast && showToast(window.RNTranslate('serials_applied'), window.RNTranslate('assigned_count',{count:picks.length}), 'success');
             hideSaleSerialModal(modal);
         }catch(e){ console.error('applySaleSerials error:', e); }
     }
@@ -582,24 +604,28 @@
         var holder = tr.querySelector('.serial-hidden') || tr;
         var selected = holder.querySelectorAll('input[type="hidden"][data-serial][name^="serialId"]');
         var count = selected ? selected.length : 0;
-        var badge = tr.querySelector('.serial-count-badge'); if(badge) badge.textContent = count + ' selected';
+        var badge = tr.querySelector('.serial-count-badge'); if(badge) badge.textContent = window.RNTranslate('selected_count', {count:count});
         var note = tr.querySelector('.serial-note');
         var available = parseInt(tr.getAttribute('data-serial-available') || '0', 10) || 0;
-        var requireSerials = available > 0;
+        var serialized = tr.dataset.serialized === '1' || available > 0;
+        var requireSerials = tr.dataset.serialRequired !== '0';
+        var policyNote = tr.querySelector('.serial-policy-note');
+        if(!policyNote){ policyNote = document.createElement('div'); policyNote.className = 'small text-muted serial-policy-note'; if(note) note.parentNode.appendChild(policyNote); }
+        policyNote.textContent = serialized && !requireSerials ? window.RNTranslate('optional_leave_empty_to_allocate_available_serials_automatically') : '';
         var mismatch = false;
-        if(requireSerials && qty > 0 && count !== qty){
+        if(tr.dataset.serialPolicyError === '1' || (serialized && qty > 0 && count !== qty && (requireSerials || count > 0))){
             mismatch = true;
-            if(note){ note.style.display = 'block'; note.textContent = 'Select exactly '+qty+' serial(s).'; }
+            if(note){ note.style.display = 'block'; note.textContent = tr.dataset.serialPolicyError === '1' ? window.RNTranslate('unable_to_verify_serial_policy_retry_selection_before_saving') : window.RNTranslate('select_exact', {qty:qty}); }
         } else {
             if(note){ note.style.display = 'none'; note.textContent = ''; }
         }
-        if(mismatch){ 
-            tr.classList.add('serial-mismatch'); 
+        if(mismatch){
+            tr.classList.add('serial-mismatch');
             // show a per-row toast to prompt user to select serials
-            try{ showRowSerialToast(tr, 'Please select serial number(s) equal to the quantity for this product.'); }catch(e){}
+            try{ showRowSerialToast(tr, window.RNTranslate('select_quantity')); }catch(e){}
         }
-        else { 
-            tr.classList.remove('serial-mismatch'); 
+        else {
+            tr.classList.remove('serial-mismatch');
             // clear per-row toast flag so future mismatches re-trigger
             try{ tr.removeAttribute('data-serial-toast'); }catch(e){}
         }
@@ -616,7 +642,7 @@
             var errBox = byId('saleErrorSummary');
             var submitBtn = document.querySelector('form#saveSaleForm button[type="submit"]');
             if(count > 0){
-                var msg = '<div class="alert alert-warning mb-0">Please select serial number(s) for '+count+' product(s) before saving.</div>';
+                var msg = '<div class="alert alert-warning mb-0">'+window.RNTranslate('missing_products',{count:count})+'</div>';
                 if(errBox) errBox.innerHTML = msg;
                 if(submitBtn) submitBtn.disabled = true;
             } else {
@@ -635,7 +661,7 @@
             if(tr.getAttribute('data-serial-toast') === '1') return;
             tr.setAttribute('data-serial-toast','1');
             // Use global toast if available
-            try{ if(typeof showToast === 'function'){ showToast('Serial required', message, 'warning'); } }catch(e){}
+            try{ if(typeof showToast === 'function'){ showToast(window.RNTranslate('serial_required'), message, 'warning'); } }catch(e){}
             // Add a quick visual highlight
             var oldOutline = tr.style.boxShadow || '';
             tr.style.boxShadow = '0 0 10px rgba(255,165,0,0.6)';
@@ -669,7 +695,7 @@
             if(!btn) return;
             var idx = btn.getAttribute('data-idx');
             var pid = btn.getAttribute('data-purchase-id');
-            if(!pid){ showToast && showToast('Missing purchase','Purchase id not found for this row','error'); return; }
+            if(!pid){ showToast && showToast(window.RNTranslate('common.client_missing_purchase'),window.RNTranslate('common.client_purchase_id_not_found_for_this_row'),'error'); return; }
             openSaleSerialModal(idx, pid);
         }catch(e){ console.warn('open-sale-serials handler', e); }
     });
@@ -730,25 +756,25 @@
                     reindexSaleSerialInputs();
                     // basic validation: at least one row
                     var rows = Array.prototype.slice.call(document.querySelectorAll('#productDetails tr'));
-                    if(rows.length === 0){ ev.preventDefault(); showToast && showToast('No items','Add at least one product before saving','warning'); return false; }
+                    if(rows.length === 0){ ev.preventDefault(); showToast && showToast(window.RNTranslate('no_items'),window.RNTranslate('add_product_first'),'warning'); return false; }
                     // validate each row qty and purchaseData
                     for(var i=0;i<rows.length;i++){
                         var r = rows[i];
                         var qty = r.querySelector('.qty');
                         var purchase = r.querySelector('input[name="purchaseData[]"]');
-                        if(!purchase || !purchase.value){ ev.preventDefault(); showToast && showToast('Missing data','One or more rows are invalid','error'); return false; }
+                        if(!purchase || !purchase.value){ ev.preventDefault(); showToast && showToast(window.RNTranslate('common.client_missing_data'),window.RNTranslate('common.client_one_or_more_rows_are_invalid'),'error'); return false; }
                         var qv = qty ? parseInt(qty.value||0,10) : 0;
-                        if(qv <= 0){ ev.preventDefault(); showToast && showToast('Invalid quantity','Quantity must be at least 1','error'); return false; }
+                        if(qv <= 0){ ev.preventDefault(); showToast && showToast(window.RNTranslate('common.client_invalid_quantity'),window.RNTranslate('common.client_quantity_must_be_at_least_1'),'error'); return false; }
                         // Block submit if any row exceeds available stock
-                        try{ if(r.classList && r.classList.contains('stock-exceeded')){ ev.preventDefault(); showToast && showToast('Stock exceeded','Adjust quantities below stock before saving','error'); return false; } }catch(e){}
+                        try{ if(r.classList && r.classList.contains('stock-exceeded')){ ev.preventDefault(); showToast && showToast(window.RNTranslate('stock_exceeded'),window.RNTranslate('adjust_quantities'),'error'); return false; } }catch(e){}
                         // Block submit if serials are required but not matched to qty
-                        try{ 
-                            if(r.classList && r.classList.contains('serial-mismatch')){ 
+                        try{
+                            if(r.classList && r.classList.contains('serial-mismatch')){
                                 console.error('Form blocked: row has serial-mismatch', r);
-                                ev.preventDefault(); 
-                                showToast && showToast('Serials missing','Select serials equal to quantity for each row','error'); 
-                                return false; 
-                            } 
+                                ev.preventDefault();
+                                showToast && showToast(window.RNTranslate('serials_missing'),window.RNTranslate('serials_per_row'),'error');
+                                return false;
+                            }
                         }catch(e){}
                     }
                     // disable submit to avoid double-post and show saving indicator
@@ -783,13 +809,13 @@
             // ensure per-row note element
             try{
                 var noteEl = tr.querySelector('.stock-note');
-                if(!noteEl){ noteEl = document.createElement('div'); noteEl.className = 'text-danger small stock-note'; noteEl.style.display = 'none'; try{ tr.children[0].appendChild(noteEl); }catch(e){} }
+                if(!noteEl){ noteEl = document.createElement('div'); noteEl.className = 'text-danger small stock-note'; noteEl.style.display = 'none'; try{ tr.querySelector('.qty').parentNode.appendChild(noteEl); }catch(e){} }
             }catch(e){ var noteEl = tr.querySelector('.stock-note'); }
             if(curStock && qty > curStock){
-                var msg = 'Quantity exceeds current stock ('+curStock+'). Adjust before saving.';
+                var msg = window.RNTranslate('quantity_exceeds',{stock:curStock});
                 try{ if(noteEl){ noteEl.style.display = 'block'; noteEl.textContent = msg; } }catch(e){}
                 try{ tr.classList.add('stock-exceeded'); }catch(e){}
-                if(errBox){ errBox.innerHTML = '<div class="text-danger small">One or more items exceed current stock. Adjust before saving.</div>'; }
+                if(errBox){ errBox.innerHTML = '<div class="text-danger small">'+window.RNTranslate('common.one_or_more_items_exceed_current_stock_adjust_before_saving')+'</div>'; }
             } else {
                 try{ if(noteEl){ noteEl.style.display = 'none'; noteEl.textContent = ''; } }catch(e){}
                 try{ tr.classList.remove('stock-exceeded'); }catch(e){}
@@ -817,7 +843,7 @@
             try{
                 var prev = num(byId('prevDue') && byId('prevDue').value);
                 var totalOutstanding = Number((prev + curDue).toFixed(2));
-                var outEl = byId('totalOutstandingDisplay'); if(outEl) outEl.textContent = 'Total Outstanding: ' + Number(totalOutstanding.toFixed(2));
+                var outEl = byId('totalOutstandingDisplay'); if(outEl) outEl.textContent = window.RNTranslate('outstanding_value',{amount:Number(totalOutstanding.toFixed(2))});
             }catch(e){ /* ignore display errors */ }
         }catch(e){ console.warn('recalcTotals error', e); }
     }
@@ -834,12 +860,12 @@
             fetch(url, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                 .then(function(res){
                     var ct = res.headers.get('content-type') || '';
-                    if(res.redirected || res.status === 302 || res.status === 401 || res.status === 403) throw new Error('unauthorized');
+                    if(!res.ok || res.redirected) throw new Error('unauthorized');
                     if(ct.indexOf('application/json') === -1) throw new Error('invalid-response');
                     return res.json();
                 }).then(function(json){
                         try{
-                            if(!json || !json.getData || !json.getData.length) { showToast && showToast('Not found','Purchase row not found','error'); return; }
+                            if(!json || !json.getData || !json.getData.length) { showToast && showToast(window.RNTranslate('common.client_not_found'),window.RNTranslate('common.client_purchase_row_not_found'),'error'); return; }
                             var p = json.getData[0];
                             // mark as backorder by forcing available stock high so appendSaleRow will allow adding
                             p.currentStock = 999999;
@@ -861,7 +887,7 @@
                                         recalcTotals();
                                         // close modal
                                         try{ var modalEl = document.getElementById('outOfStockModal'); if(modalEl){ if(typeof bootstrap !== 'undefined' && bootstrap.Modal){ try{ var m = (typeof bootstrap.Modal.getInstance === 'function') ? bootstrap.Modal.getInstance(modalEl) : null; if(!m){ m = new bootstrap.Modal(modalEl); } m.hide(); }catch(be){ try{ var m2 = new bootstrap.Modal(modalEl); m2.hide(); }catch(_){ if(window.jQuery){ $('#outOfStockModal').modal('hide'); } } } } else if(window.jQuery){ $('#outOfStockModal').modal('hide'); } } }catch(e){}
-                                        showToast && showToast('Backorder marked','Existing row marked as backorder','success');
+                                        showToast && showToast(window.RNTranslate('common.client_backorder_marked'),window.RNTranslate('common.client_existing_row_marked_as_backorder'),'success');
                                         return;
                                     }
                                 }catch(e){}
@@ -871,9 +897,9 @@
                             recalcTotals();
                             // close modal if using Bootstrap 5/4 or jQuery fallback
                             try{ var modalEl = document.getElementById('outOfStockModal'); if(modalEl){ if(typeof bootstrap !== 'undefined' && bootstrap.Modal){ try{ var m = (typeof bootstrap.Modal.getInstance === 'function') ? bootstrap.Modal.getInstance(modalEl) : null; if(!m){ m = new bootstrap.Modal(modalEl); } m.hide(); }catch(be){ try{ var m2 = new bootstrap.Modal(modalEl); m2.hide(); }catch(_){ if(window.jQuery){ $('#outOfStockModal').modal('hide'); } } } } else if(window.jQuery){ $('#outOfStockModal').modal('hide'); } } }catch(e){}
-                            showToast && showToast('Backorder added','Item added as backorder','success');
-                        }catch(e){ console.warn('backorder add failed', e); showToast && showToast('Error','Could not add backorder','error'); }
-                    }).catch(function(e){ console.warn('fetch purchase by id failed', e); showToast && showToast('Error','Could not fetch purchase details','error'); });
+                            showToast && showToast(window.RNTranslate('common.client_backorder_added'),window.RNTranslate('common.client_item_added_as_backorder'),'success');
+                        }catch(e){ console.warn('backorder add failed', e); showToast && showToast(window.RNTranslate('common.client_error'),window.RNTranslate('common.client_could_not_add_backorder'),'error'); }
+                    }).catch(function(e){ console.warn('fetch purchase by id failed', e); showToast && showToast(window.RNTranslate('common.client_error'),window.RNTranslate('common.client_could_not_fetch_purchase_details'),'error'); });
         }catch(e){ console.warn('add-backorder handler error', e); }
     });
 

@@ -2,21 +2,21 @@
 
 
 <!doctype html>
-<html lang="en">
-  
+<html lang="{{ app()->getLocale() }}">
+
 <!-- Mirrored from templates.iqonic.design/posdash/html/backend/auth-sign-in.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 12 Mar 2025 08:08:13 GMT -->
 <head>
     <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
       <title>@if($config->count()>0){{ $config[0]->businessName ?? 'Retail Nova' }}@else Retail Nova @endif | User Login</title>
-      
+
       <!-- Favicon -->
       <link rel="shortcut icon" href="{{asset('/public/eshop/')}}/assets/images/favicon.ico" />
       <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/backend-plugin.min.css">
       <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/backende209.css?v=1.0.0">
-      <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/%40fortawesome/fontawesome-free/css/all.min.css">
+      <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
       <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/line-awesome/dist/line-awesome/css/line-awesome.min.css">
-      <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/remixicon/fonts/remixicon.css">  
+      <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/remixicon/fonts/remixicon.css">
    <head>
       <style>
          .bg-login {
@@ -119,7 +119,8 @@
             }
          }
       </style>
-   </head>
+   @include('partials.localization')
+</head>
   <body class="bg-login">
     <!-- loader Start -->
     <div id="loading">
@@ -127,7 +128,7 @@
           </div>
     </div>
     <!-- loader END -->
-    
+
       <div class="wrapper">
       <section class="login-content">
          <div class="container">
@@ -175,8 +176,8 @@
                                        @endif
                                  </div>
                               </div>
-                              <h2 class="mb-2 text-center">Welcome to {{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h2>
-                              <p class="text-center">Sign in to your account to continue</p>
+                              <h2 class="mb-2 text-center">{{ __('common.welcome_to') }} {{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h2>
+                              <p class="text-center">{{ __('authentication.sign_in_to_your_account_to_continue') }}</p>
                                  @if($hasAdminUsers || $config->count()>0)
                               <form action="{{ route('adminLogin') }}" class="login-form" method="POST">
                                     @csrf
@@ -184,17 +185,17 @@
                                     <div class="col-lg-12">
                                        <div class="floating-label form-group position-relative">
                                           <span class="input-icon"><i class="ri-mail-line"></i></span>
-                                          <input class="form-control" type="email" id="userMail" name="userMail" autocomplete="username" placeholder="Email">
+                                          <input class="form-control" type="email" id="userMail" name="userMail" autocomplete="username" placeholder="{{ __('authentication.email') }}">
                                        </div>
                                     </div>
                                     <div class="col-lg-12">
                                        <div class="floating-label form-group position-relative">
                                           <span class="input-icon"><i class="ri-lock-line"></i></span>
-                                          <input class="form-control" type="password" id="password" name="password" autocomplete="current-password" placeholder="Password">
+                                          <input class="form-control" type="password" id="password" name="password" autocomplete="current-password" placeholder="{{ __('authentication.password') }}">
                                        </div>
                                     </div>
                                  </div>
-                                 <button type="submit" class="btn btn-primary w-100 mt-2">Sign In</button>
+                                 <button type="submit" class="btn btn-primary w-100 mt-2">{{ __('authentication.sign_in') }}</button>
                               </form>
                               @else
                                  <form action="{{ route('creatAdmin') }}" class="login-form" method="POST">
@@ -203,47 +204,47 @@
                                        <div class="col-lg-6">
                                           <div class="floating-label form-group">
                                              <input class="floating-input form-control" type="text" id="fullName" name="fullName" placeholder=" ">
-                                             <label>Full Name</label>
+                                             <label>{{ __('authentication.full_name') }}</label>
                                           </div>
                                        </div>
                                        <div class="col-lg-6">
                                           <div class="floating-label form-group">
                                              <input class="floating-input form-control" type="text" id="sureName" name="sureName" placeholder=" ">
-                                             <label>Last Name</label>
+                                             <label>{{ __('authentication.last_name') }}</label>
                                           </div>
                                        </div>
                                        <div class="col-lg-6">
                                           <div class="floating-label form-group">
                                              <input class="floating-input form-control" type="email" id="mail" name="mail" placeholder=" ">
-                                             <label>Email</label>
+                                             <label>{{ __('authentication.email') }}</label>
                                           </div>
                                        </div>
                                        <div class="col-lg-6">
                                           <div class="floating-label form-group">
                                              <input class="floating-input form-control" type="number" id="contactNumber" name="contactNumber" placeholder=" ">
-                                             <label>Phone No.</label>
+                                             <label>{{ __('authentication.phone_no') }}</label>
                                           </div>
                                        </div>
                                        <div class="col-lg-6">
                                           <div class="floating-label form-group">
                                              <input class="floating-input form-control" type="text" id="storeName" name="storeName" placeholder=" ">
-                                             <label>Store Name</label>
+                                             <label>{{ __('authentication.store_name') }}</label>
                                           </div>
                                        </div>
                                        <div class="col-lg-6">
                                           <div class="floating-label form-group">
                                              <input class="floating-input form-control" type="password" id="password" name="password" placeholder=" ">
-                                             <label>Password</label>
+                                             <label>{{ __('authentication.password') }}</label>
                                           </div>
                                        </div>
                                        <div class="col-lg-6">
                                           <div class="floating-label form-group">
                                              <input class="floating-input form-control" type="password" id="confirmPass" name="confirmPass" placeholder=" ">
-                                             <label>Confirm Password</label>
+                                             <label>{{ __('authentication.confirm_password') }}</label>
                                           </div>
                                        </div>
                                     </div>
-                                    <button type="submit" class="btn btn-primary w-100 mt-2">POS Register</button>
+                                    <button type="submit" class="btn btn-primary w-100 mt-2">{{ __('authentication.pos_register') }}</button>
                                  </form>
                               @endif
                            </div>
@@ -255,19 +256,19 @@
          </div>
       </section>
       </div>
-    
+
     <!-- Backend Bundle JavaScript -->
     <script src="{{asset('/public/eshop/')}}/assets/js/backend-bundle.min.js"></script>
-    
+
     <!-- Table Treeview JavaScript -->
     <script src="{{asset('/public/eshop/')}}/assets/js/table-treeview.js"></script>
-    
+
     <!-- Chart Custom JavaScript -->
     <script src="{{asset('/public/eshop/')}}/assets/js/customizer.js"></script>
-    
+
     <!-- Chart Custom JavaScript -->
     <script async src="{{asset('/public/eshop/')}}/assets/js/chart-custom.js"></script>
-    
+
     <!-- app JavaScript -->
     <script src="{{asset('/public/eshop/')}}/assets/js/app.js"></script>
   </body>

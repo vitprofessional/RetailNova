@@ -1,55 +1,55 @@
 @extends('include')
-@section('backTitle') Super Admin: Users @endsection
+@section('backTitle'){{ __('common.heading_super_admin_users') }}@endsection
 @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Admin Users</h5>
+            <h5 class="mb-0">{{ __('common.admin_users') }}</h5>
         </div>
         <div class="card-body">
             @php $actorRole = $actor->role ?? 'storemanager'; @endphp
             @php $roleOptions = $allowedRoles ?? ['storemanager']; @endphp
             @php $isGM = $actorRole === 'gm'; @endphp
             @php $routeBase = ($actorRole === 'superadmin') ? 'admin.super' : 'admin.manage'; @endphp
-            <p><strong>New Profile Creation</strong> </p>
+            <p><strong>{{ __('common.new_profile_creation') }}</strong> </p>
             <form action="{{ route($routeBase.'.users.store') }}" method="POST" class="mb-4" id="create-user-form">
                 @csrf
                 <div class="row">
-                    <div class="col-md-3"><input name="fullName" class="form-control" placeholder="Full Name" required></div>
-                    <div class="col-md-3"><input name="mail" type="email" class="form-control" placeholder="Email" required></div>
+                    <div class="col-md-3"><input name="fullName" class="form-control" placeholder="{{ __('common.full_name') }}" required></div>
+                    <div class="col-md-3"><input name="mail" type="email" class="form-control" placeholder="{{ __('common.email') }}" required></div>
                     <div class="col-md-2">
                         <select name="role" class="form-control" id="create-role" required>
                             @foreach($roleOptions as $r)
                                 <option value="{{ $r }}">{{ ucfirst($r) }}</option>
                             @endforeach
                         </select>
-                        <small class="text-muted d-block mt-1">Business selection is required for GM/Store Manager/Sales Manager.</small>
+                        <small class="text-muted d-block mt-1">{{ __('common.business_selection_is_required_for_gm_store_manager_sales_manager') }}</small>
                     </div>
                     <div class="col-md-3">
                         <select name="businessId" class="form-control" id="create-business">
-                            <option value="">Select Business</option>
+                            <option value="">{{ __('common.select_business') }}</option>
                             @foreach(($businesses ?? []) as $biz)
                                 <option value="{{ $biz->id }}">{{ $biz->businessName }}</option>
                             @endforeach
                         </select>
-                        <small class="text-muted d-block mt-1">Choose the business (required for GM/Store Manager).</small>
+                        <small class="text-muted d-block mt-1">{{ __('common.choose_the_business_required_for_gm_store_manager') }}</small>
                     </div>
-                    <div class="col-md-2 mt-2"><input name="password" type="password" class="form-control" placeholder="Password" required></div>
+                    <div class="col-md-2 mt-2"><input name="password" type="password" class="form-control" placeholder="{{ __('common.password') }}" required></div>
                 </div>
-                <div class="mt-2"><button class="btn btn-primary btn-sm">Create</button></div>
+                <div class="mt-2"><button class="btn btn-primary btn-sm">{{ __('common.create') }}</button></div>
             </form>
-            <p><strong>Filter Users</strong></p>
+            <p><strong>{{ __('common.filter_users') }}</strong></p>
             <form action="{{ route($routeBase.'.users.index') }}" method="GET" class="mb-3">
                 <div class="row align-items-end">
                     <div class="col-md-3">
-                        <label class="small text-muted">Search</label>
-                        <input name="q" class="form-control" value="{{ request('q') }}" placeholder="Name or email">
+                        <label class="small text-muted">{{ __('common.search') }}</label>
+                        <input name="q" class="form-control" value="{{ request('q') }}" placeholder="{{ __('common.name_or_email') }}">
                     </div>
                     <div class="col-md-2">
-                        <label class="small text-muted">Role</label>
+                        <label class="small text-muted">{{ __('common.role') }}</label>
                         <select name="role" class="form-control">
-                            <option value="">All</option>
+                            <option value="">{{ __('common.all') }}</option>
                             @foreach(($viewableRoles ?? []) as $vr)
                                 <option value="{{ $vr }}" {{ request('role')===$vr?'selected':'' }}>{{ ucfirst($vr) }}</option>
                             @endforeach
@@ -57,9 +57,9 @@
                     </div>
                     @if(in_array($actorRole,['superadmin','admin']))
                     <div class="col-md-3">
-                        <label class="small text-muted">Business</label>
+                        <label class="small text-muted">{{ __('common.business') }}</label>
                         <select name="businessId" class="form-control">
-                            <option value="">All</option>
+                            <option value="">{{ __('common.all') }}</option>
                             @foreach(($businesses ?? []) as $biz)
                                 <option value="{{ $biz->id }}" {{ (string)request('businessId')===(string)$biz->id?'selected':'' }}>{{ $biz->businessName }}</option>
                             @endforeach
@@ -67,7 +67,7 @@
                     </div>
                     @endif
                     <div class="col-md-2">
-                        <button class="btn btn-outline-secondary btn-sm">Filter</button>
+                        <button class="btn btn-outline-secondary btn-sm">{{ __('common.filter') }}</button>
                     </div>
                 </div>
             </form>
@@ -91,8 +91,8 @@
 
             <div id="select-error" class="alert alert-danger d-none">
                 <div class="d-flex align-items-center justify-content-between">
-                    <div><strong>No Selection:</strong> Please select at least one user to delete.</div>
-                    <div><button type="button" class="btn btn-outline-light btn-sm" id="dismiss-select-error">Dismiss</button></div>
+                    <div><strong>{{ __('common.no_selection') }}:</strong> {{ __('common.please_select_at_least_one_user_to_delete') }}</div>
+                    <div><button type="button" class="btn btn-outline-light btn-sm" id="dismiss-select-error">{{ __('common.dismiss') }}</button></div>
                 </div>
             </div>
 
@@ -101,18 +101,18 @@
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Confirm Delete</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <h5 class="modal-title">{{ __('common.confirm_delete') }}</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="{{ __('common.close') }}">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
                         <div class="modal-body">
-                            <p>This will permanently delete the selected user(s).</p>
+                            <p>{{ __('common.this_will_permanently_delete_the_selected_user_s') }}</p>
                             <p class="mb-0"><strong id="modal-selected-count"></strong></p>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger" form="bulk-delete-form" id="modal-confirm-delete">Delete</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('common.cancel') }}</button>
+                            <button type="submit" class="btn btn-danger" form="bulk-delete-form" id="modal-confirm-delete">{{ __('common.delete') }}</button>
                         </div>
                     </div>
                 </div>
@@ -126,14 +126,14 @@
                     <thead>
                         <tr>
                             <th style="width:32px"><input type="checkbox" id="select-all"></th>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Business</th>
-                            <th>Contact</th>
-                            <th>Created</th>
-                            <th class="text-right">Actions</th>
+                            <th>{{ __('common.id') }}</th>
+                            <th>{{ __('common.name') }}</th>
+                            <th>{{ __('common.email') }}</th>
+                            <th>{{ __('common.role') }}</th>
+                            <th>{{ __('common.business') }}</th>
+                            <th>{{ __('common.contact') }}</th>
+                            <th>{{ __('common.created') }}</th>
+                            <th class="text-right">{{ __('common.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -150,17 +150,17 @@
                             <td>{{ $u->contactNumber ?: '-' }}</td>
                             <td>{{ optional($u->created_at)->format('Y-m-d') ?: '-' }}</td>
                             <td class="text-right">
-                                <a href="{{ route($routeBase.'.users.edit', $u->id) }}" class="btn btn-sm btn-secondary">Edit</a>
+                                <a href="{{ route($routeBase.'.users.edit', $u->id) }}" class="btn btn-sm btn-secondary">{{ __('common.edit') }}</a>
                                 @if(($actor->id ?? 0) !== $u->id)
-                                    <button type="button" class="btn btn-sm btn-danger single-delete" data-id="{{ $u->id }}">Delete</button>
+                                    <button type="button" class="btn btn-sm btn-danger single-delete" data-id="{{ $u->id }}">{{ __('common.delete') }}</button>
                                 @else
-                                    <button class="btn btn-sm btn-outline-secondary" disabled title="Cannot delete yourself">Delete</button>
+                                    <button class="btn btn-sm btn-outline-secondary" disabled title="{{ __('common.cannot_delete_yourself') }}">{{ __('common.delete') }}</button>
                                 @endif
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" class="text-center text-muted">No users found for the current filters.</td>
+                            <td colspan="9" class="text-center text-muted">{{ __('common.no_users_found_for_the_current_filters') }}</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -169,7 +169,7 @@
             </div>
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <button type="button" class="btn btn-danger btn-sm" id="bulk-delete-btn">Bulk Delete</button>
+                    <button type="button" class="btn btn-danger btn-sm" id="bulk-delete-btn">{{ __('common.bulk_delete') }}</button>
                 </div>
                 <div>{{ $users->links() }}</div>
             </div>

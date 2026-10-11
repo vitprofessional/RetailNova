@@ -18,13 +18,13 @@
         var printForm = document.getElementById('bulkPrintForm');
         var pdfForm = document.getElementById('bulkPdfForm');
         var allCheckboxes = document.querySelectorAll('.bulk-select');
-        
+
         // Dynamically find the "Select All" checkbox on the page and assign it the correct class for our script to use.
         var masterSelectors = ['#selectAllProducts','#selectAllBrands','#selectAllCategories','#selectAllUnits','#selectAllPurchases','#selectAllSales','#selectAllDamage','#selectAllProvidedServices','#selectAllCustomers','#selectAllSuppliers'];
         var selectAllCheckbox = null;
         masterSelectors.forEach(function(sel){
-            var el = document.querySelector(sel); 
-            if(el){ 
+            var el = document.querySelector(sel);
+            if(el){
                 el.classList.add('bulk-select-all');
                 selectAllCheckbox = el;
                 console.log("Found and initialized 'Select All' checkbox:", selectAllCheckbox);
@@ -120,10 +120,12 @@
 
             if (selectedIds.length === 0) {
                 console.warn("Submission blocked: No items were selected.");
-                alert("Please select at least one item to " + (form.id.includes('Print') ? 'print.' : 'delete.'));
+                alert(form.id.includes('Print')
+                    ? window.RNTranslate('common.client_please_select_at_least_one_item_to_print')
+                    : window.RNTranslate('common.client_please_select_at_least_one_item_to_delete'));
                 return;
             }
-            
+
             console.log("Found " + selectedIds.length + " selected IDs:", selectedIds);
 
             // Specific confirmation for delete action
@@ -188,7 +190,7 @@
             printForm.addEventListener('submit', function(e){
                 // re-check groupable condition before submitting
                 var selected = document.querySelectorAll('.bulk-select:checked');
-                if(selected.length === 0){ e.preventDefault(); alert('Please select at least one item to print.'); return; }
+                if(selected.length === 0){ e.preventDefault(); alert(window.RNTranslate('common.client_please_select_at_least_one_item_to_print')); return; }
                 var firstCust = null, firstDate = null, allSame = true;
                 selected.forEach(function(cb, idx){
                     var tr = cb.closest('tr');
@@ -199,7 +201,7 @@
                         if((cust||'') !== (firstCust||'') || (date||'') !== (firstDate||'')){ allSame = false; }
                     }
                 });
-                if(!allSame){ e.preventDefault(); alert('Print requires all selected services to belong to the same customer and the same date.'); return; }
+                if(!allSame){ e.preventDefault(); alert(window.RNTranslate('common.client_print_requires_all_selected_services_to_belong_to_the_same_customer_and_the_same_date')); return; }
                 handleFormSubmit(e);
             });
         } else {
@@ -211,7 +213,7 @@
             pdfForm.addEventListener('submit', function(e){
                 // re-check groupable condition before submitting
                 var selected = document.querySelectorAll('.bulk-select:checked');
-                if(selected.length === 0){ e.preventDefault(); alert('Please select at least one item to create PDF.'); return; }
+                if(selected.length === 0){ e.preventDefault(); alert(window.RNTranslate('common.client_please_select_at_least_one_item_to_create_pdf')); return; }
                 var firstCust = null, firstDate = null, allSame = true;
                 selected.forEach(function(cb, idx){
                     var tr = cb.closest('tr');
@@ -222,7 +224,7 @@
                         if((cust||'') !== (firstCust||'') || (date||'') !== (firstDate||'')){ allSame = false; }
                     }
                 });
-                if(!allSame){ e.preventDefault(); alert('PDF requires all selected services to belong to the same customer and the same date.'); return; }
+                if(!allSame){ e.preventDefault(); alert(window.RNTranslate('common.client_pdf_requires_all_selected_services_to_belong_to_the_same_customer_and_the_same_date')); return; }
                 handleFormSubmit(e);
             });
         } else {
@@ -248,16 +250,16 @@
             confirmButtonColor: '#ffc107',
             cancelButtonColor: '#6c757d',
             confirmButtonText: 'Delete Profile Only',
-            cancelButtonText: 'Cancel',
+            cancelButtonText: window.RNTranslate('common.cancel'),
             didOpen: function() {
                 // Add additional button for full delete
                 const popup = Swal.getPopup();
                 const footerDiv = popup.querySelector('.swal2-actions');
-                
+
                 // Create Delete All Data button
                 const deleteAllBtn = document.createElement('button');
                 deleteAllBtn.className = 'btn btn-danger ml-2';
-                deleteAllBtn.textContent = 'Delete All Data';
+                deleteAllBtn.textContent = window.RNTranslate('common.client_delete_all_data');
                 deleteAllBtn.style.marginLeft = '10px';
                 deleteAllBtn.onclick = function() {
                     submitBulkDelete(selectedIds, form, 'fullDelete');
@@ -276,15 +278,15 @@
     // --- Submit Bulk Delete ---
     window.submitBulkDelete = function(selectedIds, form, deleteType) {
         console.log("Submitting bulk delete with type: " + deleteType);
-        
+
         // Set delete type
         document.getElementById('bulkDeleteType').value = deleteType;
-        
+
         // Clear old inputs
         form.querySelectorAll('input[name="selected[]"]').forEach(function(inp) {
             inp.remove();
         });
-        
+
         // Add selected IDs
         selectedIds.forEach(function(id) {
             var input = document.createElement('input');
@@ -293,7 +295,7 @@
             input.value = id;
             form.appendChild(input);
         });
-        
+
         // Submit the form
         form.submit();
     };

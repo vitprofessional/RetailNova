@@ -1,5 +1,5 @@
 @extends('include')
-@section('backTitle') new products @endsection
+@section('backTitle'){{ __('common.heading_new_products') }}@endsection
 @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
@@ -48,23 +48,23 @@
                         @include('partials.business_selector', ['businesses' => $businesses ?? [] , 'selectedBusinessId' => $profile->businessId ?? null])
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label class="form-label">Product Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" placeholder="e.g., Nokia 1110" id="name" name="name" value="{{ $name }}" required />
+                                <label class="form-label">{{ __('inventory.product_name') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" placeholder="{{ __('common.e_g_nokia_1110') }}" id="name" name="name" value="{{ $name }}" required />
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label class="form-label">Barcode</label>
-                                <input type="text" class="form-control" id="barCode" placeholder="Optional" name="barCode" value="{{ $barCode }}" />
+                                <label class="form-label">{{ __('inventory.barcode') }}</label>
+                                <input type="text" class="form-control" id="barCode" placeholder="{{ __('common.optional') }}" name="barCode" value="{{ $barCode }}" />
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label for="brand" class="form-label">Brand</label>
+                                <label for="brand" class="form-label">{{ __('inventory.brand') }}</label>
                                 <div class="input-group input-append-equal">
                                     <select id="brand" class="form-control" name="brand" style="min-width:0;">
-                                      <option value="">Select</option>
+                                      <option value="">{{ __('inventory.select') }}</option>
                                       @php $updateBrand = \App\Models\Brand::find($brandId); @endphp
                                       @if(!empty($updateBrand))
                                       <option value="{{$updateBrand->id}}">{{$updateBrand->name}}</option>
@@ -82,10 +82,10 @@
 
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label for="categoryList" class="form-label">Category</label>
+                                <label for="categoryList" class="form-label">{{ __('inventory.category') }}</label>
                                 <div class="input-group input-append-equal">
                                     <select id="categoryList" class="form-control" name="category" style="min-width:0;">
-                                      <option value="">Select</option>
+                                      <option value="">{{ __('inventory.select') }}</option>
                                       @php $updateCategory = \App\Models\Category::find($categoryId); @endphp
                                       @if(!empty($updateCategory))
                                       <option value="{{$updateCategory->id}}">{{$updateCategory->name}}</option>
@@ -103,7 +103,7 @@
 
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label for="unitName" class="form-label">Unit</label>
+                                <label for="unitName" class="form-label">{{ __('inventory.unit') }}</label>
                                 <div class="input-group input-append-equal">
                                     <select id="unitName" class="form-control" name="unitName" style="min-width:0;">
                                       @php $updateProductUnit = \App\Models\ProductUnit::find($unitId); @endphp
@@ -123,22 +123,22 @@
 
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label for="quantity" class="form-label">Alert Quantity</label>
+                                <label for="quantity" class="form-label">{{ __('inventory.alert_quantity') }}</label>
                                 <input type="number" class="form-control" placeholder="0" id="quantity" name="quantity" value="{{ $quantity }}" min="0" step="1" />
                             </div>
                         </div>
 
                         <div class="col-12">
                             <div class="form-group mb-3">
-                                <label for="details" class="form-label">Details</label>
-                                <textarea class="form-control" id="details" placeholder="Optional notes about the product" name="details" rows="2">{{ $details }}</textarea>
+                                <label for="details" class="form-label">{{ __('inventory.details') }}</label>
+                                <textarea class="form-control" id="details" placeholder="{{ __('common.optional_notes_about_the_product') }}" name="details" rows="2">{{ $details }}</textarea>
                             </div>
                         </div>
 
                         <div class="col-12 d-flex justify-content-end mt-2">
-                            <button type="reset" class="btn btn-light mr-2">Reset</button>
+                            <button type="reset" class="btn btn-light mr-2">{{ __('inventory.reset') }}</button>
                             @if(isset($profile))
-                            <a href="{{ route('addProduct') }}" class="btn btn-outline-secondary mr-2">Back</a>
+                            <a href="{{ route('addProduct') }}" class="btn btn-outline-secondary mr-2">{{ __('inventory.back') }}</a>
                             @endif
                             <button type="submit" class="btn btn-primary">@if(isset($profile)) Update @else Save @endif</button>
                         </div>
@@ -154,18 +154,18 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header">
-                <h4 class="mb-0">Product List</h4>
+                <h4 class="mb-0">{{ __('inventory.product_list') }}</h4>
             </div>
             <div class="card-body table-responsive rounded mb-3">
                 <table class="data-tables table mb-0 tbl-server-info rn-table-pro">
                     <thead class="bg-white text-uppercase">
                         <tr class="table">
-                            <th scope="col">Product Name</th>
-                            <th scope="col">Category</th>
-                            <th scope="col">Brand</th>
-                            <th scope="col">Unit</th>
-                            <th scope="col">Created Date</th>
-                            <th scope="col">Action</th>
+                            <th scope="col">{{ __('inventory.product_name') }}</th>
+                            <th scope="col">{{ __('inventory.category') }}</th>
+                            <th scope="col">{{ __('inventory.brand') }}</th>
+                            <th scope="col">{{ __('inventory.unit') }}</th>
+                            <th scope="col">{{ __('inventory.created_date') }}</th>
+                            <th scope="col">{{ __('inventory.action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -179,13 +179,13 @@
                             <td>{{ $productList->created_at->format('d-m-Y') }}</td>
                             <td>
                                 <div class="d-flex align-items-center list-action">
-                                    <a href="{{ route('editProduct',['id'=>$productList->id]) }}" class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="Edit">
+                                    <a href="{{ route('editProduct',['id'=>$productList->id]) }}" class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="{{ __('inventory.edit') }}">
                                         <i class="ri-pencil-line mr-0"></i>
                                     </a>
                                     <form method="POST" action="{{ route('delProduct',['id'=>$productList->id]) }}" style="display:inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="badge bg-warning mr-2" data-confirm="delete" data-toggle="tooltip" data-placement="top" title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
+                                        <button type="submit" class="badge bg-warning mr-2" data-confirm="delete" data-toggle="tooltip" data-placement="top" title="{{ __('inventory.delete') }}"><i class="ri-delete-bin-line mr-0"></i></button>
                                     </form>
                                 </div>
                             </td>
@@ -207,20 +207,20 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title fs-5">Create Brand</h6>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                <h6 class="modal-title fs-5">{{ __('inventory.create_brand') }}</h6>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="{{ __('inventory.close') }}"></button>
             </div>
             <div class="modal-body">
                 <form action="{{ route('createBrand') }}" method="GET" id="brandForm" data-ajax="true" data-target="#brand" data-modal-id="createBrand">
                     <div class="mb-3">
-                        <label for="brandName" class="form-label">Brand Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="brandName" name="name" placeholder="Enter brand name" required />
+                        <label for="brandName" class="form-label">{{ __('inventory.brand_name') }} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="brandName" name="name" placeholder="{{ __('common.enter_brand_name') }}" required />
                     </div>
-                    <button type="submit" class="btn btn-primary" id="saveBrand">Save</button>
+                    <button type="submit" class="btn btn-primary" id="saveBrand">{{ __('inventory.save') }}</button>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-light" data-dismiss="modal">{{ __('inventory.close') }}</button>
             </div>
         </div>
     </div>
@@ -231,20 +231,20 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title fs-5">Create Category</h6>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                <h6 class="modal-title fs-5">{{ __('inventory.create_category') }}</h6>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="{{ __('inventory.close') }}"></button>
             </div>
             <div class="modal-body">
                 <form action="{{ route('createCategory') }}" method="GET" id="categoryForm" data-ajax="true" data-target="#categoryList" data-modal-id="categoryModal">
                     <div class="mb-3">
-                        <label for="categoryName" class="form-label">Category Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="categoryName" name="name" placeholder="Enter Category name" required />
+                        <label for="categoryName" class="form-label">{{ __('inventory.category_name') }} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="categoryName" name="name" placeholder="{{ __('common.enter_category_name') }}" required />
                     </div>
-                    <button type="submit" class="btn btn-primary" id="add-category">Save</button>
+                    <button type="submit" class="btn btn-primary" id="add-category">{{ __('inventory.save') }}</button>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-light" data-dismiss="modal">{{ __('inventory.close') }}</button>
             </div>
         </div>
     </div>
@@ -255,20 +255,20 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title fs-5">Create Product Unit</h6>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                <h6 class="modal-title fs-5">{{ __('inventory.create_product_unit') }}</h6>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="{{ __('inventory.close') }}"></button>
             </div>
             <div class="modal-body">
                 <form action="{{ route('createProductUnit') }}" method="GET" id="productUnitForm" data-ajax="true" data-target="#unitName" data-modal-id="productUnitModal">
                     <div class="mb-3">
-                        <label for="productUnitName" class="form-label">Unit Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="productUnitName" name="name" placeholder="Enter Product Unit name" required />
+                        <label for="productUnitName" class="form-label">{{ __('inventory.unit_name') }} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="productUnitName" name="name" placeholder="{{ __('common.enter_product_unit_name') }}" required />
                     </div>
-                    <button type="submit" class="btn btn-primary" id="add-productUnit">Save</button>
+                    <button type="submit" class="btn btn-primary" id="add-productUnit">{{ __('inventory.save') }}</button>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-light" data-dismiss="modal">{{ __('inventory.close') }}</button>
             </div>
         </div>
     </div>
@@ -291,4 +291,4 @@
     }
     </style>
 @endsection
-                                
+

@@ -32,7 +32,7 @@ class PaymentGatewayController extends Controller
             'api_secret' => $request->api_secret,
             'is_active' => (bool)$request->input('is_active',1),
         ]);
-        Alert::success('Success','Gateway added');
+        Alert::success(__('common.notification_success'),__('common.notification_gateway_added'));
         return back();
     }
 
@@ -55,7 +55,7 @@ class PaymentGatewayController extends Controller
             'api_secret' => $request->api_secret,
             'is_active' => (bool)$request->input('is_active',0),
         ]);
-        Alert::success('Updated','Gateway updated');
+        Alert::success(__('common.notification_updated'),__('common.notification_gateway_updated'));
         return back();
     }
 
@@ -63,7 +63,7 @@ class PaymentGatewayController extends Controller
     {
         $gateway = PaymentGateway::findOrFail($id);
         $gateway->delete();
-        Alert::success('Deleted','Gateway deleted');
+        Alert::success(__('common.notification_deleted'),__('common.notification_gateway_deleted'));
         return back();
     }
 }

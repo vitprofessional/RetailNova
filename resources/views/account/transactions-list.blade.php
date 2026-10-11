@@ -1,6 +1,6 @@
 @extends('include')
 
-@section('backTitle')Account Transactions @endsection
+@section('backTitle'){{ __('common.heading_account_transactions') }}@endsection
 
 @section('container')
 <div class="col-12">
@@ -9,9 +9,9 @@
 <div class="card">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="mb-0">Account Transactions</h4>
+            <h4 class="mb-0">{{ __('common.account_transactions') }}</h4>
             <a href="{{ route('account.transactions.create') }}" class="btn btn-primary btn-sm">
-                <i class="las la-plus"></i> New Transaction
+                <i class="las la-plus"></i> {{ __('common.new_transaction') }}
             </a>
         </div>
 
@@ -19,17 +19,17 @@
         <form method="GET" action="{{ route('account.transactions') }}">
             <div class="row mb-4">
                                     <div class="col-md-3">
-                                        <label>Start Date</label>
+                                        <label>{{ __('common.start_date') }}</label>
                                         <input type="date" class="form-control" name="start_date" value="{{ request('start_date') }}">
                                     </div>
                                     <div class="col-md-3">
-                                        <label>End Date</label>
+                                        <label>{{ __('common.end_date') }}</label>
                                         <input type="date" class="form-control" name="end_date" value="{{ request('end_date') }}">
                                     </div>
                                     <div class="col-md-3">
-                                        <label>Transaction Type</label>
+                                        <label>{{ __('common.transaction_type') }}</label>
                                         <select class="form-control" name="transaction_type">
-                                            <option value="">All Types</option>
+                                            <option value="">{{ __('common.all_types') }}</option>
                                             @foreach($transactionTypes as $key => $type)
                                             <option value="{{ $key }}" {{ request('transaction_type') == $key ? 'selected' : '' }}>
                                                 {{ $type }}
@@ -38,9 +38,9 @@
                                         </select>
                                     </div>
                                     <div class="col-md-3">
-                                        <label>Account</label>
+                                        <label>{{ __('common.account') }}</label>
                                         <select class="form-control" name="account_id">
-                                            <option value="">All Accounts</option>
+                                            <option value="">{{ __('common.all_accounts') }}</option>
                                             @foreach($accounts as $account)
                                             <option value="{{ $account->id }}" {{ request('account_id') == $account->id ? 'selected' : '' }}>
                                                 {{ $account->account_code }} - {{ $account->account_name }}
@@ -49,8 +49,8 @@
                                         </select>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary"><i class="las la-filter"></i> Filter</button>
-                                <a href="{{ route('account.transactions') }}" class="btn btn-secondary"><i class="las la-redo"></i> Reset</a>
+                                <button type="submit" class="btn btn-primary"><i class="las la-filter"></i> {{ __('common.filter') }}</button>
+                                <a href="{{ route('account.transactions') }}" class="btn btn-secondary"><i class="las la-redo"></i> {{ __('common.reset') }}</a>
                             </form>
 
                             <hr>
@@ -60,14 +60,14 @@
                                 <table class="table table-bordered table-hover rn-table-pro">
                                     <thead class="thead-light">
                                         <tr>
-                                            <th>Date</th>
-                                            <th>Reference</th>
-                                            <th>Type</th>
-                                            <th>Debit Account</th>
-                                            <th>Credit Account</th>
-                                            <th class="text-right">Amount</th>
-                                            <th>Description</th>
-                                            <th>Created By</th>
+                                            <th>{{ __('common.date') }}</th>
+                                            <th>{{ __('common.reference') }}</th>
+                                            <th>{{ __('common.type') }}</th>
+                                            <th>{{ __('common.debit_account') }}</th>
+                                            <th>{{ __('common.credit_account') }}</th>
+                                            <th class="text-right">{{ __('common.amount') }}</th>
+                                            <th>{{ __('common.description') }}</th>
+                                            <th>{{ __('common.created_by') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -86,7 +86,7 @@
                                         </tr>
                                         @empty
                                         <tr>
-                                            <td colspan="8" class="text-center">No transactions found</td>
+                                            <td colspan="8" class="text-center">{{ __('common.no_transactions_found') }}</td>
                                         </tr>
                                         @endforelse
                                     </tbody>

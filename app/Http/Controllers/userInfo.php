@@ -38,7 +38,7 @@ class userInfo extends Controller
             return redirect()->route('dashboard');
         }
 
-        return back()->with('error', 'Invalid credentials');
+        return back()->with('error', __('common.notification_invalid_credentials'));
         
     }
 
@@ -47,7 +47,7 @@ class userInfo extends Controller
         
         $hashPass = Hash::make($req->password);
         if($req->password != $req->confirmPass):
-            return back()->with('error','Password not match confirm password');
+            return back()->with('error',__('common.notification_password_not_match_confirm_password'));
         endif;
 
         $server->fullName       = $req->fullName;
@@ -59,7 +59,7 @@ class userInfo extends Controller
         $server->businessId     = $req->businessId;
         
             if($server->save()):
-                return back()->with('success','Success! Admin profile created successfully');
+                return back()->with('success',__('common.notification_success_admin_profile_created_successfully'));
             else:
                 return back()->with('success','error! There was an error. Please try later');
             endif;
@@ -73,7 +73,7 @@ class userInfo extends Controller
         Session::forget('pos_user_id');
         Session::invalidate();
         Session::regenerateToken();
-        return redirect(route('userLogin'))->with('success','logout successful');
+        return redirect(route('userLogin'))->with('success',__('authentication.logout_successful'));
     }
     
 
@@ -166,6 +166,6 @@ class userInfo extends Controller
         }
 
         return redirect()->route('userLogin')
-            ->with('success', 'Business setup saved successfully! You can now log in.');
+            ->with('success', __('common.notification_business_setup_saved_successfully_you_can_now_log_in'));
     }
 }

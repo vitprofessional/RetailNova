@@ -20,10 +20,10 @@
         <div class="card">
             <div class="card-body">
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                    <h4 class="mb-2 mb-sm-0">Sales</h4>
+                    <h4 class="mb-2 mb-sm-0">{{ __('sales.sales') }}</h4>
                     <div class="d-flex align-items-center gap-2">
-                        <a href="{{ route('newsale') }}" class="btn btn-sm btn-primary">New Sale</a>
-                        <button id="exportCsvBtn" class="btn btn-sm btn-outline-secondary">Export CSV</button>
+                        <a href="{{ route('newsale') }}" class="btn btn-sm btn-primary">{{ __('sales.new_sale') }}</a>
+                        <button id="exportCsvBtn" class="btn btn-sm btn-outline-secondary">{{ __('sales.export_csv') }}</button>
                     </div>
                     @include('partials.table-filters', [
                         'tableId' => 'salesTable',
@@ -49,15 +49,15 @@
                                         <label for="selectAllSales" class="mb-0"></label>
                                     </div>
                                 </th>
-                                <th class="text-nowrap">Invoice</th>
-                                <th class="text-left">Customer</th>
-                                <th class="text-left">Salesperson</th>
-                                <th class="rn-number">Grand Total</th>
-                                <th class="rn-number">Paid</th>
-                                <th class="rn-number">Due</th>
-                                <th>Status</th>
-                                <th class="text-nowrap">Date</th>
-                                <th class="rn-col-compact">Actions</th>
+                                <th class="text-nowrap">{{ __('sales.invoice') }}</th>
+                                <th class="text-left">{{ __('sales.customer') }}</th>
+                                <th class="text-left">{{ __('sales.salesperson') }}</th>
+                                <th class="rn-number">{{ __('sales.grand_total') }}</th>
+                                <th class="rn-number">{{ __('sales.paid') }}</th>
+                                <th class="rn-number">{{ __('sales.due') }}</th>
+                                <th>{{ __('sales.status') }}</th>
+                                <th class="text-nowrap">{{ __('sales.date') }}</th>
+                                <th class="rn-col-compact">{{ __('sales.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -87,28 +87,28 @@
                                         <td class="rn-ellipsis text-nowrap">{{ $sl->invoice }}</td>
                                         <td class="text-left rn-ellipsis" title="{{ $customerName }}">{{ $customerName }}</td>
                                         <td class="text-left rn-ellipsis" title="{{ optional($sl->salesperson)->fullName ?? '-' }}">{{ optional($sl->salesperson)->fullName ?? '-' }}</td>
-                                        
+
                                         <td class="rn-number">{{ $grand }}</td><td class="rn-number">{{ $paid }}</td>
                                         <td class="rn-number">{{ $due }}</td>
                                         <td>
                                             @if($status === 'Paid')
-                                                <span class="badge bg-success">Paid</span>
+                                                <span class="badge bg-success">{{ __('sales.paid') }}</span>
                                             @elseif($status === 'Partial')
-                                                <span class="badge bg-warning">Partial</span>
+                                                <span class="badge bg-warning">{{ __('sales.partial') }}</span>
                                             @else
-                                                <span class="badge bg-danger">Due</span>
+                                                <span class="badge bg-danger">{{ __('sales.due') }}</span>
                                             @endif
                                         </td>
                                         <td class="text-nowrap">{{ $dateFmt }}</td>
                                         <td class="rn-actions text-center">
-                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('invoiceGenerate',['id'=>$sl->id]) }}" title="Print"><i class="las la-print"></i></a>
-                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('returnSale',['id'=>$sl->id]) }}" title="Return"><i class="las la-undo"></i></a>
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('invoiceGenerate',['id'=>$sl->id]) }}" title="{{ __('sales.print') }}"><i class="las la-print"></i></a>
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('returnSale',['id'=>$sl->id]) }}" title="{{ __('common.return') }}"><i class="las la-undo"></i></a>
                                             @canEdit(true)
-                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('sale.edit',['id'=>$sl->id]) }}" title="Edit"><i class="las la-edit"></i></a>
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('sale.edit',['id'=>$sl->id]) }}" title="{{ __('sales.edit') }}"><i class="las la-edit"></i></a>
                                             <form method="POST" action="{{ route('delSale',['id'=>$sl->id]) }}" style="display:inline-block;">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="delete" title="Delete"><i class="las la-trash-alt"></i></button>
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="delete" title="{{ __('sales.delete') }}"><i class="las la-trash-alt"></i></button>
                                             </form>
                                             @endcanEdit
                                         </td>
@@ -116,7 +116,7 @@
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="9">No data found</td>
+                                    <td colspan="9">{{ __('sales.no_data_found') }}</td>
                                 </tr>
                             @endif
                         </tbody>

@@ -24,7 +24,7 @@ class SuperAdminSetupController extends Controller
     {
         // Block if superadmin exists
         if (AdminUser::superAdminExists()) {
-            Alert::error('Error','Super Admin already exists');
+            Alert::error(__('common.notification_error'),__('common.notification_super_admin_already_exists'));
             return redirect()->route('userLogin');
         }
 
@@ -49,7 +49,7 @@ class SuperAdminSetupController extends Controller
 
         // Login as admin guard and redirect to dashboard
         try { Auth::guard('admin')->login($user); } catch (\Throwable $e) {}
-        Alert::success('Success','Super Admin created');
+        Alert::success(__('common.notification_success'),__('common.notification_super_admin_created'));
         return redirect()->route('dashboard');
     }
 }

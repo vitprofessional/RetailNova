@@ -117,6 +117,9 @@ class AppServiceProvider extends ServiceProvider
                     } catch (\Throwable $e) {
                         // keep fallback app name
                     }
+                    // Child templates resolve localized headings before rendering the shared layout.
+                    $heading = trim(view()->getSections()['backTitle'] ?? '');
+                    if ($heading !== '') { $page = $heading; }
                     $view->with('pageTitle', $brand . ' | ' . $page);
                 });
             }

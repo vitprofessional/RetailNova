@@ -1,5 +1,5 @@
 @extends('include')
-@section('backTitle') Edit Sale @endsection
+@section('backTitle'){{ __('common.heading_edit_sale') }}@endsection
 @section('container')
 <div class="col-12">
   @include('sweetalert::alert')
@@ -9,52 +9,52 @@
     <div class="card">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4 class="mb-0">Edit Sale</h4>
-          <a href="{{ route('sale.items.edit', ['id' => $sale->id]) }}" class="btn btn-outline-primary btn-sm"><i class="las la-edit"></i> Edit Items</a>
+          <h4 class="mb-0">{{ __('sales.edit_sale') }}</h4>
+          <a href="{{ route('sale.items.edit', ['id' => $sale->id]) }}" class="btn btn-outline-primary btn-sm"><i class="las la-edit"></i> {{ __('sales.edit_items') }}</a>
         </div>
         @php $grand = (float)($sale->grandTotal ?? $sale->totalAmount ?? 0); @endphp
         <div class="mb-2 text-muted">
-          <div><strong>Invoice:</strong> {{ $sale->invoice ?? $sale->invoiceNo ?? '-' }}</div>
-          <div><strong>Customer:</strong> {{ $customer->name ?? '-' }}</div>
-          <div><strong>Grand Total:</strong> @money($grand)</div>
+          <div><strong>{{ __('common.invoice') }}:</strong> {{ $sale->invoice ?? $sale->invoiceNo ?? '-' }}</div>
+          <div><strong>{{ __('common.customer') }}:</strong> {{ $customer->name ?? '-' }}</div>
+          <div><strong>{{ __('common.grand_total') }}:</strong> @money($grand)</div>
         </div>
         <form method="POST" action="{{ route('sale.update', ['id' => $sale->id]) }}">
           @csrf
           <div class="form-group mb-3">
-            <label for="paidAmount">Paid Amount</label>
+            <label for="paidAmount">{{ __('sales.paid_amount') }}</label>
             <input type="number" step="0.01" min="0" max="{{ $grand }}" id="paidAmount" name="paidAmount" class="form-control" value="{{ old('paidAmount', $sale->paidAmount ?? 0) }}" required />
             @error('paidAmount')<div class="text-danger small">{{ $message }}</div>@enderror
             <div class="mt-1 small d-flex gap-3 align-items-center">
-              <div><strong>Status:</strong> <span id="saleStatusBadge" class="badge badge-secondary">—</span></div>
-              <div><strong>Remaining Due:</strong> <span id="saleDuePreview">—</span></div>
+              <div><strong>{{ __('common.status') }}:</strong> <span id="saleStatusBadge" class="badge badge-secondary">—</span></div>
+              <div><strong>{{ __('sales.remaining_due') }}:</strong> <span id="saleDuePreview">—</span></div>
             </div>
-            <div id="paidHint" class="text-danger small mt-1" style="display:none;">Paid amount cannot exceed grand total.</div>
+            <div id="paidHint" class="text-danger small mt-1" style="display:none;">{{ __('sales.paid_amount_cannot_exceed_grand_total') }}</div>
           </div>
           <div class="form-group mb-3">
-            <label for="date">Sale Date</label>
+            <label for="date">{{ __('sales.sale_date') }}</label>
             <input type="date" id="date" name="date" class="form-control" value="{{ old('date', isset($sale->date) ? \Carbon\Carbon::parse($sale->date)->format('Y-m-d') : '') }}" />
             @error('date')<div class="text-danger small">{{ $message }}</div>@enderror
           </div>
           <div class="form-group mb-3">
-            <label for="paymentMode">Payment Mode</label>
+            <label for="paymentMode">{{ __('sales.payment_mode') }}</label>
             <select id="paymentMode" name="paymentMode" class="form-control">
               @php $pm = old('paymentMode', $sale->paymentMode ?? 'Cash'); @endphp
-              <option value="Cash" {{ $pm==='Cash' ? 'selected' : '' }}>Cash</option>
-              <option value="Card" {{ $pm==='Card' ? 'selected' : '' }}>Card</option>
-              <option value="Mobile" {{ $pm==='Mobile' ? 'selected' : '' }}>Mobile</option>
-              <option value="Bank" {{ $pm==='Bank' ? 'selected' : '' }}>Bank Transfer</option>
-              <option value="Other" {{ $pm==='Other' ? 'selected' : '' }}>Other</option>
+              <option value="Cash" {{ $pm==='Cash' ? 'selected' : '' }}>{{ __('sales.cash') }}</option>
+              <option value="Card" {{ $pm==='Card' ? 'selected' : '' }}>{{ __('sales.card') }}</option>
+              <option value="Mobile" {{ $pm==='Mobile' ? 'selected' : '' }}>{{ __('sales.mobile') }}</option>
+              <option value="Bank" {{ $pm==='Bank' ? 'selected' : '' }}>{{ __('sales.bank_transfer') }}</option>
+              <option value="Other" {{ $pm==='Other' ? 'selected' : '' }}>{{ __('sales.other') }}</option>
             </select>
             @error('paymentMode')<div class="text-danger small">{{ $message }}</div>@enderror
           </div>
           <div class="form-group mb-3">
-            <label for="note">Remarks</label>
-            <textarea id="note" name="note" class="form-control" rows="3" placeholder="Enter any special note">{{ old('note', $sale->note ?? '') }}</textarea>
+            <label for="note">{{ __('sales.remarks') }}</label>
+            <textarea id="note" name="note" class="form-control" rows="3" placeholder="{{ __('common.enter_any_special_note') }}">{{ old('note', $sale->note ?? '') }}</textarea>
             @error('note')<div class="text-danger small">{{ $message }}</div>@enderror
           </div>
           <div class="d-flex justify-content-between">
-            <a href="{{ route('saleList') }}" class="btn btn-outline-secondary">Cancel</a>
-            <button type="submit" id="saveBtn" class="btn btn-primary">Save Changes</button>
+            <a href="{{ route('saleList') }}" class="btn btn-outline-secondary">{{ __('sales.cancel') }}</a>
+            <button type="submit" id="saveBtn" class="btn btn-primary">{{ __('sales.save_changes') }}</button>
           </div>
         </form>
       </div>

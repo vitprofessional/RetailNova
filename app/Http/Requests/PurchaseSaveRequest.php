@@ -87,7 +87,7 @@ class PurchaseSaveRequest extends FormRequest
             $paidAmount = $this->input('paidAmount');
 
             if (is_numeric($grandTotal) && is_numeric($paidAmount) && (float) $paidAmount > (float) $grandTotal) {
-                $validator->errors()->add('paidAmount', 'Paid amount cannot exceed grand total.');
+                $validator->errors()->add('paidAmount', __('common.notification_paid_amount_cannot_exceed_grand_total'));
             }
         });
     }

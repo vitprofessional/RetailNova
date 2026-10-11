@@ -1,11 +1,11 @@
-@extends('include') @section('backTitle') sale return @endsection @section('container')
+@extends('include') @section('backTitle'){{ __('common.heading_sale_return') }}@endsection @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
 @if(!empty($readOnlyReturnHistory))
 <div class="col-12 mb-3">
     <div class="alert alert-info mb-0">
-        This sale has already been returned and the original invoice lines were cleared. The page is shown in history-only mode.
+        {{ __('sales.this_sale_has_already_been_returned_and_the_original_invoice_lines_were_cleared_the_page_is_shown_in_history_only_mode') }}
     </div>
 </div>
 @endif
@@ -14,40 +14,40 @@
     <input type="hidden" name="customerId" value="{{ $customer->id }}">
     <input type="hidden" name="invoiceId" value="{{ $invoice->invoice }}">
     <div class="card-header text-center" style="color: #c20c0cff;">
-        <h4>Sale Return</h4>
+        <h4>{{ __('sales.sale_return') }}</h4>
     </div>
     <div class="card-body">
         <div class="row">
             <div class="col-md-4">
-                <h5>Customer Details</h5>
+                <h5>{{ __('sales.customer_details') }}</h5>
                 <hr />
-                <p><strong>Name:</strong> {{ $customer->name }}</p>
-                <p><strong>Mobile:</strong> {{ $customer->mobile }}</p>
-                <p><strong>Address:</strong> {{ $customer->city }},{{ $customer->area }}</p>
+                <p><strong>{{ __('common.name') }}:</strong> {{ $customer->name }}</p>
+                <p><strong>{{ __('common.mobile') }}:</strong> {{ $customer->mobile }}</p>
+                <p><strong>{{ __('common.address') }}:</strong> {{ $customer->city }},{{ $customer->area }}</p>
             </div>
             <div class="col-md-4 mt-5">
-                <p class="mt-1"><strong>Date:</strong> {{ \Carbon\Carbon::parse($invoice->date)->format('d-m-Y') }}</p>
-                <p><strong>Reference:</strong> {{ $invoice->reference }}</p>
-                <p><strong>Note:</strong>{{ $invoice->note }}</p>
+                <p class="mt-1"><strong>{{ __('common.date') }}:</strong> {{ \Carbon\Carbon::parse($invoice->date)->format('d-m-Y') }}</p>
+                <p><strong>{{ __('common.reference') }}:</strong> {{ $invoice->reference }}</p>
+                <p><strong>{{ __('common.note') }}:</strong>{{ $invoice->note }}</p>
             </div>
             <div class="col-md-4 text-md-end">
                 <div class="card">
                     <div class="card-body">
-                        <h6>Sale Summary</h6>
+                        <h6>{{ __('sales.sale_summary') }}</h6>
                         <div class="row">
                             <div class="col-12 p-1">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label class="form-label" style="margin-bottom: 0px;">Total:</label><input disabled="" class="form-control form-control-sm" type="text" value="{{ $invoice->totalSale }}" style="width: 50%;" />
+                                    <label class="form-label" style="margin-bottom: 0px;">{{ __('common.total') }}:</label><input disabled="" class="form-control form-control-sm" type="text" value="{{ $invoice->totalSale }}" style="width: 50%;" />
                                 </div>
                             </div>
                             <div class="col-12 p-1">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label class="form-label" style="margin-bottom: 0px;">Paid Amount:</label><input disabled="" class="form-control form-control-sm" type="text" value="{{ $invoice->paidAmount }}" style="width: 50%;" />
+                                    <label class="form-label" style="margin-bottom: 0px;">{{ __('common.paid_amount') }}:</label><input disabled="" class="form-control form-control-sm" type="text" value="{{ $invoice->paidAmount }}" style="width: 50%;" />
                                 </div>
                             </div>
                             <div class="col-12 p-1">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label class="form-label" style="margin-bottom: 0px;">Due Amount:</label><input disabled="" class="form-control form-control-sm" id="dueAmount" type="text" value="{{ $invoice->curDue }}" style="width: 50%;" />
+                                    <label class="form-label" style="margin-bottom: 0px;">{{ __('common.due_amount') }}:</label><input disabled="" class="form-control form-control-sm" id="dueAmount" type="text" value="{{ $invoice->curDue }}" style="width: 50%;" />
                                 </div>
                             </div>
                         </div>
@@ -57,19 +57,19 @@
         </div>
         <div class="row  product-table">
             <div class="col-md-12">
-                <h4>Products for Return</h4>
+                <h4>{{ __('sales.products_for_return') }}</h4>
                 <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Name</th>
-                            <th>Sale Quantity</th>
-                            <th>Price</th>
-                            <th>Total</th>
-                            <th>Select</th>
-                            <th>Return Qty</th>
-                            <th>Return Amount</th>
-                            <th>Serial Nos (if any)</th>
+                            <th>{{ __('sales.name') }}</th>
+                            <th>{{ __('sales.sale_quantity') }}</th>
+                            <th>{{ __('sales.price') }}</th>
+                            <th>{{ __('sales.total') }}</th>
+                            <th>{{ __('sales.select') }}</th>
+                            <th>{{ __('sales.return_qty') }}</th>
+                            <th>{{ __('sales.return_amount') }}</th>
+                            <th>{{ __('sales.serial_nos_if_any') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -93,7 +93,7 @@
                             <td><input type="number" class="form-control form-control-sm return-amount" value="0" id="returnAmount{{$sl}}" readonly /></td>
                             <td></td>
                         </tr>
-                        
+
                         @php
                         $sl++;
                         @endphp
@@ -101,7 +101,7 @@
                         @else
                         <tr>
                             <td>2</td>
-                            <td>Crime Chake</td>
+                            <td>{{ __('sales.crime_chake') }}</td>
                             <td>20</td>
                             <td>10</td>
                             <td>200</td>
@@ -118,33 +118,33 @@
         <div class="row">
             <div class="col-6">
                 <div class="input-group mb-3">
-                    <span class="input-group-text rounded-0 p-0 px-2 bg-light">Total Return:</span>
+                    <span class="input-group-text rounded-0 p-0 px-2 bg-light">{{ __('sales.total_return') }}:</span>
                     <input type="number" id="totalReturnAmount" name="totalReturnAmount" class="form-control" value="0" readonly>
                 </div>
             </div>
             <div class="col-6">
                 <div class="input-group mb-3">
-                    <span class="input-group-text rounded-0 p-0 px-2 bg-light">Adjust Amount</span>
+                    <span class="input-group-text rounded-0 p-0 px-2 bg-light">{{ __('sales.adjust_amount') }}</span>
                     <input type="number" name="adjustAmount" id="adjustAmount" class="form-control" value="0" @if($invoice->curDue == 0 || !empty($readOnlyReturnHistory)) readonly @endif>
                 </div>
             </div>
         </div>
-        
+
         <div class="row shadow p-3">
             <div class="col-12">
-                <h5 class="card-title">Return Details (Optional)</h5>
+                <h5 class="card-title">{{ __('sales.return_details_optional') }}</h5>
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Return Note</label>
-                        <textarea class="form-control" name="returnNote" placeholder="Enter return note if any" rows="2"></textarea>
+                        <label class="form-label">{{ __('sales.return_note') }}</label>
+                        <textarea class="form-control" name="returnNote" placeholder="{{ __('common.enter_return_note_if_any') }}" rows="2"></textarea>
                     </div>
                     <div class="col-md-6 d-flex align-items-end">
                         <div class="d-flex gap-2 w-100">
                             @if(empty($readOnlyReturnHistory))
-                                <button type="submit" class="btn btn-success flex-grow-1">Submit Return</button>
-                                <button type="button" class="btn btn-primary flex-grow-1" id="returnAndRefundBtn">Return & Refund</button>
+                                <button type="submit" class="btn btn-success flex-grow-1">{{ __('sales.submit_return') }}</button>
+                                <button type="button" class="btn btn-primary flex-grow-1" id="returnAndRefundBtn">{{ __('sales.return_refund') }}</button>
                             @else
-                                <button type="button" class="btn btn-secondary flex-grow-1" disabled>Return already recorded</button>
+                                <button type="button" class="btn btn-secondary flex-grow-1" disabled>{{ __('sales.return_already_recorded') }}</button>
                             @endif
                         </div>
                     </div>
@@ -178,7 +178,7 @@
             }
             if (qty > maxQty) {
                 qty = maxQty;
-                alert('Return quantity cannot exceed available quantity (' + maxQty + ')');
+                alert(window.RNTranslate('common.client_return_quantity_cannot_exceed_available_quantity') + maxQty + ')');
             }
             input.value = String(qty);
             return qty;
@@ -286,7 +286,7 @@
                 calculateReturnAmounts();
                 if (!hasAnyReturnQty(form)) {
                     e.preventDefault();
-                    alert('Please select at least one item quantity to return.');
+                    alert(window.RNTranslate('common.client_please_select_at_least_one_item_quantity_to_return'));
                     return;
                 }
                 enableAllQtyForSubmit(form);
@@ -303,11 +303,11 @@
                     const finalAmount = totalReturnAmount + adjustAmount;
 
                     if (totalReturnAmount <= 0) {
-                        alert('Please select items to return');
+                        alert(window.RNTranslate('common.client_please_select_items_to_return'));
                         return;
                     }
 
-                    if (confirm('Return amount: ' + finalAmount.toFixed(2) + '\n\nProceed with return and refund?')) {
+                    if (confirm(window.RNTranslate('common.client_return_amount') + finalAmount.toFixed(2) + '\n\nProceed with return and refund?')) {
                         enableAllQtyForSubmit(form);
                         form.submit();
                     }

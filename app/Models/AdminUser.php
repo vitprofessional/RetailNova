@@ -13,7 +13,7 @@ class AdminUser extends Authenticatable
     protected $table = 'admin_users';
 
     protected $fillable = [
-        'fullName', 'sureName', 'storeName', 'mail', 'contactNumber', 'password', 'businessId', 'role', 'avatar'
+        'fullName', 'sureName', 'storeName', 'mail', 'contactNumber', 'password', 'businessId', 'role', 'avatar', 'preferred_locale'
     ];
 
 
@@ -43,6 +43,11 @@ class AdminUser extends Authenticatable
     {
         // Backward-compatible: treat the first created admin as platform owner.
         return $this->isSuperAdminRole() || $this->isFirstCreatedAdmin();
+    }
+
+    public function canManageSalesSettings(): bool
+    {
+        return $this->normalizedRole() === 'admin' || $this->hasSuperAdminPrivileges();
     }
 
     public static function superAdminExists(): bool

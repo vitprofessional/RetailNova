@@ -11,29 +11,29 @@
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
         <div class="header-title">
-          <h4 class="card-title">New Quotation</h4>
+          <h4 class="card-title">{{ __('common.new_quotation') }}</h4>
         </div>
-        <a class="btn btn-secondary btn-sm" href="{{ route('quotation.list') }}"><i class="las la-list mr-1"></i>Back to List</a>
+        <a class="btn btn-secondary btn-sm" href="{{ route('quotation.list') }}"><i class="las la-list mr-1"></i>{{ __('common.back_to_list') }}</a>
       </div>
       <div class="card-body">
         <form action="{{ route('quotation.store') }}" method="POST" id="quotationForm">
           @csrf
           <div class="row mb-3">
             <div class="col-md-4">
-              <label class="form-label">Date</label>
+              <label class="form-label">{{ __('common.date') }}</label>
               <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" />
             </div>
             <div class="col-md-4">
-              <label class="form-label">Customer</label>
+              <label class="form-label">{{ __('common.customer') }}</label>
               <select name="customer_id" class="form-control">
-                <option value="">Walking Customer</option>
+                <option value="">{{ __('common.walking_customer') }}</option>
                 @foreach($customers as $c)
                   <option value="{{ $c->id }}">{{ $c->name }}</option>
                 @endforeach
               </select>
             </div>
             <div class="col-md-4">
-              <label class="form-label">Validity (days)</label>
+              <label class="form-label">{{ __('common.validity_days') }}</label>
               <input type="number" name="validity_days" class="form-control" value="15" min="1" max="180" />
             </div>
           </div>
@@ -42,13 +42,13 @@
             <table class="table mb-0 table-bordered rounded-0 rn-table-pro" id="itemsTable">
               <thead>
                 <tr>
-                  <th style="width:30%">Product</th>
-                  <th>Description</th>
-                  <th style="width:10%" class="text-end">Qty</th>
-                  <th style="width:15%" class="text-end">Unit Price ({{ $currencySymbol }})</th>
-                  <th style="width:12%" class="text-end">Disc %</th>
-                  <th style="width:15%" class="text-end">Disc Amt ({{ $currencySymbol }})</th>
-                  <th style="width:15%" class="text-end">Line Total ({{ $currencySymbol }})</th>
+                  <th style="width:30%">{{ __('common.product') }}</th>
+                  <th>{{ __('common.description') }}</th>
+                  <th style="width:10%" class="text-end">{{ __('common.qty') }}</th>
+                  <th style="width:15%" class="text-end">{{ __('common.unit_price') }} ({{ $currencySymbol }})</th>
+                  <th style="width:12%" class="text-end">{{ __('common.disc') }}</th>
+                  <th style="width:15%" class="text-end">{{ __('common.disc_amt') }} ({{ $currencySymbol }})</th>
+                  <th style="width:15%" class="text-end">{{ __('common.line_total') }} ({{ $currencySymbol }})</th>
                   <th style="width:6%"></th>
                 </tr>
               </thead>
@@ -57,7 +57,7 @@
               <tfoot>
                 <tr>
                   <td colspan="8">
-                    <button type="button" class="btn btn-sm btn-primary" id="addItemRow">Add Item</button>
+                    <button type="button" class="btn btn-sm btn-primary" id="addItemRow">{{ __('common.add_item') }}</button>
                   </td>
                 </tr>
               </tfoot>
@@ -66,22 +66,22 @@
 
           <div class="row mb-2">
             <div class="col-md-8">
-              <label class="form-label">Notes</label>
+              <label class="form-label">{{ __('common.notes') }}</label>
               <textarea name="notes" class="form-control" rows="3"></textarea>
             </div>
             <div class="col-md-4">
               <table class="table table-sm mb-0">
-                <tr><th>Subtotal</th><td class="text-end" id="subtotal">0.00</td></tr>
-                <tr><th>Discount Total</th><td class="text-end" id="discountTotal">0.00</td></tr>
-                <tr><th>Grand Total</th><td class="text-end" id="grandTotal">0.00</td></tr>
+                <tr><th>{{ __('common.subtotal') }}</th><td class="text-end" id="subtotal">0.00</td></tr>
+                <tr><th>{{ __('common.discount_total') }}</th><td class="text-end" id="discountTotal">0.00</td></tr>
+                <tr><th>{{ __('common.grand_total') }}</th><td class="text-end" id="grandTotal">0.00</td></tr>
               </table>
             </div>
           </div>
 
-          
+
 
           <div>
-            <button type="submit" class="btn btn-success">Save Quotation</button>
+            <button type="submit" class="btn btn-success">{{ __('common.save_quotation') }}</button>
           </div>
         </form>
       </div>
@@ -101,13 +101,13 @@
     var tr = document.createElement('tr');
     tr.innerHTML = `
       <td><select name="items[product_id][]" class="form-control">${opts}</select></td>
-      <td><input type="text" name="items[description][]" class="form-control" placeholder="Optional" /></td>
+      <td><input type="text" name="items[description][]" class="form-control" placeholder="{{ __('common.optional') }}" /></td>
       <td><input type="number" name="items[qty][]" class="form-control text-end qty" value="1" min="1" /></td>
       <td><input type="number" name="items[unit_price][]" class="form-control text-end price" step="0.01" /></td>
       <td><input type="number" name="items[discount_percent][]" class="form-control text-end dperc" step="0.01" /></td>
       <td><input type="number" name="items[discount_amount][]" class="form-control text-end damt" step="0.01" /></td>
       <td class="text-end line">0.00</td>
-      <td><button type="button" class="btn btn-sm btn-danger del">Remove</button></td>
+      <td><button type="button" class="btn btn-sm btn-danger del">{{ __('common.remove') }}</button></td>
     `;
     document.getElementById('quoteItems').appendChild(tr);
   }

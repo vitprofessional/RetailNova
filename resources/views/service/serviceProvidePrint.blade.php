@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Print Provided Service</title>
+    <title>{{ __('common.print_provided_service') }}</title>
     <style>
         * {
             margin: 0;
@@ -81,27 +81,28 @@
             }
         }
     </style>
+@include('partials.localization')
 </head>
 <body onload="window.print()">
     <div class="print-container">
         <div class="header-section">
-            <h2>Provided Service Record</h2>
-            <div class="header-info">Service ID: {{ $row->id }}</div>
+            <h2>{{ __('common.provided_service_record') }}</h2>
+            <div class="header-info">{{ __('common.service_id') }}: {{ $row->id }}</div>
         </div>
-        
+
         <table>
-            <tr><th>Customer</th><td>{{ $row->customer_name ?? 'Customer #'.$row->customerName }}</td></tr>
-            <tr><th>Service</th><td>{{ $row->serviceName }}</td></tr>
-            <tr><th>Quantity</th><td>{{ $row->qty ?? '-' }}</td></tr>
-            <tr><th>Rate</th><td>{{ isset($row->rate) ? '$' . number_format($row->rate, 2) : '-' }}</td></tr>
-            <tr><th>Amount</th><td class="amount-highlight">${{ number_format($row->amount ?? (($row->rate ?? 0)*($row->qty ?? 1)), 2) }}</td></tr>
-            <tr><th>Notes</th><td>{{ $row->note ?? '-' }}</td></tr>
-            <tr><th>Date</th><td>{{ optional($row->created_at)->format('M d, Y - h:i A') }}</td></tr>
+            <tr><th>{{ __('common.customer') }}</th><td>{{ $row->customer_name ?? 'Customer #'.$row->customerName }}</td></tr>
+            <tr><th>{{ __('common.service') }}</th><td>{{ $row->serviceName }}</td></tr>
+            <tr><th>{{ __('common.quantity') }}</th><td>{{ $row->qty ?? '-' }}</td></tr>
+            <tr><th>{{ __('common.rate') }}</th><td>{{ isset($row->rate) ? '$' . number_format($row->rate, 2) : '-' }}</td></tr>
+            <tr><th>{{ __('common.amount') }}</th><td class="amount-highlight">${{ number_format($row->amount ?? (($row->rate ?? 0)*($row->qty ?? 1)), 2) }}</td></tr>
+            <tr><th>{{ __('common.notes') }}</th><td>{{ $row->note ?? '-' }}</td></tr>
+            <tr><th>{{ __('common.date') }}</th><td>{{ optional($row->created_at)->format('M d, Y - h:i A') }}</td></tr>
         </table>
-        
+
         <div class="footer-section">
-            <p>Printed on {{ now()->format('F d, Y') }} at {{ now()->format('h:i A') }}</p>
-            <p style="margin-top: 10px; font-size: 11px;">This is a computer-generated document.</p>
+            <p>{{ __('common.printed_on') }} {{ now()->format('F d, Y') }} at {{ now()->format('h:i A') }}</p>
+            <p style="margin-top: 10px; font-size: 11px;">{{ __('common.this_is_a_computer_generated_document') }}</p>
         </div>
     </div>
 </body>

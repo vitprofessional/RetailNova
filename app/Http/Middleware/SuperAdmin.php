@@ -29,10 +29,10 @@ class SuperAdmin
         } else {
             // For AJAX/JSON requests return a 401 JSON response instead of redirecting
             if($request->ajax() || $request->expectsJson()){
-                return response()->json(['error' => 'Please login to continue'], 401);
+                return response()->json(['error' => __('common.api_please_login_to_continue')], 401);
             }
 
-            return redirect(route('userLogin'))->with('error','Please login to continue');
+            return redirect(route('userLogin'))->with('error',__('common.please_login_to_continue'));
         }
         return $next($request);
     }

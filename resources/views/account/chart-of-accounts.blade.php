@@ -1,6 +1,6 @@
 @extends('include')
 
-@section('backTitle')Chart of Accounts @endsection
+@section('backTitle'){{ __('common.heading_chart_of_accounts') }}@endsection
 
 @section('container')
 <div class="col-12">
@@ -9,31 +9,31 @@
 <div class="card">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="mb-0">Chart of Accounts</h4>
+            <h4 class="mb-0">{{ __('common.chart_of_accounts') }}</h4>
             <a href="{{ route('account.create') }}" class="btn btn-primary btn-sm">
-                <i class="las la-plus"></i> Add New Account
+                <i class="las la-plus"></i> {{ __('common.add_new_account') }}
             </a>
         </div>
 
         {{-- Filters --}}
         <div class="row mb-4">
             <div class="col-md-4">
-                <label>Account Type</label>
+                <label>{{ __('common.account_type') }}</label>
                 <select class="form-control" id="filter-type">
-                    <option value="">All Types</option>
-                    <option value="asset">Asset</option>
-                    <option value="liability">Liability</option>
-                    <option value="equity">Equity</option>
-                    <option value="revenue">Revenue</option>
-                    <option value="expense">Expense</option>
+                    <option value="">{{ __('common.all_types') }}</option>
+                    <option value="asset">{{ __('common.asset') }}</option>
+                    <option value="liability">{{ __('common.liability') }}</option>
+                    <option value="equity">{{ __('common.equity') }}</option>
+                    <option value="revenue">{{ __('common.revenue') }}</option>
+                    <option value="expense">{{ __('common.expense') }}</option>
                 </select>
             </div>
             <div class="col-md-4">
-                <label>Status</label>
+                <label>{{ __('common.status') }}</label>
                 <select class="form-control" id="filter-status">
-                    <option value="">All Status</option>
-                    <option value="1">Active</option>
-                    <option value="0">Inactive</option>
+                    <option value="">{{ __('common.all_status') }}</option>
+                    <option value="1">{{ __('common.active') }}</option>
+                    <option value="0">{{ __('common.inactive') }}</option>
                 </select>
             </div>
         </div>
@@ -43,14 +43,14 @@
                         <table class="data-tables table mb-0 table-bordered rn-table-pro" id="accounts-table">
                             <thead class="bg-white text-uppercase">
                                 <tr>
-                                    <th>Code</th>
-                                    <th>Account Name</th>
-                                    <th>Type</th>
-                                    <th>Parent Account</th>
-                                    <th>Opening Balance</th>
-                                    <th>Current Balance</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th>{{ __('common.code') }}</th>
+                                    <th>{{ __('common.account_name') }}</th>
+                                    <th>{{ __('common.type') }}</th>
+                                    <th>{{ __('common.parent_account') }}</th>
+                                    <th>{{ __('common.opening_balance') }}</th>
+                                    <th>{{ __('common.current_balance') }}</th>
+                                    <th>{{ __('common.status') }}</th>
+                                    <th>{{ __('common.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -78,19 +78,19 @@
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a href="{{ route('account.ledger', $account->id) }}" 
-                                               class="btn btn-sm btn-info" 
-                                               title="View Ledger">
+                                            <a href="{{ route('account.ledger', $account->id) }}"
+                                               class="btn btn-sm btn-info"
+                                               title="{{ __('common.view_ledger') }}">
                                                 <i class="las la-book"></i>
                                             </a>
-                                            <a href="{{ route('account.edit', $account->id) }}" 
-                                               class="btn btn-sm btn-primary" 
-                                               title="Edit">
+                                            <a href="{{ route('account.edit', $account->id) }}"
+                                               class="btn btn-sm btn-primary"
+                                               title="{{ __('common.edit') }}">
                                                 <i class="las la-edit"></i>
                                             </a>
-                                            <a href="{{ route('account.delete', $account->id) }}" 
-                                               class="btn btn-sm btn-danger" 
-                                               title="Delete"
+                                            <a href="{{ route('account.delete', $account->id) }}"
+                                               class="btn btn-sm btn-danger"
+                                               title="{{ __('common.delete') }}"
                                                onclick="return confirm('Are you sure you want to delete this account?')">
                                                 <i class="las la-trash"></i>
                                             </a>
@@ -99,7 +99,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="8" class="text-center">No accounts found. <a href="{{ route('account.create') }}">Create your first account</a></td>
+                                    <td colspan="8" class="text-center">{{ __('common.no_accounts_found') }} <a href="{{ route('account.create') }}">{{ __('common.create_your_first_account') }}</a></td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -109,12 +109,12 @@
             {{-- Summary Statistics --}}
             <div class="row mt-4">
                 <div class="col-md-12">
-                    <h5>Account Summary by Type</h5>
+                    <h5>{{ __('common.account_summary_by_type') }}</h5>
                 </div>
                 <div class="col-md-4">
                     <div class="card bg-success text-white">
                         <div class="card-body">
-                            <h6>Total Assets</h6>
+                            <h6>{{ __('common.total_assets') }}</h6>
                             <h3>{{ number_format($accounts->where('account_type', 'asset')->sum('current_balance'), 2) }}</h3>
                         </div>
                     </div>
@@ -122,7 +122,7 @@
                 <div class="col-md-4">
                     <div class="card bg-warning text-white">
                         <div class="card-body">
-                            <h6>Total Liabilities</h6>
+                            <h6>{{ __('common.total_liabilities') }}</h6>
                             <h3>{{ number_format($accounts->where('account_type', 'liability')->sum('current_balance'), 2) }}</h3>
                         </div>
                     </div>
@@ -130,7 +130,7 @@
                 <div class="col-md-4">
                     <div class="card bg-info text-white">
                         <div class="card-body">
-                            <h6>Total Equity</h6>
+                            <h6>{{ __('common.total_equity') }}</h6>
                             <h3>{{ number_format($accounts->where('account_type', 'equity')->sum('current_balance'), 2) }}</h3>
                         </div>
                     </div>

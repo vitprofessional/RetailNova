@@ -67,10 +67,10 @@ class AccountManagementController extends Controller
             
             $account = Account::create($validated);
 
-            Alert::success('Success!', 'Account created successfully');
+            Alert::success(__('common.notification_success'), __('common.notification_account_created_successfully'));
             return redirect()->route('account.chart');
         } catch (\Exception $e) {
-            Alert::error('Failed!', 'Account creation failed: ' . $e->getMessage());
+            Alert::error(__('common.notification_failed'), __('common.notification_account_creation_failed') . $e->getMessage());
             return back()->withInput();
         }
     }
@@ -108,10 +108,10 @@ class AccountManagementController extends Controller
         try {
             $account->update($validated);
 
-            Alert::success('Success!', 'Account updated successfully');
+            Alert::success(__('common.notification_success'), __('common.notification_account_updated_successfully'));
             return redirect()->route('account.chart');
         } catch (\Exception $e) {
-            Alert::error('Failed!', 'Account update failed: ' . $e->getMessage());
+            Alert::error(__('common.notification_failed'), __('common.notification_account_update_failed') . $e->getMessage());
             return back()->withInput();
         }
     }
@@ -126,16 +126,16 @@ class AccountManagementController extends Controller
             
             // Check if account has transactions
             if ($account->transactions()->count() > 0) {
-                Alert::warning('Warning!', 'Cannot delete account with existing transactions');
+                Alert::warning(__('common.notification_warning'), __('common.notification_cannot_delete_account_with_existing_transactions'));
                 return back();
             }
 
             $account->delete();
 
-            Alert::success('Success!', 'Account deleted successfully');
+            Alert::success(__('common.notification_success'), __('common.notification_account_deleted_successfully'));
             return redirect()->route('account.chart');
         } catch (\Exception $e) {
-            Alert::error('Failed!', 'Account deletion failed: ' . $e->getMessage());
+            Alert::error(__('common.notification_failed'), __('common.notification_account_deletion_failed') . $e->getMessage());
             return back();
         }
     }
@@ -249,11 +249,11 @@ class AccountManagementController extends Controller
 
             DB::commit();
 
-            Alert::success('Success!', 'Transaction recorded successfully');
+            Alert::success(__('common.notification_success'), __('common.notification_transaction_recorded_successfully'));
             return redirect()->route('account.transactions');
         } catch (\Exception $e) {
             DB::rollBack();
-            Alert::error('Failed!', 'Transaction failed: ' . $e->getMessage());
+            Alert::error(__('common.notification_failed'), __('common.notification_transaction_failed') . $e->getMessage());
             return back()->withInput();
         }
     }

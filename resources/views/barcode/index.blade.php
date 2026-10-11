@@ -1,5 +1,5 @@
 @extends('include')
-@section('backTitle') Product Barcodes @endsection
+@section('backTitle'){{ __('common.heading_product_barcodes') }}@endsection
 @section('container')
 
 <div class="col-12">
@@ -11,14 +11,14 @@
         <div class="card shadow-sm">
             <div class="card-header bg-gradient py-3 d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">
-                    <i class="las la-barcode mr-2"></i>Manage Product Barcodes
+                    <i class="las la-barcode mr-2"></i>{{ __('common.manage_product_barcodes') }}
                 </h5>
                 <div>
                     <a href="{{ route('generateAllMissingBarcodes') }}" class="btn btn-sm btn-warning mr-2" onclick="return confirm('Generate barcodes for all products without one?')">
-                        <i class="las la-sync-alt mr-1"></i>Generate Missing Barcodes
+                        <i class="las la-sync-alt mr-1"></i>{{ __('common.generate_missing_barcodes') }}
                     </a>
-                    <button type="submit" form="bulkPrintForm" class="btn btn-sm btn-primary" title="Print selected product barcodes">
-                        <i class="las la-print mr-1"></i>Print Selected
+                    <button type="submit" form="bulkPrintForm" class="btn btn-sm btn-primary" title="{{ __('common.print_selected_product_barcodes') }}">
+                        <i class="las la-print mr-1"></i>{{ __('common.print_selected') }}
                     </button>
                 </div>
             </div>
@@ -26,7 +26,7 @@
                 <div class="d-flex flex-wrap align-items-end mb-3" style="gap:.5rem;">
                     <div class="rn-search-box" style="min-width:240px;">
                         <span class="rn-search-icon"><i class="las la-search"></i></span>
-                        <input type="text" class="rn-search-input rn-filter-input" placeholder="Search by product name or barcode..." data-table-target="barcodeTable">
+                        <input type="text" class="rn-search-input rn-filter-input" placeholder="{{ __('common.search_by_product_name_or_barcode') }}" data-table-target="barcodeTable">
                         <button class="rn-search-clear">&times;</button>
                     </div>
                 </div>
@@ -40,13 +40,13 @@
                         <thead class="bg-light">
                             <tr>
                                 <th style="width: 5%">
-                                    <input type="checkbox" id="selectAllProducts" title="Select all products" />
+                                    <input type="checkbox" id="selectAllProducts" title="{{ __('common.select_all_products') }}" />
                                 </th>
                                 <th style="width: 5%">#</th>
-                                <th>Product Name</th>
-                                <th style="width: 20%">Barcode</th>
-                                <th style="width: 15%">Status</th>
-                                <th style="width: 20%">Actions</th>
+                                <th>{{ __('common.product_name') }}</th>
+                                <th style="width: 20%">{{ __('common.barcode') }}</th>
+                                <th style="width: 15%">{{ __('common.status') }}</th>
+                                <th style="width: 20%">{{ __('common.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -63,27 +63,27 @@
                                     @if($product->barCode)
                                     <code class="bg-info text-white px-2 py-1 rounded">{{ $product->barCode }}</code>
                                     @else
-                                    <span class="badge badge-secondary">No Barcode</span>
+                                    <span class="badge badge-secondary">{{ __('common.no_barcode') }}</span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($product->barCode)
-                                    <span class="badge badge-success">Active</span>
+                                    <span class="badge badge-success">{{ __('common.active') }}</span>
                                     @else
-                                    <span class="badge badge-warning">Pending</span>
+                                    <span class="badge badge-warning">{{ __('common.pending') }}</span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($product->barCode)
-                                    <a href="{{ route('barcode.generate', $product->id) }}" class="btn btn-sm btn-info" title="Display Barcode">
-                                        <i class="las la-eye mr-1"></i>View
+                                    <a href="{{ route('barcode.generate', $product->id) }}" class="btn btn-sm btn-info" title="{{ __('common.display_barcode') }}">
+                                        <i class="las la-eye mr-1"></i>{{ __('common.view') }}
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-primary edit-barcode-btn" data-product-id="{{ $product->id }}" data-barcode="{{ $product->barCode }}" title="Edit Barcode">
-                                        <i class="las la-edit mr-1"></i>Edit
+                                    <button type="button" class="btn btn-sm btn-primary edit-barcode-btn" data-product-id="{{ $product->id }}" data-barcode="{{ $product->barCode }}" title="{{ __('common.edit_barcode') }}">
+                                        <i class="las la-edit mr-1"></i>{{ __('common.edit') }}
                                     </button>
                                     @else
-                                    <a href="{{ route('barcode.generate', $product->id) }}" class="btn btn-sm btn-success" title="Generate Barcode">
-                                        <i class="las la-plus mr-1"></i>Generate
+                                    <a href="{{ route('barcode.generate', $product->id) }}" class="btn btn-sm btn-success" title="{{ __('common.generate_barcode') }}">
+                                        <i class="las la-plus mr-1"></i>{{ __('common.generate') }}
                                     </a>
                                     @endif
                                 </td>
@@ -92,7 +92,7 @@
                             <tr>
                                 <td colspan="6" class="text-center text-muted py-4">
                                     <i class="las la-inbox" style="font-size: 40px; opacity: 0.5;"></i>
-                                    <p class="mt-2">No products available</p>
+                                    <p class="mt-2">{{ __('common.no_products_available') }}</p>
                                 </td>
                             </tr>
                             @endforelse
@@ -101,9 +101,9 @@
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-3">
-                    <small class="text-muted">Select products and click Print Selected</small>
+                    <small class="text-muted">{{ __('common.select_products_and_click_print_selected') }}</small>
                     <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="las la-print mr-1"></i>Print Selected
+                        <i class="las la-print mr-1"></i>{{ __('common.print_selected') }}
                     </button>
                 </div>
                 </form>
@@ -117,7 +117,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Product Barcode</h5>
+                <h5 class="modal-title">{{ __('common.edit_product_barcode') }}</h5>
                 <button type="button" class="close" data-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -126,18 +126,18 @@
                 @csrf
                 <div class="modal-body">
                     <div class="form-group">
-                        <label>Product Name</label>
+                        <label>{{ __('common.product_name') }}</label>
                         <input type="text" class="form-control" id="productName" disabled />
                     </div>
                     <div class="form-group">
-                        <label>Barcode <span class="text-danger">*</span></label>
+                        <label>{{ __('common.barcode') }} <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="newBarcode" name="barcode" required />
-                        <small class="text-muted">Enter a unique barcode for this product</small>
+                        <small class="text-muted">{{ __('common.enter_a_unique_barcode_for_this_product') }}</small>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Barcode</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('common.save_barcode') }}</button>
                 </div>
             </form>
         </div>
@@ -196,7 +196,7 @@
             const selected = Array.from(productCheckboxes).filter(checkbox => checkbox.checked);
             if (!selected.length) {
                 e.preventDefault();
-                alert('Please select at least one product to print.');
+                alert(window.RNTranslate('common.client_please_select_at_least_one_product_to_print'));
             }
         });
     }
@@ -230,7 +230,7 @@
         const newBarcode = document.getElementById('newBarcode').value.trim();
 
         if (!newBarcode) {
-            alert('Please enter a barcode');
+            alert(window.RNTranslate('common.client_please_enter_a_barcode'));
             return;
         }
 
@@ -250,14 +250,14 @@
             const data = await response.json();
 
             if (data.status === 'success') {
-                alert('Barcode updated successfully!');
+                alert(window.RNTranslate('common.client_barcode_updated_successfully'));
                 location.reload();
             } else {
-                alert('Error: ' + (data.message || 'Failed to update barcode'));
+                alert(window.RNTranslate('common.client_error') + (data.message || window.RNTranslate('common.client_failed_to_update_barcode')));
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error updating barcode');
+            alert(window.RNTranslate('common.client_error_updating_barcode'));
         }
     });
 })();

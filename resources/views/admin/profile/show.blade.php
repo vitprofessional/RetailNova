@@ -1,9 +1,9 @@
 @extends('include')
-@section('backTitle') Admin Profile @endsection
+@section('backTitle'){{ __('common.heading_admin_profile') }}@endsection
 @section('container')
 <div class="card">
     <div class="card-body">
-        <h4>My Profile</h4>
+        <h4>{{ __('common.my_profile') }}</h4>
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
@@ -13,14 +13,14 @@
             </div>
             <div class="col-md-9">
                 <table class="table table-borderless">
-                    <tr><th>Full names</th><td>{{ $admin->fullName }}</td></tr>
-                    <tr><th>Sure name</th><td>{{ $admin->sureName }}</td></tr>
-                    <tr><th>Email</th><td>{{ $admin->mail }}</td></tr>
-                    <tr><th>Contact</th><td>{{ $admin->contactNumber }}</td></tr>
+                    <tr><th>{{ __('common.full_names') }}</th><td>{{ $admin->fullName }}</td></tr>
+                    <tr><th>{{ __('common.sure_name') }}</th><td>{{ $admin->sureName }}</td></tr>
+                    <tr><th>{{ __('common.email') }}</th><td>{{ $admin->mail }}</td></tr>
+                    <tr><th>{{ __('common.contact') }}</th><td>{{ $admin->contactNumber }}</td></tr>
                 </table>
 
-                <a href="{{ route('admin.profile.edit') }}" class="btn btn-primary">Edit Profile</a>
-                <a href="{{ route('admin.profile.edit') }}#change-password" class="btn btn-secondary">Change Password</a>
+                <a href="{{ route('admin.profile.edit') }}" class="btn btn-primary">{{ __('common.edit_profile') }}</a>
+                <a href="{{ route('admin.profile.edit') }}#change-password" class="btn btn-secondary">{{ __('common.change_password') }}</a>
             </div>
         </div>
     </div>

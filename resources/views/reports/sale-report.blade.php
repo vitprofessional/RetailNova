@@ -1,7 +1,5 @@
 @extends('include')
-@section('backTitle')
-Sale Report
-@endsection
+@section('backTitle'){{ __('common.heading_sale_report') }}@endsection
 @section('container')
 <div class="row">
     <div class="col-lg-12">
@@ -9,34 +7,34 @@ Sale Report
             <div class="card-body p-0 mt-lg-2 mt-0">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h3 class="mb-3">Sale Report</h3>
-                        <p class="mb-0">Detailed sales transactions and analysis.</p>
+                        <h3 class="mb-3">{{ __('sales.sale_report') }}</h3>
+                        <p class="mb-0">{{ __('sales.detailed_sales_transactions_and_analysis') }}</p>
                     </div>
                     <a href="{{ route('reports.index') }}" class="btn btn-secondary">
-                        <i class="ri-arrow-left-line"></i> Back to Reports
+                        <i class="ri-arrow-left-line"></i> {{ __('sales.back_to_reports') }}
                     </a>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Filters -->
     <div class="col-lg-12 mb-3">
         <div class="card">
             <div class="card-body">
                 <form method="GET" action="{{ route('reports.sales') }}" class="row align-items-end">
                     <div class="col-md-3">
-                        <label class="form-label">Start Date</label>
+                        <label class="form-label">{{ __('sales.start_date') }}</label>
                         <input type="date" name="start_date" class="form-control" value="{{ $startDate }}">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">End Date</label>
+                        <label class="form-label">{{ __('sales.end_date') }}</label>
                         <input type="date" name="end_date" class="form-control" value="{{ $endDate }}">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Customer</label>
+                        <label class="form-label">{{ __('sales.customer') }}</label>
                         <select name="customer_id" class="form-control">
-                            <option value="">All Customers</option>
+                            <option value="">{{ __('sales.all_customers') }}</option>
                             @foreach($customers as $customer)
                                 <option value="{{ $customer->id }}" {{ $customerId == $customer->id ? 'selected' : '' }}>
                                     {{ $customer->name }}
@@ -46,46 +44,46 @@ Sale Report
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="ri-filter-3-line"></i> Filter
+                            <i class="ri-filter-3-line"></i> {{ __('sales.filter') }}
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    
+
     <!-- Summary Cards -->
     <div class="col-lg-12">
         <div class="row">
             <div class="col-lg-6">
                 <div class="card card-block card-stretch card-height bg-success">
                     <div class="card-body text-white">
-                        <h6 class="mb-2">Total Sales</h6>
+                        <h6 class="mb-2">{{ __('sales.total_sales') }}</h6>
                         <h3>@money($totalSales)</h3>
-                        <p class="mb-0">{{ $sales->total() }} Transactions</p>
+                        <p class="mb-0">{{ $sales->total() }} {{ __('common.transactions') }}</p>
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-lg-6">
                 <div class="card card-block card-stretch card-height bg-primary">
                     <div class="card-body text-white">
-                        <h6 class="mb-2">Total Profit</h6>
+                        <h6 class="mb-2">{{ __('sales.total_profit') }}</h6>
                         <h3>@money($totalProfit)</h3>
-                        <p class="mb-0">From Sales</p>
+                        <p class="mb-0">{{ __('sales.from_sales') }}</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Sales Table -->
     <div class="col-lg-12 mt-3">
         <div class="card">
             <div class="card-header d-flex justify-content-between">
-                <h5>Sales Transactions</h5>
+                <h5>{{ __('sales.sales_transactions') }}</h5>
                 <button onclick="window.print()" class="btn btn-sm btn-primary">
-                    <i class="ri-printer-line"></i> Print
+                    <i class="ri-printer-line"></i> {{ __('sales.print') }}
                 </button>
             </div>
             <div class="card-body">
@@ -93,14 +91,14 @@ Sale Report
                     <table class="table table-bordered table-hover rn-table-pro">
                         <thead class="bg-light">
                             <tr>
-                                <th>Date</th>
-                                <th>Invoice No</th>
-                                <th>Customer</th>
-                                <th class="text-right">Total</th>
-                                <th class="text-right">Discount</th>
-                                <th class="text-right">Grand Total</th>
-                                <th class="text-right">Profit</th>
-                                <th>Payment Status</th>
+                                <th>{{ __('sales.date') }}</th>
+                                <th>{{ __('sales.invoice_no') }}</th>
+                                <th>{{ __('sales.customer') }}</th>
+                                <th class="text-right">{{ __('sales.total') }}</th>
+                                <th class="text-right">{{ __('sales.discount') }}</th>
+                                <th class="text-right">{{ __('sales.grand_total') }}</th>
+                                <th class="text-right">{{ __('sales.profit') }}</th>
+                                <th>{{ __('sales.payment_status') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -118,24 +116,24 @@ Sale Report
                                             $curDue = floatval($sale->curDue ?? $sale->invoiceDue ?? 0);
                                         @endphp
                                         @if($curDue <= 0)
-                                            <span class="badge bg-success">Paid</span>
+                                            <span class="badge bg-success">{{ __('sales.paid') }}</span>
                                         @elseif($sale->paidAmount > 0)
-                                            <span class="badge bg-warning">Partial</span>
+                                            <span class="badge bg-warning">{{ __('sales.partial') }}</span>
                                         @else
-                                            <span class="badge bg-danger">Unpaid</span>
+                                            <span class="badge bg-danger">{{ __('sales.unpaid') }}</span>
                                         @endif
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center">No sales found for the selected period.</td>
+                                    <td colspan="8" class="text-center">{{ __('sales.no_sales_found_for_the_selected_period') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>
                         @if($sales->count() > 0)
                             <tfoot class="bg-light">
                                 <tr>
-                                    <th colspan="5" class="text-right">Total:</th>
+                                    <th colspan="5" class="text-right">{{ __('common.total') }}:</th>
                                     <th class="text-right">@money($totalSales)</th>
                                     <th class="text-right text-success">@money($totalProfit)</th>
                                     <th></th>
@@ -144,7 +142,7 @@ Sale Report
                         @endif
                     </table>
                 </div>
-                
+
                 <div class="mt-3">
                     {{ $sales->appends(request()->query())->links() }}
                 </div>

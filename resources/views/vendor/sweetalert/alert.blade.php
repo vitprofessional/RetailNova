@@ -20,7 +20,7 @@
 
                 if (confirmDeleteElement) {
                     event.preventDefault();
-                    Swal.fire({!! Session::pull('alert.delete') !!}).then(function(result) {
+                    Swal.fire(Object.assign({}, {!! Session::pull('alert.delete') !!}, {confirmButtonText: {{ Illuminate\Support\Js::from(__('common.delete')) }}, cancelButtonText: {{ Illuminate\Support\Js::from(__('common.cancel')) }}})).then(function(result) {
                         if (result.isConfirmed) {
                             var form = document.createElement('form');
                             form.action = confirmDeleteElement.href;
@@ -37,7 +37,7 @@
             });
 
             @if (Session::has('alert.config'))
-                Swal.fire({!! Session::pull('alert.config') !!});
+                Swal.fire(Object.assign({}, {!! Session::pull('alert.config') !!}, {confirmButtonText: {{ Illuminate\Support\Js::from(__('common.ok')) }}, cancelButtonText: {{ Illuminate\Support\Js::from(__('common.cancel')) }}}));
             @endif
         </script>
     @endif

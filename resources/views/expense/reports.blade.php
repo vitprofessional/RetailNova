@@ -1,6 +1,6 @@
 @extends('include')
 
-@section('backTitle')Expense Reports @endsection
+@section('backTitle'){{ __('common.heading_expense_reports') }}@endsection
 
 @section('container')
 <div class="col-12">
@@ -8,30 +8,30 @@
 </div>
 <div class="card">
     <div class="card-body">
-        <h4 class="mb-4">Expense Reports</h4>
+        <h4 class="mb-4">{{ __('reports.expense_reports') }}</h4>
 
         <form method="GET" action="{{ route('expense.reports') }}">
             <div class="row mb-4">
                                     <div class="col-md-3">
-                                        <label>Start Date</label>
+                                        <label>{{ __('reports.start_date') }}</label>
                                         <input type="date" class="form-control" name="start_date" value="{{ $startDate }}">
                                     </div>
                                     <div class="col-md-3">
-                                        <label>End Date</label>
+                                        <label>{{ __('reports.end_date') }}</label>
                                         <input type="date" class="form-control" name="end_date" value="{{ $endDate }}">
                                     </div>
                                     <div class="col-md-3">
-                                        <label>Group By</label>
+                                        <label>{{ __('reports.group_by') }}</label>
                                         <select class="form-control" name="group_by">
-                                            <option value="category" {{ $groupBy == 'category' ? 'selected' : '' }}>Category</option>
-                                            <option value="payment_method" {{ $groupBy == 'payment_method' ? 'selected' : '' }}>Payment Method</option>
-                                            <option value="date" {{ $groupBy == 'date' ? 'selected' : '' }}>Date</option>
+                                            <option value="category" {{ $groupBy == 'category' ? 'selected' : '' }}>{{ __('reports.category') }}</option>
+                                            <option value="payment_method" {{ $groupBy == 'payment_method' ? 'selected' : '' }}>{{ __('reports.payment_method') }}</option>
+                                            <option value="date" {{ $groupBy == 'date' ? 'selected' : '' }}>{{ __('reports.date') }}</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3">
                                         <label>&nbsp;</label><br>
-                                        <button type="submit" class="btn btn-primary"><i class="las la-chart-bar"></i> Generate</button>
-                                        <button type="button" class="btn btn-print" onclick="window.print()"><i class="las la-print"></i> Print</button>
+                                        <button type="submit" class="btn btn-primary"><i class="las la-chart-bar"></i> {{ __('reports.generate') }}</button>
+                                        <button type="button" class="btn btn-print" onclick="window.print()"><i class="las la-print"></i> {{ __('reports.print') }}</button>
                                     </div>
                                 </div>
                             </form>
@@ -39,7 +39,7 @@
                             <hr>
 
                             <div class="alert alert-info">
-                                <strong>Total Expenses:</strong> {{ number_format($totalExpense, 2) }}
+                                <strong>{{ __('reports.total_expenses') }}:</strong> {{ number_format($totalExpense, 2) }}
                             </div>
 
                             <div class="table-responsive">
@@ -47,14 +47,14 @@
                                     <thead class="thead-dark">
                                         <tr>
                                             @if($groupBy == 'category')
-                                                <th>Category</th>
+                                                <th>{{ __('reports.category') }}</th>
                                             @elseif($groupBy == 'payment_method')
-                                                <th>Payment Method</th>
+                                                <th>{{ __('reports.payment_method') }}</th>
                                             @elseif($groupBy == 'date')
-                                                <th>Date</th>
+                                                <th>{{ __('reports.date') }}</th>
                                             @endif
-                                            <th class="text-right">Total Amount</th>
-                                            <th class="text-right">Percentage</th>
+                                            <th class="text-right">{{ __('reports.total_amount') }}</th>
+                                            <th class="text-right">{{ __('reports.percentage') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -76,7 +76,7 @@
                                     </tbody>
                                     <tfoot class="font-weight-bold">
                                         <tr>
-                                            <td class="text-right">Total:</td>
+                                            <td class="text-right">{{ __('common.total') }}:</td>
                                             <td class="text-right">{{ number_format($totalExpense, 2) }}</td>
                                             <td class="text-right">100%</td>
                                         </tr>

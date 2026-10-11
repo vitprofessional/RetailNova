@@ -1,4 +1,4 @@
-@extends('include') @section('backTitle') damage product list @endsection @section('container')
+@extends('include') @section('backTitle'){{ __('common.heading_damage_product_list') }}@endsection @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -7,31 +7,31 @@
         <div class="card">
             <div class="card-body">
                 <div class="col-12 p-0 mt-0 mb-4">
-                    <h4>Damage Product List</h4>
+                    <h4>{{ __('inventory.damage_product_list') }}</h4>
                 </div>
                 @include('partials.bulk-actions', ['deleteRoute' => 'damageProducts.bulkDelete', 'entity' => 'Damage Records'])
                 <div class="rounded mb-2 table-responsive product-table">
                     <div class="rn-search-box rn-col-compact" style="min-width:240px;">
                         <span class="rn-search-icon"><i class="las la-search"></i></span>
-                        <input type="text" class="rn-search-input rn-filter-input" placeholder="Search..." data-table-target="damageTable">
+                        <input type="text" class="rn-search-input rn-filter-input" placeholder="{{ __('common.search') }}" data-table-target="damageTable">
                         <button class="rn-search-clear">&times;</button>
                     </div>
                     <div class="d-flex mb-3 align-items-center flex-wrap" style="gap:.5rem;">
                         <div>
-                            <label class="mb-0">Product</label>
+                            <label class="mb-0">{{ __('inventory.product') }}</label>
                             <select class="form-control rn-filter-input" data-table-target="damageTable" data-filter-for="product" style="min-width:200px;">
-                                <option value="">All products</option>
+                                <option value="">{{ __('inventory.all_products') }}</option>
                                 @foreach(($productList ?? []) as $p)
                                     <option value="{{ strtolower($p->name) }}">{{ $p->name }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div>
-                            <label class="mb-0">From</label>
+                            <label class="mb-0">{{ __('inventory.from') }}</label>
                             <input type="date" class="form-control rn-filter-input" data-table-target="damageTable" data-filter-date="from">
                         </div>
                         <div>
-                            <label class="mb-0">To</label>
+                            <label class="mb-0">{{ __('inventory.to') }}</label>
                             <input type="date" class="form-control rn-filter-input" data-table-target="damageTable" data-filter-date="to">
                         </div>
                     </div>
@@ -44,12 +44,12 @@
                                         <label for="selectAllDamage" class="mb-0"></label>
                                     </div>
                                 </th>
-                                <th>Reference</th>
-                                <th>Product Name</th>
-                                <th>Total</th>
-                                <th>Created By</th>
-                                <th>Date</th>
-                                <th>Print</th>
+                                <th>{{ __('inventory.reference') }}</th>
+                                <th>{{ __('inventory.product_name') }}</th>
+                                <th>{{ __('inventory.total') }}</th>
+                                <th>{{ __('inventory.created_by') }}</th>
+                                <th>{{ __('inventory.date') }}</th>
+                                <th>{{ __('inventory.print') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -67,14 +67,14 @@
                                 <td>{{ $d->admin ? $d->admin->name : ($d->admin_id ? 'Admin #'.$d->admin_id : '-') }}</td>
                                 <td>{{ \Carbon\Carbon::parse($d->date)->format('Y-m-d') }}</td>
                                 <td class="list-action">
-                                    <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title="View" href="{{ route('damageProductView', $d->id) }}"><i class="ri-eye-line mr-0"></i></a>
-                                    <a class="badge badge-primary mr-2" data-toggle="tooltip" data-placement="top" title="Print" href="{{ route('damageProductPrint', $d->id) }}" target="_blank"><i class="ri-printer-line mr-0"></i></a>
-                                    <a class="badge badge-danger" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('damageProductDelete', $d->id) }}"><i class="ri-delete-bin-line mr-0"></i></a>
+                                    <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title="{{ __('inventory.view') }}" href="{{ route('damageProductView', $d->id) }}"><i class="ri-eye-line mr-0"></i></a>
+                                    <a class="badge badge-primary mr-2" data-toggle="tooltip" data-placement="top" title="{{ __('inventory.print') }}" href="{{ route('damageProductPrint', $d->id) }}" target="_blank"><i class="ri-printer-line mr-0"></i></a>
+                                    <a class="badge badge-danger" data-toggle="tooltip" data-placement="top" title="{{ __('inventory.delete') }}" href="{{ route('damageProductDelete', $d->id) }}"><i class="ri-delete-bin-line mr-0"></i></a>
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="text-center">No damage records found.</td>
+                                <td colspan="7" class="text-center">{{ __('inventory.no_damage_records_found') }}</td>
                             </tr>
                             @endforelse
                         </tbody>

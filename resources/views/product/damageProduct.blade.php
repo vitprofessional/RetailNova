@@ -1,4 +1,4 @@
-@extends('include') @section('backTitle') damage product @endsection @section('container')
+@extends('include') @section('backTitle'){{ __('common.heading_damage_product') }}@endsection @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -10,29 +10,29 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between">
                         <div class="header-title">
-                            <h4 class="card-title">Damage product</h4>
+                            <h4 class="card-title">{{ __('inventory.damage_product') }}</h4>
                         </div>
                     </div>
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="date" class="form-label">Date *</label>
+                                    <label for="date" class="form-label">{{ __('common.date') }} *</label>
                                     <input type="date" class="form-control" id="date" name="purchaseDate" />
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="reference" class="form-label">Reference *</label>
+                                    <label for="reference" class="form-label">{{ __('common.reference') }} *</label>
                                     <input type="text" class="form-control" id="reference" name="refData" />
                                 </div>
                             </div>
                             <div class="col-md-7">
                                 <div class="form-group">
-                                    <label for="productName" class="form-label">Product *</label>
+                                    <label for="productName" class="form-label">{{ __('common.product') }} *</label>
                                     <select id="productName" name="productName" class="form-control js-product-select" required>
                                     <!--  form option show proccessing -->
-                                        <option value="">Select</option>
+                                        <option value="">{{ __('inventory.select') }}</option>
                                     @if(!empty($productList) && count($productList)>0)
                                     @foreach($productList as $productData)
                                         <option value="{{$productData->id}}">{{$productData->name}}</option>
@@ -54,13 +54,13 @@
                     <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
                         <thead class="bg-white text-uppercase">
                             <tr>
-                                <th>Product Name</th>
-                                <th>In Date</th>
-                                <th>Product Qty</th>
-                                <th>Current Stock</th>
-                                <th>Price</th>
-                                <th>Total Price</th>
-                                <th>Remove</th>
+                                <th>{{ __('inventory.product_name') }}</th>
+                                <th>{{ __('inventory.in_date') }}</th>
+                                <th>{{ __('inventory.product_qty') }}</th>
+                                <th>{{ __('inventory.current_stock') }}</th>
+                                <th>{{ __('inventory.price') }}</th>
+                                <th>{{ __('inventory.total_price') }}</th>
+                                <th>{{ __('inventory.remove') }}</th>
                             </tr>
                         </thead>
                         <tbody id="productDetails">
@@ -73,7 +73,7 @@
                                 <td width="9%">
                                     <input type="number" class="form-control" id="qty" name="qty" min="1" step="1" readonly />
                                     <div id="qty-error" class="text-danger small mt-1" style="display:none;"></div>
-                                    <div id="qty-stock" class="text-muted small mt-1">Current stock: <span id="qty-stock-val">0</span></div>
+                                    <div id="qty-stock" class="text-muted small mt-1">{{ __('common.current_stock') }}: <span id="qty-stock-val">0</span></div>
                                 </td>
                                 <td width="9%">
                                     <input type="number" class="form-control" id="currentStock" name="currentStock" readonly />
@@ -84,13 +84,13 @@
                                 <td width="9%">
                                     <div style="display:flex;flex-direction:column;">
                                         <input type="number" class="form-control mb-1" id="salingPriceWithoutVat" name="salingPriceWithoutVat" step="0.01" />
-                                        <input type="text" class="form-control" id="computedTotal" name="total" readonly placeholder="Total" />
+                                        <input type="text" class="form-control" id="computedTotal" name="total" readonly placeholder="{{ __('inventory.total') }}" />
                                     </div>
                                 </td>
                                 <td width="9%">
-                                   
+
                                     <div class="list-action">
-                                        <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-remove-row="true" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
+                                        <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-remove-row="true" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('inventory.delete') }}"><i class="ri-delete-bin-line mr-0"></i></button>
                                     </div>
                                 </td>
                             </tr>
@@ -98,7 +98,7 @@
                     </table>
                 </div>
                 <div class=" d-md-flex  mt-2">
-                    <button class="btn btn-primary btn-sm" type="submit">Save</button>
+                    <button class="btn btn-primary btn-sm" type="submit">{{ __('inventory.save') }}</button>
                 </div>
             </div>
         </div>
@@ -238,7 +238,7 @@
                     if(window.Swal && typeof Swal.fire === 'function'){
                         Swal.fire({icon:'warning', title: 'Invalid quantity', text: 'Please enter a valid damage quantity.'});
                     } else {
-                        alert('Please enter a valid damage quantity.');
+                        alert(window.RNTranslate('common.client_please_enter_a_valid_damage_quantity'));
                     }
                     return false;
                 }

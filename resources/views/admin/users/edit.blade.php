@@ -1,10 +1,10 @@
 @extends('include')
-@section('backTitle') Edit Admin User @endsection
+@section('backTitle'){{ __('common.heading_edit_admin_user') }}@endsection
 @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
     <div class="card">
-        <div class="card-header"><h5 class="mb-0">Edit Admin User</h5></div>
+        <div class="card-header"><h5 class="mb-0">{{ __('common.edit_admin_user') }}</h5></div>
         <div class="card-body">
             @php $actor = Auth::guard('admin')->user(); @endphp
             @php $actorRole = $actor->role ?? 'storemanager'; @endphp
@@ -30,22 +30,22 @@
                                 <option value="{{ $r }}" {{ $user->role===$r?'selected':'' }}>{{ ucfirst($r) }}</option>
                             @endforeach
                         </select>
-                        <small class="text-muted d-block mt-1">Business selection is required for GM/Store Manager.</small>
+                        <small class="text-muted d-block mt-1">{{ __('common.business_selection_is_required_for_gm_store_manager') }}</small>
                     </div>
                     <div class="col-md-3">
                         <select name="businessId" class="form-control" id="edit-business">
-                            <option value="">Select Business</option>
+                            <option value="">{{ __('common.select_business') }}</option>
                             @foreach(($businesses ?? []) as $biz)
                                 <option value="{{ $biz->id }}" {{ (string)$user->businessId===(string)$biz->id?'selected':'' }}>{{ $biz->businessName }}</option>
                             @endforeach
                         </select>
-                        <small class="text-muted d-block mt-1">Choose the business (required for GM/Store Manager).</small>
+                        <small class="text-muted d-block mt-1">{{ __('common.choose_the_business_required_for_gm_store_manager') }}</small>
                     </div>
                 </div>
                 <div class="row mt-2">
-                    <div class="col-md-4"><input name="password" type="password" class="form-control" placeholder="New Password (optional)"></div>
+                    <div class="col-md-4"><input name="password" type="password" class="form-control" placeholder="{{ __('common.new_password_optional') }}"></div>
                 </div>
-                <div class="mt-3"><button class="btn btn-primary">Save</button></div>
+                <div class="mt-3"><button class="btn btn-primary">{{ __('common.save') }}</button></div>
             </form>
             <script>
             (function(){

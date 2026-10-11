@@ -1,4 +1,4 @@
-@extends('include') @section('backTitle') Purchase Return List @endsection @section('container')
+@extends('include') @section('backTitle'){{ __('common.heading_purchase_return_list') }}@endsection @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -7,7 +7,7 @@
         <div class="rounded mb-3 table-responsive product-table">
             <div class="row">
                 <div class="col-12 mb-3">
-                    <h4>Purchase Return List</h4>
+                    <h4>{{ __('purchases.purchase_return_list') }}</h4>
                 </div>
             </div>
             <table class="data-tables table mb-0 table-bordered rn-table-pro">
@@ -19,19 +19,19 @@
                                 <label for="checkbox1" class="mb-0"></label>
                             </div>
                         </th>
-                        <th>Return ID</th>
-                        <th>Purchase Invoice</th>
-                        <th>Supplier Name</th>
-                        <th>Product Name</th>
-                        <th>Return Amount</th>
-                        <th>Adjust Amount</th>
-                        <th>Return Date</th>
-                        <th>Action</th>
+                        <th>{{ __('purchases.return_id') }}</th>
+                        <th>{{ __('purchases.purchase_invoice') }}</th>
+                        <th>{{ __('purchases.supplier_name') }}</th>
+                        <th>{{ __('purchases.product_name') }}</th>
+                        <th>{{ __('purchases.return_amount') }}</th>
+                        <th>{{ __('purchases.adjust_amount') }}</th>
+                        <th>{{ __('purchases.return_date') }}</th>
+                        <th>{{ __('purchases.action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
-                @if(!empty($returnList) && $returnList->count()>0 ) 
-                    @foreach($returnList as $return) 
+                @if(!empty($returnList) && $returnList->count()>0 )
+                    @foreach($returnList as $return)
                         <tr>
                             <td>
                                 <div class="checkbox d-inline-block">
@@ -48,15 +48,15 @@
                             <td>{{ \Carbon\Carbon::parse($return->created_at)->format('d-m-Y') }}</td>
                             <td>
                                 <div class="d-flex align-items-center list-action">
-                                    <a class="badge bg-info mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="View"
+                                    <a class="badge bg-info mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('purchases.view') }}"
                                         href="#"><i class="ri-eye-line mr-0"></i></a>
                                 </div>
                             </td>
                         </tr>
-                    @endforeach 
+                    @endforeach
                 @else
                     <tr>
-                        <td colspan="9" class="text-center">No purchase returns found</td>
+                        <td colspan="9" class="text-center">{{ __('purchases.no_purchase_returns_found') }}</td>
                     </tr>
                 @endif
                 </tbody>

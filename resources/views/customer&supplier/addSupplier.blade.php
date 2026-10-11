@@ -1,5 +1,5 @@
-@extends('include') 
-@section('backTitle') addSupplier @endsection 
+@extends('include')
+@section('backTitle'){{ __('common.heading_addsupplier') }}@endsection
 @section('container')
 <div class="col-12">@include('sweetalert::alert')</div>
 <div class="row">
@@ -41,60 +41,60 @@
                         @include('partials.business_selector', ['businesses' => $businesses ?? [] , 'selectedBusinessId' => $profile->businessId ?? null])
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Name *</label>
-                                <input type="text" class="form-control" placeholder="Enter Name" id="fullName" name="fullName" value="{{$name}}" required />
+                                <label>{{ __('common.name') }} *</label>
+                                <input type="text" class="form-control" placeholder="{{ __('common.enter_name') }}" id="fullName" name="fullName" value="{{$name}}" required />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="openingBalance" class="form-label">Opening Balance
-                                    <span class="ml-1" data-toggle="tooltip" data-bs-toggle="tooltip" title="Positive = you owe supplier (payable). Negative = supplier owes you (receivable).">
+                                <label for="openingBalance" class="form-label">{{ __('suppliers.opening_balance') }}
+                                    <span class="ml-1" data-toggle="tooltip" data-bs-toggle="tooltip" title="{{ __('common.positive_you_owe_supplier_payable_negative_supplier_owes_you_receivable') }}">
                                         <i class="ri-information-line"></i>
                                     </span>
                                 </label>
-                                <input type="number" step="1" class="form-control" placeholder="Enter Opening Balance" id="openingBalance" name="openingBalance" value="{{$openingBalance}}" />
-                                <small class="text-muted">Positive payable, negative receivable.</small>
+                                <input type="number" step="1" class="form-control" placeholder="{{ __('common.enter_opening_balance') }}" id="openingBalance" name="openingBalance" value="{{$openingBalance}}" />
+                                <small class="text-muted">{{ __('suppliers.positive_payable_negative_receivable') }}</small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Email</label>
-                                <input type="email" class="form-control" placeholder="Enter Email" id="mail" name="mail" value="{{$mail}}" />
+                                <label>{{ __('suppliers.email') }}</label>
+                                <input type="email" class="form-control" placeholder="{{ __('common.enter_email') }}" id="mail" name="mail" value="{{$mail}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Phone Number</label>
-                                <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" value="{{$mobile}}" />
+                                <label>{{ __('suppliers.phone_number') }}</label>
+                                <input type="text" class="form-control" placeholder="{{ __('common.enter_phone_number') }}" id="mobile" name="mobile" value="{{$mobile}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Country</label>
-                                <input type="text" class="form-control" placeholder="Enter The Country" id="country" name="country" value="{{$country}}" />
+                                <label>{{ __('suppliers.country') }}</label>
+                                <input type="text" class="form-control" placeholder="{{ __('common.enter_the_country') }}" id="country" name="country" value="{{$country}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>State</label>
-                                <input type="text" class="form-control" placeholder="Enter The State" id="state" name="state" value="{{$state}}" />
+                                <label>{{ __('suppliers.state') }}</label>
+                                <input type="text" class="form-control" placeholder="{{ __('common.enter_the_state') }}" id="state" name="state" value="{{$state}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>City</label>
-                                <input type="text" class="form-control" placeholder="Enter The City" id="city" name="city" value="{{$city}}" />
+                                <label>{{ __('suppliers.city') }}</label>
+                                <input type="text" class="form-control" placeholder="{{ __('common.enter_the_city') }}" id="city" name="city" value="{{$city}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Area</label>
-                                <input type="text" class="form-control" placeholder="Enter The Area" id="area" name="area" value="{{$area}}" />
+                                <label>{{ __('suppliers.area') }}</label>
+                                <input type="text" class="form-control" placeholder="{{ __('common.enter_the_area') }}" id="area" name="area" value="{{$area}}" />
                             </div>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary mr-2">@if(isset($profile)) Update @else Add @endif Supplier</button>
-                    <button type="reset" class="btn btn-danger">Reset</button>
+                    <button type="reset" class="btn btn-danger">{{ __('suppliers.reset') }}</button>
                 </form>
             </div>
         </div>
@@ -107,9 +107,9 @@
             <div class="card-header ">
                 <div class="row">
                     <div class="col-md-12 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Opening Balance Summary</h5>
+                        <h5 class="mb-0">{{ __('suppliers.opening_balance_summary') }}</h5>
                         <div>
-                            <span class="font-weight-bold">Total Opening Balance:</span>
+                            <span class="font-weight-bold">{{ __('suppliers.total_opening_balance') }}:</span>
                             <span>@money($openingTotal ?? 0)</span>
                         </div>
                     </div>
@@ -128,7 +128,7 @@
             ])
             <div class="d-flex align-items-center">
                 <div class="small text-muted mt-2 mt-sm-0 ml-sm-3">
-                    <span class="badge bg-success">Positive</span> payable, <span class="badge bg-danger">Negative</span> receivable
+                    <span class="badge bg-success">{{ __('suppliers.positive') }}</span> {{ __('common.payable') }}, <span class="badge bg-danger">{{ __('suppliers.negative') }}</span> {{ __('suppliers.receivable') }}
                 </div>
             </div>
         </div>
@@ -145,12 +145,12 @@
                                 <label for="selectAllSuppliers" class="mb-0"></label>
                             </div>
                         </th>
-                        <th class="text-left">Supplier</th>
-                        <th>Opening Balance</th>
-                        <th>Mobile</th>
-                        <th class="d-none d-lg-table-cell">Address</th>
-                        <th class="d-none d-xl-table-cell">Last Transaction</th>
-                        <th class="rn-col-compact">Actions</th>
+                        <th class="text-left">{{ __('suppliers.supplier') }}</th>
+                        <th>{{ __('suppliers.opening_balance') }}</th>
+                        <th>{{ __('suppliers.mobile') }}</th>
+                        <th class="d-none d-lg-table-cell">{{ __('suppliers.address') }}</th>
+                        <th class="d-none d-xl-table-cell">{{ __('suppliers.last_transaction') }}</th>
+                        <th class="rn-col-compact">{{ __('suppliers.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="ligth-body">
@@ -170,12 +170,12 @@
                         </td>
                         <td>{{$supplierList->mobile}}</td>
                         <td class="d-none d-lg-table-cell text-left"><div class="rn-ellipsis rn-addr">@php $addr = array_filter([$supplierList->area,$supplierList->city,$supplierList->state,$supplierList->country]); @endphp {{ implode(', ', $addr) }}</div></td>
-                        <td class="d-none d-xl-table-cell">not entry</td>
+                        <td class="d-none d-xl-table-cell">{{ __('suppliers.not_entry') }}</td>
                         <td>
                                 <div class="d-flex align-items-center justify-content-center list-action">
-                                    <a class="badge badge-info mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="View" href="{{route('supplierbalancesheet')}}"><i class="ri-eye-line mr-0 "></i></a>
-                                    <a href="{{route('editSupplier',['id'=>$supplierList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Edit"><i class="ri-pencil-line mr-0"></i></a>
-                                    <button type="button" class="badge bg-warning mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" title="Delete" style="border:none;background:transparent;padding:0;"
+                                    <a class="badge badge-info mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="{{ __('suppliers.view') }}" href="{{route('supplierbalancesheet')}}"><i class="ri-eye-line mr-0 "></i></a>
+                                    <a href="{{route('editSupplier',['id'=>$supplierList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="{{ __('suppliers.edit') }}"><i class="ri-pencil-line mr-0"></i></a>
+                                    <button type="button" class="badge bg-warning mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" title="{{ __('suppliers.delete') }}" style="border:none;background:transparent;padding:0;"
                                         data-delete-id="{{ $supplierList->id }}" data-delete-name="{{ $supplierList->name }}" onclick="showDeleteModal(this, '{{ route('delSupplier', ['id' => $supplierList->id]) }}')">
                                         <i class="ri-delete-bin-line mr-0"></i>
                                     </button>
@@ -198,12 +198,12 @@
                         <td class="d-none d-xl-table-cell">10.10.2025</td>
                         <td class="rn-col-compact">
                             <div class="d-flex align-items-center justify-content-center list-action">
-                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
-                                <a  class="badge bg-success mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
+                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="{{ __('suppliers.view') }}" href="#"><i class="ri-eye-line mr-0"></i></a>
+                                <a  class="badge bg-success mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="{{ __('suppliers.edit') }}" href="#"><i class="ri-pencil-line mr-0"></i></a>
                                 <form method="POST" action="#" style="display:inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="button" class="badge bg-warning mr-2" data-confirm="delete" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
+                                    <button type="button" class="badge bg-warning mr-2" data-confirm="delete" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" title="{{ __('suppliers.delete') }}"><i class="ri-delete-bin-line mr-0"></i></button>
                                 </form>
                             </div>
                         </td>
@@ -216,7 +216,7 @@
         </div>
         </div>
     </div>
-    
+
 </div>
 @endif
 <!-- Page end  -->
@@ -226,25 +226,25 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Delete Supplier</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <h5 class="modal-title" id="deleteModalLabel">{{ __('suppliers.delete_supplier') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{{ __('suppliers.close') }}">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <p id="deleteMessage"></p>
                 <div class="alert alert-info mt-3">
-                    <strong>Choose Delete Type:</strong>
+                    <strong>{{ __('suppliers.choose_delete_type') }}:</strong>
                     <ul class="mb-0 mt-2">
-                        <li><strong>Profile Only:</strong> Delete only the supplier profile data</li>
-                        <li><strong>Delete All Data:</strong> Delete profile and all related transaction data</li>
+                        <li><strong>{{ __('suppliers.profile_only') }}:</strong> {{ __('suppliers.delete_only_the_supplier_profile_data') }}</li>
+                        <li><strong>{{ __('suppliers.delete_all_data') }}:</strong> {{ __('suppliers.delete_profile_and_all_related_transaction_data') }}</li>
                     </ul>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning" onclick="submitDelete('profileOnly')">Delete Profile Only</button>
-                <button type="button" class="btn btn-danger" onclick="submitDelete('fullDelete')">Delete All Data</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('suppliers.cancel') }}</button>
+                <button type="button" class="btn btn-warning" onclick="submitDelete('profileOnly')">{{ __('suppliers.delete_profile_only') }}</button>
+                <button type="button" class="btn btn-danger" onclick="submitDelete('fullDelete')">{{ __('suppliers.delete_all_data') }}</button>
             </div>
         </div>
     </div>
@@ -259,27 +259,27 @@
 
 <script>
     let currentDeleteUrl = '';
-    
+
     function showDeleteModal(button, deleteUrl) {
         currentDeleteUrl = deleteUrl;
         const supplierName = button.getAttribute('data-delete-name');
-        document.getElementById('deleteMessage').innerHTML = 
+        document.getElementById('deleteMessage').innerHTML =
             `Are you sure you want to delete the supplier: <strong>${supplierName}</strong>?`;
-        
+
         // Show the modal
         $('#deleteModal').modal('show');
     }
-    
+
     function submitDelete(deleteType) {
         if (!currentDeleteUrl) return;
-        
+
         // Set the delete type
         document.getElementById('deleteType').value = deleteType;
-        
+
         // Set form action and submit
         document.getElementById('deleteForm').action = currentDeleteUrl;
         document.getElementById('deleteForm').submit();
-        
+
         // Hide modal
         $('#deleteModal').modal('hide');
     }

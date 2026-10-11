@@ -11,7 +11,7 @@
         <div class="card shadow-sm">
             <div class="card-header bg-gradient py-3">
                 <h5 class="card-title mb-0">
-                    <i class="las la-barcode mr-2"></i>Product Barcode
+                    <i class="las la-barcode mr-2"></i>{{ __('common.product_barcode') }}
                 </h5>
             </div>
             <div class="card-body">
@@ -20,7 +20,7 @@
                     <h6 class="mb-2">
                         <i class="las la-box mr-2"></i>{{ $product->name }}
                     </h6>
-                    <p class="mb-0 text-muted">ID: <strong>#{{ $product->id }}</strong></p>
+                    <p class="mb-0 text-muted">{{ __('common.id') }}: <strong>#{{ $product->id }}</strong></p>
                 </div>
 
                 <!-- Barcode Display -->
@@ -29,9 +29,9 @@
                         <div>
                             <!-- Barcode SVG will be generated here -->
                             <svg id="barcodeContainer" style="max-width: 100%;"></svg>
-                            
+
                             @if(!$product->barCode)
-                            <p class="text-muted mt-3">Generating barcode...</p>
+                            <p class="text-muted mt-3">{{ __('common.generating_barcode') }}</p>
                             @else
                             <p class="mt-3">
                                 <strong>{{ $product->barCode }}</strong>
@@ -45,18 +45,18 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label class="font-weight-600">Barcode</label>
+                            <label class="font-weight-600">{{ __('common.barcode') }}</label>
                             <input type="text" class="form-control" id="barcodeValue" value="{{ $product->barCode ?? '' }}" readonly />
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label class="font-weight-600">Copy Barcode</label>
+                            <label class="font-weight-600">{{ __('common.copy_barcode') }}</label>
                             <div class="input-group">
                                 <input type="text" class="form-control" id="barcodeText" value="{{ $product->barCode ?? '' }}" readonly />
                                 <div class="input-group-append">
                                     <button class="btn btn-outline-secondary" type="button" id="copyBtn">
-                                        <i class="las la-copy mr-1"></i>Copy
+                                        <i class="las la-copy mr-1"></i>{{ __('common.copy') }}
                                     </button>
                                 </div>
                             </div>
@@ -68,7 +68,7 @@
                 <div class="row no-print">
                     <div class="col-12">
                         <a href="{{ route('barcode.index') }}" class="btn btn-secondary btn-lg ml-2">
-                            <i class="las la-arrow-left mr-2"></i>Back to Barcodes
+                            <i class="las la-arrow-left mr-2"></i>{{ __('common.back_to_barcodes') }}
                         </a>
                     </div>
                 </div>
@@ -84,7 +84,7 @@
 (function() {
     const barcodeValue = '{{ $product->barCode ?? '' }}';
     const barcodeContainer = document.getElementById('barcodeContainer');
-    
+
     if (!barcodeValue) {
         return;
     }
@@ -111,11 +111,11 @@
         const barcodeText = document.getElementById('barcodeText');
         barcodeText.select();
         document.execCommand('copy');
-        
+
         const btn = this;
         const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="las la-check mr-1"></i>Copied!';
-        
+
         setTimeout(() => {
             btn.innerHTML = originalText;
         }, 2000);
@@ -128,17 +128,17 @@
     body {
         background: white;
     }
-    
+
     .navbar, .iq-sidebar, .card-header, .alert, .no-print {
         display: none;
     }
-    
+
     .card {
         border: none;
         box-shadow: none;
         page-break-inside: avoid;
     }
-    
+
     svg {
         max-width: 100%;
     }

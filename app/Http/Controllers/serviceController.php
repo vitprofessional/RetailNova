@@ -32,7 +32,7 @@ class serviceController extends Controller
         if ($req->profileId) {
             $data = Service::find($req->profileId);
             if (!$data) {
-                Alert::error('Failed!', 'Service not found');
+                Alert::error(__('common.notification_failed'), __('common.notification_service_not_found'));
                 return back();
             }
         } else {
@@ -43,10 +43,10 @@ class serviceController extends Controller
         $data->rate = $req->rate;
 
         if ($data->save()) {
-            Alert::success('Success!', 'Service profile created successfully');
+            Alert::success(__('common.notification_success'), __('common.notification_service_profile_created_successfully'));
             return redirect(route('addServiceName'));
         } else {
-            Alert::error('Failed!', 'Service profile creation failed');
+            Alert::error(__('common.notification_failed'), __('common.notification_service_profile_creation_failed'));
             return back();
         }
     }
@@ -65,11 +65,11 @@ class serviceController extends Controller
                 Service::whereIn('id', $ids)->delete();
             });
 
-            Alert::success('Success!', 'Selected services deleted successfully');
+            Alert::success(__('common.notification_success'), __('common.notification_selected_services_deleted_successfully'));
             return redirect(route('addServiceName'));
         } catch (\Exception $e) {
             Log::error('Service bulk delete failed: ' . $e->getMessage());
-            Alert::error('Failed!', 'Bulk delete failed');
+            Alert::error(__('common.notification_failed'), __('common.bulk_delete_failed'));
             return back();
         }
     }
@@ -77,13 +77,13 @@ class serviceController extends Controller
     /** Bulk delete provided services */
     public function bulkDeleteProvidedServices(Request $req){
         $ids = (array)$req->input('ids', $req->input('selected', []));
-        if(empty($ids)){ return back()->with('error','No provided services selected'); }
+        if(empty($ids)){ return back()->with('error',__('common.notification_no_provided_services_selected')); }
         try{
             ProvideService::whereIn('id',$ids)->delete();
-            Alert::success('Deleted','Selected provided services deleted');
+            Alert::success(__('common.notification_deleted'),__('common.notification_selected_provided_services_deleted'));
         }catch(\Exception $e){
             \Log::error('bulkDeleteProvidedServices failed: '.$e->getMessage());
-            Alert::error('Error','Failed to delete selected provided services');
+            Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_selected_provided_services'));
         }
         return back();
     }
@@ -93,7 +93,7 @@ class serviceController extends Controller
     {
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if (empty($ids)) {
-            return back()->with('error', 'No provided services selected for printing.');
+            return back()->with('error', __('common.notification_no_provided_services_selected_for_printing'));
         }
 
         try {
@@ -106,7 +106,7 @@ class serviceController extends Controller
                 ->get();
 
             if ($services->isEmpty()) {
-                return back()->with('error', 'Selected services not found.');
+                return back()->with('error', __('common.notification_selected_services_not_found'));
             }
 
             // Group services by customer name and then by date (Y-m-d)
@@ -147,7 +147,7 @@ class serviceController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('bulkPrintProvidedServices failed: ' . $e->getMessage());
-            return back()->with('error', 'An error occurred while generating the print view.');
+            return back()->with('error', __('common.notification_an_error_occurred_while_generating_the_print_view'));
         }
     }
 
@@ -156,7 +156,7 @@ class serviceController extends Controller
     {
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if (empty($ids)) {
-            return back()->with('error', 'No provided services selected for PDF generation.');
+            return back()->with('error', __('common.notification_no_provided_services_selected_for_pdf_generation'));
         }
 
         try {
@@ -168,7 +168,7 @@ class serviceController extends Controller
                 ->get();
 
             if ($services->isEmpty()) {
-                return back()->with('error', 'Selected services not found.');
+                return back()->with('error', __('common.notification_selected_services_not_found'));
             }
 
             $grouped = [];
@@ -212,11 +212,11 @@ class serviceController extends Controller
 
             // Dompdf not available: show a helpful error to the user
             \Log::warning('Dompdf facade not available: cannot generate PDF.');
-            Alert::error('PDF Not Available', 'PDF generation is not available on this installation. To enable PDFs run: <code>composer require barryvdh/laravel-dompdf</code> and register the service provider.');
+            Alert::error(__('common.notification_pdf_not_available'), __('common.pdf_unavailable'));
             return back();
         } catch (\Exception $e) {
             \Log::error('bulkPrintProvidedServicesPdf failed: ' . $e->getMessage());
-            return back()->with('error', 'An error occurred while generating the PDF.');
+            return back()->with('error', __('common.notification_an_error_occurred_while_generating_the_pdf'));
         }
     }
 
@@ -232,16 +232,16 @@ class serviceController extends Controller
     {
         $data = Service::find($id);
         if (!$data) {
-            Alert::error('Failed!', 'Service not found');
+            Alert::error(__('common.notification_failed'), __('common.notification_service_not_found'));
             return back();
         }
 
         try {
             $data->delete();
-            Alert::success('Success!', 'Service deleted successfully');
+            Alert::success(__('common.notification_success'), __('common.notification_service_deleted_successfully'));
             return redirect(route('addServiceName'));
         } catch (\Exception $e) {
-            Alert::error('Failed!', 'Service delete failed');
+            Alert::error(__('common.notification_failed'), __('common.notification_service_delete_failed'));
             return back();
         }
     }
@@ -274,7 +274,7 @@ class serviceController extends Controller
     {
         $invoice = \App\Models\ServiceInvoice::with('items')->find($id);
         if (!$invoice) {
-            Alert::error('Failed!', 'Invoice not found');
+            Alert::error(__('common.notification_failed'), __('common.notification_invoice_not_found'));
             return redirect()->route('serviceProvideList');
         }
 
@@ -292,7 +292,7 @@ class serviceController extends Controller
     {
         $invoice = \App\Models\ServiceInvoice::with('items')->find($id);
         if (!$invoice) {
-            Alert::error('Failed!', 'Invoice not found');
+            Alert::error(__('common.notification_failed'), __('common.notification_invoice_not_found'));
             return redirect()->route('serviceProvideList');
         }
 
@@ -355,11 +355,11 @@ class serviceController extends Controller
                     $ps->note = $note;
                     $ps->save();
                 }
-                Alert::success('Success!', 'Service(s) saved (legacy mode). Run migrations to enable invoices.');
+                Alert::success(__('common.notification_success'), __('common.notification_service_s_saved_legacy_mode_run_migrations_to_enable_invoices'));
                 return redirect(route('provideService'));
             } catch (\Exception $e) {
                 Log::error('legacy saveProvideService failed: ' . $e->getMessage());
-                Alert::error('Failed!', 'Service save failed');
+                Alert::error(__('common.notification_failed'), __('common.notification_service_save_failed'));
                 return back();
             }
         }
@@ -419,13 +419,13 @@ class serviceController extends Controller
 
             DB::commit();
 
-            Alert::success('Success!', 'Service(s) saved successfully. Invoice: ' . $invoiceNumber);
+            Alert::success(__('common.notification_success'), __('common.notification_service_s_saved_successfully_invoice') . $invoiceNumber);
             // Redirect user to the generated invoice view and request auto-print
             return redirect()->route('serviceInvoiceView', ['id' => $invoice->id, 'autoprint' => 1]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('saveProvideService failed: ' . $e->getMessage());
-            Alert::error('Failed!', 'Service save failed');
+            Alert::error(__('common.notification_failed'), __('common.notification_service_save_failed'));
             return back();
         }
     }
@@ -456,7 +456,7 @@ class serviceController extends Controller
             ->where('provide_services.id',$id)
             ->first();
         if(!$row){
-            Alert::error('Failed!','Provided service not found');
+            Alert::error(__('common.notification_failed'),__('common.notification_provided_service_not_found'));
             return redirect()->route('serviceProvideList');
         }
         return view('service.serviceProvideView',[ 'row' => $row ]);
@@ -470,7 +470,7 @@ class serviceController extends Controller
             ->where('provide_services.id',$id)
             ->first();
         if(!$row){
-            Alert::error('Failed!','Provided service not found');
+            Alert::error(__('common.notification_failed'),__('common.notification_provided_service_not_found'));
             return redirect()->route('serviceProvideList');
         }
         return view('service.serviceProvidePrint',[ 'row' => $row ]);
@@ -481,16 +481,16 @@ class serviceController extends Controller
     {
         $row = ProvideService::find($id);
         if(!$row){
-            Alert::error('Failed!','Provided service not found');
+            Alert::error(__('common.notification_failed'),__('common.notification_provided_service_not_found'));
             return back();
         }
         try {
             $row->delete();
-            Alert::success('Deleted','Provided service deleted successfully');
+            Alert::success(__('common.notification_deleted'),__('common.notification_provided_service_deleted_successfully'));
             return back();
         } catch(\Exception $e){
             \Log::error('delProvideService failed: '.$e->getMessage());
-            Alert::error('Error','Deletion failed');
+            Alert::error(__('common.notification_error'),__('common.notification_deletion_failed'));
             return back();
         }
     }

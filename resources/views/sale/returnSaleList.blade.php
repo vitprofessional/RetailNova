@@ -7,7 +7,7 @@
         <div class="card">
             <div class="card-body">
                 <div class="col-12 p-0 mt-0 mb-4">
-                    <h4>Sales Return List</h4>
+                    <h4>{{ __('sales.sales_return_list') }}</h4>
                 </div>
                 <div class="rounded mb-2 table-responsive product-table">
                     <table class="data-tables table mb-0 table-bordered rn-table-pro">
@@ -19,14 +19,14 @@
                                         <label for="selectAllReturns" class="mb-0"></label>
                                     </div>
                                 </th>
-                                <th>Sale ID</th>
-                                <th>Customer</th>
-                                <th>Return Amount</th>
-                                <th>Adjust Amount</th>
-                                <th>Items Returned</th>
-                                <th>Created By</th>
-                                <th>Date</th>
-                                <th style="width: 100px;">Actions</th>
+                                <th>{{ __('sales.sale_id') }}</th>
+                                <th>{{ __('sales.customer') }}</th>
+                                <th>{{ __('sales.return_amount') }}</th>
+                                <th>{{ __('sales.adjust_amount') }}</th>
+                                <th>{{ __('sales.items_returned') }}</th>
+                                <th>{{ __('sales.created_by') }}</th>
+                                <th>{{ __('sales.date') }}</th>
+                                <th style="width: 100px;">{{ __('sales.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -43,9 +43,9 @@
                                         $createdBy = $sale && $sale->salesperson ? $sale->salesperson->fullName : '-';
                                         $returnAmount = \App\Support\Currency::format($return->totalReturnAmount ?? 0);
                                         $adjustAmount = \App\Support\Currency::format($return->adjustAmount ?? 0);
-                                        try { 
+                                        try {
                                             $dateFmt = \Carbon\Carbon::parse($return->created_at)->format('d M Y');
-                                        } catch (\Exception $e) { 
+                                        } catch (\Exception $e) {
                                             $dateFmt = (string)($return->created_at ?? '-');
                                         }
                                     @endphp
@@ -65,13 +65,13 @@
                                         <td>{{ $dateFmt }}</td>
                                         <td>
                                             <div style="display: flex; gap: 4px; justify-content: center;">
-                                                <a href="{{ route('saleReturnDetails', ['id' => $return->id]) }}" class="btn btn-sm btn-outline-secondary" title="View" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                <a href="{{ route('saleReturnDetails', ['id' => $return->id]) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('sales.view') }}" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;">
                                                     <i class="ri-eye-line"></i>
                                                 </a>
                                                 <form method="POST" action="{{ route('delSale', ['id' => $return->saleId]) }}" style="display: inline-block;">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="delete" title="Delete" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="delete" title="{{ __('sales.delete') }}" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;">
                                                         <i class="ri-delete-bin-line"></i>
                                                     </button>
                                                 </form>
@@ -81,7 +81,7 @@
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="9" class="text-center">No sale returns found</td>
+                                    <td colspan="9" class="text-center">{{ __('sales.no_sale_returns_found') }}</td>
                                 </tr>
                             @endif
                         </tbody>
@@ -101,7 +101,7 @@
                 // Initialize select all checkbox
                 const selectAllCheckbox = document.getElementById('selectAllReturns');
                 const bulkSelects = document.querySelectorAll('.bulk-select');
-                
+
                 if (selectAllCheckbox) {
                     selectAllCheckbox.addEventListener('change', function() {
                         bulkSelects.forEach(checkbox => {

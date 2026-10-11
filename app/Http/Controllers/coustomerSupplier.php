@@ -40,7 +40,7 @@ class coustomerSupplier extends Controller
     public function saveCustomer(SaveCustomerRequest $req){
         $data = $req->profileId ? Customer::find($req->profileId) : new Customer();
         if($req->profileId && !$data):
-            Alert::error('Failed!', 'Customer not found for update');
+            Alert::error(__('common.notification_failed'), __('common.notification_customer_not_found_for_update'));
             return redirect()->route('addCustomer');
         endif;
 
@@ -61,11 +61,11 @@ class coustomerSupplier extends Controller
         }
 
         if($data->save()):
-            $message = $req->profileId ? 'Customer profile updated successfully' : 'Customer profile created successfully';
-            Alert::success('Success!', $message);
+            $message = $req->profileId ? __('common.customer_updated') : __('common.customer_created');
+            Alert::success(__('common.notification_success'), $message);
             return redirect(route('addCustomer'));
         else:
-            Alert::error('Failed!','Customer profile save failed');
+            Alert::error(__('common.notification_failed'),__('common.notification_customer_profile_save_failed'));
             return back();
         endif;
     }
@@ -80,7 +80,7 @@ class coustomerSupplier extends Controller
     public function delCustomer($id, Request $request){
         $data = Customer::withTrashed()->find($id);
         if(!$data){
-            Alert::error('Failed!','Customer not found');
+            Alert::error(__('common.notification_failed'),__('common.notification_customer_not_found'));
             return back();
         }
 
@@ -93,16 +93,16 @@ class coustomerSupplier extends Controller
                 $this->cascadeDeleteCustomer($id);
                 // finally delete customer record permanently
                 $data->forceDelete();
-                Alert::success('Deleted!','Customer profile and all related records deleted successfully');
+                Alert::success(__('common.notification_deleted'),__('common.notification_customer_profile_and_all_related_records_deleted_successfully'));
             } else {
                 // Delete only the profile (soft delete or just remove profile data)
                 $data->delete(); // This will soft delete
-                Alert::success('Deleted!','Customer profile deleted successfully. Related transactions are preserved');
+                Alert::success(__('common.notification_deleted'),__('common.notification_customer_profile_deleted_successfully_related_transactions_are_preserved'));
             }
             DB::commit();
         }catch(\Throwable $e){
             DB::rollBack();
-            Alert::error('Failed!','Failed to delete customer: '.$e->getMessage());
+            Alert::error(__('common.notification_failed'),__('common.notification_failed_to_delete_customer').$e->getMessage());
         }
         return back();
     }
@@ -111,7 +111,7 @@ class coustomerSupplier extends Controller
     public function bulkDeleteCustomer(Request $req){
         $ids = $req->input('selected', []);
         if(!is_array($ids) || count($ids) === 0){
-            Alert::error('No selection','No customers selected for deletion');
+            Alert::error(__('common.notification_no_selection'),__('common.notification_no_customers_selected_for_deletion'));
             return back();
         }
 
@@ -136,13 +136,13 @@ class coustomerSupplier extends Controller
             DB::commit();
             
             if($deleteType === 'fullDelete'){
-                Alert::success('Deleted!','Selected customers and all related records deleted successfully');
+                Alert::success(__('common.notification_deleted'),__('common.notification_selected_customers_and_all_related_records_deleted_successfully'));
             } else {
-                Alert::success('Deleted!','Selected customer profiles deleted. Related transactions are preserved');
+                Alert::success(__('common.notification_deleted'),__('common.notification_selected_customer_profiles_deleted_related_transactions_are_preserved'));
             }
         }catch(\Throwable $e){
             DB::rollBack();
-            Alert::error('Failed!','Failed to delete selected customers: '.$e->getMessage());
+            Alert::error(__('common.notification_failed'),__('common.notification_failed_to_delete_selected_customers').$e->getMessage());
         }
         return back();
     }
@@ -168,7 +168,7 @@ class coustomerSupplier extends Controller
                                             ->where('mail',$value)
                                             ->whereNull('deleted_at')
                                             ->exists();
-                                        if($exists) $fail('The email has already been taken.');
+                                        if($exists) $fail(__('common.email_taken'));
                                     }
                                 }],
             'mobile'         => ['nullable','string','min:6','max:25', function($attr,$value,$fail){
@@ -190,7 +190,7 @@ class coustomerSupplier extends Controller
         if($validator->fails()){
             return [
                 'data'    => '',
-                'message' => 'Validation failed: ' . implode(', ', $validator->errors()->all()),
+                'message' => __('common.api_validation_failed') . implode(', ', $validator->errors()->all()),
                 'errors'  => $validator->errors()->toArray(),
             ];
         }
@@ -210,7 +210,7 @@ class coustomerSupplier extends Controller
         }catch(\Throwable $e){
             return [
                 'data'    => '',
-                'message' => 'Error! Failed to create customer',
+                'message' => __('common.api_error_failed_to_create_customer'),
             ];
         }
 
@@ -222,12 +222,12 @@ class coustomerSupplier extends Controller
             }
             return [
                 'data'   => $option,
-                'message'=>'Success! Customer created successfully'
+                'message'=>__('common.api_success_customer_created_successfully')
             ];
         }
         return [
             'data'=> '',
-            'message'=>'Error! Failed to create customer'
+            'message'=>__('common.api_error_failed_to_create_customer')
         ];
     }
 
@@ -236,11 +236,11 @@ class coustomerSupplier extends Controller
     {
         $cust = Customer::onlyTrashed()->find($id);
         if(!$cust){
-            Alert::error('Failed!','Customer not found or not deleted');
+            Alert::error(__('common.notification_failed'),__('common.notification_customer_not_found_or_not_deleted'));
             return back();
         }
         $cust->restore();
-        Alert::success('Success!','Customer restored successfully');
+        Alert::success(__('common.notification_success'),__('common.notification_customer_restored_successfully'));
         return back();
     }
 
@@ -280,7 +280,7 @@ class coustomerSupplier extends Controller
         ]);
         $data = $isUpdate ? Supplier::find($req->profileId) : new Supplier();
         if($isUpdate && !$data){
-            Alert::error('Failed!','Supplier not found');
+            Alert::error(__('common.notification_failed'),__('common.notification_supplier_not_found'));
             return back();
         }
 
@@ -302,11 +302,11 @@ class coustomerSupplier extends Controller
         }
 
         if($data->save()){
-            $msg = $isUpdate ? 'Supplier profile updated successfully' : 'Supplier profile created successfully';
-            Alert::success('Success!', $msg);
+            $msg = $isUpdate ? __('common.supplier_updated') : __('common.supplier_created');
+            Alert::success(__('common.notification_success'), $msg);
             return redirect(route('addSupplier'));
         }
-        Alert::error('Failed!','Supplier profile save failed');
+        Alert::error(__('common.notification_failed'),__('common.notification_supplier_profile_save_failed'));
         return back();
     }
 
@@ -321,7 +321,7 @@ class coustomerSupplier extends Controller
     public function delSupplier($id, Request $request){
         $data = Supplier::withTrashed()->find($id);
         if(!$data){
-            Alert::error('Failed!','Supplier not found');
+            Alert::error(__('common.notification_failed'),__('common.notification_supplier_not_found'));
             return back();
         }
 
@@ -333,16 +333,16 @@ class coustomerSupplier extends Controller
                 // Delete all related data (cascade delete)
                 $this->cascadeDeleteSupplier($id);
                 $data->forceDelete();
-                Alert::success('Deleted!','Supplier profile and all related records deleted successfully');
+                Alert::success(__('common.notification_deleted'),__('common.notification_supplier_profile_and_all_related_records_deleted_successfully'));
             } else {
                 // Delete only the profile (soft delete or just remove profile data)
                 $data->delete(); // This will soft delete
-                Alert::success('Deleted!','Supplier profile deleted successfully. Related transactions are preserved');
+                Alert::success(__('common.notification_deleted'),__('common.notification_supplier_profile_deleted_successfully_related_transactions_are_preserved'));
             }
             DB::commit();
         }catch(\Throwable $e){
             DB::rollBack();
-            Alert::error('Failed!','Failed to delete supplier: '.$e->getMessage());
+            Alert::error(__('common.notification_failed'),__('common.notification_failed_to_delete_supplier').$e->getMessage());
         }
         return back();
     }
@@ -351,7 +351,7 @@ class coustomerSupplier extends Controller
     public function bulkDeleteSupplier(Request $req){
         $ids = $req->input('selected', []);
         if(!is_array($ids) || count($ids) === 0){
-            Alert::error('No selection','No suppliers selected for deletion');
+            Alert::error(__('common.notification_no_selection'),__('common.notification_no_suppliers_selected_for_deletion'));
             return back();
         }
         
@@ -376,13 +376,13 @@ class coustomerSupplier extends Controller
             DB::commit();
             
             if($deleteType === 'fullDelete'){
-                Alert::success('Deleted!','Selected suppliers and all related records deleted successfully');
+                Alert::success(__('common.notification_deleted'),__('common.notification_selected_suppliers_and_all_related_records_deleted_successfully'));
             } else {
-                Alert::success('Deleted!','Selected supplier profiles deleted. Related transactions are preserved');
+                Alert::success(__('common.notification_deleted'),__('common.notification_selected_supplier_profiles_deleted_related_transactions_are_preserved'));
             }
         }catch(\Throwable $e){
             DB::rollBack();
-            Alert::error('Failed!','Failed to delete selected suppliers: '.$e->getMessage());
+            Alert::error(__('common.notification_failed'),__('common.notification_failed_to_delete_selected_suppliers').$e->getMessage());
         }
         return back();
     }
@@ -440,11 +440,11 @@ class coustomerSupplier extends Controller
     {
         $sup = Supplier::onlyTrashed()->find($id);
         if(!$sup){
-            Alert::error('Failed!','Supplier not found or not deleted');
+            Alert::error(__('common.notification_failed'),__('common.notification_supplier_not_found_or_not_deleted'));
             return back();
         }
         $sup->restore();
-        Alert::success('Success!','Supplier restored successfully');
+        Alert::success(__('common.notification_success'),__('common.notification_supplier_restored_successfully'));
         return back();
     }
 
@@ -477,7 +477,7 @@ class coustomerSupplier extends Controller
                                         ->where('mail',$value)
                                         ->whereNull('deleted_at')
                                         ->exists();
-                                    if($exists) $fail('The email has already been taken.');
+                                    if($exists) $fail(__('common.email_taken'));
                                 }
                             }],
             'phoneNumber' => ['nullable','string','min:6','max:25', function($attr,$value,$fail){
@@ -499,7 +499,7 @@ class coustomerSupplier extends Controller
         if($validator->fails()){
             return [
                 'data'    => '',
-                'message' => 'Validation failed: ' . implode(', ', $validator->errors()->all()),
+                'message' => __('common.api_validation_failed') . implode(', ', $validator->errors()->all()),
                 'errors'  => $validator->errors()->toArray(),
             ];
         }
@@ -519,7 +519,7 @@ class coustomerSupplier extends Controller
         try{
             $saved = $data->save();
         }catch(\Throwable $e){
-            return ['data'=> $option, 'message'=>'Error! There was an error. Please try again'];
+            return ['data'=> $option, 'message'=>__('common.api_error_there_was_an_error_please_try_again')];
         }
 
         if($saved){
@@ -529,8 +529,8 @@ class coustomerSupplier extends Controller
                     $option .= '<option value="'.$d->id.'">'.$d->name.'</option>';
                 }
             }
-            return ['data'=> $option, 'message'=>'Success! Form successfully submit'];
+            return ['data'=> $option, 'message'=>__('common.api_success_form_successfully_submit')];
         }
-        return ['data'=> $option, 'message'=>'Error! There was an error. Please try again'];
+        return ['data'=> $option, 'message'=>__('common.api_error_there_was_an_error_please_try_again')];
     }
 }

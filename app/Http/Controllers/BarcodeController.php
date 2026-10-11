@@ -44,7 +44,7 @@ class BarcodeController extends Controller
         $product = Product::find($id);
         
         if (!$product) {
-            return redirect()->back()->with('error', 'Product not found');
+            return redirect()->back()->with('error', __('common.notification_product_not_found'));
         }
 
         // Generate barcode if not present
@@ -65,7 +65,7 @@ class BarcodeController extends Controller
             $count = $this->barcodeService->generateMissingBarcodes();
             return redirect()->back()->with('success', "Generated barcodes for {$count} products");
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error generating barcodes: ' . $e->getMessage());
+            return redirect()->back()->with('error', __('common.notification_error_generating_barcodes') . $e->getMessage());
         }
     }
 
@@ -77,7 +77,7 @@ class BarcodeController extends Controller
         $productIds = $request->input('product_ids', []);
         
         if (empty($productIds)) {
-            return redirect()->back()->with('error', 'Please select at least one product');
+            return redirect()->back()->with('error', __('common.notification_please_select_at_least_one_product'));
         }
 
         $products = Product::whereIn('id', $productIds)->get();
@@ -105,26 +105,26 @@ class BarcodeController extends Controller
         $product = Product::find($id);
         
         if (!$product) {
-            return response()->json(['status' => 'error', 'message' => 'Product not found'], 404);
+            return response()->json(['status' => 'error', 'message' => __('common.api_product_not_found')], 404);
         }
 
         $barcode = trim($request->input('barcode'));
 
         // Check if barcode is already used
         if (!$this->barcodeService->isBarcodeUnique($barcode, $id)) {
-            return response()->json(['status' => 'error', 'message' => 'Barcode already in use'], 400);
+            return response()->json(['status' => 'error', 'message' => __('common.api_barcode_already_in_use')], 400);
         }
 
         // Validate barcode format
         if (!$this->barcodeService->isValidBarcode($barcode)) {
-            return response()->json(['status' => 'error', 'message' => 'Invalid barcode format'], 400);
+            return response()->json(['status' => 'error', 'message' => __('common.api_invalid_barcode_format')], 400);
         }
 
         try {
             $product->update(['barCode' => $barcode]);
-            return response()->json(['status' => 'success', 'message' => 'Barcode updated', 'barcode' => $barcode]);
+            return response()->json(['status' => 'success', 'message' => __('common.api_barcode_updated'), 'barcode' => $barcode]);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => 'Error updating barcode'], 500);
+            return response()->json(['status' => 'error', 'message' => __('common.api_error_updating_barcode')], 500);
         }
     }
 }

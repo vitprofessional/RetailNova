@@ -40,11 +40,11 @@ class Account extends Model implements Auditable
     public static function getAccountTypes()
     {
         return [
-            self::TYPE_ASSET => 'Asset',
-            self::TYPE_LIABILITY => 'Liability',
-            self::TYPE_EQUITY => 'Equity',
-            self::TYPE_REVENUE => 'Revenue',
-            self::TYPE_EXPENSE => 'Expense',
+            self::TYPE_ASSET => __('common.asset'),
+            self::TYPE_LIABILITY => __('common.liability'),
+            self::TYPE_EQUITY => __('common.equity'),
+            self::TYPE_REVENUE => __('common.revenue'),
+            self::TYPE_EXPENSE => __('common.expense'),
         ];
     }
 

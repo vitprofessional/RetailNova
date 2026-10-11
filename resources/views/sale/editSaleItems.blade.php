@@ -1,5 +1,5 @@
 @extends('include')
-@section('backTitle') Edit Sale Items @endsection
+@section('backTitle'){{ __('common.heading_edit_sale_items') }}@endsection
 @section('container')
 <div class="col-12">
   @include('sweetalert::alert')
@@ -8,34 +8,35 @@
   <div class="col-lg-10">
     <div class="card">
       <div class="card-body">
-        <h4 class="mb-3">Edit Sale Items</h4>
+        <h4 class="mb-3">{{ __('sales.edit_sale_items') }}</h4>
         @php
           $grand = (float)($sale->grandTotal ?? $sale->totalAmount ?? 0);
           $paid  = (float)($sale->paidAmount ?? 0);
           $due   = max(0, $grand - $paid);
         @endphp
         <div class="mb-2 text-muted">
-          <div><strong>Invoice:</strong> {{ $sale->invoice ?? $sale->invoiceNo ?? '-' }}</div>
-          <div><strong>Customer:</strong> {{ $customer->name ?? '-' }}</div>
-          <div><strong>Grand Total:</strong> @money($grand) &nbsp;|&nbsp; <strong>Paid:</strong> @money($paid) &nbsp;|&nbsp; <strong>Due:</strong> @money($due)</div>
+          <div><strong>{{ __('common.invoice') }}:</strong> {{ $sale->invoice ?? $sale->invoiceNo ?? '-' }}</div>
+          <div><strong>{{ __('common.customer') }}:</strong> {{ $customer->name ?? '-' }}</div>
+          <div><strong>{{ __('common.grand_total') }}:</strong> @money($grand) &nbsp;|&nbsp; <strong>{{ __('common.paid') }}:</strong> @money($paid) &nbsp;|&nbsp; <strong>{{ __('common.due') }}:</strong> @money($due)</div>
         </div>
         @if($errors->any())
           <div class="alert alert-danger">{{ $errors->first() }}</div>
         @endif
         <form method="POST" action="{{ route('sale.items.update', ['id' => $sale->id]) }}">
           @csrf
+          @include('sale.mobile-styles')
           <div class="table-responsive">
-            <table class="table table-bordered rn-table-pro">
+            <table class="table table-bordered rn-table-pro rn-sale-mobile-table">
               <thead class="thead-light">
                 <tr>
                   <th style="width:6%">#</th>
-                  <th style="width:20%">Product</th>
+                  <th style="width:20%">{{ __('sales.product') }}</th>
                   <th style="width:10%">Purchase #</th>
-                  <th style="width:12%" class="text-end">Current Stock</th>
-                  <th style="width:12%" class="text-end">Qty</th>
-                  <th style="width:12%" class="text-end">Warranty (days)</th>
-                  <th style="width:15%" class="text-end">Price</th>
-                  <th style="width:15%" class="text-end">Line Total</th>
+                  <th style="width:12%" class="text-end">{{ __('sales.current_stock') }}</th>
+                  <th style="width:12%" class="text-end">{{ __('sales.qty') }}</th>
+                  <th style="width:12%" class="text-end">{{ __('sales.warranty_days') }}</th>
+                  <th style="width:15%" class="text-end">{{ __('sales.price') }}</th>
+                  <th style="width:15%" class="text-end">{{ __('sales.line_total') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -43,67 +44,68 @@
                 @forelse($items as $it)
                   @php $line = (float)($it->totalSale ?? ($it->salePrice * $it->qty)); @endphp
                   <tr data-item-id="{{ $it->id }}" data-purchase-id="{{ $it->purchaseId }}">
-                    <td>{{ $i++ }}</td>
-                    <td>
+                    <td data-label="{{ __('sales.item') }}">{{ $i++ }}</td>
+                    <td data-label="Product / Serials">
                       <div class="fw-semibold">{{ $it->productName }}</div>
-                      <button type="button" class="btn btn-link btn-sm p-0" data-action="toggle-serials" data-purchase-id="{{ $it->purchaseId }}">Manage Serials</button>
+                      <button type="button" class="btn btn-link btn-sm p-0" data-action="toggle-serials" data-purchase-id="{{ $it->purchaseId }}">{{ __('sales.manage_serials') }}</button>
+                      @error('serialIdByItem.'.(int)$it->id)<div class="text-danger small" data-role="backend-serial-error">{{ $message }}</div>@enderror
                       <div class="serials-wrap mt-1" data-purchase-id="{{ $it->purchaseId }}" style="display:none;">
-                        <div class="small text-muted">Select exactly <span data-role="required-count">{{ (int)$it->qty }}</span> serial(s).</div>
+                        <div class="small text-muted">{{ __('sales.select_prefix') }}<span data-role="required-count">{{ (int)$it->qty }}</span>{{ __('sales.serial_suffix') }}</div>
                         <div class="serials-list border rounded p-2" style="max-height:160px; overflow:auto;"></div>
                         <div class="serial-hidden-container"></div>
-                        <div class="small text-danger mt-1" data-role="serial-error" style="display:none;">Please select the required number of serials.</div>
+                        <div class="small text-danger mt-1" data-role="serial-error" style="display:none;">{{ __('sales.please_select_the_required_number_of_serials') }}</div>
                       </div>
                     </td>
-                    <td>{{ $it->purchaseId }}</td>
-                    <td class="text-end">{{ $it->currentStock }}</td>
-                    <td>
+                    <td data-label="Purchase #">{{ $it->purchaseId }}</td>
+                    <td class="text-end" data-label="{{ __('sales.current_stock') }}">{{ $it->currentStock }}</td>
+                    <td data-label="{{ __('sales.quantity') }}">
                       <input type="number" name="items[{{ $it->id }}][qty]" min="0" class="form-control form-control-sm text-end" value="{{ old('items.'.$it->id.'.qty', $it->qty) }}" data-purchase-id="{{ $it->purchaseId }}" data-role="qty">
                     </td>
-                    <td>
-                      <input type="text" name="items[{{ $it->id }}][warranty_days]" class="form-control form-control-sm text-end" value="{{ old('items.'.$it->id.'.warranty_days', $it->warranty_days) }}" placeholder="e.g. 365">
+                    <td data-label="{{ __('sales.warranty_days') }}">
+                      <input type="text" name="items[{{ $it->id }}][warranty_days]" class="form-control form-control-sm text-end" value="{{ old('items.'.$it->id.'.warranty_days', $it->warranty_days) }}" placeholder="{{ __('common.e_g_365') }}">
                     </td>
-                    <td>
+                    <td data-label="{{ __('sales.sale_price') }}">
                       <input type="number" step="0.01" min="0" name="items[{{ $it->id }}][salePrice]" class="form-control form-control-sm text-end" value="{{ old('items.'.$it->id.'.salePrice', $it->salePrice) }}" data-role="price">
                     </td>
-                    <td class="text-end"><span class="line-total" data-role="line-total">@money($line)</span></td>
+                    <td class="text-end" data-label="{{ __('sales.line_total') }}"><span class="line-total" data-role="line-total">@money($line)</span></td>
                   </tr>
                 @empty
-                  <tr><td colspan="7" class="text-center">No items found</td></tr>
+                  <tr><td colspan="8" class="text-center">{{ __('sales.no_items_found') }}</td></tr>
                 @endforelse
                 <tr class="table-secondary">
-                  <td colspan="7"><strong>Add New Item (optional)</strong></td>
+                  <td colspan="8"><strong>{{ __('sales.add_new_item_optional') }}</strong></td>
                 </tr>
                 <tr>
                   <td colspan="3">
-                    <small class="text-muted">Select Product/Purchase</small>
-                    <select id="addPurchaseSelect" class="form-control form-control-sm" title="Select product purchase row">
-                      <option value="">Loading options…</option>
+                    <small class="text-muted">{{ __('sales.select_product_purchase') }}</small>
+                    <select id="addPurchaseSelect" class="form-control form-control-sm" title="{{ __('common.select_product_purchase_row') }}">
+                      <option value="">{{ __('sales.loading_options') }}</option>
                     </select>
                     <input type="hidden" name="add[purchaseId]" id="addPurchaseId" value="{{ old('add.purchaseId') }}">
                     <div class="small text-muted mt-1" id="addPurchaseMeta" style="display:none;"></div>
                   </td>
                   <td>
-                    <small class="text-muted">Available Stock</small>
-                    <input type="text" id="addCurrentStock" class="form-control form-control-sm" value="" placeholder="Stock" readonly>
+                    <small class="text-muted">{{ __('sales.available_stock') }}</small>
+                    <input type="text" id="addCurrentStock" class="form-control form-control-sm" value="" placeholder="{{ __('sales.stock') }}" readonly>
                   </td>
                   <td>
-                    <small class="text-muted">Quantity</small>
-                    <input type="number" name="add[qty]" id="addQty" min="0" class="form-control form-control-sm" value="{{ old('add.qty') }}" placeholder="Qty">
+                    <small class="text-muted">{{ __('sales.quantity') }}</small>
+                    <input type="number" name="add[qty]" id="addQty" min="0" class="form-control form-control-sm" value="{{ old('add.qty') }}" placeholder="{{ __('sales.qty') }}">
                   </td>
                   <td>
-                    <small class="text-muted">Warranty (days)</small>
-                    <input type="text" name="add[warranty_days]" id="addWarrantyDays" class="form-control form-control-sm text-end" value="{{ old('add.warranty_days') }}" placeholder="e.g. 365">
+                    <small class="text-muted">{{ __('sales.warranty_days') }}</small>
+                    <input type="text" name="add[warranty_days]" id="addWarrantyDays" class="form-control form-control-sm text-end" value="{{ old('add.warranty_days') }}" placeholder="{{ __('common.e_g_365') }}">
                   </td>
                   <td colspan="2">
-                    <small class="text-muted">Sale Price</small>
-                    <input type="number" step="0.01" min="0" name="add[salePrice]" id="addSalePrice" class="form-control form-control-sm" value="{{ old('add.salePrice') }}" placeholder="Price">
+                    <small class="text-muted">{{ __('sales.sale_price') }}</small>
+                    <input type="number" step="0.01" min="0" name="add[salePrice]" id="addSalePrice" class="form-control form-control-sm" value="{{ old('add.salePrice') }}" placeholder="{{ __('sales.price') }}">
                     <div class="mt-2">
-                      <button type="button" class="btn btn-link btn-sm p-0" id="addManageSerials">Manage Serials</button>
+                      <button type="button" class="btn btn-link btn-sm p-0" id="addManageSerials">{{ __('sales.manage_serials') }}</button>
                       <div id="addSerialsWrap" class="mt-1" style="display:none;">
-                        <div class="small text-muted">Select exactly <span id="addRequiredCount">0</span> serial(s).</div>
+                        <div class="small text-muted">{{ __('sales.select_prefix') }}<span id="addRequiredCount">0</span>{{ __('sales.serial_suffix') }}</div>
                         <div id="addSerialsList" class="border rounded p-2" style="max-height:160px; overflow:auto;"></div>
                         <div id="addSerialsHiddenContainer"></div>
-                        <div class="small text-danger mt-1" id="addSerialError" style="display:none;">Please select the required number of serials.</div>
+                        <div class="small text-danger mt-1" id="addSerialError" style="display:none;">{{ __('sales.please_select_the_required_number_of_serials') }}</div>
                       </div>
                     </div>
                   </td>
@@ -122,24 +124,24 @@
                 $initialDue = max(0, $initialGrand - $paid);
               @endphp
               <div class="d-flex flex-wrap gap-3 align-items-center">
-                <div><strong>Total:</strong> <span id="calcTotal">৳ {{ number_format($initialTotal,2) }}</span></div>
+                <div><strong>{{ __('common.total') }}:</strong> <span id="calcTotal">৳ {{ number_format($initialTotal,2) }}</span></div>
                 <div class="d-flex align-items-center" style="gap:6px;">
-                  <strong>Discount:</strong>
+                  <strong>{{ __('common.discount') }}:</strong>
                   <input type="number" step="0.01" min="0" name="discountAmount" id="discountInput" class="form-control form-control-sm" style="max-width:120px;" value="{{ number_format($discount,2,'.','') }}" />
                 </div>
-                <div><strong>Grand Total:</strong> <span id="calcGrand">৳ {{ number_format($initialGrand,2) }}</span></div>
-                <div><strong>Paid:</strong> <span id="calcPaid">৳ {{ number_format($paid,2) }}</span></div>
-                <div><strong>Remaining Due:</strong> <span id="calcDue">৳ {{ number_format($initialDue,2) }}</span></div>
+                <div><strong>{{ __('common.grand_total') }}:</strong> <span id="calcGrand">৳ {{ number_format($initialGrand,2) }}</span></div>
+                <div><strong>{{ __('common.paid') }}:</strong> <span id="calcPaid">৳ {{ number_format($paid,2) }}</span></div>
+                <div><strong>{{ __('sales.remaining_due') }}:</strong> <span id="calcDue">৳ {{ number_format($initialDue,2) }}</span></div>
               </div>
             </div>
           </div>
           <div class="d-flex justify-content-between">
-            <a href="{{ route('invoiceGenerate', ['id' => $sale->id]) }}" class="btn btn-outline-secondary">Cancel</a>
-            <button type="submit" class="btn btn-primary">Save Item Changes</button>
+            <a href="{{ route('invoiceGenerate', ['id' => $sale->id]) }}" class="btn btn-outline-secondary">{{ __('sales.cancel') }}</a>
+            <button type="submit" class="btn btn-primary">{{ __('sales.save_item_changes') }}</button>
           </div>
         </form>
         <div class="mt-3 small text-muted">
-          Note: Increasing quantities consumes stock from the corresponding purchase row. Reducing quantities returns stock. Adding a new item requires a valid purchase ID with sufficient stock.
+          {{ __('common.note') }}: Increasing quantities consumes stock from the corresponding purchase row. Reducing quantities returns stock. Adding a new item requires a valid purchase ID with sufficient stock.
         </div>
       </div>
     </div>
@@ -225,7 +227,11 @@
 
     function loadAddSerials(purchaseId){
       var url = "{{ route('ajax.purchase.serials.public', ['id' => 0]) }}".replace('/0', '/' + purchaseId);
-      fetch(url).then(function(r){ return r.json(); }).then(function(j){
+      fetch(url, {headers:{'Accept':'application/json'}, credentials:'same-origin'}).then(function(r){ if(!r.ok) throw new Error('Serial lookup failed'); return r.json(); }).then(function(j){
+        addSerialsWrap.dataset.serialRequired = j.selection_required === false ? '0' : '1';
+        addSerialsWrap.dataset.serialized = j.serialized ? '1' : '0';
+        addRequiredCountEl.parentNode.firstChild.textContent = j.selection_required === false ? 'Optional: select all or leave empty to allocate ' : window.RNTranslate('select_prefix');
+        var previous = Array.prototype.slice.call(addSerialsList.querySelectorAll('input:checked')).map(function(cb){ return cb.value; });
         addSerialsList.innerHTML = '';
         var reqCount = parseInt(qtyEl.value || '0', 10) || 0;
         addRequiredCountEl.textContent = reqCount;
@@ -234,7 +240,7 @@
           var id = s.id; var num = s.serialNumber || ('SN#'+id);
           var lbl = document.createElement('label');
           lbl.className = 'd-block small';
-          var cb = document.createElement('input'); cb.type='checkbox'; cb.value = id; cb.className='me-1';
+          var cb = document.createElement('input'); cb.type='checkbox'; cb.value = id; cb.className='me-1'; cb.checked = previous.indexOf(String(id)) !== -1;
           lbl.appendChild(cb); lbl.appendChild(document.createTextNode(num));
           addSerialsList.appendChild(lbl);
         });
@@ -262,11 +268,30 @@
         h.value = el.value;
         addSerialsHiddenContainer.appendChild(h);
       });
-      addSerialError.style.display = (checked.length !== reqCount) ? 'block' : 'none';
+      addSerialError.style.display = (addSerialsWrap.dataset.serialized === '1' && checked.length !== reqCount && !(addSerialsWrap.dataset.serialRequired === '0' && checked.length === 0)) ? 'block' : 'none';
     }
     if(addSerialsList){ addSerialsList.addEventListener('change', syncAddSerialsHidden); }
     if(qtyEl){ qtyEl.addEventListener('input', function(){ addRequiredCountEl.textContent = parseInt(qtyEl.value || '0', 10) || 0; syncAddSerialsHidden(); recalcTotals(); }); }
     if(priceEl){ priceEl.addEventListener('input', function(){ recalcTotals(); }); }
+
+    function refreshEditSerialPolicies(){
+      document.querySelectorAll('.serials-wrap').forEach(function(wrap){
+        var pid = wrap.dataset.purchaseId;
+        var url = "{{ route('ajax.purchase.serials.public', ['id' => 0]) }}".replace('/0', '/' + pid);
+        fetch(url, {headers:{'Accept':'application/json'}, credentials:'same-origin'})
+          .then(function(r){ if(!r.ok) throw new Error('Serial lookup failed'); return r.json(); })
+          .then(function(j){
+            wrap.dataset.serialRequired = j.selection_required === false ? '0' : '1';
+            wrap.dataset.serialized = j.serialized ? '1' : '0';
+            var count = wrap.querySelector('[data-role="required-count"]');
+            count.parentNode.firstChild.textContent = j.selection_required === false ? 'Optional: select all or leave empty to allocate ' : window.RNTranslate('select_prefix');
+            recalcTotals();
+          }).catch(function(){ /* Backend verifies current policy and availability on save. */ });
+      });
+      if(hidPid.value) loadAddSerials(hidPid.value);
+    }
+    window.addEventListener('focus', refreshEditSerialPolicies);
+    setInterval(function(){ if(!document.hidden) refreshEditSerialPolicies(); }, 30000);
 
     // Existing items: serial management per row
     function qs(sel, ctx){ return (ctx||document).querySelector(sel); }
@@ -274,7 +299,7 @@
     qsa('[data-action="toggle-serials"]').forEach(function(btn){
       btn.addEventListener('click', function(){
         var pid = btn.getAttribute('data-purchase-id');
-        var wrap = qs('.serials-wrap[data-purchase-id="'+pid+'"]');
+        var wrap = qs('.serials-wrap', btn.closest('tr'));
         if(!wrap) return;
         var list = qs('.serials-list', wrap);
         var hiddenContainer = qs('.serial-hidden-container', wrap);
@@ -282,10 +307,15 @@
         var errorEl = qs('[data-role="serial-error"]', wrap);
         // Toggle display
         wrap.style.display = (wrap.style.display === 'none' ? 'block' : 'none');
-        if(wrap.dataset.loaded === '1'){ return; }
+        // Reload current policy each time selection is opened.
         // Load available serials and mark currently assigned
         var url = "{{ route('ajax.purchase.serials.public', ['id' => 0]) }}".replace('/0', '/' + pid);
-        fetch(url).then(function(r){ return r.json(); }).then(function(j){
+        fetch(url, {headers:{'Accept':'application/json'}, credentials:'same-origin'}).then(function(r){ if(!r.ok) throw new Error('Serial lookup failed'); return r.json(); }).then(function(j){
+          wrap.dataset.serialRequired = j.selection_required === false ? '0' : '1';
+          wrap.dataset.serialized = j.serialized ? '1' : '0';
+          reqCountEl.parentNode.firstChild.textContent = wrap.dataset.serialRequired === '0' ? 'Optional: select all or leave empty to allocate ' : window.RNTranslate('select_prefix');
+          var previousIds = Array.prototype.slice.call(list.querySelectorAll('input:checked')).map(function(cb){ return String(cb.value); });
+          var wasLoaded = wrap.dataset.loaded === '1';
           list.innerHTML = '';
           // Preload assigned serials from blade data
           var assigned = (window.__soldSerials && window.__soldSerials[pid]) ? window.__soldSerials[pid] : [];
@@ -293,7 +323,7 @@
           // Render assigned first
           assigned.forEach(function(s){
             var lbl = document.createElement('label'); lbl.className='d-block small';
-            var cb = document.createElement('input'); cb.type='checkbox'; cb.value = s.id; cb.className='me-1'; cb.checked = true;
+            var cb = document.createElement('input'); cb.type='checkbox'; cb.value = s.id; cb.className='me-1'; cb.checked = wasLoaded ? previousIds.indexOf(String(s.id)) !== -1 : true;
             lbl.appendChild(cb); lbl.appendChild(document.createTextNode(s.serialNumber || ('SN#'+s.id)+' (assigned)'));
             list.appendChild(lbl);
           });
@@ -301,7 +331,7 @@
           (j.serials||[]).forEach(function(s){
             if(assignedIds.indexOf(s.id) !== -1) return; // skip duplicates
             var lbl = document.createElement('label'); lbl.className='d-block small';
-            var cb = document.createElement('input'); cb.type='checkbox'; cb.value = s.id; cb.className='me-1';
+            var cb = document.createElement('input'); cb.type='checkbox'; cb.value = s.id; cb.className='me-1'; cb.checked = previousIds.indexOf(String(s.id)) !== -1;
             lbl.appendChild(cb); lbl.appendChild(document.createTextNode(s.serialNumber || ('SN#'+s.id)));
             list.appendChild(lbl);
           });
@@ -331,9 +361,9 @@
               }
               h.value = el.value; hiddenContainer.appendChild(h);
             });
-            errorEl.style.display = (checked.length !== reqCount) ? 'block' : 'none';
+            errorEl.style.display = (wrap.dataset.serialized === '1' && checked.length !== reqCount && !(wrap.dataset.serialRequired === '0' && checked.length === 0)) ? 'block' : 'none';
           }
-          list.addEventListener('change', sync);
+          list.onchange = sync;
           sync();
           wrap.dataset.loaded = '1';
         });
@@ -358,7 +388,7 @@
         if(lineEl){ lineEl.textContent = '৳ ' + fmt(line); }
         // Update required serial count if wrap visible
         var pid = tr.getAttribute('data-purchase-id');
-        var wrap = qs('.serials-wrap[data-purchase-id="'+pid+'"]');
+        var wrap = qs('.serials-wrap', tr);
         if(wrap){
           var rc = qs('[data-role="required-count"]', wrap); if(rc){ rc.textContent = parseInt(qty,10)||0; }
           // Re-enforce disable/enable after count change
@@ -372,7 +402,7 @@
               var checked = cbs.filter(function(el){ return el.checked; });
               var disable = checked.length >= reqCount;
               cbs.forEach(function(el){ if(!el.checked){ el.disabled = disable; } else { el.disabled = false; } });
-              errorEl.style.display = (checked.length !== reqCount) ? 'block' : 'none';
+              errorEl.style.display = (wrap.dataset.serialized === '1' && checked.length !== reqCount && !(wrap.dataset.serialRequired === '0' && checked.length === 0)) ? 'block' : 'none';
             })();
           }
         }

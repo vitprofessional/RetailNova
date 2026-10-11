@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Print Damage Record</title>
+    <title>{{ __('inventory.print_damage_record') }}</title>
     <style>
         * {
             margin: 0;
@@ -81,27 +81,28 @@
             }
         }
     </style>
+@include('partials.localization')
 </head>
 <body onload="window.print()">
     <div class="print-container">
         <div class="header-section">
-            <h2>Damage Record</h2>
-            <div class="header-info">Record ID: {{ $damage->id }}</div>
+            <h2>{{ __('inventory.damage_record') }}</h2>
+            <div class="header-info">{{ __('common.record_id') }}: {{ $damage->id }}</div>
         </div>
-        
+
         <table>
-            <tr><th>Reference</th><td>{{ $damage->reference ?? '-' }}</td></tr>
-            <tr><th>Product</th><td>{{ $damage->product ? $damage->product->name : '-' }}</td></tr>
-            <tr><th>Quantity Damaged</th><td>{{ $damage->qty }}</td></tr>
-            <tr><th>Unit Price</th><td>${{ number_format($damage->sale_price ?? $damage->buy_price ?? 0, 2) }}</td></tr>
-            <tr><th>Total Loss</th><td class="amount-highlight">${{ number_format($damage->total ?? 0, 2) }}</td></tr>
-            <tr><th>Reported By</th><td>{{ $damage->admin ? $damage->admin->name : ($damage->admin_id ? 'Admin #'.$damage->admin_id : '-') }}</td></tr>
-            <tr><th>Report Date</th><td>{{ optional($damage->date)->format('M d, Y') }}</td></tr>
+            <tr><th>{{ __('inventory.reference') }}</th><td>{{ $damage->reference ?? '-' }}</td></tr>
+            <tr><th>{{ __('inventory.product') }}</th><td>{{ $damage->product ? $damage->product->name : '-' }}</td></tr>
+            <tr><th>{{ __('inventory.quantity_damaged') }}</th><td>{{ $damage->qty }}</td></tr>
+            <tr><th>{{ __('inventory.unit_price') }}</th><td>${{ number_format($damage->sale_price ?? $damage->buy_price ?? 0, 2) }}</td></tr>
+            <tr><th>{{ __('inventory.total_loss') }}</th><td class="amount-highlight">${{ number_format($damage->total ?? 0, 2) }}</td></tr>
+            <tr><th>{{ __('inventory.reported_by') }}</th><td>{{ $damage->admin ? $damage->admin->name : ($damage->admin_id ? 'Admin #'.$damage->admin_id : '-') }}</td></tr>
+            <tr><th>{{ __('inventory.report_date') }}</th><td>{{ optional($damage->date)->format('M d, Y') }}</td></tr>
         </table>
-        
+
         <div class="footer-section">
-            <p>Printed on {{ now()->format('F d, Y') }} at {{ now()->format('h:i A') }}</p>
-            <p style="margin-top: 10px; font-size: 11px;">This is a computer-generated damage report.</p>
+            <p>{{ __('common.printed_on') }} {{ now()->format('F d, Y') }} at {{ now()->format('h:i A') }}</p>
+            <p style="margin-top: 10px; font-size: 11px;">{{ __('inventory.this_is_a_computer_generated_damage_report') }}</p>
         </div>
     </div>
 </body>

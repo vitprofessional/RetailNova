@@ -1,17 +1,17 @@
 @extends('include')
 
 @section('title','New RMA')
-@section('backTitle')New RMA @endsection
+@section('backTitle'){{ __('common.heading_new_rma') }}@endsection
 @section('container')
 <div class="col-12">
-    <h4>Create RMA</h4>
+    <h4>{{ __('common.create_rma') }}</h4>
     <div class="card">
         <div class="card-body">
             <form method="POST" action="{{ route('rma.store') }}">
                 @csrf
                 <div class="row g-2">
                     <div class="col-md-4">
-                        <label class="form-label">Customer</label>
+                        <label class="form-label">{{ __('common.customer') }}</label>
                         <select name="customer_id" class="form-control form-control-sm">
                             <option value="">(none)</option>
                             @foreach($customers as $c)
@@ -21,8 +21,8 @@
                         @error('customer_id')<small class="text-danger">{{ $message }}</small>@enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Serial</label>
-                        <input list="serialsList" name="serial_display" id="serialInput" class="form-control form-control-sm" value="{{ old('serial_display') }}" placeholder="Type to search serial..." />
+                        <label class="form-label">{{ __('common.serial') }}</label>
+                        <input list="serialsList" name="serial_display" id="serialInput" class="form-control form-control-sm" value="{{ old('serial_display') }}" placeholder="{{ __('common.type_to_search_serial') }}" />
                         <datalist id="serialsList">
                             @foreach($serials as $s)
                                 <option data-id="{{ $s->id }}" value="{{ $s->serialNumber ?? $s->serial ?? $s->serial_number }}"></option>
@@ -31,27 +31,27 @@
                         <input type="hidden" name="product_serial_id" id="product_serial_id" value="{{ old('product_serial_id') }}" />
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Status</label>
+                        <label class="form-label">{{ __('common.status') }}</label>
                         <select name="status" class="form-control form-control-sm">
-                            <option value="open">Open</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="resolved">Resolved</option>
-                            <option value="closed">Closed</option>
+                            <option value="open">{{ __('common.open') }}</option>
+                            <option value="in_progress">{{ __('common.in_progress') }}</option>
+                            <option value="resolved">{{ __('common.resolved') }}</option>
+                            <option value="closed">{{ __('common.closed') }}</option>
                         </select>
                     </div>
                     <div class="col-12 mt-2">
-                        <label class="form-label">Reason</label>
+                        <label class="form-label">{{ __('common.reason') }}</label>
                         <input name="reason" class="form-control form-control-sm" />
                         @error('reason')<small class="text-danger">{{ $message }}</small>@enderror
                     </div>
                     <div class="col-12 mt-2">
-                        <label class="form-label">Notes</label>
+                        <label class="form-label">{{ __('common.notes') }}</label>
                         <textarea name="notes" class="form-control form-control-sm" rows="4"></textarea>
                         @error('notes')<small class="text-danger">{{ $message }}</small>@enderror
                     </div>
                     <div class="col-12 mt-3">
-                        <button class="btn btn-primary">Create</button>
-                        <a href="{{ route('rma.index') }}" class="btn btn-secondary">Cancel</a>
+                        <button class="btn btn-primary">{{ __('common.create') }}</button>
+                        <a href="{{ route('rma.index') }}" class="btn btn-secondary">{{ __('common.cancel') }}</a>
                     </div>
                 </div>
             </form>

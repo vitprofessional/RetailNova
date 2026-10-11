@@ -19,13 +19,14 @@ buttons(window, $);
 $(function () {
     if ($('#purchaseTable').length) {
         $('#purchaseTable').DataTable({
+            language: window.RNDataTableLanguage,
             dom: 'Bfrtip',
             buttons: [
-                { extend: 'copy', className: 'btn btn-outline-secondary btn-sm' },
+                { extend: 'copy', text: window.RNTranslate('common.copy'), className: 'btn btn-outline-secondary btn-sm' },
                 { extend: 'csv', className: 'btn btn-outline-secondary btn-sm' },
                 { extend: 'excel', className: 'btn btn-outline-secondary btn-sm' },
                 { extend: 'pdf', className: 'btn btn-outline-secondary btn-sm' },
-                { extend: 'print', className: 'btn btn-outline-secondary btn-sm' }
+                { extend: 'print', text: window.RNTranslate('common.print'), className: 'btn btn-outline-secondary btn-sm' }
             ],
             order: [[3, 'desc']],
             responsive: true,

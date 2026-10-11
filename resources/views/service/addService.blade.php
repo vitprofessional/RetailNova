@@ -6,7 +6,7 @@
     <div class="card-body">
         <div class="row">
             <div class="col-12 mb-3">
-                <h4>Create Service</h4>
+                <h4>{{ __('common.create_service') }}</h4>
             </div>
         </div>
         @php
@@ -27,14 +27,14 @@
                 <input type="hidden" name="profileId" value="{{$profileId}}">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="serviceName" class="form-label">Service Name</label>
-                        <input type="text" class="form-control" placeholder="Enter the service name" id="serviceName" name="serviceName" value="{{$serviceName}}" required />
+                        <label for="serviceName" class="form-label">{{ __('common.service_name') }}</label>
+                        <input type="text" class="form-control" placeholder="{{ __('common.enter_the_service_name') }}" id="serviceName" name="serviceName" value="{{$serviceName}}" required />
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="rate" class="form-label">Service Rate</label>
-                        <input type="number" class="form-control" placeholder="Enter the amount" id="rate" name="rate" value="{{$rate}}" />
+                        <label for="rate" class="form-label">{{ __('common.service_rate') }}</label>
+                        <input type="number" class="form-control" placeholder="{{ __('common.enter_the_amount') }}" id="rate" name="rate" value="{{$rate}}" />
                     </div>
                 </div>
             </div>
@@ -48,7 +48,7 @@
             <div class="col-lg-12">
                 <div class="d-flex flex-wrap flex-wrap align-items-center justify-content-between mb-4">
                     <div>
-                        <h4 class="">Service List</h4>
+                        <h4 class="">{{ __('common.service_list') }}</h4>
                     </div>
                 </div>
             </div>
@@ -56,7 +56,7 @@
                 <form id="bulkDeleteForm" action="{{ route('services.bulkDelete') }}" method="POST">
                     @csrf
                     <div class="mb-2 d-flex justify-content-end">
-                        <button type="submit" class="btn btn-danger btn-sm" data-onclick="confirm('Delete selected services?')">Delete Selected</button>
+                        <button type="submit" class="btn btn-danger btn-sm" data-onclick="confirm('Delete selected services?')">{{ __('common.delete_selected') }}</button>
                     </div>
                     <div class="table-responsive rounded mb-3 p-2">
                         <table class="data-tables table mb-0 tbl-server-info rn-table-pro">
@@ -68,9 +68,9 @@
                                         <label for="selectAllServices" class="mb-0"></label>
                                     </div>
                                 </th>
-                                <th>Service Name</th>
-                                <th>Service Amount</th>
-                                <th>Action</th>
+                                <th>{{ __('common.service_name') }}</th>
+                                <th>{{ __('common.service_amount') }}</th>
+                                <th>{{ __('common.action') }}</th>
                             </tr>
                         </thead>
                         <tbody class="ligth-body ">
@@ -87,11 +87,11 @@
                                 <td>{{$serviceList -> rate}}</td>
                                 <td>
                                     <div class="d-flex align-items-center list-action">
-                                        <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit" href="{{route('editService',['id'=>$serviceList->id])}}"><i class="ri-pencil-line mr-0"></i></a>
+                                        <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('common.edit') }}" href="{{route('editService',['id'=>$serviceList->id])}}"><i class="ri-pencil-line mr-0"></i></a>
                                         <form action="{{ route('delService',['id'=>$serviceList->id]) }}" method="POST" style="display:inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="badge bg-warning mr-2" data-confirm="Are you sure to delete this service?" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete" style="border:none; background:transparent; padding:0;"><i class="ri-delete-bin-line mr-0"></i></button>
+                                            <button type="submit" class="badge bg-warning mr-2" data-confirm="Are you sure to delete this service?" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('common.delete') }}" style="border:none; background:transparent; padding:0;"><i class="ri-delete-bin-line mr-0"></i></button>
                                         </form>
                                     </div>
                                 </td>
@@ -105,12 +105,12 @@
                                         <label for="checkbox2" class="mb-0"></label>
                                     </div>
                                 </td>
-                                <td>Standerd</td>
+                                <td>{{ __('common.standerd') }}</td>
                                 <td>1000</td>
                                 <td>
                                     <div class="d-flex align-items-center list-action">
-                                        <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                        <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
+                                        <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('common.edit') }}" href="#"><i class="ri-pencil-line mr-0"></i></a>
+                                        <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('common.delete') }}"><i class="ri-delete-bin-line mr-0"></i></button>
                                     </div>
                                 </td>
                             </tr>

@@ -85,7 +85,7 @@ class AdminUserManagementController extends Controller
                     $bizId = $actor->businessId;
                 }
                 if ((string)$bizId !== (string)$actor->businessId) {
-                    Alert::error('Error','GM can only assign their own business to Store Manager');
+                    Alert::error(__('common.notification_error'),__('common.notification_gm_can_only_assign_their_own_business_to_store_manager'));
                     return back()->withInput();
                 }
             } elseif ($actor->role === 'storemanager') {
@@ -93,7 +93,7 @@ class AdminUserManagementController extends Controller
                 $bizId = $actor->businessId;
             }
             if (empty($bizId)) {
-                Alert::error('Error','Business is required for selected role');
+                Alert::error(__('common.notification_error'),__('common.notification_business_is_required_for_selected_role'));
                 return back()->withInput();
             }
             $request->merge(['businessId' => $bizId]);
@@ -113,7 +113,7 @@ class AdminUserManagementController extends Controller
         $user->password = Hash::make($request->password);
         $user->save();
 
-        Alert::success('Success','User created');
+        Alert::success(__('common.notification_success'),__('common.notification_user_created'));
         return back();
     }
 
@@ -172,14 +172,14 @@ class AdminUserManagementController extends Controller
                     $bizId = $actor->businessId;
                 }
                 if ((string)$bizId !== (string)$actor->businessId) {
-                    Alert::error('Error','GM can only assign their own business to Store Manager');
+                    Alert::error(__('common.notification_error'),__('common.notification_gm_can_only_assign_their_own_business_to_store_manager'));
                     return back()->withInput();
                 }
             } elseif ($actor->role === 'storemanager') {
                 $bizId = $actor->businessId;
             }
             if (empty($bizId)) {
-                Alert::error('Error','Business is required for selected role');
+                Alert::error(__('common.notification_error'),__('common.notification_business_is_required_for_selected_role'));
                 return back()->withInput();
             }
             $request->merge(['businessId' => $bizId]);
@@ -197,7 +197,7 @@ class AdminUserManagementController extends Controller
         }
         $user->save();
 
-        Alert::success('Updated','User updated');
+        Alert::success(__('common.notification_updated'),__('common.notification_user_updated'));
         // Redirect intelligently based on actor
         return redirect()->route($this->routeBase($actor).'.users.index');
     }
@@ -216,11 +216,11 @@ class AdminUserManagementController extends Controller
             abort(403);
         }
         if ($user->id === $actor->id) {
-            Alert::error('Error','You cannot delete your own account');
+            Alert::error(__('common.notification_error'),__('common.notification_you_cannot_delete_your_own_account'));
             return back();
         }
         $user->delete();
-        Alert::success('Deleted','User deleted');
+        Alert::success(__('common.notification_deleted'),__('common.notification_user_deleted'));
         return back();
     }
 
@@ -236,7 +236,7 @@ class AdminUserManagementController extends Controller
             ->values();
 
         if ($ids->isEmpty()) {
-            Alert::error('Error','No users selected for deletion');
+            Alert::error(__('common.notification_error'),__('common.notification_no_users_selected_for_deletion'));
             return back();
         }
 
@@ -251,12 +251,12 @@ class AdminUserManagementController extends Controller
         });
 
         if ($deletable->isEmpty()) {
-            Alert::error('Error','No permitted users to delete');
+            Alert::error(__('common.notification_error'),__('common.notification_no_permitted_users_to_delete'));
             return back();
         }
 
         AdminUser::whereIn('id', $deletable->pluck('id'))->delete();
-        Alert::success('Deleted', sprintf('Deleted %d user(s)', $deletable->count()));
+        Alert::success(__('common.notification_deleted'), sprintf(__('common.notification_deleted_d_user_s'), $deletable->count()));
         return back();
     }
 

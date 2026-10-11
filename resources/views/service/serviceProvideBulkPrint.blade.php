@@ -11,7 +11,7 @@
                             <div class="d-flex justify-content-between mb-2">
                                 <div>
                                     <h5>{{ $customer }}</h5>
-                                    <div class="text-muted">Date: {{ $date }}</div>
+                                    <div class="text-muted">{{ __('common.date') }}: {{ $date }}</div>
                                 </div>
                                 <div class="text-end">
                                     <h5>{{ $business->businessName ?? config('app.name') }}</h5>
@@ -24,9 +24,9 @@
                                     <thead>
                                         <tr>
                                             <th>#</th>
-                                            <th>Service</th>
-                                            <th class="text-end">Amount</th>
-                                            <th class="text-end">Qty</th>
+                                            <th>{{ __('common.service') }}</th>
+                                            <th class="text-end">{{ __('common.amount') }}</th>
+                                            <th class="text-end">{{ __('common.qty') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -43,7 +43,7 @@
                                     </tbody>
                                     <tfoot>
                                         <tr>
-                                            <td colspan="2" class="text-end"><strong>Total</strong></td>
+                                            <td colspan="2" class="text-end"><strong>{{ __('common.total') }}</strong></td>
                                             <td class="text-end"><strong>{{ number_format($total,2) }}</strong></td>
                                             <td></td>
                                         </tr>

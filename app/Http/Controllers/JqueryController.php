@@ -53,12 +53,12 @@ class JqueryController extends Controller
                 'buyPrice'     => $buyPrice,
                 'salePrice'    => $salePrice,
                 'vatStatus'    => $vatStatus,
-                'message'      => 'Success',
+                'message'      => __('common.api_success'),
                 'id'           => $getData->id
             ];
         }
 
-        return ['productName' => '', 'currentStock' => 0, 'buyPrice' => '', 'salePrice' => '', 'vatStatus' => '', 'message' => 'Not found', 'id' => ''];
+        return ['productName' => '', 'currentStock' => 0, 'buyPrice' => '', 'salePrice' => '', 'vatStatus' => '', 'message' => __('common.api_not_found'), 'id' => ''];
     }
 
     public function getSaleProductDetails($id){
@@ -272,12 +272,12 @@ class JqueryController extends Controller
                 'buyPrice'     => $buyPrice,
                 'salePrice'    => $salePrice,
                 'purchaseDate' => $purchaseDate ? $purchaseDate->format('Y-m-d') : null,
-                'message'      => 'Success',
+                'message'      => __('common.api_success'),
                 'id'           => $getData->id
             ]);
         }
 
-        return response()->json(['productName' => '', 'currentStock' => 0, 'buyPrice' => '', 'salePrice' => '', 'purchaseDate'=>null, 'message' => 'Not found', 'id' => '']);
+        return response()->json(['productName' => '', 'currentStock' => 0, 'buyPrice' => '', 'salePrice' => '', 'purchaseDate'=>null, 'message' => __('common.api_not_found'), 'id' => '']);
     }
 
     /**
@@ -407,21 +407,29 @@ class JqueryController extends Controller
     }
 
     /**
-     * Public serial lookup for a purchase row (returns only available/unsold serials)
+     * Authenticated serial lookup (legacy public route name retained for clients).
      */
     public function getPurchaseSerialsPublic($purchaseId)
     {
+        $actor = auth('admin')->user();
+        if (!$actor) {
+            return response()->json(['status' => 'error', 'serials' => []], 401);
+        }
+        $purchase = PurchaseProduct::find($purchaseId);
+        $canAccessAllBusinesses = in_array(strtolower(trim((string) $actor->role)), ['admin', 'superadmin'], true);
+        if (!$purchase || (!$canAccessAllBusinesses && (
+            (int) $actor->businessId <= 0 || (int) $purchase->businessId !== (int) $actor->businessId
+        ))) {
+            return response()->json(['status' => 'error', 'serials' => []], 404);
+        }
         try {
-            $query = ProductSerial::where('purchaseId', $purchaseId);
-            // Only return serials that are not already sold/linked to a sale
-            $query->whereNull('saleId');
-            if (Schema::hasColumn('product_serials', 'status')) {
-                $query->where(function($q){
-                    $q->whereNull('status')->orWhere('status', '!=', 'sold');
-                });
-            }
+            $policy = app(\App\Services\SalesSerialPolicy::class);
+            $query = $policy->available(ProductSerial::where('purchaseId', $purchaseId)
+                ->where('productId', $purchase->productName));
             $serials = $query->orderBy('id', 'asc')->get(['id','serialNumber','saleId','status','purchaseId']);
-            return response()->json(['status' => 'ok', 'serials' => $serials]);
+            return response()->json(['status' => 'ok', 'serials' => $serials,
+                'serialized' => $policy->serialized($purchase),
+                'selection_required' => $policy->required($purchase->businessId)]);
         } catch (\Throwable $e) {
             \Log::warning('getPurchaseSerialsPublic error: '.$e->getMessage(), ['purchaseId' => $purchaseId]);
             return response()->json(['status' => 'error', 'serials' => []], 500);
@@ -485,7 +493,7 @@ class JqueryController extends Controller
         $paidAmount = max(0, $normalizeMoney($requ->input('paidAmount')));
         if ($paidAmount > $grandTotal) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'paidAmount' => 'Paid amount cannot exceed grand total.',
+                'paidAmount' => __('common.notification_paid_amount_cannot_exceed_grand_total'),
             ]);
         }
         $dueAmount = max(0, $grandTotal - $paidAmount);
@@ -694,13 +702,13 @@ class JqueryController extends Controller
                 }
 
                 DB::commit();
-                if($updatedAny) Alert::success('Success!','Purchase updated successfully');
-                else Alert::warning('No changes','No valid rows were updated');
+                if($updatedAny) Alert::success(__('common.notification_success'),__('common.notification_purchase_updated_successfully'));
+                else Alert::warning(__('common.notification_no_changes'),__('common.notification_no_valid_rows_were_updated'));
                 return back();
             }catch(\Exception $e){
                 DB::rollBack();
                 // update exception debug removed
-                Alert::error('Sorry!','Failed to update purchases: '.$e->getMessage());
+                Alert::error(__('common.notification_sorry'),__('common.notification_failed_to_update_purchases').$e->getMessage());
                 return back();
             }
 
@@ -857,9 +865,9 @@ class JqueryController extends Controller
                 DB::commit();
 
                 if($createdAny){
-                    Alert::success('Success!','Data saved successfully');
+                    Alert::success(__('common.notification_success'),__('common.notification_data_saved_successfully'));
                 } else {
-                    Alert::warning('No rows','No valid purchase rows to save or duplicates skipped');
+                    Alert::warning(__('common.notification_no_rows'),__('common.notification_no_valid_purchase_rows_to_save_or_duplicates_skipped'));
                 }
                 try {
                     $count = \App\Models\PurchaseProduct::count();
@@ -869,7 +877,7 @@ class JqueryController extends Controller
             }catch(\Exception $e){
                 DB::rollBack();
                 try { \Log::error('create_exception', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]); } catch (\Exception $_) {}
-                Alert::error('Sorry!','Data failed to save: '.$e->getMessage());
+                Alert::error(__('common.notification_sorry'),__('common.notification_data_failed_to_save').$e->getMessage());
                 return back();
             }
         endif; // end create/update branching
@@ -882,9 +890,9 @@ class JqueryController extends Controller
         if($getData):
             $serviceName = $getData->serviceName;
             $rate = $getData->rate;
-            return ['serviceName' => $serviceName, 'rate' => $rate, 'message'=>'Success ! Form successfully subjmit.','id'=> $getData->id];
+            return ['serviceName' => $serviceName, 'rate' => $rate, 'message'=>__('common.api_success_form_successfully_subjmit'),'id'=> $getData->id];
         else:
-            return ['serviceName' => "",'rate' => "", 'message'=>'Error ! There is an error. Please try agin.','id'=>''];
+            return ['serviceName' => "",'rate' => "", 'message'=>__('common.api_error_there_is_an_error_please_try_agin'),'id'=>''];
         endif;    
     }
 
@@ -914,33 +922,17 @@ class JqueryController extends Controller
         $createdSaleId = null;
 
         $items = $requ->qty ?? [];
-        // Get raw serial input
-        $rawSerialIds = $requ->input('serialId', []);
-        $rawSerialNumbers = $requ->input('serialNumber', []);
-        
-        // Normalize serial arrays to zero-based indexes so they align with qty/purchaseData ordering
-        $serialIdsInput = array_values($rawSerialIds);
-        $serialNumbersInput = array_values($rawSerialNumbers);
-        
+        // Preserve sparse row keys when a preceding row has no serial inputs.
+        $serialIdsInput = (array)$requ->input('serialId', []);
+        $serialNumbersInput = (array)$requ->input('serialNumber', []);
+        $serialPolicy = app(\App\Services\SalesSerialPolicy::class);
+
         // Extract VAT data from request (same pattern as savePurchase)
         $vatPercents = is_array($requ->get('vatPercent')) ? $requ->get('vatPercent') : [$requ->get('vatPercent')];
         $vatIncludeds = is_array($requ->get('includeVat')) ? $requ->get('includeVat') : [$requ->get('includeVat')];
 
-        // Build a purchaseId-keyed lookup for serials to survive any client-side reindex mismatches
-        $serialMapByPurchase = [];
-        if(isset($requ->purchaseData) && is_array($requ->purchaseData)){
-            foreach($requ->purchaseData as $i => $pid){
-                $pidInt = (int)$pid;
-                if($pidInt <= 0) continue;
-                $serialMapByPurchase[$pidInt] = [
-                    'ids' => (isset($serialIdsInput[$i]) && is_array($serialIdsInput[$i])) ? array_values($serialIdsInput[$i]) : [],
-                    'numbers' => (isset($serialNumbersInput[$i]) && is_array($serialNumbersInput[$i])) ? array_values($serialNumbersInput[$i]) : [],
-                ];
-            }
-        }
-
         try {
-            DB::transaction(function() use ($requ, $items, $stockService, $invoiceService, $serialMapByPurchase, $serialIdsInput, $serialNumbersInput, $vatPercents, $vatIncludeds, &$createdSaleId) {
+            DB::transaction(function() use ($requ, $items, $stockService, $invoiceService, $serialPolicy, $serialIdsInput, $serialNumbersInput, $vatPercents, $vatIncludeds, &$createdSaleId) {
                 $sales = new SaleProduct();
                 // Generate a sequenced sale invoice (replaces client-provided invoice)
                 $sales->invoice         = $invoiceService->generateSaleInvoice();
@@ -967,6 +959,12 @@ class JqueryController extends Controller
                     $bizId = (int)($requ->input('businessId') ?? 0);
                     if($bizId > 0){ $sales->businessId = $bizId; }
                 }
+                if ($actor && !in_array(strtolower(trim($actor->role)), ['admin','superadmin'], true)) {
+                    $sales->businessId = $actor->businessId;
+                }
+                if (!$sales->businessId) {
+                    $sales->businessId = PurchaseProduct::withoutGlobalScopes()->find($requ->purchaseData[0] ?? 0)?->businessId;
+                }
                 // Record salesperson (the admin user who created this sale)
                 try{ if($actor && isset($actor->id)){ $sales->salespersonId = $actor->id; } }catch(\Throwable $_){}
 
@@ -974,6 +972,15 @@ class JqueryController extends Controller
                     throw new \Exception('Failed to save sale');
                 }
                 $createdSaleId = (int)$sales->id;
+
+                $seenPurchases = [];
+                foreach ($requ->purchaseData as $row => $pid) {
+                    $purchase = $serialPolicy->purchase((int)$pid, $sales->businessId, "purchaseData.$row");
+                    if (isset($seenPurchases[(int)$pid]) && $serialPolicy->serialized($purchase)) {
+                        throw \Illuminate\Validation\ValidationException::withMessages(["purchaseData.$row" => __('common.notification_combine_duplicate_serialized_purchase_rows_into_one_quantity')]);
+                    }
+                    $seenPurchases[(int)$pid] = true;
+                }
 
                 $backorders = $requ->backorder ?? [];
                 if(!is_array($backorders)) $backorders = [$backorders];
@@ -1028,75 +1035,9 @@ class JqueryController extends Controller
 
                         $purchaseId = (int)$requ->purchaseData[$index];
                         $qty = (int)$item;
-                        $selectedSerialIds = [];
-                        $selectedSerialNumbers = [];
-                        // Collect serial ids for this row if provided (nested by row index)
-                        if(isset($serialIdsInput[$index]) && is_array($serialIdsInput[$index])){
-                            $selectedSerialIds = array_values(array_filter($serialIdsInput[$index], function($v){ return trim((string)$v) !== ''; }));
-                        }
-                        if(isset($serialNumbersInput[$index]) && is_array($serialNumbersInput[$index])){
-                            $selectedSerialNumbers = array_values(array_filter($serialNumbersInput[$index], function($v){ return trim((string)$v) !== ''; }));
-                        }
-                        
-                        // Prefer purchaseId-keyed serials if present (more robust against index drift)
-                        if(isset($serialMapByPurchase[$purchaseId])){
-                            $alt = $serialMapByPurchase[$purchaseId];
-                            if(!empty($alt['ids'])){ $selectedSerialIds = array_values(array_filter($alt['ids'], function($v){ return trim((string)$v) !== ''; })); }
-                            if(!empty($alt['numbers'])){ $selectedSerialNumbers = array_values(array_filter($alt['numbers'], function($v){ return trim((string)$v) !== ''; })); }
-                        }
-
-                        // Only enforce serial selection for non-backorder rows
-                        if(!$isBackorder){
-                            $hasSerialsForPurchase = ProductSerial::where('purchaseId', $purchaseId)->exists();
-                            if($hasSerialsForPurchase){
-                                // If no ids supplied but numbers exist, resolve ids by serialNumber
-                                if(empty($selectedSerialIds) && !empty($selectedSerialNumbers)){
-                                    $selectedSerialIds = ProductSerial::whereIn('serialNumber', $selectedSerialNumbers)->pluck('id')->toArray();
-                                }
-
-                                // Auto-pick available serials if user did not supply any
-                                if(empty($selectedSerialIds)){
-                                    $available = ProductSerial::where('purchaseId', $purchaseId)
-                                        ->where(function($q){
-                                            $q->whereNull('saleId');
-                                            if(Schema::hasColumn('product_serials','status')){
-                                                $q->orWhere('status','!=','sold');
-                                            }
-                                        })
-                                        ->orderBy('id')
-                                        ->limit($qty)
-                                        ->pluck('id')
-                                        ->toArray();
-                                    $selectedSerialIds = $available;
-                                }
-
-                                if(count($selectedSerialIds) !== $qty){
-                                    throw new \Exception('Select exactly '.$qty.' serial(s) for purchase #'.$purchaseId);
-                                }
-
-                                $serialRows = ProductSerial::whereIn('id', $selectedSerialIds)->lockForUpdate()->get();
-                                if($serialRows->count() !== count($selectedSerialIds)){
-                                    throw new \Exception('Invalid serial selection for purchase #'.$purchaseId);
-                                }
-
-                                foreach($serialRows as $sr){
-                                    if((int)$sr->purchaseId !== $purchaseId){
-                                        throw new \Exception('Serial '.$sr->serialNumber.' does not belong to this purchase');
-                                    }
-                                    $soldStatus = Schema::hasColumn('product_serials', 'status') ? strtolower((string)$sr->status) : '';
-                                    if($sr->saleId || $soldStatus === 'sold'){
-                                        throw new \Exception('Serial '.$sr->serialNumber.' is already sold');
-                                    }
-                                }
-
-                                foreach($serialRows as $sr){
-                                    $sr->saleId = $sales->id;
-                                    if(Schema::hasColumn('product_serials', 'sold_at')){ $sr->sold_at = now(); }
-                                    if(Schema::hasColumn('product_serials', 'status')){ $sr->status = 'sold'; }
-                                    $sr->save();
-                                }
-                            }
-                        }
+                        $serialPolicy->sync($sales, $purchaseId, $qty,
+                            (array)($serialIdsInput[$index] ?? []), (array)($serialNumbersInput[$index] ?? []),
+                            "serialId.$index", false, $isBackorder);
 
                         // Only decrease stock for non-backorder rows
                         if(!$isBackorder){
@@ -1115,7 +1056,7 @@ class JqueryController extends Controller
                 }
             });
 
-            Alert::success('Success!','Data saved successfully');
+            Alert::success(__('common.notification_success'),__('common.notification_data_saved_successfully'));
             if($createdSaleId > 0){
                 $defaultPrinter = (string) config('pos.default_invoice_printer', 'thermal80');
                 if(!in_array($defaultPrinter, ['a4', 'thermal80', 'thermal58'], true)){
@@ -1133,11 +1074,13 @@ class JqueryController extends Controller
                 return redirect()->route('invoiceGenerate', ['id' => $createdSaleId, 'autoprint' => 1, 'printer' => $selectedPrinter]);
             }
             return back();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             // Log exception
             \Log::error('saveSale transaction failed: '.$e->getMessage());
 
-            $msg = 'Data failed to save';
+            $msg = __('common.data_failed');
             // Friendly message for insufficient stock
             if (stripos($e->getMessage(), 'Insufficient stock') !== false) {
                 // try to extract purchaseId from message
@@ -1153,13 +1096,13 @@ class JqueryController extends Controller
                     }
                 }
                 if ($productName) {
-                    $msg = 'Insufficient stock for "'.$productName.'". Adjust quantity or restock and try again.';
+                    $msg = __('sales.insufficient_product_stock', ['product'=>$productName]);
                 } else {
-                    $msg = 'Insufficient stock for one or more items. Adjust quantity or restock and try again.';
+                    $msg = __('sales.insufficient_stock');
                 }
             }
 
-            $message = Alert::error('Sorry!',$msg);
+            $message = Alert::error(__('common.notification_sorry'),$msg);
             return back();
         }
     }
@@ -1171,14 +1114,14 @@ class JqueryController extends Controller
     {
         $serial = ProductSerial::find($id);
         if (!$serial) {
-            return response()->json(['status' => 'error', 'message' => 'Serial not found'], 404);
+            return response()->json(['status' => 'error', 'message' => __('common.api_serial_not_found')], 404);
         }
 
         try {
             $serial->delete();
-            return response()->json(['status' => 'success', 'message' => 'Serial deleted']);
+            return response()->json(['status' => 'success', 'message' => __('common.api_serial_deleted')]);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => 'Failed to delete serial'], 500);
+            return response()->json(['status' => 'error', 'message' => __('common.api_failed_to_delete_serial')], 500);
         }
     }
 
@@ -1192,7 +1135,7 @@ class JqueryController extends Controller
         $serial = ProductSerial::find($id);
         if (!$serial) {
             \Log::warning('updateProductSerial: Serial not found', ['id' => $id]);
-            return response()->json(['status' => 'error', 'message' => 'Serial not found'], 404);
+            return response()->json(['status' => 'error', 'message' => __('common.api_serial_not_found')], 404);
         }
 
         \Log::info('updateProductSerial: Found serial', ['oldValue' => $serial->serialNumber]);
@@ -1210,10 +1153,10 @@ class JqueryController extends Controller
                 'oldValue' => $oldValue,
                 'newValue' => $serial->serialNumber
             ]);
-            return response()->json(['status' => 'success', 'message' => 'Serial updated']);
+            return response()->json(['status' => 'success', 'message' => __('common.api_serial_updated')]);
         } catch (\Exception $e) {
             \Log::error('updateProductSerial: Failed to update', ['id' => $id, 'error' => $e->getMessage()]);
-            return response()->json(['status' => 'error', 'message' => 'Failed to update serial: ' . $e->getMessage()], 500);
+            return response()->json(['status' => 'error', 'message' => __('common.api_failed_to_update_serial') . $e->getMessage()], 500);
         }
     }
 
@@ -1230,7 +1173,7 @@ class JqueryController extends Controller
 
         $purchase = PurchaseProduct::find($request->purchaseId);
         if (!$purchase) {
-            return response()->json(['status' => 'error', 'message' => 'Purchase not found'], 404);
+            return response()->json(['status' => 'error', 'message' => __('common.api_purchase_not_found')], 404);
         }
 
         $created = [];
@@ -1270,7 +1213,7 @@ class JqueryController extends Controller
         if (empty($barcode)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Barcode cannot be empty'
+                'message' => __('common.api_barcode_cannot_be_empty')
             ], 400);
         }
 
@@ -1284,7 +1227,7 @@ class JqueryController extends Controller
             if (!$product) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Product not found',
+                    'message' => __('common.api_product_not_found'),
                     'barcode'  => $barcode
                 ], 404);
             }
@@ -1324,7 +1267,7 @@ class JqueryController extends Controller
             \Log::error('findProductByBarcode error: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error searching product'
+                'message' => __('common.api_error_searching_product')
             ], 500);
         }
     }

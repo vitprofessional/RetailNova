@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Provided Services - Bulk Print</title>
+    <title>{{ __('common.provided_services_bulk_print') }}</title>
     <style>
         /* Dompdf-friendly CSS: use explicit sizes and avoid complex rules */
         @page { size: A4 portrait; margin: 12mm 10mm 14mm 10mm; }
@@ -31,6 +31,7 @@
         /* Avoid page-breaks inside rows and customer sections */
         .customer-section, tr { page-break-inside: avoid; }
     </style>
+@include('partials.localization')
 </head>
 <body>
     <div class="header">
@@ -47,20 +48,20 @@
 
     <div class="content">
         @if(empty($groupedServices))
-            <div>No services found for the selected criteria.</div>
+            <div>{{ __('common.no_services_found_for_the_selected_criteria') }}</div>
         @else
             @foreach($groupedServices as $customerName => $dates)
                 @foreach($dates as $date => $rows)
                     @php $total = array_sum(array_map(function($r){ return floatval($r->amount ?? 0); }, $rows)); @endphp
                     <div class="customer-section">
-                        <div class="customer-header">Customer: {{ $customerName }} - {{ $date }}</div>
+                        <div class="customer-header">{{ __('common.customer') }}: {{ $customerName }} - {{ $date }}</div>
                         <table>
                             <thead>
                                 <tr>
                                     <th style="width:6%;">#</th>
-                                    <th style="width:64%;">Service Name</th>
-                                    <th style="width:15%;" class="text-right">Qty</th>
-                                    <th style="width:15%;" class="text-right">Amount</th>
+                                    <th style="width:64%;">{{ __('common.service_name') }}</th>
+                                    <th style="width:15%;" class="text-right">{{ __('common.qty') }}</th>
+                                    <th style="width:15%;" class="text-right">{{ __('common.amount') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -75,7 +76,7 @@
                             </tbody>
                             <tfoot>
                                 <tr class="total-row">
-                                    <td colspan="3" class="text-right">Total</td>
+                                    <td colspan="3" class="text-right">{{ __('common.total') }}</td>
                                     <td class="text-right">{{ number_format($total,2) }}</td>
                                 </tr>
                             </tfoot>

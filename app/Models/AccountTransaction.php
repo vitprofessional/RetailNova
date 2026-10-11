@@ -41,13 +41,13 @@ class AccountTransaction extends Model implements Auditable
     public static function getTransactionTypes()
     {
         return [
-            self::TYPE_JOURNAL => 'Journal Entry',
-            self::TYPE_PAYMENT => 'Payment',
-            self::TYPE_RECEIPT => 'Receipt',
-            self::TYPE_EXPENSE => 'Expense',
-            self::TYPE_SALE => 'Sale',
-            self::TYPE_PURCHASE => 'Purchase',
-            self::TYPE_TRANSFER => 'Transfer',
+            self::TYPE_JOURNAL => __('common.journal_entry'),
+            self::TYPE_PAYMENT => __('common.payment'),
+            self::TYPE_RECEIPT => __('common.receipt'),
+            self::TYPE_EXPENSE => __('common.expense'),
+            self::TYPE_SALE => __('common.sale'),
+            self::TYPE_PURCHASE => __('common.purchase'),
+            self::TYPE_TRANSFER => __('common.transfer'),
         ];
     }
 

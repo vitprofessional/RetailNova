@@ -55,10 +55,10 @@ class ExpenseManagementController extends Controller
         try {
             ExpenseCategory::create($validated);
 
-            Alert::success('Success!', 'Expense category created successfully');
+            Alert::success(__('common.notification_success'), __('common.notification_expense_category_created_successfully'));
             return redirect()->route('expense.categories');
         } catch (\Exception $e) {
-            Alert::error('Failed!', 'Category creation failed: ' . $e->getMessage());
+            Alert::error(__('common.notification_failed'), __('common.notification_category_creation_failed') . $e->getMessage());
             return back()->withInput();
         }
     }
@@ -88,10 +88,10 @@ class ExpenseManagementController extends Controller
         try {
             $category->update($validated);
 
-            Alert::success('Success!', 'Expense category updated successfully');
+            Alert::success(__('common.notification_success'), __('common.notification_expense_category_updated_successfully'));
             return redirect()->route('expense.categories');
         } catch (\Exception $e) {
-            Alert::error('Failed!', 'Category update failed: ' . $e->getMessage());
+            Alert::error(__('common.notification_failed'), __('common.notification_category_update_failed') . $e->getMessage());
             return back()->withInput();
         }
     }
@@ -105,16 +105,16 @@ class ExpenseManagementController extends Controller
             $category = ExpenseCategory::findOrFail($id);
             
             if ($category->expenses()->count() > 0) {
-                Alert::warning('Warning!', 'Cannot delete category with existing expenses');
+                Alert::warning(__('common.notification_warning'), __('common.notification_cannot_delete_category_with_existing_expenses'));
                 return back();
             }
 
             $category->delete();
 
-            Alert::success('Success!', 'Expense category deleted successfully');
+            Alert::success(__('common.notification_success'), __('common.notification_expense_category_deleted_successfully'));
             return redirect()->route('expense.categories');
         } catch (\Exception $e) {
-            Alert::error('Failed!', 'Category deletion failed: ' . $e->getMessage());
+            Alert::error(__('common.notification_failed'), __('common.notification_category_deletion_failed') . $e->getMessage());
             return back();
         }
     }
@@ -245,11 +245,11 @@ class ExpenseManagementController extends Controller
 
             DB::commit();
 
-            Alert::success('Success!', 'Expense recorded successfully');
+            Alert::success(__('common.notification_success'), __('common.notification_expense_recorded_successfully'));
             return redirect()->route('expense.list');
         } catch (\Exception $e) {
             DB::rollBack();
-            Alert::error('Failed!', 'Expense recording failed: ' . $e->getMessage());
+            Alert::error(__('common.notification_failed'), __('common.notification_expense_recording_failed') . $e->getMessage());
             return back()->withInput();
         }
     }
@@ -310,11 +310,11 @@ class ExpenseManagementController extends Controller
 
             DB::commit();
 
-            Alert::success('Success!', 'Expense updated successfully');
+            Alert::success(__('common.notification_success'), __('common.notification_expense_updated_successfully'));
             return redirect()->route('expense.list');
         } catch (\Exception $e) {
             DB::rollBack();
-            Alert::error('Failed!', 'Expense update failed: ' . $e->getMessage());
+            Alert::error(__('common.notification_failed'), __('common.notification_expense_update_failed') . $e->getMessage());
             return back()->withInput();
         }
     }
@@ -359,11 +359,11 @@ class ExpenseManagementController extends Controller
 
             DB::commit();
 
-            Alert::success('Success!', 'Expense deleted successfully');
+            Alert::success(__('common.notification_success'), __('common.notification_expense_deleted_successfully'));
             return redirect()->route('expense.list');
         } catch (\Exception $e) {
             DB::rollBack();
-            Alert::error('Failed!', 'Expense deletion failed: ' . $e->getMessage());
+            Alert::error(__('common.notification_failed'), __('common.notification_expense_deletion_failed') . $e->getMessage());
             return back();
         }
     }

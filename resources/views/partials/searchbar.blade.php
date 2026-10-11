@@ -7,7 +7,7 @@
     <div class="rn-search-box my-3">
         <i class="ri-search-line rn-search-icon"></i>
         <input type="text" id="{{ $searchId }}" data-table-target="{{ $tableId }}" class="form-control rn-search-input" placeholder="{{ $placeholder }}">
-        <button type="button" class="rn-search-clear" title="Clear">
+        <button type="button" class="rn-search-clear" title="{{ __('common.clear') }}">
             <i class="ri-close-circle-line" style="font-size:18px;"></i>
         </button>
     </div>

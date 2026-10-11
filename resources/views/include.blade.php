@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>@yield('title', isset($pageTitle) ? $pageTitle : config('app.name', 'Retail Nova'))</title>
-    
+
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{asset('/public/eshop/')}}/assets/images/favicon.ico" />
     <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/backend-plugin.min.css">
@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/rn-table-pro.css">
     <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
     <link rel= "stylesheet" href= "https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css" >
-    <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/remixicon/fonts/remixicon.css"> 
+    <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/remixicon/fonts/remixicon.css">
     <script src="https://kit.fontawesome.com/7001e2ea29.js" crossorigin="anonymous"></script>
     <!-- Ensure jQuery is available early for inline scripts -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -56,7 +56,7 @@
             }
         })();
     </script>
-    
+
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
@@ -84,7 +84,7 @@
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
-            align-items: center;    
+            align-items: center;
         }
         .invoice-items-table tbody td,.invoice-items-table tfoot td {
             line-height: 0 !important;
@@ -266,7 +266,7 @@
             border-color: #e9ecef;
             padding: 0.875rem 0.75rem;
         }
-        
+
         /* Documentation Section Table Styles */
         .section table {
             width: 100%;
@@ -278,12 +278,12 @@
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.12);
             border: 1px solid #e2e8f0;
         }
-        
+
         .section table thead {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
-        
+
         .section table th {
             padding: 16px 18px;
             text-align: left;
@@ -295,7 +295,7 @@
             color: white;
             background: transparent;
         }
-        
+
         .section table td {
             padding: 14px 18px;
             border-bottom: 1px solid #e2e8f0;
@@ -303,23 +303,23 @@
             line-height: 1.6;
             color: #4a5568;
         }
-        
+
         .section table tbody tr {
             transition: background-color 0.3s ease;
         }
-        
+
         .section table tbody tr:hover {
             background-color: #f7fafc;
         }
-        
+
         .section table tbody tr:nth-child(even) {
             background-color: #fafbfc;
         }
-        
+
         .section table tbody tr:nth-child(odd) {
             background-color: #ffffff;
         }
-        
+
         .table-responsive {
             border-radius: 6px;
             border: 1px solid #e9ecef;
@@ -511,12 +511,12 @@
             transform: translateY(-2px) !important;
             text-decoration: none !important;
         }
-        .btn-link[data-original-title="Delete"] {
+        .btn-link[data-original-title="{{ __('common.delete') }}"] {
             color: #dc3545;
             text-decoration: none;
             transition: all 0.2s ease;
         }
-        .btn-link[data-original-title="Delete"]:hover {
+        .btn-link[data-original-title="{{ __('common.delete') }}"]:hover {
             color: #c82333;
             transform: scale(1.1);
         }
@@ -575,26 +575,26 @@
         }
         @media print {
             /* Hide elements that shouldn't print */
-            .sidebar, .iq-navbar, .wrapper-menu, .search-toggle, nav, 
-            .btn, button, .badge:not(.badge-primary):not(.badge-success):not(.badge-danger):not(.badge-warning), 
+            .sidebar, .iq-navbar, .wrapper-menu, .search-toggle, nav,
+            .btn, button, .badge:not(.badge-primary):not(.badge-success):not(.badge-danger):not(.badge-warning),
             .alert, .form-control, form, .d-print-none, .no-print {
                 display: none !important;
             }
-            
+
             /* Print-friendly body */
             body {
                 background: white !important;
                 padding: 20px !important;
                 color: #000 !important;
             }
-            
+
             /* Print container adjustments */
             .content-page, .container-fluid {
                 width: 100% !important;
                 margin: 0 !important;
                 padding: 20px !important;
             }
-            
+
             /* Print-friendly cards */
             .card {
                 border: 1px solid #000 !important;
@@ -602,17 +602,17 @@
                 page-break-inside: avoid !important;
                 margin-bottom: 20px !important;
             }
-            
+
             .card-header {
                 background: #f5f5f5 !important;
                 border-bottom: 2px solid #000 !important;
                 padding: 12px !important;
             }
-            
+
             .card-body {
                 padding: 15px !important;
             }
-            
+
             /* Print-friendly tables */
             table {
                 width: 100% !important;
@@ -620,7 +620,7 @@
                 margin-bottom: 15px !important;
                 page-break-inside: avoid !important;
             }
-            
+
             table thead th {
                 background: #e9ecef !important;
                 border: 1px solid #000 !important;
@@ -628,32 +628,32 @@
                 text-align: left !important;
                 font-weight: bold !important;
             }
-            
+
             table tbody td {
                 border: 1px solid #ddd !important;
                 padding: 8px !important;
             }
-            
+
             table tbody tr:nth-child(even) {
                 background: #f9f9f9 !important;
             }
-            
+
             /* Print-friendly headings */
             h1, h2, h3, h4, h5, h6 {
                 page-break-after: avoid !important;
                 page-break-inside: avoid !important;
             }
-            
+
             /* Print-friendly paragraphs */
             p {
                 page-break-inside: avoid !important;
             }
-            
+
             /* Print page breaks */
             .page-break {
                 page-break-after: always !important;
             }
-            
+
             /* Print footer */
             .print-footer {
                 display: block !important;
@@ -664,7 +664,7 @@
                 font-size: 12px !important;
                 color: #666 !important;
             }
-            
+
             /* Link styling for print */
             a {
                 text-decoration: none !important;
@@ -728,6 +728,7 @@
         .list-action { justify-content: center !important; }
         .list-action .badge { margin: 0 .25rem; }
     </style>
+@include('partials.localization')
 </head>
   <body class="">
     <!-- loader Start -->
@@ -738,7 +739,7 @@
     <!-- loader END -->
     <!-- Wrapper Start -->
     <div class="wrapper">
-      
+
       <div class="iq-sidebar  sidebar-default ">
           <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
               <a href="{{ route('dashboard') }}" class="header-logo">
@@ -752,11 +753,11 @@
               <nav class="iq-sidebar-menu">
                   <ul id="iq-sidebar-toggle" class="iq-menu">
                       <li class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                          <a href="{{route('dashboard')}}" class="svg-icon">                        
+                          <a href="{{route('dashboard')}}" class="svg-icon">
                               <svg  class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>
                               </svg>
-                              <span class="ml-4">Dashboards </span>
+                              <span class="ml-4">{{ __('navigation.dashboards') }} </span>
                           </a>
                       </li>
                       @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
@@ -768,7 +769,7 @@
                                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                                   <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                               </svg>
-                              <span class="ml-4">Customer & Supplier</span>
+                              <span class="ml-4">{{ __('navigation.customer_supplier') }}</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
@@ -776,17 +777,17 @@
                           <ul id="product" class="iq-submenu collapse{{ request()->routeIs('addCustomer','addSupplier') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
                               <li class="{{ request()->routeIs('addCustomer') ? 'active' : '' }}">
                                   <a href="{{route('addCustomer')}}">
-                                      <i class="las la-minus"></i><span>Customer</span>
+                                      <i class="las la-minus"></i><span>{{ __('navigation.customer') }}</span>
                                   </a>
                               </li>
                               <li class="{{ request()->routeIs('addSupplier') ? 'active' : '' }}">
                                   <a href="{{route('addSupplier')}}">
-                                      <i class="las la-minus"></i><span>Supplier</span>
+                                      <i class="las la-minus"></i><span>{{ __('navigation.supplier') }}</span>
                                   </a>
                               </li>
                           </ul>
                       </li>
-                      
+
                       @php $__adminUser = Auth::guard('admin')->user(); @endphp
                       @if(isset($__adminUser) && strtolower($__adminUser->role) === 'super admin')
                       <li class=" ">
@@ -796,17 +797,17 @@
                                   <path d="M2 10l10 4 10-4"></path>
                                   <path d="M2 18l10 4 10-4"></path>
                               </svg>
-                              <span class="ml-4">Super Admin</span>
+                              <span class="ml-4">{{ __('navigation.super_admin') }}</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
                           </a>
                           <ul id="superadmin" class="iq-submenu collapse" data-parent="#iq-sidebar-toggle">
-                              <li><a href="{{ route('admin.super.users.index') }}"><i class="las la-minus"></i><span>User Management</span></a></li>
-                              <li><a href="{{ route('admin.super.subscriptions.plans') }}"><i class="las la-minus"></i><span>Subscription Plans</span></a></li>
-                              <li><a href="{{ route('admin.super.subscriptions.index') }}"><i class="las la-minus"></i><span>Subscriptions</span></a></li>
-                              <li><a href="{{ route('admin.super.stores.index') }}"><i class="las la-minus"></i><span>Stores</span></a></li>
-                              <li><a href="{{ route('admin.super.gateways.index') }}"><i class="las la-minus"></i><span>Payment Gateways</span></a></li>
+                              <li><a href="{{ route('admin.super.users.index') }}"><i class="las la-minus"></i><span>{{ __('navigation.user_management') }}</span></a></li>
+                              <li><a href="{{ route('admin.super.subscriptions.plans') }}"><i class="las la-minus"></i><span>{{ __('navigation.subscription_plans') }}</span></a></li>
+                              <li><a href="{{ route('admin.super.subscriptions.index') }}"><i class="las la-minus"></i><span>{{ __('navigation.subscriptions') }}</span></a></li>
+                              <li><a href="{{ route('admin.super.stores.index') }}"><i class="las la-minus"></i><span>{{ __('navigation.stores') }}</span></a></li>
+                              <li><a href="{{ route('admin.super.gateways.index') }}"><i class="las la-minus"></i><span>{{ __('navigation.payment_gateways') }}</span></a></li>
                           </ul>
                       </li>
                       @endif
@@ -819,7 +820,7 @@
                                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                                   <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                               </svg>
-                              <span class="ml-4">User Management</span>
+                              <span class="ml-4">{{ __('navigation.user_management') }}</span>
                           </a>
                       </li>
                       @endif
@@ -830,7 +831,7 @@
                                   <line x1="3" y1="6" x2="21" y2="6"></line>
                                   <path d="M16 10a4 4 0 0 1-8 0"></path>
                               </svg>
-                              <span class="ml-4">Sales</span>
+                              <span class="ml-4">{{ __('navigation.sales') }}</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
@@ -838,17 +839,17 @@
                           <ul id="sale" class="iq-submenu collapse{{ request()->routeIs('newsale','saleList','returnSaleList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
                                   <li class="">
                                           <a href="{{route('newsale')}}">
-                                              <i class="las la-minus"></i><span>New sale</span>
+                                              <i class="las la-minus"></i><span>{{ __('navigation.new_sale') }}</span>
                                           </a>
                                   </li>
                                   <li class="">
                                           <a href="{{route('saleList')}}">
-                                              <i class="las la-minus"></i><span>Sale List</span>
+                                              <i class="las la-minus"></i><span>{{ __('navigation.sale_list') }}</span>
                                           </a>
                                   </li>
                                   <li class="">
                                             <a href="{{route('returnSaleList')}}">
-                                                <i class="las la-minus"></i><span>Sale Return List</span>
+                                                <i class="las la-minus"></i><span>{{ __('navigation.sale_return_list') }}</span>
                                             </a>
                                   </li>
                           </ul>
@@ -862,7 +863,7 @@
                                   <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                                   <line x1="12" y1="22.08" x2="12" y2="12"></line>
                               </svg>
-                              <span class="ml-4">Product</span>
+                              <span class="ml-4">{{ __('navigation.product') }}</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
@@ -870,42 +871,42 @@
                           <ul id="category" class="iq-submenu collapse{{ request()->routeIs('addProduct','productlist','stockProduct','addBrand','addCategory','addProductUnit') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
                                   <li class="{{ request()->routeIs('addProduct') ? 'active' : '' }}">
                                           <a href="{{route('addProduct')}}">
-                                              <i class="las la-minus"></i><span>New Product</span>
+                                              <i class="las la-minus"></i><span>{{ __('navigation.new_product') }}</span>
                                           </a>
                                   </li>
                                   <li class="{{ request()->routeIs('productlist') ? 'active' : '' }}">
                                           <a href="{{route('productlist')}}">
-                                              <i class="las la-minus"></i><span>Product List</span>
+                                              <i class="las la-minus"></i><span>{{ __('navigation.product_list') }}</span>
                                           </a>
                                   </li>
                                   <li class="{{ request()->routeIs('stockProduct') ? 'active' : '' }}">
                                           <a href="{{route('stockProduct')}}">
-                                              <i class="las la-minus"></i><span>Stock Product</span>
+                                              <i class="las la-minus"></i><span>{{ __('navigation.stock_product') }}</span>
                                           </a>
                                   </li>
                                   <li class="{{ request()->routeIs('addBrand') ? 'active' : '' }}">
                                           <a href="{{route('addBrand')}}">
-                                              <i class="las la-minus"></i><span>Brand</span>
+                                              <i class="las la-minus"></i><span>{{ __('navigation.brand') }}</span>
                                           </a>
                                   </li>
                                   <li class="{{ request()->routeIs('addCategory') ? 'active' : '' }}">
                                           <a href="{{route('addCategory')}}">
-                                              <i class="las la-minus"></i><span>Category</span>
+                                              <i class="las la-minus"></i><span>{{ __('navigation.category') }}</span>
                                           </a>
                                   </li>
                                   <li class="{{ request()->routeIs('addProductUnit') ? 'active' : '' }}">
                                           <a href="{{route('addProductUnit')}}">
-                                              <i class="las la-minus"></i><span>Unit</span>
+                                              <i class="las la-minus"></i><span>{{ __('navigation.unit') }}</span>
                                           </a>
                                   </li>
                                   <li class="{{ request()->routeIs('barcode.index','barcode.generate') ? 'active' : '' }}">
                                           <a href="{{route('barcode.index')}}">
-                                              <i class="las la-minus"></i><span>Barcodes</span>
+                                              <i class="las la-minus"></i><span>{{ __('navigation.barcodes') }}</span>
                                           </a>
                                   </li>
                           </ul>
                       </li>
-                      
+
                       @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       <li class=" ">
                           <a href="#parchase" class="{{ request()->routeIs('addPurchase','purchaseList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addPurchase','purchaseList') ? 'true' : 'false' }}">
@@ -914,7 +915,7 @@
                                   <circle cx="20" cy="21" r="1"></circle>
                                   <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                               </svg>
-                              <span class="ml-4">Purchase</span>
+                              <span class="ml-4">{{ __('navigation.purchase') }}</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
@@ -922,17 +923,17 @@
                           <ul id="parchase" class="iq-submenu collapse{{ request()->routeIs('addPurchase','purchaseList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
                                   <li class="">
                                           <a href="{{route('addPurchase')}}">
-                                              <i class="las la-minus"></i><span>Naw Parchase</span>
+                                              <i class="las la-minus"></i><span>{{ __('navigation.naw_parchase') }}</span>
                                           </a>
                                   </li>
                                   <li class="">
                                           <a href="{{route('purchaseList')}}">
-                                              <i class="las la-minus"></i><span>Parchase List</span>
+                                              <i class="las la-minus"></i><span>{{ __('navigation.parchase_list') }}</span>
                                           </a>
                                   </li>
                           </ul>
                       </li>
-                      
+
                       @php
                           $__adminUser = $__adminUser ?? Auth::guard('admin')->user();
                           $__businessType = $config->count() > 0 ? $config[0]->businessType : null;
@@ -944,7 +945,7 @@
                               <svg class="svg-icon" id="p-dash6" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
                               </svg>
-                              <span class="ml-4">Service</span>
+                              <span class="ml-4">{{ __('navigation.service') }}</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
@@ -952,23 +953,23 @@
                           <ul id="service" class="iq-submenu collapse{{ request()->routeIs('provideService','addServiceName','serviceProvideList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
                               <li class="">
                                   <a href="{{route('provideService')}}">
-                                      <i class="las la-minus"></i><span>Provide Service</span>
+                                      <i class="las la-minus"></i><span>{{ __('navigation.provide_service') }}</span>
                                   </a>
                               </li>
                               <li class="">
                                   <a href="{{route('addServiceName')}}">
-                                      <i class="las la-minus"></i><span>Service item</span>
+                                      <i class="las la-minus"></i><span>{{ __('navigation.service_item') }}</span>
                                   </a>
                               </li>
                                <li class="">
                                   <a href="{{route('serviceProvideList')}}">
-                                      <i class="las la-minus"></i><span>Service List</span>
+                                      <i class="las la-minus"></i><span>{{ __('navigation.service_list') }}</span>
                                   </a>
                               </li>
                           </ul>
                       </li>
                       @endif
-                      
+
                       @php
                           $__adminUser = $__adminUser ?? Auth::guard('admin')->user();
                           $__businessType = $config->count() > 0 ? $config[0]->businessType : null;
@@ -980,7 +981,7 @@
                               <svg class="svg-icon" id="p-dash6" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                               </svg>
-                              <span class="ml-4">Warranty</span>
+                              <span class="ml-4">{{ __('navigation.warranty') }}</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
@@ -988,18 +989,18 @@
                                   <ul id="warranty" class="iq-submenu collapse{{ request()->routeIs('rma.*','serialList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
                           <li class="{{ request()->routeIs('rma.*') ? 'active' : '' }}">
                               <a href="{{ route('rma.index') }}">
-                                  <i class="las la-minus"></i><span>RMA</span>
+                                  <i class="las la-minus"></i><span>{{ __('navigation.rma') }}</span>
                               </a>
                           </li>
                           <li class="{{ request()->routeIs('serialList') ? 'active' : '' }}">
                               <a href="{{ route('serialList') }}">
-                                  <i class="las la-minus"></i><span>Serial List</span>
+                                  <i class="las la-minus"></i><span>{{ __('navigation.serial_list') }}</span>
                               </a>
                           </li>
                       </ul>
                       </li>
                       @endif
-                      
+
                       @php
                           $__adminUser = $__adminUser ?? Auth::guard('admin')->user();
                           $__businessType = $config->count() > 0 ? $config[0]->businessType : null;
@@ -1012,7 +1013,7 @@
                                   <path d="M4 4h16v16H4z"></path>
                                   <path d="M8 8h8M8 12h8M8 16h5"></path>
                               </svg>
-                              <span class="ml-4">Quotations</span>
+                              <span class="ml-4">{{ __('navigation.quotations') }}</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
@@ -1020,18 +1021,18 @@
                           <ul id="quotations" class="iq-submenu collapse{{ request()->routeIs('quotation.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
                               <li class="{{ request()->routeIs('quotation.create') ? 'active' : '' }}">
                                   <a href="{{ route('quotation.create') }}">
-                                      <i class="las la-minus"></i><span>New Quotation</span>
+                                      <i class="las la-minus"></i><span>{{ __('navigation.new_quotation') }}</span>
                                   </a>
                               </li>
                               <li class="{{ request()->routeIs('quotation.list') ? 'active' : '' }}">
                                   <a href="{{ route('quotation.list') }}">
-                                      <i class="las la-minus"></i><span>Quotation List</span>
+                                      <i class="las la-minus"></i><span>{{ __('navigation.quotation_list') }}</span>
                                   </a>
                               </li>
                           </ul>
                       </li>
                       @endif
-                      
+
                       @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       <li class=" ">
                           <a href="#damage" class="{{ request()->routeIs('damageProduct','damageProductList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('damageProduct','damageProductList') ? 'true' : 'false' }}">
@@ -1040,7 +1041,7 @@
                                   <line x1="12" y1="9" x2="12" y2="13"></line>
                                   <line x1="12" y1="17" x2="12.01" y2="17"></line>
                               </svg>
-                              <span class="ml-4">Damage</span>
+                              <span class="ml-4">{{ __('navigation.damage') }}</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
@@ -1048,17 +1049,17 @@
                           <ul id="damage" class="iq-submenu collapse{{ request()->routeIs('damageProduct','damageProductList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
                                   <li class="">
                                           <a href="{{route('damageProduct')}}">
-                                              <i class="las la-minus"></i><span>Damage Product</span>
+                                              <i class="las la-minus"></i><span>{{ __('navigation.damage_product') }}</span>
                                           </a>
                                   </li>
                                   <li class="">
                                           <a href="{{route('damageProductList')}}">
-                                              <i class="las la-minus"></i><span>Damage Product List</span>
+                                              <i class="las la-minus"></i><span>{{ __('navigation.damage_product_list') }}</span>
                                           </a>
                                   </li>
                           </ul>
                       </li>
-                      
+
                       @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       @if(!isset($__adminUser) || !in_array(strtolower($__adminUser->role), ['storemanager','salesmanager']))
                       <li class=" ">
@@ -1066,7 +1067,7 @@
                               <svg class="svg-icon" id="p-dash8" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                               </svg>
-                              <span class="ml-4">Account Management</span>
+                              <span class="ml-4">{{ __('navigation.account_management') }}</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
@@ -1074,28 +1075,28 @@
                           <ul id="account" class="iq-submenu collapse{{ request()->routeIs('account.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
                                   <li class="{{ request()->routeIs('account.chart','account.create','account.edit') ? 'active' : '' }}">
                                           <a href="{{route('account.chart')}}">
-                                              <i class="las la-book"></i><span>Chart of Accounts</span>
+                                              <i class="las la-book"></i><span>{{ __('navigation.chart_of_accounts') }}</span>
                                           </a>
                                   </li>
                                   <li class="{{ request()->routeIs('account.transactions','account.transactions.create') ? 'active' : '' }}">
                                           <a href="{{route('account.transactions')}}">
-                                              <i class="las la-exchange-alt"></i><span>Transactions</span>
+                                              <i class="las la-exchange-alt"></i><span>{{ __('navigation.transactions') }}</span>
                                           </a>
                                   </li>
                                   <li class="{{ request()->routeIs('account.reports') ? 'active' : '' }}">
                                           <a href="{{route('account.reports')}}">
-                                              <i class="las la-chart-line"></i><span>Financial Reports</span>
+                                              <i class="las la-chart-line"></i><span>{{ __('navigation.financial_reports') }}</span>
                                           </a>
                                   </li>
                           </ul>
-                      </li> 
+                      </li>
                       <li class=" ">
                           <a href="#expense" class="{{ request()->routeIs('expense.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('expense.*') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-dash8" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                                   <line x1="1" y1="10" x2="23" y2="10"></line>
                               </svg>
-                              <span class="ml-4">Expense Management</span>
+                              <span class="ml-4">{{ __('navigation.expense_management') }}</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
@@ -1103,22 +1104,22 @@
                           <ul id="expense" class="iq-submenu collapse{{ request()->routeIs('expense.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
                                   <li class="{{ request()->routeIs('expense.categories','expense.categories.*') ? 'active' : '' }}">
                                           <a href="{{route('expense.categories')}}">
-                                              <i class="las la-tags"></i><span>Expense Categories</span>
+                                              <i class="las la-tags"></i><span>{{ __('navigation.expense_categories') }}</span>
                                           </a>
                                   </li>
                                   <li class="{{ request()->routeIs('expense.create') ? 'active' : '' }}">
                                           <a href="{{route('expense.create')}}">
-                                              <i class="las la-plus-circle"></i><span>Add Expense</span>
+                                              <i class="las la-plus-circle"></i><span>{{ __('navigation.add_expense') }}</span>
                                           </a>
                                   </li>
                                   <li class="{{ request()->routeIs('expense.list','expense.edit') ? 'active' : '' }}">
                                           <a href="{{route('expense.list')}}">
-                                              <i class="las la-list"></i><span>Expense List</span>
+                                              <i class="las la-list"></i><span>{{ __('navigation.expense_list') }}</span>
                                           </a>
                                   </li>
                                   <li class="{{ request()->routeIs('expense.reports') ? 'active' : '' }}">
                                           <a href="{{route('expense.reports')}}">
-                                              <i class="las la-chart-bar"></i><span>Expense Reports</span>
+                                              <i class="las la-chart-bar"></i><span>{{ __('navigation.expense_reports') }}</span>
                                           </a>
                                   </li>
                           </ul>
@@ -1133,7 +1134,7 @@
                                   <circle cx="12" cy="12" r="10"></circle>
                                   <polyline points="12 6 12 12 16 14"></polyline>
                               </svg>
-                              <span class="ml-4">Audits</span>
+                              <span class="ml-4">{{ __('navigation.audits') }}</span>
                           </a>
                       </li>
                       @endif
@@ -1147,7 +1148,7 @@
                                   <line x1="12" y1="20" x2="12" y2="4"></line>
                                   <line x1="6" y1="20" x2="6" y2="14"></line>
                               </svg>
-                              <span class="ml-4">Reports</span>
+                              <span class="ml-4">{{ __('navigation.reports') }}</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
@@ -1155,38 +1156,38 @@
                           <ul id="reports" class="iq-submenu collapse{{ request()->routeIs('reports.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
                               <li class="{{ request()->routeIs('reports.business') ? 'active' : '' }}">
                                   <a href="{{route('reports.business')}}">
-                                      <i class="las la-chart-line"></i><span>Business Report</span>
+                                      <i class="las la-chart-line"></i><span>{{ __('navigation.business_report') }}</span>
                                   </a>
                               </li>
                               <li class="{{ request()->routeIs('reports.sales') ? 'active' : '' }}">
                                   <a href="{{route('reports.sales')}}">
-                                      <i class="las la-shopping-cart"></i><span>Sale Report</span>
+                                      <i class="las la-shopping-cart"></i><span>{{ __('navigation.sale_report') }}</span>
                                   </a>
                               </li>
                               <li class="{{ request()->routeIs('reports.purchases') ? 'active' : '' }}">
                                   <a href="{{route('reports.purchases')}}">
-                                      <i class="las la-dolly"></i><span>Purchase Report</span>
+                                      <i class="las la-dolly"></i><span>{{ __('navigation.purchase_report') }}</span>
                                   </a>
                               </li>
                               <li class="{{ request()->routeIs('reports.topCustomers') ? 'active' : '' }}">
                                   <a href="{{route('reports.topCustomers')}}">
-                                      <i class="las la-star"></i><span>Top Customers</span>
+                                      <i class="las la-star"></i><span>{{ __('navigation.top_customers') }}</span>
                                   </a>
                               </li>
                               <li class="{{ request()->routeIs('reports.payableReceivable') ? 'active' : '' }}">
                                   <a href="{{route('reports.payableReceivable')}}">
-                                      <i class="las la-money-bill"></i><span>Payable/Receivable</span>
+                                      <i class="las la-money-bill"></i><span>{{ __('navigation.payable_receivable') }}</span>
                                   </a>
                               </li>
                               <li class="{{ request()->routeIs('reports.stock') ? 'active' : '' }}">
                                   <a href="{{route('reports.stock')}}">
-                                      <i class="las la-cubes"></i><span>Stock Report</span>
+                                      <i class="las la-cubes"></i><span>{{ __('navigation.stock_report') }}</span>
                                   </a>
                               </li>
                           </ul>
                       </li>
                       @endif
-                      
+
                       @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       <li class=" {{ request()->routeIs('documentation.*') ? 'active' : '' }}">
                           <a href="{{ route('documentation.index') }}" class="svg-icon">
@@ -1194,32 +1195,42 @@
                                   <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                                   <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                               </svg>
-                              <span class="ml-4">Documentation</span>
+                              <span class="ml-4">{{ __('navigation.documentation') }}</span>
                           </a>
                       </li>
-                      
+
                       @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
                       @if(!isset($__adminUser) || !in_array(strtolower($__adminUser->role), ['storemanager','salesmanager']))
                       <li class=" ">
-                          <a href="#settings" class="{{ request()->routeIs('addBusinessSetupPage','business.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addBusinessSetupPage','business.*') ? 'true' : 'false' }}">
+                          <a href="#settings" class="{{ request()->routeIs('addBusinessSetupPage','business.*','sales.settings.*','language.settings.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addBusinessSetupPage','business.*','sales.settings.*','language.settings.*') ? 'true' : 'false' }}">
                               <svg class="svg-icon" id="p-settings" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <circle cx="12" cy="12" r="3"></circle>
                                   <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"></path>
                               </svg>
-                              <span class="ml-4">Business Settings</span>
+                              <span class="ml-4">{{ __('common.settings') }}</span>
                               <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                               </svg>
                           </a>
-                          <ul id="settings" class="iq-submenu collapse{{ request()->routeIs('addBusinessSetupPage','business.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
+                          <ul id="settings" class="iq-submenu collapse{{ request()->routeIs('addBusinessSetupPage','business.*','sales.settings.*','language.settings.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
+                                @if($__adminUser && $__adminUser->canManageSalesSettings())
+                                <li class="{{ request()->routeIs('sales.settings.*') ? 'active' : '' }}">
+                                    <a href="{{ route('sales.settings.edit') }}"><i class="las la-sliders-h"></i><span>{{ __('settings.sales_settings') }}</span></a>
+                                </li>
+                                @endif
+                                @if($__adminUser && in_array(strtolower(trim($__adminUser->role)), ['admin','superadmin'], true))
+                                <li class="{{ request()->routeIs('language.settings.*') ? 'active' : '' }}">
+                                    <a href="{{ route('language.settings.edit') }}"><i class="las la-language"></i><span>{{ __('settings.language_settings') }}</span></a>
+                                </li>
+                                @endif
                                 <li class="{{ request()->routeIs('addBusinessSetupPage') ? 'active' : '' }}">
                                         <a href="{{route('addBusinessSetupPage')}}">
-                                            <i class="las la-cog"></i><span>Business Configuration</span>
+                                            <i class="las la-cog"></i><span>{{ __('navigation.business_configuration') }}</span>
                                         </a>
                                 </li>
                                 <li class="{{ request()->routeIs('business.locations.*','business.locations') ? 'active' : '' }}">
                                         <a href="{{route('business.locations')}}">
-                                            <i class="las la-map-marked-alt"></i><span>Business Locations</span>
+                                            <i class="las la-map-marked-alt"></i><span>{{ __('navigation.business_locations') }}</span>
                                         </a>
                                 </li>
                           </ul>
@@ -1232,8 +1243,8 @@
                       <div class="card-body p-0">
                           <div class="sidebarbottom-content">
                               <div class="image"><img src="{{asset('/public/eshop/')}}/assets/images/layouts/side-bkg.png" class="img-fluid" alt="side-bkg"></div>
-                              <h6 class="mt-4 px-4 body-title">Get More Feature by Upgrading</h6>
-                              <button type="button" class="btn sidebar-bottom-btn mt-4">Go Premium</button>
+                              <h6 class="mt-4 px-4 body-title">{{ __('navigation.get_more_feature_by_upgrading') }}</h6>
+                              <button type="button" class="btn sidebar-bottom-btn mt-4">{{ __('navigation.go_premium') }}</button>
                           </div>
                       </div>
                   </div>
@@ -1248,53 +1259,26 @@
                       <a href="{{route('dashboard')}}" class="header-logo">
                           <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('/public/uploads/business/' . $config[0]->businessLogo) : asset('/public/logo.png') }}" class="img-fluid rounded-normal" alt="logo">
                           <h5 class="logo-title ml-3">{{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h5>
-      
+
                       </a>
                   </div>
                   <div class="iq-search-bar device-search">
                       <form action="#" class="searchbox">
                           <a class="search-link" href="#"><i class="ri-search-line"></i></a>
-                          <input type="text" class="text search-input" placeholder="Search here.">
+                          <input type="text" class="text search-input" placeholder="{{ __('navigation.search_here') }}">
                       </form>
                   </div>
                   <div class="d-flex align-items-center">
                       <button class="navbar-toggler" type="button" data-toggle="collapse"
                           data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
-                          aria-label="Toggle navigation">
+                          aria-label="{{ __('navigation.toggle_navigation') }}">
                           <i class="ri-menu-3-line"></i>
                       </button>
                       <div class="collapse navbar-collapse" id="navbarSupportedContent">
                           <ul class="navbar-nav ml-auto navbar-list align-items-center">
-                              <li class="nav-item nav-icon dropdown">
-                                  <a href="#" class="search-toggle dropdown-toggle btn border add-btn"
-                                      id="dropdownMenuButton02" data-toggle="dropdown" aria-haspopup="true"
-                                      aria-expanded="false">
-                                      <img src="{{asset('/public/eshop/')}}/assets/images/small/flag-01.png" alt="img-flag"
-                                          class="img-fluid image-flag mr-2">En
-                                  </a>
-                                  <div class="iq-sub-dropdown dropdown-menu" aria-labelledby="dropdownMenuButton2">
-                                      <div class="card shadow-none m-0">
-                                          <div class="card-body p-3">
-                                              <a class="iq-sub-card" href="#"><img
-                                                      src="{{asset('/public/eshop/')}}/assets/images/small/flag-02.png" alt="img-flag"
-                                                      class="img-fluid mr-2">French</a>
-                                              <a class="iq-sub-card" href="#"><img
-                                                      src="{{asset('/public/eshop/')}}/assets/images/small/flag-03.png" alt="img-flag" ,+8A6
-                                                      lass="iq-sub-card" href="#"><img
-                                                      src="{{asset('/public/eshop/')}}/assets/images/small/flag-04.png" alt="img-flag"
-                                                      class="img-fluid mr-2">Italian</a>
-                                              <a class="iq-sub-card" href="#"><img
-                                                      src="{{asset('/public/eshop/')}}/assets/images/small/flag-05.png" alt="img-flag"
-                                                      class="img-fluid mr-2">German</a>
-                                              <a class="iq-sub-card" href="#"><img
-                                                      src="{{asset('/public/eshop/')}}/assets/images/small/flag-06.png" alt="img-flag"
-                                                      class="img-fluid mr-2">Japanese</a>
-                                          </div>
-                                      </div>
-                                  </div>
-                              </li>
+                              <li>@include('partials.language-selector')</li>
                               <li>
-                                  <a href="#" class="btn border add-btn shadow-none mx-2 d-none d-md-block" data-toggle="modal" data-target="#new-order"><i class="las la-plus mr-2"></i>New Order</a>
+                                  <a href="#" class="btn border add-btn shadow-none mx-2 d-none d-md-block" data-toggle="modal" data-target="#new-order"><i class="las la-plus mr-2"></i>{{ __('navigation.new_order') }}</a>
                               </li>
                               <li class="nav-item nav-icon search-content">
                                   <a href="#" class="search-toggle rounded" id="dropdownSearch" data-toggle="dropdown"
@@ -1305,7 +1289,7 @@
                                       <form action="#" class="searchbox p-2">
                                           <div class="form-group mb-0 position-relative">
                                               <input type="text" class="text search-input font-size-12"
-                                                  placeholder="type here to search.">
+                                                  placeholder="{{ __('common.type_here_to_search') }}">
                                               <a href="#" class="search-link"><i class="las la-search"></i></a>
                                           </div>
                                       </form>
@@ -1329,7 +1313,7 @@
                                           <div class="card-body p-0 ">
                                               <div class="cust-title p-3">
                                                   <div class="d-flex align-items-center justify-content-between">
-                                                      <h5 class="mb-0">All Messages</h5>
+                                                      <h5 class="mb-0">{{ __('navigation.all_messages') }}</h5>
                                                       <a class="badge badge-primary badge-card" href="#">3</a>
                                                   </div>
                                               </div>
@@ -1345,7 +1329,7 @@
                                                                   <h6 class="mb-0">Emma Watson</h6>
                                                                   <small class="text-dark"><b>12 : 47 pm</b></small>
                                                               </div>
-                                                              <small class="mb-0">Lorem ipsum dolor sit amet</small>
+                                                              <small class="mb-0">{{ __('common.notification_placeholder') }}</small>
                                                           </div>
                                                       </div>
                                                   </a>
@@ -1360,7 +1344,7 @@
                                                                   <h6 class="mb-0">Ashlynn Franci</h6>
                                                                   <small class="text-dark"><b>11 : 30 pm</b></small>
                                                               </div>
-                                                              <small class="mb-0">Lorem ipsum dolor sit amet</small>
+                                                              <small class="mb-0">{{ __('common.notification_placeholder') }}</small>
                                                           </div>
                                                       </div>
                                                   </a>
@@ -1375,14 +1359,14 @@
                                                                   <h6 class="mb-0">Kianna Carder</h6>
                                                                   <small class="text-dark"><b>11 : 21 pm</b></small>
                                                               </div>
-                                                              <small class="mb-0">Lorem ipsum dolor sit amet</small>
+                                                              <small class="mb-0">{{ __('common.notification_placeholder') }}</small>
                                                           </div>
                                                       </div>
                                                   </a>
                                               </div>
                                               <a class="right-ic btn btn-primary btn-block position-relative p-2" href="#"
                                                   role="button">
-                                                  View All
+                                                  {{ __('navigation.view_all') }}
                                               </a>
                                           </div>
                                       </div>
@@ -1404,7 +1388,7 @@
                                           <div class="card-body p-0 ">
                                               <div class="cust-title p-3">
                                                   <div class="d-flex align-items-center justify-content-between">
-                                                      <h5 class="mb-0">Notifications</h5>
+                                                      <h5 class="mb-0">{{ __('navigation.notifications') }}</h5>
                                                       <a class="badge badge-primary badge-card" href="#">3</a>
                                                   </div>
                                               </div>
@@ -1420,7 +1404,7 @@
                                                                   <h6 class="mb-0">Emma Watson</h6>
                                                                   <small class="text-dark"><b>12 : 47 pm</b></small>
                                                               </div>
-                                                              <small class="mb-0">Lorem ipsum dolor sit amet</small>
+                                                              <small class="mb-0">{{ __('common.notification_placeholder') }}</small>
                                                           </div>
                                                       </div>
                                                   </a>
@@ -1435,7 +1419,7 @@
                                                                   <h6 class="mb-0">Ashlynn Franci</h6>
                                                                   <small class="text-dark"><b>11 : 30 pm</b></small>
                                                               </div>
-                                                              <small class="mb-0">Lorem ipsum dolor sit amet</small>
+                                                              <small class="mb-0">{{ __('common.notification_placeholder') }}</small>
                                                           </div>
                                                       </div>
                                                   </a>
@@ -1450,14 +1434,14 @@
                                                                   <h6 class="mb-0">Kianna Carder</h6>
                                                                   <small class="text-dark"><b>11 : 21 pm</b></small>
                                                               </div>
-                                                              <small class="mb-0">Lorem ipsum dolor sit amet</small>
+                                                              <small class="mb-0">{{ __('common.notification_placeholder') }}</small>
                                                           </div>
                                                       </div>
                                                   </a>
                                               </div>
                                               <a class="right-ic btn btn-primary btn-block position-relative p-2" href="#"
                                                   role="button">
-                                                  View All
+                                                  {{ __('navigation.view_all') }}
                                               </a>
                                           </div>
                                       </div>
@@ -1500,10 +1484,10 @@
                                                   @endphp
                                                   <h5 class="mb-1">{{ $displayName ?: ($adminUser->mail ?? 'Admin User') }}</h5>
                                                   <p class="mb-0">{{ $adminUser->mail ?? '' }}</p>
-                                                  <p class="mb-0">Since {{ optional($adminUser->created_at)->format('j M, Y') ?? '' }}</p>
+                                                  <p class="mb-0">{{ __('common.since') }} {{ optional($adminUser->created_at)->format('j M, Y') ?? '' }}</p>
                                                   <div class="d-flex align-items-center justify-content-center mt-3">
-                                                      <a href="{{ route('admin.profile.show') }}" class="btn border mr-2">My Profile</a>
-                                                      <a href="{{ route('logout') }}" class="btn border">Sign Out</a>
+                                                      <a href="{{ route('admin.profile.show') }}" class="btn border mr-2">{{ __('navigation.my_profile') }}</a>
+                                                      <a href="{{ route('logout') }}" class="btn border">{{ __('navigation.sign_out') }}</a>
                                                   </div>
                                               </div>
                                           </div>
@@ -1515,7 +1499,7 @@
                   </div>
               </nav>
           </div>
-      </div>     
+      </div>
       <div class="content-page">
         <div class="container-fluid">
             @yield('container')
@@ -1526,17 +1510,17 @@
               <div class="modal-content">
                   <div class="modal-body">
                       <div class="popup text-left">
-                          <h4 class="mb-3">New Order</h4>
+                          <h4 class="mb-3">{{ __('navigation.new_order') }}</h4>
 
                           <div class="content create-workform bg-body">
                               <div class="pb-3">
-                                  <label class="mb-2">Email</label>
-                                  <input type="text" class="form-control" placeholder="Enter Name or Email">
+                                  <label class="mb-2">{{ __('navigation.email') }}</label>
+                                  <input type="text" class="form-control" placeholder="{{ __('common.enter_name_or_email') }}">
                               </div>
                               <div class="col-lg-12 mt-4">
                                   <div class="d-flex flex-wrap align-items-ceter justify-content-center">
-                                      <div class="btn btn-primary mr-4" data-dismiss="modal">Cancel</div>
-                                      <div class="btn btn-outline-primary" data-dismiss="modal">Create</div>
+                                      <div class="btn btn-primary mr-4" data-dismiss="modal">{{ __('navigation.cancel') }}</div>
+                                      <div class="btn btn-outline-primary" data-dismiss="modal">{{ __('navigation.create') }}</div>
                                   </div>
                               </div>
                           </div>
@@ -1544,7 +1528,7 @@
                   </div>
               </div>
           </div>
-      </div> 
+      </div>
     </div>
     <!-- Wrapper End-->
     <footer class="iq-footer">
@@ -1553,18 +1537,18 @@
                 <div class="card-body">
                     <div class="p-3">
                         <h5 class="mb-1">{{ $adminUser->mail ?? 'user@domain' }}</h5>
-                        <p class="mb-0">Since {{ optional($adminUser->created_at)->format('j M, Y') ?? '26 Mar, 2020' }}</p>
+                        <p class="mb-0">{{ __('common.since') }} {{ optional($adminUser->created_at)->format('j M, Y') ?? '26 Mar, 2020' }}</p>
                         <div class="d-flex align-items-center justify-content-center mt-3">
-                            <a href="{{ route('admin.profile.show') }}" class="btn border mr-2">My Profile</a>
-                            <a href="{{ route('dashboard') }}" class="btn border mr-2">Dashboard</a>
-                            <a href="{{ route('logout') }}" class="btn border">Sign Out</a>
+                            <a href="{{ route('admin.profile.show') }}" class="btn border mr-2">{{ __('navigation.my_profile') }}</a>
+                            <a href="{{ route('dashboard') }}" class="btn border mr-2">{{ __('navigation.dashboard') }}</a>
+                            <a href="{{ route('logout') }}" class="btn border">{{ __('navigation.sign_out') }}</a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </footer>
-    
+
     <script>
         $(document).ready(function() {
             // Only auto-dismiss status alerts (success, warning, danger from SweetAlert/flash messages)
@@ -1580,7 +1564,7 @@
             $("#"+f)[0].reset();
         }
 
-        
+
 
         function remove(e){
             $(e).remove();
@@ -1625,16 +1609,16 @@
                 var explicit = el.getAttribute('data-confirm');
                 if(explicit){
                     if(explicit === 'false' || explicit === '0') return;
-                    var msg = explicit === 'delete' ? 'Are you sure you want to delete this item? This action cannot be undone.' : explicit;
+                    var msg = explicit === 'delete' ? window.RNTranslate('common.confirm_delete') : explicit;
                     e.preventDefault();
                     Swal.fire({
-                        title: 'Confirm',
+                        title: window.RNTranslate('common.confirm'),
                         text: msg,
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#d33',
-                        confirmButtonText: 'Yes, proceed',
-                        cancelButtonText: 'Cancel'
+                        confirmButtonText: window.RNTranslate('common.yes_proceed'),
+                        cancelButtonText: window.RNTranslate('common.cancel')
                     }).then(function(result){ if(result.isConfirmed){
                         // if link, navigate; if button in form, submit
                         if(el.tagName.toLowerCase() === 'a'){
@@ -1653,13 +1637,13 @@
                     if(isDeleteLink(href)){
                         e.preventDefault();
                         Swal.fire({
-                            title: 'Delete item?',
-                            text: 'Are you sure you want to delete this item? This will revert stock where applicable.',
+                            title: window.RNTranslate('common.delete_item'),
+                            text: window.RNTranslate('common.confirm_delete_stock'),
                             icon: 'warning',
                             showCancelButton: true,
                             confirmButtonColor: '#d33',
-                            confirmButtonText: 'Yes, delete',
-                            cancelButtonText: 'Cancel'
+                            confirmButtonText: window.RNTranslate('common.yes_delete'),
+                            cancelButtonText: window.RNTranslate('common.cancel')
                         }).then(function(result){ if(result.isConfirmed){ submitDeleteViaPost(href); } });
                         return;
                     }
@@ -1674,13 +1658,13 @@
                         if(isDeleteLink(action) || hasDeleteMethod || method === 'delete'){
                             e.preventDefault();
                             Swal.fire({
-                                title: 'Delete item?',
-                                text: 'Are you sure you want to delete this item? This action cannot be undone.',
+                                title: window.RNTranslate('common.delete_item'),
+                                text: window.RNTranslate('common.confirm_delete'),
                                 icon: 'warning',
                                 showCancelButton: true,
                                 confirmButtonColor: '#d33',
-                                confirmButtonText: 'Yes, delete',
-                                cancelButtonText: 'Cancel'
+                                confirmButtonText: window.RNTranslate('common.yes_delete'),
+                                cancelButtonText: window.RNTranslate('common.cancel')
                             }).then(function(result){ if(result.isConfirmed){ form.submit(); } });
                             return;
                         }
@@ -1692,16 +1676,21 @@
     <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
     <!-- Backend Bundle JavaScript -->
     <script src="{{asset('/public/eshop/')}}/assets/js/backend-bundle.min.js"></script>
-    
+    <script>
+        if(window.jQuery && jQuery.fn.dataTable) {
+            jQuery.extend(true, jQuery.fn.dataTable.defaults, {language:window.RNDataTableLanguage});
+        }
+    </script>
+
     <!-- Table Treeview JavaScript -->
     <script src="{{asset('/public/eshop/')}}/assets/js/table-treeview.js"></script>
-    
+
     <!-- Chart Custom JavaScript -->
     <script src="{{asset('/public/eshop/')}}/assets/js/customizer.js"></script>
-    
+
     <!-- Chart Custom JavaScript -->
     <script async src="{{asset('/public/eshop/')}}/assets/js/chart-custom.js"></script>
-    
+
     <!-- app JavaScript -->
     <script src="{{asset('/public/eshop/')}}/assets/js/app.js"></script>
     <script>

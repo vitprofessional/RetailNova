@@ -66,7 +66,7 @@ class AdminProfileController extends Controller
         $admin->fill($data);
         $admin->save();
 
-        return redirect()->route('admin.profile.show')->with('success','Profile updated successfully.');
+        return redirect()->route('admin.profile.show')->with('success',__('common.notification_profile_updated_successfully'));
     }
 
     // Change password
@@ -86,6 +86,6 @@ class AdminProfileController extends Controller
         $admin->password = Hash::make($request->input('new_password'));
         $admin->save();
 
-        return redirect()->route('admin.profile.show')->with('success','Password changed successfully.');
+        return redirect()->route('admin.profile.show')->with('success',__('common.notification_password_changed_successfully'));
     }
 }

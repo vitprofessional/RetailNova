@@ -6,10 +6,10 @@
     <div class="card-body">
         <div class="row">
             <div class="col-12 mb-3">
-                <h4>Provide Service</h4>
-                <div id="invoicePreview" class="small text-muted mt-1">Invoice preview: <span id="invoiceNumberPreview">-</span></div>
+                <h4>{{ __('common.provide_service') }}</h4>
+                <div id="invoicePreview" class="small text-muted mt-1">{{ __('common.invoice_preview') }}: <span id="invoiceNumberPreview">-</span></div>
                 @if(!\Schema::hasTable('service_invoices'))
-                    <div class="alert alert-warning mt-2">Service Invoices are not enabled. Saving will use legacy mode. Run <code>php artisan migrate</code> to enable invoices and printing.</div>
+                    <div class="alert alert-warning mt-2">{{ __('common.service_invoices_are_not_enabled_saving_will_use_legacy_mode_run') }} <code>php artisan migrate</code> {{ __('common.to_enable_invoices_and_printing') }}</div>
                 @endif
             </div>
         </div>
@@ -18,9 +18,9 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="customerName" class="form-label">Customer Name</label>
+                        <label for="customerName" class="form-label">{{ __('common.customer_name') }}</label>
                         <select id="customerName" name="customerName" class="form-control" required>
-                                    <option value="">Select Customer Name</option>
+                                    <option value="">{{ __('common.select_customer_name') }}</option>
                                     <!--  form option show proccessing -->
                                   @if(!empty($customerList) && count($customerList)>0)
                                   @foreach($customerList as $customerData)
@@ -32,22 +32,22 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="note" class="form-label">Note</label>
+                        <label for="note" class="form-label">{{ __('common.note') }}</label>
                         <input type="text" class="form-control" placeholder="" id="note" name="note" />
                     </div>
                 </div>
                 <div class="col-md-12 mb-2">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="1" id="walkinCheck" />
-                        <label class="form-check-label" for="walkinCheck">Walking Customer (no registered customer)</label>
+                        <label class="form-check-label" for="walkinCheck">{{ __('common.walking_customer_no_registered_customer') }}</label>
                         <input type="hidden" id="is_walkin" name="is_walkin" value="0" />
                     </div>
                 </div>
                 <div class="col-md-8">
                     <div class="form-group">
-                        <label>Select A Service </label>
+                        <label>{{ __('common.select_a_service') }} </label>
                                                 <select id="serviceType" class="form-control" name="serviceType" disabled>
-                                                    <option value="">Select Service (choose customer first)</option>
+                                                    <option value="">{{ __('common.select_service_choose_customer_first') }}</option>
                                     <!--  form option show proccessing -->
                                   @if(!empty($serviceList) && count($serviceList)>0)
                                   @foreach($serviceList as $serviceData)
@@ -63,11 +63,11 @@
                         <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
                             <thead class="bg-white text-uppercase">
                                 <tr>
-                                    <th>Service Type</th>
-                                    <th>Rate</th>
-                                    <th>Qty</th>
-                                    <th>Line Total</th>
-                                    <th>Action</th>
+                                    <th>{{ __('common.service_type') }}</th>
+                                    <th>{{ __('common.rate') }}</th>
+                                    <th>{{ __('common.qty') }}</th>
+                                    <th>{{ __('common.line_total') }}</th>
+                                    <th>{{ __('common.action') }}</th>
                                 </tr>
                             </thead>
                             <tbody id="serviceBox">
@@ -75,7 +75,7 @@
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <td colspan="3" class="text-end"><strong>Grand Total</strong></td>
+                                    <td colspan="3" class="text-end"><strong>{{ __('common.grand_total') }}</strong></td>
                                     <td colspan="2"><strong id="grandTotalDisplay">0.00</strong>
                                         <input type="hidden" name="grandTotal" id="grandTotal" value="0">
                                     </td>
@@ -84,7 +84,7 @@
                         </table>
                     </div>
                     <div id="saveButton" class="d-none mt-2">
-                        <button class="btn btn-primary btn-sm" type="submit">Save</button>
+                        <button class="btn btn-primary btn-sm" type="submit">{{ __('common.save') }}</button>
                     </div>
                 </div>
             </div>
@@ -125,7 +125,7 @@
                                 +'<td><input type="number" step="0.01" class="form-control rate-input" value="'+rateVal+'" name="rate[]" /></td>'
                                 +'<td><input type="number" min="1" class="form-control qty-input" value="1" name="qty[]" /></td>'
                                 +'<td><input type="text" readonly class="form-control line-total-input" value="'+rateVal+'" /></td>'
-                                +'<td><button type="button" class="btn btn-sm btn-outline-danger remove-service" title="delete" data-service-id="'+result.id+'"><i class="ri-delete-bin-line mr-0"></i></button></td>'
+                                +'<td><button type="button" class="btn btn-sm btn-outline-danger remove-service" title="{{ __('common.delete') }}" data-service-id="'+result.id+'"><i class="ri-delete-bin-line mr-0"></i></button></td>'
                                 +'</tr>';
 
                             $('#serviceBox').append(field);

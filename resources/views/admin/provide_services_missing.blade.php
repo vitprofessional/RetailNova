@@ -1,9 +1,9 @@
 @extends('include')
 
-@section('backTitle')Provide Services - Missing Data @endsection
+@section('backTitle'){{ __('common.heading_provide_services_missing_data') }}@endsection
 @section('container')
 <div class="col-12">
-    <h4>Provide Services - Missing Rate or Qty</h4>
+    <h4>{{ __('common.provide_services_missing_rate_or_qty') }}</h4>
 </div>
 <div class="card">
     <div class="card-body">

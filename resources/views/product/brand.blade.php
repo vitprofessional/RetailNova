@@ -1,6 +1,6 @@
-@extends('include') 
+@extends('include')
 
-@section('backTitle')Brand Type @endsection @section('container')
+@section('backTitle'){{ __('common.heading_brand_type') }}@endsection @section('container')
     <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -18,13 +18,13 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="mb-0">@if(isset($profile)) Edit @else Add @endif Brand</h4>
         </div>
-        
+
         <form action="{{route('saveBrand')}}" method="POST" >
             @csrf
             <div class="row">
                 <input type="hidden" name="profileId" value="{{ $profileId }}">
                 <div class="col-md-4">
-                    <input type="text" class="form-control" placeholder="Enter brand name" aria-label="name"  name ="name" value="{{$name}}" />
+                    <input type="text" class="form-control" placeholder="{{ __('common.enter_brand_name') }}" aria-label="{{ __('common.name') }}"  name ="name" value="{{$name}}" />
                     <div class="justify-content-md-end mt-2">
                         <button class="btn btn-primary btn-sm" type="submit">@if(isset($profile)) Update @else Add @endif Brand </button>
                     </div>
@@ -44,8 +44,8 @@
                                 <label for="selectAllBrands" class="mb-0"></label>
                             </div>
                         </th>
-                        <th scope="">Brand</th>
-                        <th scope="">Action</th>
+                        <th scope="">{{ __('inventory.brand') }}</th>
+                        <th scope="">{{ __('inventory.action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -61,11 +61,11 @@
                         <td> {{$brandList->name}}</td>
                         <td>
                             <div class="d-flex list-action">
-                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit" href="{{route('editBrand',['id'=>$brandList->id])}}"><i class="ri-pencil-line mr-0"></i>Edit</a>
+                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('inventory.edit') }}" href="{{route('editBrand',['id'=>$brandList->id])}}"><i class="ri-pencil-line mr-0"></i>{{ __('inventory.edit') }}</a>
                                 <form action="{{ route('delBrand',['id'=>$brandList->id]) }}" method="POST" style="display:inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="badge bg-warning mr-2" data-confirm="Are you sure to delete this brand?" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete" style="border:none; background:transparent; padding:0;"><i class="ri-delete-bin-line mr-0"></i>Delete</button>
+                                    <button type="submit" class="badge bg-warning mr-2" data-confirm="Are you sure to delete this brand?" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('inventory.delete') }}" style="border:none; background:transparent; padding:0;"><i class="ri-delete-bin-line mr-0"></i>{{ __('inventory.delete') }}</button>
                                 </form>
                             </div>
                         </td>
@@ -73,11 +73,11 @@
                     @endforeach
                     @else
                     <tr>
-                        <td>Mark</td>
+                        <td>{{ __('inventory.mark') }}</td>
                         <td>
                             <div class="d-flex list-action">
-                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i>Edit</a>
-                                <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i>Delete</button>
+                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('inventory.edit') }}" href="#"><i class="ri-pencil-line mr-0"></i>{{ __('inventory.edit') }}</a>
+                                <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('inventory.delete') }}"><i class="ri-delete-bin-line mr-0"></i>{{ __('inventory.delete') }}</button>
                             </div>
                         </td>
                     </tr>

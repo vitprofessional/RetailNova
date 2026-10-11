@@ -56,7 +56,7 @@ class businessController extends Controller
         $isValidBusinessType = empty($selectedBusinessType) || array_key_exists($selectedBusinessType, $businessTypes);
 
         if (!$isValidBusinessType) {
-            Alert::error("Error", "Invalid business type selected");
+            Alert::error(__('common.notification_error'), __('common.notification_invalid_business_type_selected'));
             return back()->withInput();
         }
 
@@ -96,11 +96,11 @@ class businessController extends Controller
 
             if ($shouldAttemptDemoSeed) {
                 if (app()->environment('production')) {
-                    $seedMessage = 'Business details saved. Demo data import is disabled in production.';
+                    $seedMessage = __('common.demo_production');
                 } elseif (!$this->canSeedDemoDataForBusiness($savedBusinessId)) {
-                    $seedMessage = 'Business details saved. Demo data was not seeded because products, customers, purchases, or sales already exist for this business.';
+                    $seedMessage = __('common.demo_existing');
                 } elseif (!empty($previousBusinessType) && $previousBusinessType !== $selectedBusinessType) {
-                    $seedMessage = 'Business details saved. Demo data was not reseeded because this business already has a different saved business type.';
+                    $seedMessage = __('common.demo_type');
                 } else {
                     $seedMessage = $this->seedDemoDataForBusinessType($selectedBusinessType, $savedBusinessId);
                 }
@@ -119,10 +119,10 @@ class businessController extends Controller
             } catch(\Throwable $e) {
                 \Log::warning('Failed to update walk-in toggles in .env', ['error' => $e->getMessage()]);
             }
-            Alert::success("Success!", $seedMessage ?? "Business data saved successfully");
+            Alert::success(__('common.notification_success'), $seedMessage ?? __('common.notification_business_data_saved_successfully'));
             return back();
         else:
-            Alert::error("Sorry!","Business data failed to save");
+            Alert::error(__('common.notification_sorry'),__('common.notification_business_data_failed_to_save'));
             return back();
         endif;
     }
@@ -332,12 +332,12 @@ class businessController extends Controller
 
         $business = BusinessSetup::find($requ->businessId);
         if(!$business):
-            Alert::error("Error","Business setup not found");
+            Alert::error(__('common.notification_error'),__('common.notification_business_setup_not_found'));
             return back();
         endif;
 
         if(!$requ->hasFile('businessLogo')):
-            Alert::error("Error","Please choose a valid logo file to upload.");
+            Alert::error(__('common.notification_error'),__('common.notification_please_choose_a_valid_logo_file_to_upload'));
             return back();
         endif;
 
@@ -362,18 +362,18 @@ class businessController extends Controller
             $business->businessLogo = $upFile;
 
             if($business->save()):
-                Alert::success("Success","Business logo updated successfully");
+                Alert::success(__('common.notification_success'),__('common.notification_business_logo_updated_successfully'));
                 return back();
             endif;
 
-            Alert::error("Sorry","Business logo failed to update");
+            Alert::error(__('common.notification_sorry'),__('common.notification_business_logo_failed_to_update'));
             return back();
         } catch (\Throwable $e) {
             \Log::error('Business logo upload failed', [
                 'business_id' => $requ->businessId,
                 'error' => $e->getMessage(),
             ]);
-            Alert::error("Error","Business logo upload failed: " . $e->getMessage());
+            Alert::error(__('common.notification_error'),__('common.notification_business_logo_upload_failed') . $e->getMessage());
             return back();
         }
     }
@@ -388,10 +388,10 @@ class businessController extends Controller
                 }
                 $business->businessLogo = null;
                 $business->save();
-                Alert::success("Success","Business logo deleted successfully");
+                Alert::success(__('common.notification_success'),__('common.notification_business_logo_deleted_successfully'));
             endif;
         } catch(\Exception $e) {
-            Alert::error("Error","Failed to delete logo");
+            Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_logo'));
         }
         return back();
     }
@@ -444,10 +444,10 @@ class businessController extends Controller
                 'description' => $request->description,
             ]);
 
-            Alert::success("Success!", "Business location created successfully");
+            Alert::success(__('common.notification_success'), __('common.notification_business_location_created_successfully'));
             return redirect()->route('business.locations');
         } catch(\Exception $e) {
-            Alert::error("Error", "Failed to create location: " . $e->getMessage());
+            Alert::error(__('common.notification_error'), __('common.notification_failed_to_create_location') . $e->getMessage());
             return back()->withInput();
         }
     }
@@ -495,10 +495,10 @@ class businessController extends Controller
                 'description' => $request->description,
             ]);
 
-            Alert::success("Success!", "Business location updated successfully");
+            Alert::success(__('common.notification_success'), __('common.notification_business_location_updated_successfully'));
             return redirect()->route('business.locations');
         } catch(\Exception $e) {
-            Alert::error("Error", "Failed to update location: " . $e->getMessage());
+            Alert::error(__('common.notification_error'), __('common.notification_failed_to_update_location') . $e->getMessage());
             return back()->withInput();
         }
     }
@@ -509,15 +509,15 @@ class businessController extends Controller
             
             // Don't allow deletion if it's the main location
             if($location->is_main_location) {
-                Alert::warning("Warning", "Cannot delete the main business location");
+                Alert::warning(__('common.notification_warning'), __('common.notification_cannot_delete_the_main_business_location'));
                 return back();
             }
 
             $location->delete();
-            Alert::success("Success!", "Business location deleted successfully");
+            Alert::success(__('common.notification_success'), __('common.notification_business_location_deleted_successfully'));
             return redirect()->route('business.locations');
         } catch(\Exception $e) {
-            Alert::error("Error", "Failed to delete location: " . $e->getMessage());
+            Alert::error(__('common.notification_error'), __('common.notification_failed_to_delete_location') . $e->getMessage());
             return back();
         }
     }
@@ -529,7 +529,7 @@ class businessController extends Controller
     public function resetDemoData(Request $request)
     {
         if (app()->environment('production')) {
-            Alert::error("Forbidden", "Demo data reset is disabled in production.");
+            Alert::error(__('common.notification_forbidden'), __('common.notification_demo_data_reset_is_disabled_in_production'));
             return back();
         }
 
@@ -540,7 +540,7 @@ class businessController extends Controller
 
         $actor = Auth::guard('admin')->user();
         if (!$actor || !method_exists($actor, 'hasSuperAdminPrivileges') || !$actor->hasSuperAdminPrivileges()) {
-            Alert::error("Forbidden", "Only Super Admin can reset demo data.");
+            Alert::error(__('common.notification_forbidden'), __('common.notification_only_super_admin_can_reset_demo_data'));
             return back();
         }
 
@@ -549,13 +549,13 @@ class businessController extends Controller
         $businessTypes = $this->businessTypeOptions();
 
         if (empty($newType) || !array_key_exists($newType, $businessTypes)) {
-            Alert::error("Error", "Please select a valid business type to re-seed.");
+            Alert::error(__('common.notification_error'), __('common.notification_please_select_a_valid_business_type_to_re_seed'));
             return back();
         }
 
         $business = BusinessSetup::find($targetBusinessId);
         if (!$business) {
-            Alert::error("Error", "Selected business record not found.");
+            Alert::error(__('common.notification_error'), __('common.notification_selected_business_record_not_found'));
             return back();
         }
 
@@ -572,13 +572,13 @@ class businessController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             \Log::error('Reset demo data failed during wipe', ['error' => $e->getMessage()]);
-            Alert::error("Error", "Failed to clear existing data: " . $e->getMessage());
+            Alert::error(__('common.notification_error'), __('common.clear_failed') . $e->getMessage());
             return back();
         }
 
         // Seed fresh demo data for the new type
         $seedMessage = $this->seedDemoDataForBusinessType($newType, $targetBusinessId);
-        Alert::success("Success!", $seedMessage);
+        Alert::success(__('common.notification_success'), $seedMessage);
         return back();
     }
 }

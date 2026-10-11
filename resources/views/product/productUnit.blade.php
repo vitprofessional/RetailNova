@@ -1,6 +1,6 @@
-@extends('include') 
+@extends('include')
 
-@section('backTitle')Unit Type @endsection @section('container')
+@section('backTitle'){{ __('common.heading_unit_type') }}@endsection @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -23,7 +23,7 @@
             <div class="row">
                 <input type="hidden" name="profileId" value="{{ $profileId }}">
                 <div class="col-md-4">
-                    <input type="text" class="form-control" placeholder="Enter product unit name" aria-label="name"  name ="name" value="{{$name}}" />
+                    <input type="text" class="form-control" placeholder="{{ __('common.enter_product_unit_name') }}" aria-label="{{ __('common.name') }}"  name ="name" value="{{$name}}" />
                     <div class="justify-content-md-end mt-2">
                         <button class="btn btn-primary btn-sm" type="submit">@if(isset($profile)) Update @else Add @endif Product Unit </button>
                     </div>
@@ -43,8 +43,8 @@
                                 <label for="selectAllUnits" class="mb-0"></label>
                             </div>
                         </th>
-                        <th scope="">Product Unit</th>
-                        <th scope="">Action</th>
+                        <th scope="">{{ __('inventory.product_unit') }}</th>
+                        <th scope="">{{ __('inventory.action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,11 +60,11 @@
                         <td> {{$productUnitList->name}}</td>
                         <td>
                             <div class="d-flex list-action">
-                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit" href="{{route('editProductUnit',['id'=>$productUnitList->id])}}"><i class="ri-pencil-line mr-0"></i>Edit</a>
+                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('inventory.edit') }}" href="{{route('editProductUnit',['id'=>$productUnitList->id])}}"><i class="ri-pencil-line mr-0"></i>{{ __('inventory.edit') }}</a>
                                 <form action="{{ route('delProductUnit',['id'=>$productUnitList->id]) }}" method="POST" style="display:inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="badge bg-warning mr-2" data-confirm="Are you sure to delete this unit?" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete" style="border:none; background:transparent; padding:0;"><i class="ri-delete-bin-line mr-0"></i>Delete</button>
+                                    <button type="submit" class="badge bg-warning mr-2" data-confirm="Are you sure to delete this unit?" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('inventory.delete') }}" style="border:none; background:transparent; padding:0;"><i class="ri-delete-bin-line mr-0"></i>{{ __('inventory.delete') }}</button>
                                 </form>
                             </div>
                         </td>
@@ -72,11 +72,11 @@
                     @endforeach
                     @else
                     <tr>
-                        <td>Mark</td>
+                        <td>{{ __('inventory.mark') }}</td>
                         <td>
                             <div class="d-flex list-action">
-                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i>Edit</a>
-                                <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i>Delete</button>
+                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('inventory.edit') }}" href="#"><i class="ri-pencil-line mr-0"></i>{{ __('inventory.edit') }}</a>
+                                <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('inventory.delete') }}"><i class="ri-delete-bin-line mr-0"></i>{{ __('inventory.delete') }}</button>
                             </div>
                         </td>
                     </tr>

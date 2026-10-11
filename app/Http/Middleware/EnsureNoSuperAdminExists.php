@@ -18,9 +18,9 @@ class EnsureNoSuperAdminExists
         if ($exists) {
             // If superadmin exists, redirect away
             if ($request->ajax() || $request->expectsJson()) {
-                return response()->json(['error' => 'Super Admin already exists'], 403);
+                return response()->json(['error' => __('common.api_super_admin_already_exists')], 403);
             }
-            return redirect()->route('userLogin')->with('error', 'Super Admin already exists. Please login.');
+            return redirect()->route('userLogin')->with('error', __('common.notification_super_admin_already_exists_please_login'));
         }
         return $next($request);
     }

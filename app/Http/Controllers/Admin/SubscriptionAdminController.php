@@ -30,7 +30,7 @@ class SubscriptionAdminController extends Controller
             'features' => $request->features,
             'is_active' => (bool)$request->input('is_active',1),
         ]);
-        Alert::success('Success','Plan created');
+        Alert::success(__('common.notification_success'),__('common.notification_plan_created'));
         return back();
     }
 
@@ -38,7 +38,7 @@ class SubscriptionAdminController extends Controller
     {
         $plan = SubscriptionPlan::findOrFail($id);
         $plan->delete();
-        Alert::success('Deleted','Plan deleted');
+        Alert::success(__('common.notification_deleted'),__('common.notification_plan_deleted'));
         return back();
     }
 
@@ -66,7 +66,7 @@ class SubscriptionAdminController extends Controller
             'starts_at' => $starts,
             'ends_at' => $ends,
         ]);
-        Alert::success('Success','Subscription started');
+        Alert::success(__('common.notification_success'),__('common.notification_subscription_started'));
         return back();
     }
 
@@ -75,7 +75,7 @@ class SubscriptionAdminController extends Controller
         $sub = Subscription::findOrFail($id);
         $sub->status = 'cancelled';
         $sub->save();
-        Alert::success('Cancelled','Subscription cancelled');
+        Alert::success(__('common.notification_cancelled'),__('common.notification_subscription_cancelled'));
         return back();
     }
 }

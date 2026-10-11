@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Service Invoice {{ $invoice->invoice_number }}</title>
+    <title>{{ __('common.service_invoice') }} {{ $invoice->invoice_number }}</title>
     <link rel="stylesheet" href="/css/app.css" />
     <style>
         @page{ margin: 10mm; }
@@ -11,6 +11,7 @@
         .table th, .table td{ border: 1px solid #ddd; padding: 6px; }
         .text-end{ text-align: right; }
     </style>
+@include('partials.localization')
 </head>
 <body>
     <div class="invoice-root">
@@ -18,10 +19,10 @@
         <div>{{ $business->address ?? '' }}</div>
         <div>{{ $business->phone ?? '' }}</div>
         <hr />
-        <h4>Invoice: {{ $invoice->invoice_number }}</h4>
-        <div>Created: {{ $invoice->created_at->format('Y-m-d H:i') }}</div>
+        <h4>{{ __('common.invoice') }}: {{ $invoice->invoice_number }}</h4>
+        <div>{{ __('common.created') }}: {{ $invoice->created_at->format('Y-m-d H:i') }}</div>
 
-        <h5>Bill To</h5>
+        <h5>{{ __('invoices.bill_to') }}</h5>
         @if($customer)
             @php
                 $addr = '';
@@ -33,19 +34,19 @@
             @endphp
             <div><strong>{{ $customer->name }}</strong></div>
             @if(!empty($addr))<div>{{ $addr }}</div>@endif
-            @if(!empty($customer->mobile))<div>Contact: {{ $customer->mobile }}</div>@endif
+            @if(!empty($customer->mobile))<div>{{ __('common.contact') }}: {{ $customer->mobile }}</div>@endif
         @else
-            <div><strong>Walking Customer</strong></div>
+            <div><strong>{{ __('invoices.walking_customer') }}</strong></div>
         @endif
 
         <table class="table" style="margin-top:10px;">
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Service</th>
-                    <th class="text-end">Rate</th>
-                    <th class="text-end">Qty</th>
-                    <th class="text-end">Line Total</th>
+                    <th>{{ __('invoices.service') }}</th>
+                    <th class="text-end">{{ __('invoices.rate') }}</th>
+                    <th class="text-end">{{ __('invoices.qty') }}</th>
+                    <th class="text-end">{{ __('invoices.line_total') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -61,7 +62,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="4" class="text-end"><strong>Total</strong></td>
+                    <td colspan="4" class="text-end"><strong>{{ __('invoices.total') }}</strong></td>
                     <td class="text-end"><strong>{{ number_format($invoice->total_amount,2) }}</strong></td>
                 </tr>
             </tfoot>
@@ -69,7 +70,7 @@
 
         @if($invoice->note)
         <div style="margin-top:10px;">
-            <strong>Note:</strong>
+            <strong>{{ __('common.note') }}:</strong>
             <div>{{ $invoice->note }}</div>
         </div>
         @endif

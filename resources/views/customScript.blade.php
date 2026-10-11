@@ -27,7 +27,7 @@ if(typeof window.showToast !== 'function'){
                     var container = document.getElementById('rn-toast-container');
                     if(!container){ container = document.createElement('div'); container.id = 'rn-toast-container'; container.style.position = 'fixed'; container.style.top = '1rem'; container.style.right = '1rem'; container.style.zIndex = '1080'; document.body.appendChild(container); }
                     var toast = document.createElement('div'); toast.className = 'toast'; toast.setAttribute('role','alert'); toast.setAttribute('aria-live','assertive'); toast.setAttribute('aria-atomic','true');
-                    toast.innerHTML = '<div class="toast-header"><strong class="me-auto">'+(title||'')+'</strong><small></small><button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"></button></div><div class="toast-body">'+(text||'')+'</div>';
+                    toast.innerHTML = '<div class="toast-header"><strong class="me-auto">'+(title||'')+'</strong><small></small><button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="{{ __('common.close') }}"></button></div><div class="toast-body">'+(text||'')+'</div>';
                     container.appendChild(toast);
                     try{ var bToast = new bootstrap.Toast(toast, { delay: 2500 }); bToast.show(); }catch(e){ toast.style.display='block'; setTimeout(function(){ try{ toast.parentNode.removeChild(toast); }catch(_){} },2500); }
                     return;
@@ -85,13 +85,13 @@ function recalcPurchaseRow(ctx){
             var includeFlag = false; if(incEl){ if(incEl.type === 'checkbox') includeFlag = !!incEl.checked; else includeFlag = (String(incEl.value) === '1' || String(incEl.value).toLowerCase() === 'yes' || String(incEl.value).toLowerCase() === 'true'); }
             if(saleIncEl){
                 var saleIncVal = 0;
-                if(includeFlag && vatPct > 0){ 
-                    saleIncVal = Number((sale * (1 + (vatPct/100))).toFixed(2)); 
-                } else if(includeFlag){ 
-                    saleIncVal = sale; 
+                if(includeFlag && vatPct > 0){
+                    saleIncVal = Number((sale * (1 + (vatPct/100))).toFixed(2));
+                } else if(includeFlag){
+                    saleIncVal = sale;
                 }
                 // When unchecked, saleIncVal remains 0
-                try{ 
+                try{
                     if('value' in saleIncEl) {
                         // Explicitly set to 0 when unchecked, or calculated value when checked
                         saleIncEl.value = saleIncVal;
@@ -106,7 +106,7 @@ function recalcPurchaseRow(ctx){
                 var badgeEl = row.querySelector('.vat-badge') || document.getElementById('vatBadge__' + (row.getAttribute && row.getAttribute('data-idx') || '0'));
                 var vatAmount = 0;
                 if(includeFlag && vatPct > 0 && sale > 0 && qty > 0){ vatAmount = sale * qty * (vatPct/100); }
-                if(rowVatEl){ rowVatEl.textContent = vatAmount ? ('VAT: ' + Number(vatAmount.toFixed(2))) : ''; }
+                if(rowVatEl){ rowVatEl.textContent = vatAmount ? (window.RNTranslate('common.client_vat') + Number(vatAmount.toFixed(2))) : ''; }
                 // Visual highlight and badge
                 try{
                     if(includeFlag){ row.classList.add('vat-enabled'); if(badgeEl){ badgeEl.style.display = 'inline-block'; badgeEl.title = vatPct ? ('VAT included: ' + vatPct + '%') : 'VAT included'; } }
@@ -294,7 +294,7 @@ document.addEventListener('change', function(e){
             }catch(e){ includeFlag = false; }
 
             var vat = vatEl ? numVal(vatEl.value) : 0;
-            
+
             // Forcefully set inc VAT to 0 when checkbox is unchecked
             if(!includeFlag && saleInc){
                 try{
@@ -309,7 +309,7 @@ document.addEventListener('change', function(e){
                     if(wasReadonly) saleInc.setAttribute('readonly', 'readonly');
                 }catch(e){console.warn('Failed to set inc VAT to 0', e);}
             }
-            
+
             // Visual highlight + badge for include-vat
             try{
                 var badge = row.querySelector('.vat-badge') || document.getElementById('vatBadge__' + (row.getAttribute && row.getAttribute('data-idx') || '0'));
@@ -355,7 +355,7 @@ document.addEventListener('submit', function(e){
                         }
                     }
                     if(typeof window.showToast === 'function'){
-                        window.showToast('Validation Error', errorMsg, 'error');
+                        window.showToast(window.RNTranslate('common.client_validation_error'), errorMsg, 'error');
                     }
                 }catch(e){}
                 return; // Don't close modal or reset form on validation error
@@ -434,7 +434,7 @@ document.addEventListener('submit', function(e){
                 if(result && result.message){
                     try{
                         if(typeof window.showToast === 'function'){
-                            window.showToast('Success', result.message, 'success');
+                            window.showToast(window.RNTranslate('common.client_success'), result.message, 'success');
                         }
                     }catch(e){}
                 }
@@ -478,12 +478,12 @@ document.addEventListener('submit', function(e){
                 // reset form
                 try{ f.reset(); }catch(e){}
             }catch(err){ console.warn('ajax-form result handling', err); }
-        }).catch(function(err){ 
-            console.warn('ajax form submit failed', err); 
+        }).catch(function(err){
+            console.warn('ajax form submit failed', err);
             // Show error message
             try{
                 if(typeof window.showToast === 'function'){
-                    window.showToast('Error', 'Failed to submit form. Please try again.', 'error');
+                    window.showToast(window.RNTranslate('common.client_error'), window.RNTranslate('common.client_failed_to_submit_form_please_try_again'), 'error');
                 }
             }catch(e){}
         });
@@ -523,11 +523,11 @@ document.addEventListener('DOMContentLoaded', function(){
                         var sel = document.querySelector('.js-product-select');
                         if(!sel) sel = document.getElementById('productName');
                         if(!sel){
-                            try{ showToast && showToast('Error','Product select not found','error'); }catch(_){ alert('Product select not found'); }
+                            try{ showToast && showToast(window.RNTranslate('common.client_error'),window.RNTranslate('common.client_product_select_not_found'),'error'); }catch(_){ alert(window.RNTranslate('common.client_product_select_not_found')); }
                             return;
                         }
                         var pid = sel.value || sel.options && sel.options[sel.selectedIndex] && sel.options[sel.selectedIndex].value;
-                        if(!pid){ try{ showToast && showToast('Warning','Please select a product first','warning'); }catch(_){ alert('Please select a product first'); } return; }
+                        if(!pid){ try{ showToast && showToast(window.RNTranslate('common.client_warning'),window.RNTranslate('common.client_please_select_a_product_first'),'warning'); }catch(_){ alert(window.RNTranslate('common.client_please_select_a_product_first')); } return; }
                         if(typeof addPurchaseRow === 'function'){
                             addPurchaseRow(pid);
                         } else {
@@ -647,7 +647,7 @@ window.syncSerialsFromModal = function(modalId){
         });
 
         // notify user if any serials were synced
-        try{ if(added > 0){ showToast('Serials saved', 'Saved '+added+' serial(s) for row '+ (idx || ''), 'success'); } }catch(e){}
+        try{ if(added > 0){ showToast(window.RNTranslate('common.client_serials_saved'), window.RNTranslate('common.client_saved')+added+' serial(s) for row '+ (idx || ''), 'success'); } }catch(e){}
     }catch(e){ console.warn('syncSerialsFromModal error', e); }
 };
 

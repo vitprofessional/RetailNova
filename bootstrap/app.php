@@ -33,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         // Ensure web requests authenticate from session pos keys
         $middleware->appendToGroup('web', SyncSessionUser::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\ResolveLocale::class);
         // Keep test-time logger appended to the web group when testing.
         // During testing, append a lightweight request logger to the web group.
         // Avoid calling `app()` here (container may not be fully resolved),

@@ -1,45 +1,43 @@
 @extends('include')
-@section('backTitle')
-Dashboard
-@endsection
+@section('backTitle'){{ __('common.heading_dashboard') }}@endsection
 @section('container')
 <div class="row">
             <div class="col-lg-12">
                 <div class="card card-transparent card-block card-stretch card-height border-none">
                     <div class="card-body p-0 mt-lg-2 mt-0">
-                        <h3 class="mb-1">Hi {{ optional($adminUser)->fullName ?? 'there' }},
+                        <h3 class="mb-1">{{ __('dashboard.hello', ['name'=>optional($adminUser)->fullName ?? __('dashboard.guest')]) }},
                             @php
                                 $hour = \Carbon\Carbon::now()->format('H');
                                 if ($hour >= 5 && $hour < 12) {
-                                    echo 'Good Morning! 🌅';
+                                    echo __('dashboard.good_morning').' 🌅';
                                 } elseif ($hour >= 12 && $hour < 17) {
-                                    echo 'Good Afternoon! ☀️';
+                                    echo __('dashboard.good_afternoon').' ☀️';
                                 } elseif ($hour >= 17 && $hour < 21) {
-                                    echo 'Good Evening! 🌇';
+                                    echo __('dashboard.good_evening').' 🌇';
                                 } else {
-                                    echo 'Good Night! 🌙';
+                                    echo __('dashboard.good_night').' 🌙';
                                 }
                             @endphp
                         </h3>
-                        <p class="mb-3 mr-4">Your dashboard highlights sales, purchases, cash flow, stock, and more.</p>
+                        <p class="mb-3 mr-4">{{ __('dashboard.your_dashboard_highlights_sales_purchases_cash_flow_stock_and_more') }}</p>
                         <div class="d-flex align-items-center flex-wrap">
                             <div class="form-inline mr-2 mb-2">
-                                <label class="mr-2 mb-0">Range</label>
+                                <label class="mr-2 mb-0">{{ __('dashboard.range') }}</label>
                                 <select id="rn-range" class="form-control form-control-sm">
-                                    <option value="today">Today</option>
-                                    <option value="week">This Week</option>
-                                    <option value="month" selected>This Month</option>
-                                    <option value="year">This Year</option>
-                                    <option value="custom">Custom</option>
+                                    <option value="today">{{ __('dashboard.today') }}</option>
+                                    <option value="week">{{ __('dashboard.this_week') }}</option>
+                                    <option value="month" selected>{{ __('dashboard.this_month') }}</option>
+                                    <option value="year">{{ __('dashboard.this_year') }}</option>
+                                    <option value="custom">{{ __('dashboard.custom') }}</option>
                                 </select>
                             </div>
                             <div id="rn-custom-range" class="form-inline mr-2 mb-2" style="display:none;">
-                                <label class="mr-2 mb-0">From</label>
+                                <label class="mr-2 mb-0">{{ __('dashboard.from') }}</label>
                                 <input type="date" id="rn-start" class="form-control form-control-sm mr-2">
-                                <label class="mr-2 mb-0">To</label>
+                                <label class="mr-2 mb-0">{{ __('dashboard.to') }}</label>
                                 <input type="date" id="rn-end" class="form-control form-control-sm mr-2">
                             </div>
-                            <button id="rn-apply" class="btn btn-primary btn-sm mb-2">Apply</button>
+                            <button id="rn-apply" class="btn btn-primary btn-sm mb-2">{{ __('dashboard.apply') }}</button>
                         </div>
                     </div>
                 </div>
@@ -52,7 +50,7 @@ Dashboard
                             <div class="iq-alert-text  card-body">
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
-                                        <p class="mb-2">Customer Opening Balance</p>
+                                        <p class="mb-2">{{ __('dashboard.customer_opening_balance') }}</p>
                                         <h4>@money($customerOpeningTotal ?? 0)</h4>
                                     </div>
                                 </div>
@@ -68,7 +66,7 @@ Dashboard
                             <div class="iq-alert-text  card-body">
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
-                                        <p class="mb-2">Supplier Opening Balance</p>
+                                        <p class="mb-2">{{ __('dashboard.supplier_opening_balance') }}</p>
                                         <h4>@money($supplierOpeningTotal ?? 0)</h4>
                                     </div>
                                 </div>
@@ -85,7 +83,7 @@ Dashboard
                             <div class="iq-alert-text  card-body">
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
-                                        <p class="mb-2">Sales</p>
+                                        <p class="mb-2">{{ __('dashboard.sales') }}</p>
                                         <h4 id="rn-sales">0.00</h4>
                                     </div>
                                 </div>
@@ -100,7 +98,7 @@ Dashboard
                             <div class="iq-alert-text  card-body">
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
-                                        <p class="mb-2">Purchase</p>
+                                        <p class="mb-2">{{ __('dashboard.purchase') }}</p>
                                         <h4 id="rn-purchases">0.00</h4>
                                     </div>
                                 </div>
@@ -115,7 +113,7 @@ Dashboard
                             <div class="iq-alert-text  card-body">
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
-                                        <p class="mb-2">Received</p>
+                                        <p class="mb-2">{{ __('dashboard.received') }}</p>
                                         <h4 id="rn-receipts">0.00</h4>
                                     </div>
                                 </div>
@@ -130,7 +128,7 @@ Dashboard
                             <div class="iq-alert-text  card-body">
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
-                                        <p class="mb-2">Payment</p>
+                                        <p class="mb-2">{{ __('dashboard.payment') }}</p>
                                         <h4 id="rn-payments">0.00</h4>
                                     </div>
                                 </div>
@@ -145,7 +143,7 @@ Dashboard
                             <div class="card-body">
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
-                                        <p class="mb-2">Expense</p>
+                                        <p class="mb-2">{{ __('dashboard.expense') }}</p>
                                         <h4 id="rn-expenses">0.00</h4>
                                     </div>
                                 </div>
@@ -160,7 +158,7 @@ Dashboard
                             <div class="iq-alert-text  card-body">
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
-                                        <p class="mb-2">Cash Flow</p>
+                                        <p class="mb-2">{{ __('dashboard.cash_flow') }}</p>
                                         <h4 id="rn-cashflow">0.00</h4>
                                     </div>
                                 </div>
@@ -175,7 +173,7 @@ Dashboard
                             <div class="iq-alert-text  card-body">
                                 <div class="d-flex align-items-center  card-total-sale">
                                     <div>
-                                        <p class="mb-2">Net Sale</p>
+                                        <p class="mb-2">{{ __('dashboard.net_sale') }}</p>
                                         <h4 id="rn-net">0.00</h4>
                                     </div>
                                 </div>
@@ -190,7 +188,7 @@ Dashboard
                             <div class="iq-alert-text  card-body">
                                 <div class="d-flex align-items-center card-total-sale">
                                     <div>
-                                        <p class="mb-2">Total Stock Qty</p>
+                                        <p class="mb-2">{{ __('dashboard.total_stock_qty') }}</p>
                                         <h4 class="text-white" id="rn-stock-total">0</h4>
                                     </div>
                                 </div>
@@ -206,7 +204,7 @@ Dashboard
                 <div class="card card-block card-stretch">
                     <div class="card-header d-flex justify-content-between">
                         <div class="header-title">
-                            <h4 class="card-title">Financial Report</h4>
+                            <h4 class="card-title">{{ __('dashboard.financial_report') }}</h4>
                         </div>
                     </div>
                     <div class="card-body">
@@ -220,7 +218,7 @@ Dashboard
                 <div class="card card-block card-stretch card-height">
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <div class="header-title">
-                            <h4 class="card-title">Latest Invoices</h4>
+                            <h4 class="card-title">{{ __('dashboard.latest_invoices') }}</h4>
                         </div>
                     </div>
                     <div class="card-body p-0">
@@ -228,13 +226,13 @@ Dashboard
                             <table class="table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Invoice</th>
-                                        <th>Customer</th>
-                                        <th class="text-right">Total</th>
+                                        <th>{{ __('dashboard.invoice') }}</th>
+                                        <th>{{ __('dashboard.customer') }}</th>
+                                        <th class="text-right">{{ __('dashboard.total') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody id="rn-latest-invoices">
-                                    <tr><td colspan="3" class="text-center">Loading...</td></tr>
+                                    <tr><td colspan="3" class="text-center">{{ __('dashboard.loading') }}</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -245,12 +243,12 @@ Dashboard
                 <div class="card card-block card-stretch card-height">
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <div class="header-title">
-                            <h4 class="card-title">Low Stock Products</h4>
+                            <h4 class="card-title">{{ __('dashboard.low_stock_products') }}</h4>
                         </div>
                     </div>
                     <div class="card-body p-0">
                         <ul class="list-group list-group-flush" id="rn-low-stock">
-                            <li class="list-group-item">Loading...</li>
+                            <li class="list-group-item">{{ __('dashboard.loading') }}</li>
                         </ul>
                     </div>
                 </div>
@@ -259,19 +257,19 @@ Dashboard
                 <div class="card card-block card-stretch card-height">
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <div class="header-title">
-                            <h4 class="card-title">Top Products</h4>
+                            <h4 class="card-title">{{ __('dashboard.top_products') }}</h4>
                         </div>
                         <div class="card-header-toolbar d-flex align-items-center">
                             <div class="dropdown">
                                 <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton006"
                                     data-toggle="dropdown">
-                                    This Month<i class="ri-arrow-down-s-line ml-1"></i>
+                                    {{ __('dashboard.this_month') }}<i class="ri-arrow-down-s-line ml-1"></i>
                                 </span>
                                 <div class="dropdown-menu dropdown-menu-right shadow-none"
                                     aria-labelledby="dropdownMenuButton006">
-                                    <a class="dropdown-item" href="#">Year</a>
-                                    <a class="dropdown-item" href="#">Month</a>
-                                    <a class="dropdown-item" href="#">Week</a>
+                                    <a class="dropdown-item" href="#">{{ __('dashboard.year') }}</a>
+                                    <a class="dropdown-item" href="#">{{ __('dashboard.month') }}</a>
+                                    <a class="dropdown-item" href="#">{{ __('dashboard.week') }}</a>
                                 </div>
                             </div>
                         </div>
@@ -336,7 +334,7 @@ Dashboard
             </div>
             <!-- Removed placeholder last sale/purchase/transaction cards -->
             </div>
-            <div class="row">        
+            <div class="row">
             <!-- Removed placeholder income/expense charts -->
             </div>
             <!-- Removed placeholder order summary section -->
@@ -431,7 +429,7 @@ Dashboard
                         low.appendChild(li);
                     });
                     if(!low.children.length){
-                        var li = document.createElement('li'); li.className = 'list-group-item'; li.textContent = 'No low stock items'; low.appendChild(li);
+                        var li = document.createElement('li'); li.className = 'list-group-item'; li.textContent = window.RNTranslate('common.client_no_low_stock_items'); low.appendChild(li);
                     }
                 }
 

@@ -12,10 +12,11 @@ class BusinessSetup extends Model
         'currencySymbol','currencyPosition','currencyNegParentheses',
         'hide_invoice_acknowledgement',
         'invoice_terms_enabled',
-        'invoice_terms_text'
+        'invoice_terms_text', 'sales_serial_selection_required', 'default_locale'
     ];
 
     protected $casts = [
+        'sales_serial_selection_required' => 'boolean',
         'currencyNegParentheses' => 'boolean',
         'hide_invoice_acknowledgement' => 'boolean',
         'invoice_terms_enabled' => 'boolean',

@@ -114,8 +114,8 @@ function purchaseData(pid,proField,pf,bp,sp,ts,tp,qd,pm,pt){
                         // inline error element
                         var next = qtyEl.nextElementSibling;
                         if(!next || !next.classList || !next.classList.contains('invalid-feedback')){
-                            var div = document.createElement('div'); div.className = 'invalid-feedback sale-error'; div.textContent = 'Only '+currentStock+' units available for the selected purchase row'; qtyEl.parentNode.insertBefore(div, qtyEl.nextSibling);
-                        } else { next.textContent = 'Only '+currentStock+' units available for the selected purchase row'; }
+                            var div = document.createElement('div'); div.className = 'invalid-feedback sale-error'; div.textContent = window.RNTranslate('common.client_only')+currentStock+' units available for the selected purchase row'; qtyEl.parentNode.insertBefore(div, qtyEl.nextSibling);
+                        } else { next.textContent = window.RNTranslate('common.client_only')+currentStock+' units available for the selected purchase row'; }
                         qtyEl.classList.add('is-invalid');
                         var tr = qtyEl.closest('tr'); if(tr) tr.classList.add('table-danger');
                     }
@@ -131,7 +131,7 @@ function purchaseData(pid,proField,pf,bp,sp,ts,tp,qd,pm,pt){
                 var profitValue = totalSale - totalPurchase;
                 var profitPercent = totalPurchase>0? Number(((profitValue/totalPurchase)*100).toFixed(2)):0;
 
-                try{ 
+                try{
                     if(ts) { var el = document.getElementById(ts); if(el) el.innerHTML = totalSale; }
                     if(tp){ var el2 = document.getElementById(tp); if(el2) el2.innerHTML = totalPurchase; }
                     // Intentionally do NOT auto-fill sale/buy price inputs. Leave these fields for the user to enter.
@@ -324,7 +324,7 @@ window.addPurchaseRow = function(productId){
             var existingInputs = document.querySelectorAll('input[name="productName[]"]');
             for(var ei=0; ei<existingInputs.length; ei++){
                 if(String(existingInputs[ei].value) === String(productId)){
-                    showToast('Warning','Product already added to the list','warning');
+                    showToast(window.RNTranslate('common.client_warning'),window.RNTranslate('common.client_product_already_added_to_the_list'),'warning');
                     try{ var selc = document.getElementById('productName'); if(selc) selc.selectedIndex = 0; }catch(_){}
                     return;
                 }
@@ -435,12 +435,12 @@ window.addPurchaseRow = function(productId){
         };
 
         if(window.jQuery && typeof window.jQuery.get === 'function'){
-            window.jQuery.get(url, function(data){ fillRow(data); }).fail(function(){ showToast('Error','Failed to load product details','error'); });
+            window.jQuery.get(url, function(data){ fillRow(data); }).fail(function(){ showToast(window.RNTranslate('common.client_error'),window.RNTranslate('common.client_failed_to_load_product_details'),'error'); });
         } else {
             fetch(url, {headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}, credentials:'same-origin'})
                 .then(function(res){ if(!res.ok) return {}; return res.json(); })
                 .then(function(data){ fillRow(data); })
-                .catch(function(){ showToast('Error','Failed to load product details','error'); });
+                .catch(function(){ showToast(window.RNTranslate('common.client_error'),window.RNTranslate('common.client_failed_to_load_product_details'),'error'); });
         }
 
         // enable discounts area when at least one row exists
@@ -459,7 +459,7 @@ function createSerialRow(value){
         inp.style.marginRight = '12px';
         // buttons container
         var btnGroup = document.createElement('div'); btnGroup.className = 'd-flex';
-        var btnRemove = document.createElement('button'); btnRemove.type='button'; btnRemove.className='btn btn-sm btn-outline-danger remove-serial'; btnRemove.textContent='Remove';
+        var btnRemove = document.createElement('button'); btnRemove.type='button'; btnRemove.className='btn btn-sm btn-outline-danger remove-serial'; btnRemove.textContent=window.RNTranslate('common.client_remove');
         var btnAuto = document.createElement('button'); btnAuto.type='button'; btnAuto.className='btn btn-sm btn-outline-info auto-gen-serial-row'; btnAuto.textContent='Auto'; btnAuto.style.marginLeft='6px';
         btnGroup.appendChild(btnRemove); btnGroup.appendChild(btnAuto);
         wrap.appendChild(inp); wrap.appendChild(btnGroup);
@@ -467,7 +467,7 @@ function createSerialRow(value){
     }catch(e){
         console.warn('createSerialRow error', e);
         var r = document.createElement('div'); r.className='serial-input-row d-flex mb-3';
-        r.innerHTML = '<input class="form-control flex-grow-1" name="serialNumber[]" value="'+(value||'')+'" style="margin-right:12px;" /><div class="d-flex"><button type="button" class="btn btn-sm btn-outline-danger remove-serial">Remove</button><button type="button" class="btn btn-sm btn-outline-info auto-gen-serial-row" style="margin-left:6px;">Auto</button></div>';
+        r.innerHTML = '<input class="form-control flex-grow-1" name="serialNumber[]" value="'+(value||'')+'" style="margin-right:12px;" /><div class="d-flex"><button type="button" class="btn btn-sm btn-outline-danger remove-serial">{{ __('purchases.remove') }}</button><button type="button" class="btn btn-sm btn-outline-info auto-gen-serial-row" style="margin-left:6px;">Auto</button></div>';
         return r;
     }
 }
@@ -524,7 +524,7 @@ function enforceSerialCapacity(modal){
         // Capacity info message
         var info = document.getElementById('serialCapacityInfo');
         if(info){
-            if(atCapacity){ info.style.display='block'; info.textContent = 'Serial limit reached for current quantity ('+qty+').'; }
+            if(atCapacity){ info.style.display='block'; info.textContent = window.RNTranslate('common.client_serial_limit_reached_for_current_quantity')+qty+').'; }
             else { info.style.display='none'; }
         }
 
@@ -545,13 +545,13 @@ function handleSerialDelete(serialId, triggerEl){
                     try{ var li = triggerEl.closest('.existing-serial-row'); if(li) li.remove(); }catch(e){}
                     try{ var hidden = document.querySelector('input[data-serial-id="'+serialId+'"]'); if(hidden) hidden.remove(); }catch(e){}
                     enforceSerialCapacity(document.getElementById('serialModal'));
-                    try{ showToast && showToast('Deleted','Serial removed','success'); }catch(e){ alert('Serial deleted'); }
+                    try{ showToast && showToast(window.RNTranslate('common.client_deleted'),window.RNTranslate('common.client_serial_removed'),'success'); }catch(e){ alert(window.RNTranslate('common.client_serial_deleted')); }
                 } else {
                     var msg = (data && data.message) ? data.message : 'Failed to delete serial';
-                    try{ showToast && showToast('Error', msg, 'error'); }catch(e){ alert(msg); }
+                    try{ showToast && showToast(window.RNTranslate('common.client_error'), msg, 'error'); }catch(e){ alert(msg); }
                 }
             })
-            .catch(function(){ try{ showToast && showToast('Error','Failed to delete serial','error'); }catch(e){ alert('Failed to delete serial'); } });
+            .catch(function(){ try{ showToast && showToast(window.RNTranslate('common.client_error'),window.RNTranslate('common.client_failed_to_delete_serial'),'error'); }catch(e){ alert(window.RNTranslate('common.client_failed_to_delete_serial')); } });
     }catch(e){ console.warn('handleSerialDelete failed', e); }
 }
 
@@ -561,17 +561,17 @@ function updateExistingSerial(serialId, newValue, inputEl){
         headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN': getCsrfToken()},
         body: JSON.stringify({_method:'PATCH', serialNumber: newValue})
     })
-    .then(function(res){ 
-        return res.json().catch(function(){ return {}; }); 
+    .then(function(res){
+        return res.json().catch(function(){ return {}; });
     })
     .then(function(data){
         if(data && data.status === 'success'){
             if(inputEl){ inputEl.dataset.original = newValue; }
-            try{ showToast && showToast('Success', 'Serial updated', 'success'); }catch(e){}
+            try{ showToast && showToast(window.RNTranslate('common.client_success'), window.RNTranslate('common.client_serial_updated'), 'success'); }catch(e){}
             return true;
         }
         var msg = (data && data.message) ? data.message : 'Failed to update serial';
-        try{ showToast && showToast('Error', msg, 'error'); }catch(e){ alert(msg); }
+        try{ showToast && showToast(window.RNTranslate('common.client_error'), msg, 'error'); }catch(e){ alert(msg); }
         throw new Error(msg);
     })
     .catch(function(err){
@@ -614,7 +614,7 @@ function buildProductCode(name){
         }
         if(initials.length < 2){ initials = (String(name).replace(/[^A-Za-z0-9]/g,'').slice(0,3) || initials).toUpperCase(); }
         return initials;
-    }catch(e){ return '';} 
+    }catch(e){ return '';}
 }
 
 // remove row handler (delegated binding exists; provide helper)
@@ -635,11 +635,11 @@ document.addEventListener('click', function(e){
             if(!sid) return;
             try{
                 if(window.Swal && window.Swal.fire){
-                    window.Swal.fire({title:'Delete serial?', text:'This will permanently remove the serial.', icon:'warning', showCancelButton:true, confirmButtonText:'Delete'}).then(function(res){ if(res && res.isConfirmed){ handleSerialDelete(sid, target); } });
-                } else if(confirm('Delete this serial?')){
+                    window.Swal.fire({title:window.RNTranslate('common.delete_serial'), text:window.RNTranslate('common.remove_serial_permanently'), icon:'warning', showCancelButton:true, confirmButtonText:window.RNTranslate('common.delete')}).then(function(res){ if(res && res.isConfirmed){ handleSerialDelete(sid, target); } });
+                } else if(confirm(window.RNTranslate('common.client_delete_this_serial'))){
                     handleSerialDelete(sid, target);
                 }
-            }catch(e){ if(confirm('Delete this serial?')){ handleSerialDelete(sid, target); } }
+            }catch(e){ if(confirm(window.RNTranslate('common.client_delete_this_serial'))){ handleSerialDelete(sid, target); } }
             return;
         }
 
@@ -669,7 +669,7 @@ document.addEventListener('click', function(e){
         if(target && target.id === 'add-serial'){
             var modal = document.getElementById('serialModal');
             var capacity = enforceSerialCapacity(modal);
-            if(capacity && capacity.disabled){ try{ showToast && showToast('Info','Serial limit reached for this quantity','info'); }catch(e){ alert('Serial limit reached for this quantity'); } return; }
+            if(capacity && capacity.disabled){ try{ showToast && showToast(window.RNTranslate('common.info'),window.RNTranslate('common.client_serial_limit_reached_for_this_quantity'),'info'); }catch(e){ alert(window.RNTranslate('common.client_serial_limit_reached_for_this_quantity')); } return; }
             var box = document.getElementById('serialNumberBox'); if(!box) return;
             var r = createSerialRow(''); box.appendChild(r);
             enforceSerialCapacity(modal);
@@ -679,7 +679,7 @@ document.addEventListener('click', function(e){
             var modal = document.getElementById('serialModal'); if(!modal) return;
             var existingBox = document.getElementById('existingSerialsList'); if(!existingBox) return;
             var box = document.getElementById('serialNumberBox'); if(!box) return;
-            
+
             // Remove all existing serials (delete from DB)
             var existingInputs = Array.from(existingBox.querySelectorAll('.existing-serial-row'));
             existingInputs.forEach(function(row){
@@ -702,32 +702,32 @@ document.addEventListener('click', function(e){
                     noMsg = document.createElement('div');
                     noMsg.id = 'existingSerialsEmpty';
                     noMsg.className = 'text-muted small';
-                    noMsg.textContent = 'No serials for this purchase.';
+                    noMsg.textContent = window.RNTranslate('common.client_no_serials_for_this_purchase');
                     existingBox.appendChild(noMsg);
                 } else {
                     noMsg.style.display = '';
                 }
             }
-            
+
             // Remove all new serials
             var newRows = Array.from(box.querySelectorAll('.serial-input-row'));
             newRows.forEach(function(row){ try{ row.remove(); }catch(e){} });
             // Add one empty serial input row
             var r = createSerialRow(''); box.appendChild(r);
-            
+
             enforceSerialCapacity(modal);
-            try{ showToast && showToast('Success','All serials removed','success'); }catch(e){}
+            try{ showToast && showToast(window.RNTranslate('common.client_success'),window.RNTranslate('common.client_all_serials_removed'),'success'); }catch(e){}
             return;
         }
         if(target && target.id === 'autoGenerateSerials'){
             var modal = document.getElementById('serialModal'); if(!modal) return;
-            var idx = modal.getAttribute('data-current-idx'); if(!idx) { alert('Row not found'); return; }
+            var idx = modal.getAttribute('data-current-idx'); if(!idx) { alert(window.RNTranslate('common.client_row_not_found')); return; }
             var row = document.querySelector('tr.product-row[data-idx="'+idx+'"]');
-            if(!row){ alert('Product row not found'); return; }
+            if(!row){ alert(window.RNTranslate('common.client_product_row_not_found')); return; }
             var qtyEl = row.querySelector('.quantity') || row.querySelector('input[name="quantity"]') || row.querySelector('#quantity');
             var qty = 0;
             try{ qty = qtyEl ? (parseInt(String(qtyEl.value || '').replace(/,/g,'')) || 0) : 0; }catch(e){ qty = 0; }
-            if(qty <= 0){ try{ showToast && showToast('Warning','Please enter a valid quantity for this row before auto-generating serials','warning'); }catch(e){ alert('Please enter a valid quantity for this row before auto-generating serials'); } return; }
+            if(qty <= 0){ try{ showToast && showToast(window.RNTranslate('common.client_warning'),window.RNTranslate('common.client_please_enter_a_valid_quantity_for_this_row_before_auto_generating_serials'),'warning'); }catch(e){ alert(window.RNTranslate('common.client_please_enter_a_valid_quantity_for_this_row_before_auto_generating_serials')); } return; }
 
             var box = document.getElementById('serialNumberBox'); if(!box) return;
             var existingBox = document.getElementById('existingSerialsList');
@@ -794,16 +794,16 @@ document.addEventListener('click', function(e){
             // Prefer SweetAlert2 (Swal.fire) or older swal if available, otherwise fallback to confirm()
             try{
                 if(window.Swal && typeof window.Swal.fire === 'function'){
-                    window.Swal.fire({ title: 'Remove row', text: 'Are you sure you want to remove this product row?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Remove', cancelButtonText: 'Cancel' })
+                    window.Swal.fire({ title: window.RNTranslate('common.remove_row'), text: window.RNTranslate('common.confirm_remove_row'), icon: 'warning', showCancelButton: true, confirmButtonText: window.RNTranslate('common.remove'), cancelButtonText: window.RNTranslate('common.cancel') })
                         .then(function(result){ if(result && result.isConfirmed){ doRemove(); } });
                 } else if(window.swal && typeof window.swal === 'function'){
                     // some versions expose swal as a function returning a promise
-                    try{ window.swal({ title: 'Remove row', text: 'Are you sure you want to remove this product row?', icon: 'warning', buttons: true }).then(function(ok){ if(ok) doRemove(); }); }
-                    catch(e){ if(confirm('Remove this row?')) doRemove(); }
+                    try{ window.swal({ title: window.RNTranslate('common.remove_row'), text: window.RNTranslate('common.confirm_remove_row'), icon: 'warning', buttons: true }).then(function(ok){ if(ok) doRemove(); }); }
+                    catch(e){ if(confirm(window.RNTranslate('common.client_remove_this_row'))) doRemove(); }
                 } else {
-                    if(confirm('Remove this row?')) doRemove();
+                    if(confirm(window.RNTranslate('common.client_remove_this_row'))) doRemove();
                 }
-            }catch(e){ if(confirm('Remove this row?')) doRemove(); }
+            }catch(e){ if(confirm(window.RNTranslate('common.client_remove_this_row'))) doRemove(); }
         }
         // open serial modal
         if(target && target.classList && target.classList.contains('open-serials')){
@@ -892,14 +892,14 @@ document.addEventListener('submit', function(e){
             try{
                 if(window.Swal && typeof window.Swal.fire === 'function'){
                     window.Swal.fire({
-                        title: 'Validation error',
-                        html: 'Each row must have serials ≥ qty.<br><br>'+problems.join('<br>'),
+                        title: window.RNTranslate('common.validation_error'),
+                        html: window.RNTranslate('common.rows_need_serials')+problems.join('<br>'),
                         icon: 'error'
                     });
                 } else if(window.swal && typeof window.swal === 'function'){
-                    window.swal('Validation error', problems.join('\n'), 'error');
+                    window.swal(window.RNTranslate('common.validation_error'), problems.join('\n'), 'error');
                 } else if(typeof showToast === 'function'){
-                    showToast('Validation', problems.join('\n'), 'error');
+                    showToast(window.RNTranslate('common.client_validation'), problems.join('\n'), 'error');
                 } else {
                     alert('Validation error:\n'+problems.join('\n'));
                 }
@@ -930,25 +930,25 @@ if(window.jQuery){
             var row = document.querySelector('tr.product-row[data-idx="'+idx+'"]'); if(!row) return;
             // remove old hidden serial inputs
             var olds = row.querySelectorAll('input[type="hidden"][data-serial]'); olds.forEach(function(o){ o.remove(); });
-            
+
             // collect ONLY NEW serial inputs (not existing ones - they're already in DB)
             var allInputs = [];
             var newInputs = document.querySelectorAll('#serialNumberBox input[name="serialNumber[]"]');
             newInputs.forEach(function(inp){ allInputs.push(inp); });
-            
+
             // Detect if this is an edit page (single row with simple form structure)
             var isEditPage = !document.querySelector('input[name="productName[]"]');
-            
-            allInputs.forEach(function(inp){ 
-                var v = inp.value.trim(); 
-                if(v==='') return; 
-                var h = document.createElement('input'); 
-                h.type='hidden'; 
+
+            allInputs.forEach(function(inp){
+                var v = inp.value.trim();
+                if(v==='') return;
+                var h = document.createElement('input');
+                h.type='hidden';
                 // Use flat array for edit page, nested array for add page
                 h.name = isEditPage ? 'serialNumber[]' : 'serialNumber['+idx+'][]';
-                h.value = v; 
-                h.setAttribute('data-serial','1'); 
-                row.appendChild(h); 
+                h.value = v;
+                h.setAttribute('data-serial','1');
+                row.appendChild(h);
             });
             // Verify what was added
             var afterAdd = row.querySelectorAll('input[type="hidden"][data-serial]');
@@ -962,11 +962,11 @@ if(window.jQuery){
             var serialId = input.getAttribute('data-serial-id');
             var newValue = input.value.trim();
             var originalValue = input.getAttribute('data-original');
-            
+
             if(!serialId || newValue === originalValue || newValue === ''){
                 return;
             }
-            
+
             updateExistingSerial(serialId, newValue, input).catch(function(e){
                 input.value = originalValue;
                 console.warn('Restoring original value due to error:', e);
@@ -987,14 +987,14 @@ if(window.jQuery){
                 if(!prodSelect.dataset.origOptions){
                     prodSelect.dataset.origOptions = prodSelect.innerHTML;
                 }
-                
+
                 // Initial sync - get value from select, or fall back to hidden input if select is disabled
                 var selectValue = prodSelect.value;
                 if(!selectValue && prodHidden.value){
                     selectValue = prodHidden.value;
                 }
                 prodHidden.value = selectValue;
-                
+
                 // Sync on change
                 prodSelect.addEventListener('change', function(){
                     prodHidden.value = this.value;
@@ -1004,7 +1004,7 @@ if(window.jQuery){
             var form = document.getElementById('savePurchase');
             if(!form) return;
             form.addEventListener('submit', function(e){
-                try{                    
+                try{
                     // Sync productName hidden input with select value before submission
                     var prodSelect = document.getElementById('productName');
                     var prodHidden = document.getElementById('productNameHidden');
@@ -1018,23 +1018,23 @@ if(window.jQuery){
                     }
                     // Collect serial inputs being submitted (no logging)
                     var serialInputs = document.querySelectorAll('input[type="hidden"][data-serial]');
-                    
+
                     // Ensure supplier selected
                     var supplier = document.getElementById('supplierName');
-                    if(!supplier || !supplier.value){ e.preventDefault(); alert('Please select a Supplier before saving the purchase.'); supplier && supplier.focus(); return false; }
+                    if(!supplier || !supplier.value){ e.preventDefault(); alert(window.RNTranslate('common.client_please_select_a_supplier_before_saving_the_purchase')); supplier && supplier.focus(); return false; }
 
                     // Check if this is edit mode (has purchaseId) or create mode
                     var purchaseIdField = document.querySelector('input[name="purchaseId"]');
                     var purchaseIdValue = purchaseIdField ? purchaseIdField.value : '';
                     var isEditMode = purchaseIdField && purchaseIdValue;
-                    
+
                     if(isEditMode){
                         // Edit mode: validate single global product and quantity selectors
                         // Note: productName is submitted via hidden input, so check that directly
                         var prodHidden = document.querySelector('input[name="productName"]');
                         var prodSelect = document.querySelector('select[name="productName_select"]');
                         var prodValue = '';
-                        
+
                         // Get value from hidden input (which is kept in sync with select by JS)
                         if(prodHidden && prodHidden.value){
                             prodValue = prodHidden.value;
@@ -1045,18 +1045,18 @@ if(window.jQuery){
                                 prodValue = prodSelect.options[prodSelect.selectedIndex].value;
                             }
                         }
-                        
-                        if(!prodValue){ e.preventDefault(); alert('Please select a Product before saving.'); prodSelect && prodSelect.focus && prodSelect.focus(); return false; }
+
+                        if(!prodValue){ e.preventDefault(); alert(window.RNTranslate('common.client_please_select_a_product_before_saving')); prodSelect && prodSelect.focus && prodSelect.focus(); return false; }
                         var qty = document.querySelector('input[name="quantity"]');
-                        if(!qty || Number(qty.value) <= 0){ e.preventDefault(); alert('Please enter a valid quantity (>0).'); qty && qty.focus(); return false; }
+                        if(!qty || Number(qty.value) <= 0){ e.preventDefault(); alert(window.RNTranslate('common.client_please_enter_a_valid_quantity_0')); qty && qty.focus(); return false; }
                         var buy = document.querySelector('input[name="buyPrice"]');
-                        if(!buy || buy.value === '' || isNaN(Number(buy.value))){ e.preventDefault(); alert('Please enter the Buy Price.'); buy && buy.focus(); return false; }
+                        if(!buy || buy.value === '' || isNaN(Number(buy.value))){ e.preventDefault(); alert(window.RNTranslate('common.client_please_enter_the_buy_price')); buy && buy.focus(); return false; }
                         return true;
                     }
 
                     // Ensure at least one product row exists
                     var rows = document.querySelectorAll('tr.product-row');
-                    if(!rows || rows.length === 0){ e.preventDefault(); alert('Please add at least one product to the purchase.'); return false; }
+                    if(!rows || rows.length === 0){ e.preventDefault(); alert(window.RNTranslate('common.client_please_add_at_least_one_product_to_the_purchase')); return false; }
 
                     // Validate each row
                     for(var i=0;i<rows.length;i++){
@@ -1065,7 +1065,7 @@ if(window.jQuery){
                         // or single-row edit form using top-level `productName` select/input.
                         var prod = r.querySelector('input[name="productName[]"], input[name="selectProductName[]"], select[name="productName_select"], input[name="productName"]');
                         // if row doesn't have a per-row product input, fall back to top-level product selector
-                        if(!prod){ 
+                        if(!prod){
                             prod = document.querySelector('select[name="productName_select"], input[name="productName"]');
                         }
                         var qty = r.querySelector('[id^="quantity"]') || r.querySelector('input[name="quantity[]"]') || document.querySelector('input[name="quantity"]');

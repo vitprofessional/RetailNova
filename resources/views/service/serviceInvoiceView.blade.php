@@ -1,23 +1,23 @@
 @extends('include')
-@section('backTitle') Service Invoice @endsection
+@section('backTitle'){{ __('common.heading_service_invoice') }}@endsection
 @section('container')
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
-                    <h4>Service Invoice - {{ $invoice->invoice_number }}</h4>
-                    <small class="text-muted">Created: {{ $invoice->created_at->format('Y-m-d H:i') }}</small>
+                    <h4>{{ __('common.service_invoice') }} {{ $invoice->invoice_number }}</h4>
+                    <small class="text-muted">{{ __('common.created') }}: {{ $invoice->created_at->format('Y-m-d H:i') }}</small>
                 </div>
                 <div>
-                    <a href="{{ route('serviceInvoicePrint',['id'=>$invoice->id]) }}" class="btn btn-outline-secondary" target="_blank"><i class="fa-solid fa-print"></i> Print</a>
-                    <a href="{{ route('serviceProvideList') }}" class="btn btn-secondary">Back to List</a>
+                    <a href="{{ route('serviceInvoicePrint',['id'=>$invoice->id]) }}" class="btn btn-outline-secondary" target="_blank"><i class="fa-solid fa-print"></i> {{ __('invoices.print') }}</a>
+                    <a href="{{ route('serviceProvideList') }}" class="btn btn-secondary">{{ __('invoices.back_to_list') }}</a>
                 </div>
             </div>
             <div class="card-body">
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <h6>Bill To</h6>
+                        <h6>{{ __('invoices.bill_to') }}</h6>
                         @if($customer)
                             @php
                                 $addr = '';
@@ -33,7 +33,7 @@
                                 @if(!empty($customer->mobile))Contact: {{ $customer->mobile }}@endif
                             </p>
                         @else
-                            <p><strong>Walking Customer</strong></p>
+                            <p><strong>{{ __('invoices.walking_customer') }}</strong></p>
                         @endif
                     </div>
                     <div class="col-md-6 text-end">
@@ -47,10 +47,10 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Service</th>
-                                <th class="text-end">Rate</th>
-                                <th class="text-end">Qty</th>
-                                <th class="text-end">Line Total</th>
+                                <th>{{ __('invoices.service') }}</th>
+                                <th class="text-end">{{ __('invoices.rate') }}</th>
+                                <th class="text-end">{{ __('invoices.qty') }}</th>
+                                <th class="text-end">{{ __('invoices.line_total') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -66,7 +66,7 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="4" class="text-end"><strong>Total</strong></td>
+                                <td colspan="4" class="text-end"><strong>{{ __('invoices.total') }}</strong></td>
                                 <td class="text-end"><strong>{{ number_format($invoice->total_amount,2) }}</strong></td>
                             </tr>
                         </tfoot>
@@ -75,7 +75,7 @@
 
                 @if($invoice->note)
                 <div class="mt-3">
-                    <strong>Note:</strong>
+                    <strong>{{ __('common.note') }}:</strong>
                     <div>{{ $invoice->note }}</div>
                 </div>
                 @endif

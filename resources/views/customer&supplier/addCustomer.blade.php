@@ -1,5 +1,5 @@
-@extends('include') 
-@section('backTitle') addCoustomer @endsection @section('container')
+@extends('include')
+@section('backTitle'){{ __('common.heading_addcoustomer') }}@endsection @section('container')
 
 <div class="col-12">
     @include('sweetalert::alert')
@@ -45,63 +45,63 @@
                         <input type="hidden" name="profileId" value="{{ $profileId }}">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Name *</label>
-                                <input type="text" class="form-control" placeholder="Enter Name"  id="fullName" name="fullName"  value="{{$name}}" required />
+                                <label>{{ __('common.name') }} *</label>
+                                <input type="text" class="form-control" placeholder="{{ __('common.enter_name') }}"  id="fullName" name="fullName"  value="{{$name}}" required />
                                 <div class="help-block with-errors"></div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="openingBalance" class="form-label">Opening Balance
-                                    <span class="ml-1" data-toggle="tooltip" data-bs-toggle="tooltip" title="Positive = customer owes you (receivable). Negative = you owe customer (payable).">
+                                <label for="openingBalance" class="form-label">{{ __('customers.opening_balance') }}
+                                    <span class="ml-1" data-toggle="tooltip" data-bs-toggle="tooltip" title="{{ __('common.positive_customer_owes_you_receivable_negative_you_owe_customer_payable') }}">
                                         <i class="ri-information-line"></i>
                                     </span>
                                 </label>
-                                <input type="number" step="1" class="form-control" placeholder="Enter Opening Balance" id="openingBalance" name="openingBalance" value="{{$openingBalance}}" />
-                                <small class="text-muted">Use positive for receivable, negative for payable.</small>
+                                <input type="number" step="1" class="form-control" placeholder="{{ __('common.enter_opening_balance') }}" id="openingBalance" name="openingBalance" value="{{$openingBalance}}" />
+                                <small class="text-muted">{{ __('customers.use_positive_for_receivable_negative_for_payable') }}</small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Email</label>
-                                <input type="email" class="form-control" placeholder="Enter Email" id="mail" name="mail" value="{{$mail}}" />
+                                <label>{{ __('customers.email') }}</label>
+                                <input type="email" class="form-control" placeholder="{{ __('common.enter_email') }}" id="mail" name="mail" value="{{$mail}}" />
                                 <div class="help-block with-errors"></div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Phone Number</label>
-                                <input type="text" class="form-control" placeholder="Enter Phone Number" id="mobile" name="mobile" value="{{$mobile}}" />
+                                <label>{{ __('customers.phone_number') }}</label>
+                                <input type="text" class="form-control" placeholder="{{ __('common.enter_phone_number') }}" id="mobile" name="mobile" value="{{$mobile}}" />
                                 <div class="help-block with-errors"></div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="inputState" class="form-label">Country</label>
-                                <input type="text" class="form-control" placeholder="Enter The Country" id="country" name="country" value="{{$country}}" />
+                                <label for="inputState" class="form-label">{{ __('customers.country') }}</label>
+                                <input type="text" class="form-control" placeholder="{{ __('common.enter_the_country') }}" id="country" name="country" value="{{$country}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="inputState" class="form-label">State</label>
-                                <input type="text" class="form-control" placeholder="Enter The State" id="state" name="state" value="{{$state}}" />
+                                <label for="inputState" class="form-label">{{ __('customers.state') }}</label>
+                                <input type="text" class="form-control" placeholder="{{ __('common.enter_the_state') }}" id="state" name="state" value="{{$state}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="inputState" class="form-label">City</label>
-                                <input type="text" class="form-control" placeholder="Enter The City" id="city" name="city" value="{{$city}}" />
+                                <label for="inputState" class="form-label">{{ __('customers.city') }}</label>
+                                <input type="text" class="form-control" placeholder="{{ __('common.enter_the_city') }}" id="city" name="city" value="{{$city}}" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="inputState" class="form-label">Area</label>
-                                <input type="text" class="form-control" placeholder="Enter The Area" id="area" name="area" value="{{$area}}" />
+                                <label for="inputState" class="form-label">{{ __('customers.area') }}</label>
+                                <input type="text" class="form-control" placeholder="{{ __('common.enter_the_area') }}" id="area" name="area" value="{{$area}}" />
                             </div>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary mr-2">@if(isset($profile)) Update @else Add @endif Customer</button>
-                    <button type="reset" class="btn btn-danger">Reset</button>
+                    <button type="reset" class="btn btn-danger">{{ __('customers.reset') }}</button>
                 </form>
             </div>
         </div>
@@ -114,9 +114,9 @@
             <div class="card-header ">
                     <div class="row">
                         <div class="col-md-12 d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Opening Balance Summary</h5>
+                            <h5 class="mb-0">{{ __('customers.opening_balance_summary') }}</h5>
                             <div>
-                                <span class="font-weight-bold">Total Opening Balance:</span>
+                                <span class="font-weight-bold">{{ __('customers.total_opening_balance') }}:</span>
                                 <span>@money($openingTotal ?? 0)</span>
                             </div>
                         </div>
@@ -134,9 +134,9 @@
                 'placeholder' => 'Search customers by name, email, mobile, address...'
             ])
             <div class="d-flex align-items-center">
-                <button id="delete-selected-customers" class="btn btn-sm btn-danger mr-3">Delete Selected</button>
+                <button id="delete-selected-customers" class="btn btn-sm btn-danger mr-3">{{ __('customers.delete_selected') }}</button>
                 <div class="small text-muted mt-2 mt-sm-0 ml-sm-3">
-                    <span class="badge bg-success">Positive</span> receivable, <span class="badge bg-danger">Negative</span> payable
+                    <span class="badge bg-success">{{ __('customers.positive') }}</span> {{ __('common.receivable') }}, <span class="badge bg-danger">{{ __('customers.negative') }}</span> {{ __('customers.payable') }}
                 </div>
             </div>
         </div>
@@ -151,12 +151,12 @@
                                 <label for="selectAllCustomers" class="mb-0"></label>
                             </div>
                         </th>
-                        <th class="text-left">Customer</th>
-                        <th>Opening Balance</th>
-                        <th>Mobile</th>
-                        <th class="d-none d-lg-table-cell">Address</th>
-                        <th class="d-none d-xl-table-cell">Last Transaction</th>
-                        <th class="rn-col-compact">Actions</th>
+                        <th class="text-left">{{ __('customers.customer') }}</th>
+                        <th>{{ __('customers.opening_balance') }}</th>
+                        <th>{{ __('customers.mobile') }}</th>
+                        <th class="d-none d-lg-table-cell">{{ __('customers.address') }}</th>
+                        <th class="d-none d-xl-table-cell">{{ __('customers.last_transaction') }}</th>
+                        <th class="rn-col-compact">{{ __('customers.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="ligth-body">
@@ -180,7 +180,7 @@
                         <td>
                             @if(!empty($customerList->mobile))
                             <a href="tel:{{$customerList->mobile}}" class="text-dark">{{$customerList->mobile}}</a>
-                            <a href="javascript:void(0)" class="badge badge-light ml-2" data-toggle="tooltip" data-bs-toggle="tooltip" title="Copy" data-onclick="copyToClipboard('{{$customerList->mobile}}')"><i class="ri-file-copy-line"></i></a>
+                            <a href="javascript:void(0)" class="badge badge-light ml-2" data-toggle="tooltip" data-bs-toggle="tooltip" title="{{ __('customers.copy') }}" data-onclick="copyToClipboard('{{$customerList->mobile}}')"><i class="ri-file-copy-line"></i></a>
                             @else
                             <span class="text-muted">-</span>
                             @endif
@@ -188,14 +188,14 @@
                         <td class="d-none d-lg-table-cell text-left">
                             <div class="rn-ellipsis rn-addr">{{$customerList->full_address ?? $customerList->area}}</div>
                         </td>
-                        <td class="d-none d-xl-table-cell">not entry</td>
+                        <td class="d-none d-xl-table-cell">{{ __('customers.not_entry') }}</td>
                         <td class="rn-col-compact">
                                      <div class="d-flex align-items-center justify-content-center list-action">
-                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" data-original-title="View"
+                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" data-original-title="{{ __('customers.view') }}"
                                    href="{{route('balancesheet')}}"><i class="ri-eye-line mr-0 "></i></a>
-                                <a href="{{route('editCustomer',['id'=>$customerList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" data-original-title="Edit">
+                                <a href="{{route('editCustomer',['id'=>$customerList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" data-original-title="{{ __('customers.edit') }}">
                                    <i class="ri-pencil-line mr-0"></i></a>
-                                <button type="button" class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" data-original-title="Delete" style="border:none;background:transparent;padding:0;" 
+                                <button type="button" class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" data-original-title="{{ __('customers.delete') }}" style="border:none;background:transparent;padding:0;"
                                     data-delete-id="{{ $customerList->id }}" data-delete-name="{{ $customerList->name }}" onclick="showDeleteModal(this, '{{ route('delCustomer', ['id' => $customerList->id]) }}')">
                                     <i class="ri-delete-bin-line mr-0"></i>
                                 </button>
@@ -221,10 +221,10 @@
                         <td>10.10.2025</td>
                         <td class="rn-col-compact">
                             <div class="d-flex align-items-center justify-content-center list-action">
-                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" data-original-title="View"
+                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" data-original-title="{{ __('customers.view') }}"
                                    href="{{route('balancesheet')}}"><i class="ri-eye-line mr-0"></i></a>
-                                <a  class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-toggle="tooltip" data-placement="top" data-original-title="Delete"><i class="ri-delete-bin-line mr-0"></i></button>
+                                <a  class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" data-original-title="{{ __('customers.edit') }}" href="#"><i class="ri-pencil-line mr-0"></i></a>
+                                <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-toggle="tooltip" data-placement="top" data-original-title="{{ __('customers.delete') }}"><i class="ri-delete-bin-line mr-0"></i></button>
                             </div>
                         </td>
                     </tr>
@@ -244,16 +244,16 @@
     <div class="col-lg-12 mt-4">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title">Deleted Customers</h5>
+                <h5 class="card-title">{{ __('customers.deleted_customers') }}</h5>
             </div>
             <div class="table-responsive rounded mb-3">
                 <table class="data-tables table mb-0 tbl-server-info rn-table-pro">
                     <thead class="bg-white text-uppercase">
                         <tr class="ligth ligth-data">
-                            <th>Customer Name</th>
-                            <th>Mobile</th>
-                            <th>Deleted At</th>
-                            <th>Action</th>
+                            <th>{{ __('customers.customer_name') }}</th>
+                            <th>{{ __('customers.mobile') }}</th>
+                            <th>{{ __('customers.deleted_at') }}</th>
+                            <th>{{ __('customers.action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -263,7 +263,7 @@
                             <td>{{$t->mobile}}</td>
                             <td>{{$t->deleted_at}}</td>
                             <td>
-                                <a class="badge bg-info" href="{{route('restoreCustomer',['id'=>$t->id])}}">Restore</a>
+                                <a class="badge bg-info" href="{{route('restoreCustomer',['id'=>$t->id])}}">{{ __('customers.restore') }}</a>
                             </td>
                         </tr>
                         @endforeach
@@ -273,7 +273,7 @@
         </div>
     </div>
     @endif
-    
+
 </div>
 @endif
 <!-- Page end  -->
@@ -283,25 +283,25 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Delete Customer</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <h5 class="modal-title" id="deleteModalLabel">{{ __('customers.delete_customer') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{{ __('customers.close') }}">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <p id="deleteMessage"></p>
                 <div class="alert alert-info mt-3">
-                    <strong>Choose Delete Type:</strong>
+                    <strong>{{ __('customers.choose_delete_type') }}:</strong>
                     <ul class="mb-0 mt-2">
-                        <li><strong>Profile Only:</strong> Delete only the customer profile data</li>
-                        <li><strong>Delete All Data:</strong> Delete profile and all related transaction data</li>
+                        <li><strong>{{ __('customers.profile_only') }}:</strong> {{ __('customers.delete_only_the_customer_profile_data') }}</li>
+                        <li><strong>{{ __('customers.delete_all_data') }}:</strong> {{ __('customers.delete_profile_and_all_related_transaction_data') }}</li>
                     </ul>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning" onclick="submitDelete('profileOnly')">Delete Profile Only</button>
-                <button type="button" class="btn btn-danger" onclick="submitDelete('fullDelete')">Delete All Data</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('customers.cancel') }}</button>
+                <button type="button" class="btn btn-warning" onclick="submitDelete('profileOnly')">{{ __('customers.delete_profile_only') }}</button>
+                <button type="button" class="btn btn-danger" onclick="submitDelete('fullDelete')">{{ __('customers.delete_all_data') }}</button>
             </div>
         </div>
     </div>
@@ -316,27 +316,27 @@
 
 <script>
     let currentDeleteUrl = '';
-    
+
     function showDeleteModal(button, deleteUrl) {
         currentDeleteUrl = deleteUrl;
         const customerName = button.getAttribute('data-delete-name');
-        document.getElementById('deleteMessage').innerHTML = 
+        document.getElementById('deleteMessage').innerHTML =
             `Are you sure you want to delete the customer: <strong>${customerName}</strong>?`;
-        
+
         // Show the modal
         $('#deleteModal').modal('show');
     }
-    
+
     function submitDelete(deleteType) {
         if (!currentDeleteUrl) return;
-        
+
         // Set the delete type
         document.getElementById('deleteType').value = deleteType;
-        
+
         // Set form action and submit
         document.getElementById('deleteForm').action = currentDeleteUrl;
         document.getElementById('deleteForm').submit();
-        
+
         // Hide modal
         $('#deleteModal').modal('hide');
     }
