@@ -19,7 +19,7 @@ function check(value, message) { assert.ok(value, message); checks++; }
       for (const width of [320, 360, 375, 390, 430, 576, 768, 992, 1280, 1440]) {
         const page = await browser.newPage({viewport: {width, height: 900}});
         const posts = [], pageErrors = [];
-        let changePolicy = false, failPolicy = false, delayWalking = false;
+        let changePolicy = false, failPolicy = false, failDue = false, delayWalking = false;
         page.on('pageerror', e => pageErrors.push(e.message));
         await page.route('**/*', async route => {
           const request = route.request(), url = new URL(request.url());
@@ -33,6 +33,8 @@ function check(value, message) { assert.ok(value, message); checks++; }
             return route.fulfill({contentType: 'text/html', body: '<html><body>QA captured submission</body></html>'});
           }
           if (normalized === '/new/sale') return route.fulfill({contentType: 'text/html', body: html});
+          if (/\/customer\/999999\/(products|previous-due)$/.test(normalized)) return route.fulfill({status: 404, contentType: 'application/json', body: JSON.stringify({status: 'error'})});
+          if (failDue && normalized.endsWith('/previous-due')) return route.fulfill({status: 503, contentType: 'application/json', body: JSON.stringify({status: 'error'})});
           const response = fixture.responses[normalized];
           if (response) {
             if(delayWalking && /\/customer\//.test(normalized) && !normalized.includes('/customer/'+fixture.customerId+'/')) await new Promise(resolve=>setTimeout(resolve,180));
@@ -58,6 +60,10 @@ function check(value, message) { assert.ok(value, message); checks++; }
         check(await page.locator('#saleEmptyState').isVisible(), 'Empty state missing');
         check(!await page.locator('#saleSaveButton').isEnabled() && !await page.locator('#saleSavePrintButton').isEnabled(), 'Empty sale enabled submission');
         check(await page.locator('[data-sale-back]').getAttribute('href').then(h => h.endsWith('/Sale/list')), 'Back route changed');
+        await page.locator('#customerName').evaluate(select => { select.add(new Option('Invalid customer', '999999')); select.value = '999999'; select.dispatchEvent(new Event('change', {bubbles: true})); });
+        await page.waitForFunction(() => document.querySelector('#customerName').dataset.productLookupError === '1');
+        for (const id of ['saleProductSearch','barcodeInput','searchBarcodeBtn','categorySelect','productName']) check(!await page.locator('#'+id).isEnabled(), 'Invalid customer enabled '+id);
+        await page.locator('#customerName').selectOption('');
         await page.locator('#useWalkingCustomerBtn').click();
         await page.waitForFunction(()=>document.querySelector('#customerName').dataset.customerReady==='1');
         check(await page.locator('#barcodeInput').isEnabled()&&await page.locator('#saleProductSearch').isEnabled(),'Explicit Walk-in did not enable product entry');
@@ -191,6 +197,27 @@ function check(value, message) { assert.ok(value, message); checks++; }
         check(guard.decisions.join(',')==='false,true'&&guard.disabled, 'Duplicate submit guard failed');
         const captured=new URLSearchParams(guard.body);check(captured.get('saleAction')===action,'Disabled submitter lost Save intent');
         check(captured.get('grandTotal')==='445'&&captured.getAll('qty[]').join(',')==='2,1','Submission totals/payload changed');
+        // A balance lookup outage must not keep the validated product controls locked,
+        // and must still block both financial submission actions.
+        await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
+        const rowsBeforeBalanceFailure = await page.locator('#productDetails tr').count();
+        await page.locator('#customerName').selectOption('');
+        check(await page.locator('#productDetails tr').count() === rowsBeforeBalanceFailure, 'Clearing customer removed existing cart rows');
+        for (const id of ['saleProductSearch','barcodeInput','searchBarcodeBtn','categorySelect','productName']) check(!await page.locator('#'+id).isEnabled(), 'Cleared customer left '+id+' enabled');
+        failDue = true;
+        await page.locator('#customerName').selectOption(String(fixture.customerId));
+        await page.waitForFunction(() => document.querySelector('#customerName').dataset.customerReady === '1' && document.querySelector('#customerName').dataset.dueReady === '0' && !document.querySelector('#productName').disabled);
+        for (const id of ['saleProductSearch','barcodeInput','searchBarcodeBtn','categorySelect','productName']) check(await page.locator('#'+id).isEnabled(), 'Validated customer did not enable '+id+' while balance lookup failed');
+        check(!await page.locator('#saleSaveButton').isEnabled() && !await page.locator('#saleSavePrintButton').isEnabled(), 'Balance lookup failure allowed submission');
+        const blockedByDue = await page.locator('#saveSaleForm').evaluate(form => { const button = document.querySelector('#saleSaveButton'); const event = new SubmitEvent('submit', {bubbles: true, cancelable: true, submitter: button}); form.dispatchEvent(event); return event.defaultPrevented; });
+        check(blockedByDue, 'Form submit handler allowed a sale without verified previous balance');
+        check(await page.locator('#saleCustomerGateMessage').innerText() === await page.evaluate(() => window.RNTranslate('sale_customer_balance_failed')), 'Balance failure feedback was missing or not localized');
+        check(await page.locator('#productDetails tr').count() === rowsBeforeBalanceFailure, 'Customer switch changed existing cart rows');
+        failDue = false;
+        await page.locator('#customerName').selectOption('');
+        await page.locator('#customerName').selectOption(String(fixture.customerId));
+        await page.waitForFunction(() => document.querySelector('#customerName').dataset.customerReady === '1' && document.querySelector('#customerName').dataset.dueReady === '1');
+        check(await page.locator('#saleCustomerGateMessage').innerText() === '', 'Clear-and-reselect did not recover customer readiness');
         check(pageErrors.length===0,'Browser script errors: '+pageErrors.join(';'));
         cases++;results.push({locale,policy,width,pass:true}); await page.close();
       }

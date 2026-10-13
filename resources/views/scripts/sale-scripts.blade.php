@@ -52,14 +52,27 @@
         var customer = byId('customerName');
         return !!(customer && customer.value && customer.dataset.customerReady === '1');
     }
+    function customerCanSubmit(){
+        var customer = byId('customerName');
+        return customerReady() && customer.dataset.dueReady === '1';
+    }
     function refreshCustomerGate(){
         var customer = byId('customerName');
         if(!customer) return;
-        var ready = !!customer.value && customer.dataset.productsReady === '1' && customer.dataset.dueReady === '1';
-        customer.dataset.customerReady = ready ? '1' : '0';
-        ['saleProductSearch','barcodeInput','searchBarcodeBtn','categorySelect','productName','outOfStockBtn'].forEach(function(id){ var el=byId(id); if(el) el.disabled=!ready; });
+        var productsReady = !!customer.value && customer.dataset.productsReady === '1';
+        var ready = productsReady && customer.dataset.dueReady === '1';
+        // Product entry depends on server validation of the selected customer's
+        // business-scoped catalog. The separate balance lookup remains a save gate.
+        customer.dataset.customerReady = productsReady ? '1' : '0';
+        ['saleProductSearch','barcodeInput','searchBarcodeBtn','categorySelect','productName','outOfStockBtn'].forEach(function(id){ var el=byId(id); if(el) el.disabled=!productsReady; });
         var note=byId('saleCustomerGateMessage');
-        if(note) note.textContent=ready ? '' : window.RNTranslate(!customer.value ? 'sale_customer_first_instruction' : customer.dataset.lookupError === '1' ? 'sale_customer_lookup_failed' : 'sale_customer_loading');
+        if(note){
+            var message = !customer.value ? 'sale_customer_first_instruction'
+                : !productsReady ? (customer.dataset.productLookupError === '1' ? 'sale_customer_lookup_failed' : 'sale_customer_loading')
+                : !ready ? (customer.dataset.dueLookupError === '1' ? 'sale_customer_balance_failed' : 'sale_customer_balance_loading')
+                : '';
+            note.textContent = message ? window.RNTranslate(message) : '';
+        }
         toggleSaveButton();
     }
 
@@ -134,7 +147,7 @@
                 var cid = this.value;
                 var version = ++SALE_CUSTOMER_VERSION; ++SALE_PRODUCT_REQUEST;
                 customerSel.dataset.selectionVersion=String(version);
-                customerSel.dataset.productsReady='0'; customerSel.dataset.dueReady='0'; customerSel.dataset.lookupError='0';
+                customerSel.dataset.productsReady='0'; customerSel.dataset.dueReady='0'; customerSel.dataset.productLookupError='0'; customerSel.dataset.dueLookupError='0';
                 if(byId('prevDue')) byId('prevDue').value=0;
                 if(byId('prevDueDisplay')) byId('prevDueDisplay').textContent=window.RNTranslate('previous_due_value',{amount:'0.00'});
                 recalcTotals(); refreshCustomerGate();
@@ -146,7 +159,7 @@
                             fetch(prevTpl, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                                 .then(function(res){ if(res.status >= 400) throw new Error('prevDue fetch failed'); return res.json(); })
                                 .then(function(json){ if(version!==SALE_CUSTOMER_VERSION) return; if(!json || json.status!=='ok') throw new Error('Invalid customer balance'); var v=json.prevDue || '0.00'; if(byId('prevDue')) byId('prevDue').value=v; if(byId('prevDueDisplay')) byId('prevDueDisplay').textContent=window.RNTranslate('previous_due_value',{amount:v}); customerSel.dataset.dueReady='1'; recalcTotals(); refreshCustomerGate(); })
-                                .catch(function(e){ if(version!==SALE_CUSTOMER_VERSION) return; customerSel.dataset.lookupError='1'; refreshCustomerGate(); });
+                                .catch(function(e){ if(version!==SALE_CUSTOMER_VERSION) return; customerSel.dataset.dueLookupError='1'; refreshCustomerGate(); });
                         }catch(e){ /* ignore prev due fetch errors */ }
                 if(!cid){ productSel.innerHTML = ('<option value="">' + window.RNTranslate('common.select') + '</option>'); productSel.disabled = true; if(categorySel){ categorySel.innerHTML = ('<option value="">' + window.RNTranslate('common.all_categories') + '</option>'); categorySel.disabled = true; } return; }
                 var tpl = ROUTES.productsTpl || customerSel.getAttribute('data-products-url') || '';
@@ -154,7 +167,7 @@
                     url = safeFinalizeUrl(url);
                     if(window.__SALEDEBUG) console.debug('[SALE] Products final URL:', url);
                     // Guard: do not accidentally call auth routes which may destroy session
-                    try{ var low = String(url).toLowerCase(); if(low.indexOf('/logout')!==-1 || low.indexOf('/login')!==-1){ console.warn('[SALE] Aborting AJAX to auth route:', url); showToast && showToast(window.RNTranslate('common.client_ajax_blocked'),window.RNTranslate('common.client_invalid_products_url'),'error'); productSel.disabled = false; return; } }catch(e){}
+                    try{ var low = String(url).toLowerCase(); if(low.indexOf('/logout')!==-1 || low.indexOf('/login')!==-1){ console.warn('[SALE] Aborting AJAX to auth route:', url); showToast && showToast(window.RNTranslate('common.client_ajax_blocked'),window.RNTranslate('common.client_invalid_products_url'),'error'); customerSel.dataset.productLookupError='1'; refreshCustomerGate(); return; } }catch(e){}
                     fetch(url, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                     .then(function(res){
                         // If redirected to login or unauthorized, abort and notify
@@ -218,8 +231,8 @@
                                     }
                                 }
                             }catch(e){}
-                        }catch(e){ customerSel.dataset.lookupError='1'; refreshCustomerGate(); }
-                    }).catch(function(err){ if(version!==SALE_CUSTOMER_VERSION) return; customerSel.dataset.lookupError='1'; refreshCustomerGate(); });
+                        }catch(e){ customerSel.dataset.productLookupError='1'; refreshCustomerGate(); }
+                    }).catch(function(err){ if(version!==SALE_CUSTOMER_VERSION) return; customerSel.dataset.productLookupError='1'; refreshCustomerGate(); });
             });
         }
 
@@ -784,7 +797,7 @@
         try{
             var saveBtns = document.querySelectorAll('form#saveSaleForm button[type="submit"]');
             var hasRows = document.querySelectorAll('#productDetails tr').length > 0;
-            saveBtns.forEach(function(btn){ btn.disabled = SALE_SUBMITTING || !customerReady() || !hasRows || document.querySelectorAll('#productDetails tr.serial-mismatch').length > 0; });
+            saveBtns.forEach(function(btn){ btn.disabled = SALE_SUBMITTING || !customerCanSubmit() || !hasRows || document.querySelectorAll('#productDetails tr.serial-mismatch').length > 0; });
         }catch(e){}
     }
 
@@ -798,7 +811,7 @@
                 try{
                     if(ev.defaultPrevented) return;
                     if(SALE_SUBMITTING){ ev.preventDefault(); return; }
-                    if(!customerReady()){ ev.preventDefault(); refreshCustomerGate(); return; }
+                    if(!customerCanSubmit()){ ev.preventDefault(); refreshCustomerGate(); return; }
                     reindexSaleSerialInputs();
                     // basic validation: at least one row
                     var rows = Array.prototype.slice.call(document.querySelectorAll('#productDetails tr'));

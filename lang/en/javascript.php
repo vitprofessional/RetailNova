@@ -184,6 +184,8 @@ return [
     'sale_customer_first_instruction' => 'Select a customer or Walk-in Customer before adding products.',
     'sale_customer_loading' => 'Loading customer products and balance…',
     'sale_customer_lookup_failed' => 'Customer products or balance could not be verified. Select the customer again to retry.',
+    'sale_customer_balance_loading' => 'Customer products are ready; checking the previous balance before saving…',
+    'sale_customer_balance_failed' => 'Products are ready, but the previous balance could not be verified. Saving is blocked. Clear the customer selection, then select it again to retry.',
     'purchase_serials_saved_for_row' => ':count serial(s) saved for item :row.',
     'purchase_item_error' => 'Item :row:product: ',
 ];
