@@ -26,7 +26,7 @@ jobs:
         run: composer validate --no-check-publish
 
       - name: Run PHPUnit
-        run: ./vendor/bin/phpunit --coverage-text --colors=never
+        run: ./vendor/bin/phpunit --colors=never
         env:
           APP_ENV: testing
           APP_KEY: base64:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=
