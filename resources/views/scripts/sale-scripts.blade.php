@@ -4,44 +4,22 @@
     function byId(id){ return document.getElementById(id); }
     function num(v){ v = (v==null? '': String(v)); v = v.replace(/,/g,''); var n = Number(v); return isNaN(n)? 0 : n; }
 
-    // Derive dynamic base & templates from seed div (more reliable than url('/'))
+    // Laravel-generated route seeds are authoritative for both root and subdirectory deployments.
     function deriveRoutes(){
         var seed = document.getElementById('rn-route-seeds');
         if(!seed) return {};
-        var newsale = seed.getAttribute('data-newsale') || '';
         var productsTpl = seed.getAttribute('data-products-template') || '';
+        var previousDueTpl = seed.getAttribute('data-previous-due-template') || '';
         var categoriesUrl = seed.getAttribute('data-categories-url') || '';
         var categoryProductsTpl = seed.getAttribute('data-category-products-template') || '';
         var purchaseTpl = seed.getAttribute('data-purchase-template') || '';
         var purchaseByIdTpl = seed.getAttribute('data-purchase-by-id-template') || '';
         var purchaseSerialTpl = seed.getAttribute('data-purchase-serials-template') || '';
-        // Use URL API when possible
-        var base = '';
-        try{
-            if(newsale){
-                var u = new URL(newsale, window.location.origin);
-                // Remove trailing /new/sale from path
-                var path = u.pathname.replace(/\/?new\/sale\/?$/,'');
-                base = u.origin + path;
-            }
-        }catch(e){ base = window.location.origin; }
-        if(base.endsWith('/')) base = base.slice(0,-1);
-        // Subfolder correction: if current location path contains a first segment (e.g. /RetailNova)
-        // not present in derived base, prepend it.
-        try {
-            var locPath = window.location.pathname; // e.g. /RetailNova/new/sale
-            var segmentMatch = locPath.match(/^\/(\w[^\/]+)(?:\/|$)/); // first segment
-            if(segmentMatch){
-                var firstSeg = segmentMatch[1];
-                if(base === window.location.origin || base === window.location.origin+''){
-                    base = window.location.origin + '/' + firstSeg;
-                } else if(base.indexOf('/'+firstSeg) === -1){
-                    // ensure we include the subfolder if missing
-                    base = window.location.origin + '/' + firstSeg;
-                }
-            }
-        } catch(e){ /* ignore */ }
-        return { base: base, productsTpl: productsTpl, categoriesUrl: categoriesUrl, categoryProductsTpl: categoryProductsTpl, purchaseTpl: purchaseTpl, purchaseByIdTpl: purchaseByIdTpl, purchaseSerialTpl: purchaseSerialTpl };
+        var productEditTpl = seed.getAttribute('data-product-edit-template') || '';
+        return { productsTpl: productsTpl, previousDueTpl: previousDueTpl, categoriesUrl: categoriesUrl, categoryProductsTpl: categoryProductsTpl, purchaseTpl: purchaseTpl, purchaseByIdTpl: purchaseByIdTpl, purchaseSerialTpl: purchaseSerialTpl, productEditTpl: productEditTpl };
+    }
+    function routeForId(template, id){
+        return template ? safeFinalizeUrl(template.replace('__ID__', encodeURIComponent(String(id)))) : '';
     }
     var ROUTES = {}; // will populate on DOMContentLoaded
     var SALE_SUBMITTING = false;
@@ -76,8 +54,8 @@
         toggleSaveButton();
     }
 
-    // Ensure AJAX URLs are finalized safely. If a template is absolute or root-relative,
-    // use it as-is. Otherwise fall back to `adjustForSubfolder` for legacy relative paths.
+    // Laravel-generated route URLs are absolute or root-relative and already contain
+    // the correct deployment path.
     function safeFinalizeUrl(url){
         try{
             if(!url) return url;
@@ -85,7 +63,7 @@
             if(!s) return s;
             // if absolute url or protocol-relative or root-relative, trust it
             if(s.indexOf('http://') === 0 || s.indexOf('https://') === 0 || s.indexOf('///') === 0 || s.charAt(0) === '/') return s;
-            return adjustForSubfolder(s);
+            return s;
         }catch(e){ return url; }
     }
 
@@ -99,21 +77,16 @@
         productSel.disabled = true;
         if(categorySel) categorySel.disabled = true;
         refreshCustomerGate();
-        // Ensure form action posts to subfolder-aware URL
+        // Keep the form action on Laravel's generated route.
         try{
             var form = byId('saveSaleForm');
             if(form){
-                var tmpl = form.getAttribute('data-action-template') || '/sale/save/data';
-                var url = '';
-                // If the template is already absolute or root-relative, skip prefixing with ROUTES.base
-                if(tmpl.indexOf('http://') === 0 || tmpl.indexOf('https://') === 0 || tmpl.charAt(0) === '/'){
-                    url = tmpl;
-                } else {
-                    url = (ROUTES.base || '') + tmpl;
+                var tmpl = form.getAttribute('data-action-template') || '';
+                if(tmpl){
+                    var url = safeFinalizeUrl(tmpl);
+                    form.setAttribute('action', url);
+                    if(window.__SALEDEBUG) console.debug('[SALE] Form action set to:', url);
                 }
-                url = safeFinalizeUrl(url);
-                form.setAttribute('action', url);
-                if(window.__SALEDEBUG) console.debug('[SALE] Form action set to:', url);
             }
         }catch(e){ }
         // Wire payment inputs to recalc totals (direct and delegated for reliability)
@@ -154,17 +127,17 @@
                 if(!cid){ productSel.innerHTML='<option value="">'+window.RNTranslate('common.select')+'</option>'; if(categorySel) categorySel.value=''; return; }
                         // Fetch and display customer's previous due
                         try{
-                            var prevTpl = ROUTES.base + '/ajax/public/customer/'+encodeURIComponent(cid)+'/previous-due';
-                            prevTpl = safeFinalizeUrl(prevTpl);
+                            var prevTpl = routeForId(ROUTES.previousDueTpl, cid);
+                            if(!prevTpl) throw new Error('Previous balance route is not configured');
                             fetch(prevTpl, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                                 .then(function(res){ if(res.status >= 400) throw new Error('prevDue fetch failed'); return res.json(); })
                                 .then(function(json){ if(version!==SALE_CUSTOMER_VERSION) return; if(!json || json.status!=='ok') throw new Error('Invalid customer balance'); var v=json.prevDue || '0.00'; if(byId('prevDue')) byId('prevDue').value=v; if(byId('prevDueDisplay')) byId('prevDueDisplay').textContent=window.RNTranslate('previous_due_value',{amount:v}); customerSel.dataset.dueReady='1'; recalcTotals(); refreshCustomerGate(); })
                                 .catch(function(e){ if(version!==SALE_CUSTOMER_VERSION) return; customerSel.dataset.dueLookupError='1'; refreshCustomerGate(); });
-                        }catch(e){ /* ignore prev due fetch errors */ }
+                        }catch(e){ customerSel.dataset.dueLookupError='1'; refreshCustomerGate(); }
                 if(!cid){ productSel.innerHTML = ('<option value="">' + window.RNTranslate('common.select') + '</option>'); productSel.disabled = true; if(categorySel){ categorySel.innerHTML = ('<option value="">' + window.RNTranslate('common.all_categories') + '</option>'); categorySel.disabled = true; } return; }
                 var tpl = ROUTES.productsTpl || customerSel.getAttribute('data-products-url') || '';
-                    var url = tpl ? tpl.replace('__ID__', encodeURIComponent(cid)) : (ROUTES.base + '/ajax/public/customer/'+encodeURIComponent(cid)+'/products');
-                    url = safeFinalizeUrl(url);
+                    var url = routeForId(tpl, cid);
+                    if(!url){ customerSel.dataset.productLookupError='1'; refreshCustomerGate(); return; }
                     if(window.__SALEDEBUG) console.debug('[SALE] Products final URL:', url);
                     // Guard: do not accidentally call auth routes which may destroy session
                     try{ var low = String(url).toLowerCase(); if(low.indexOf('/logout')!==-1 || low.indexOf('/login')!==-1){ console.warn('[SALE] Aborting AJAX to auth route:', url); showToast && showToast(window.RNTranslate('common.client_ajax_blocked'),window.RNTranslate('common.client_invalid_products_url'),'error'); customerSel.dataset.productLookupError='1'; refreshCustomerGate(); return; } }catch(e){}
@@ -191,8 +164,8 @@
                             customerSel.dataset.productsReady='1'; refreshCustomerGate();
                             // Load categories
                             if(categorySel){
-                                var cUrl = ROUTES.categoriesUrl || (ROUTES.base + '/ajax/public/categories');
-                                cUrl = safeFinalizeUrl(cUrl);
+                                var cUrl = safeFinalizeUrl(ROUTES.categoriesUrl || '');
+                                if(!cUrl) return;
                                 fetch(cUrl, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                                   .then(function(res){ return res.json(); })
                                   .then(function(json){ if(version!==SALE_CUSTOMER_VERSION) return; categorySel.innerHTML=(json && json.data) || '<option value="">'+window.RNTranslate('common.all_categories')+'</option>'; refreshCustomerGate(); })
@@ -216,7 +189,7 @@
                                         var html = '<div class="list-group">';
                                         outArr.forEach(function(it){
                                             var pd = it.purchaseDate ? (' ['+it.purchaseDate+']') : '';
-                                            var viewLink = it.productId ? (adjustForSubfolder('/product/edit/' + encodeURIComponent(it.productId))) : '#';
+                                            var viewLink = it.productId ? routeForId(ROUTES.productEditTpl, it.productId) : '#';
                                             html += '<div class="list-group-item d-flex justify-content-between align-items-center">'+
                                                 '<div><strong>'+ (it.productName || '') +'</strong> — '+ (it.supplierName || window.RNTranslate('sale_unknown_supplier')) + pd +
                                                 ' <span class="badge bg-secondary ms-2">'+window.RNTranslate('common.stock')+': '+ (it.currentStock || 0) +'</span></div>' +
@@ -251,11 +224,11 @@
             var url2 = '';
             if(isPurchaseRow){
                 var tplById = ROUTES.purchaseByIdTpl || '';
-                url2 = tplById ? tplById.replace('__ID__', encodeURIComponent(purchaseId)) : (ROUTES.base + '/ajax/public/purchase/'+encodeURIComponent(purchaseId)+'/details');
+                url2 = routeForId(tplById, purchaseId);
             } else {
-                url2 = tpl2 ? tpl2.replace('__ID__', encodeURIComponent(pid)) : (ROUTES.base + '/ajax/public/sale/product/'+encodeURIComponent(pid)+'/purchase-details');
+                url2 = routeForId(tpl2, pid);
             }
-            url2 = safeFinalizeUrl(url2);
+            if(!url2){ showToast(window.RNTranslate('common.client_product_details_blocked'),window.RNTranslate('common.client_invalid_products_url'),'error'); return; }
             if(window.__SALEDEBUG) console.debug('[SALE] Fetch purchase details URL:', url2, 'isPurchaseRow:', isPurchaseRow);
             try{ var low2 = String(url2).toLowerCase(); if(low2.indexOf('/logout')!==-1 || low2.indexOf('/login')!==-1){ console.warn('[SALE] Aborting AJAX to auth route:', url2); showToast && showToast(window.RNTranslate('common.client_ajax_blocked'),window.RNTranslate('common.client_invalid_product_details_url'),'error'); return; } }catch(e){}
             fetch(url2, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
@@ -293,16 +266,16 @@
                         var cid = customerSel && customerSel.value ? customerSel.value : '';
                         if(!cid){ productSel.innerHTML = ('<option value="">' + window.RNTranslate('common.select') + '</option>'); return; }
                         var tpl = ROUTES.productsTpl || customerSel.getAttribute('data-products-url') || '';
-                        var url = tpl ? tpl.replace('__ID__', encodeURIComponent(cid)) : (ROUTES.base + '/ajax/public/customer/'+encodeURIComponent(cid)+'/products');
-                        url = safeFinalizeUrl(url);
+                        var url = routeForId(tpl, cid);
+                        if(!url) return;
                         fetch(url, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                           .then(function(res){ return res.json(); })
                           .then(function(json){ if(requestVersion!==SALE_PRODUCT_REQUEST || customerVersion!==SALE_CUSTOMER_VERSION || !customerReady()) return; productSel.innerHTML=(json && json.data) || '<option value="">'+window.RNTranslate('common.select')+'</option>'; });
                         return;
                     }
                     var cpTpl = ROUTES.categoryProductsTpl || '';
-                    var cpUrl = cpTpl ? cpTpl.replace('__ID__', encodeURIComponent(catId)) : (ROUTES.base + '/ajax/public/category/'+encodeURIComponent(catId)+'/products');
-                    cpUrl = safeFinalizeUrl(cpUrl);
+                    var cpUrl = routeForId(cpTpl, catId);
+                    if(!cpUrl) return;
                     fetch(cpUrl, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                       .then(function(res){ return res.json(); })
                       .then(function(json){
@@ -326,7 +299,7 @@
                                     var html = '<div class="list-group">';
                                     outArr.forEach(function(it){
                                         var pd = it.purchaseDate ? (' ['+it.purchaseDate+']') : '';
-                                        var viewLink = it.productId ? (adjustForSubfolder('/product/edit/' + encodeURIComponent(it.productId))) : '#';
+                                        var viewLink = it.productId ? routeForId(ROUTES.productEditTpl, it.productId) : '#';
                                         html += '<div class="list-group-item d-flex justify-content-between align-items-center">'+
                                             '<div><strong>'+ (it.productName || '') +'</strong> — '+ (it.supplierName || window.RNTranslate('sale_unknown_supplier')) + pd +
                                             ' <span class="badge bg-secondary ms-2">'+window.RNTranslate('common.stock')+': '+ (it.currentStock || 0) +'</span></div>' +
@@ -468,8 +441,8 @@
 
     function fetchAvailableSerials(purchaseId){
         var tpl = ROUTES.purchaseSerialTpl || '';
-        var url = tpl ? tpl.replace('__ID__', encodeURIComponent(purchaseId)) : (ROUTES.base + '/ajax/public/purchase/'+encodeURIComponent(purchaseId)+'/serials');
-        url = safeFinalizeUrl(url);
+        var url = routeForId(tpl, purchaseId);
+        if(!url) return Promise.reject(new Error('Purchase serial route is not configured'));
         return fetch(url, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
             .then(function(res){
                 var ct = res.headers.get('content-type') || '';
@@ -920,8 +893,8 @@
             var customerVersion=SALE_CUSTOMER_VERSION;
             // Fetch the purchase row details then force-add as backorder by overriding stock
             var tplById = ROUTES.purchaseByIdTpl || '';
-            var url = tplById ? tplById.replace('__ID__', encodeURIComponent(purchaseId)) : (ROUTES.base + '/ajax/public/purchase/'+encodeURIComponent(purchaseId)+'/details');
-            url = safeFinalizeUrl(url);
+            var url = routeForId(tplById, purchaseId);
+            if(!url) return;
             fetch(url, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                 .then(function(res){
                     var ct = res.headers.get('content-type') || '';
@@ -1018,24 +991,3 @@
         }catch(e){ console.warn('modal dismiss delegated handler error', e); }
     });
 })();
-
-// Helper injected after IIFE: adjust URL for subfolder deployments like /RetailNova
-function adjustForSubfolder(url){
-    try{
-        var locPath = window.location.pathname; // e.g. /RetailNova/new/sale
-        var segMatch = locPath.match(/^\/(\w[^\/]+)(?:\/|$)/);
-        if(!segMatch) return url; // no subfolder
-        var seg = segMatch[1];
-        // If url already contains /seg/ after origin, leave it.
-        var origin = window.location.origin;
-        if(url.indexOf(origin) === 0){
-            var afterOrigin = url.substring(origin.length);
-            if(afterOrigin.indexOf('/'+seg+'/') === 0 || afterOrigin === '/'+seg) return url;
-            // Insert segment after origin
-            url = origin + '/' + seg + afterOrigin;
-        } else if(url.charAt(0) === '/' && url.indexOf('/'+seg+'/') !== 0){
-            url = '/' + seg + url; // relative path case
-        }
-    }catch(e){ /* ignore */ }
-    return url;
-}

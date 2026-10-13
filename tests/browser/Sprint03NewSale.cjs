@@ -16,9 +16,12 @@ function check(value, message) { assert.ok(value, message); checks++; }
     for (const locale of ['en', 'bn']) for (const policy of ['required', 'optional']) {
       const stem = path.join(root, 'storage/logs', `sprint03-sale-${locale}-${policy}`);
       const html = fs.readFileSync(stem + '.html', 'utf8'), fixture = JSON.parse(fs.readFileSync(stem + '.json'));
-      for (const width of [320, 360, 375, 390, 430, 576, 768, 992, 1280, 1440]) {
+      for (const appPrefix of ['', '/RetailNova']) for (const width of [320, 360, 375, 390, 430, 576, 768, 992, 1280, 1440]) {
+        // Exercise identical Laravel route seeds at a domain root and under XAMPP's mount path.
+        const pageHtml = html.replace(/http:\/\/localhost\//g, 'http://localhost'+appPrefix+'/')
+          .replace(/data-products-template="([^"]+)"/, '$& data-previous-due-template="http://localhost'+appPrefix+'/ajax/public/customer/__ID__/previous-due" data-product-edit-template="http://localhost'+appPrefix+'/product/edit/__ID__"');
         const page = await browser.newPage({viewport: {width, height: 900}});
-        const posts = [], pageErrors = [];
+        const posts = [], pageErrors = [], previousDueUrls = [];
         let changePolicy = false, failPolicy = false, failDue = false, delayWalking = false;
         page.on('pageerror', e => pageErrors.push(e.message));
         await page.route('**/*', async route => {
@@ -32,7 +35,8 @@ function check(value, message) { assert.ok(value, message); checks++; }
             posts.push(new URLSearchParams(request.postData()));
             return route.fulfill({contentType: 'text/html', body: '<html><body>QA captured submission</body></html>'});
           }
-          if (normalized === '/new/sale') return route.fulfill({contentType: 'text/html', body: html});
+          if (normalized === '/new/sale') return route.fulfill({contentType: 'text/html', body: pageHtml});
+          if (normalized.endsWith('/previous-due')) previousDueUrls.push(request.url());
           if (/\/customer\/999999\/(products|previous-due)$/.test(normalized)) return route.fulfill({status: 404, contentType: 'application/json', body: JSON.stringify({status: 'error'})});
           if (failDue && normalized.endsWith('/previous-due')) return route.fulfill({status: 503, contentType: 'application/json', body: JSON.stringify({status: 'error'})});
           const response = fixture.responses[normalized];
@@ -50,7 +54,7 @@ function check(value, message) { assert.ok(value, message); checks++; }
           }
           return route.abort();
         });
-        await page.goto('http://localhost/RetailNova/new/sale');
+        await page.goto('http://localhost'+appPrefix+'/new/sale');
         await page.locator('#loading').waitFor({state: 'hidden'});
         check(await page.locator('#customerName').inputValue() === '', 'Customer silently preselected');
         for (const id of ['saleProductSearch','barcodeInput','searchBarcodeBtn','categorySelect','productName','outOfStockBtn']) check(!await page.locator('#'+id).isEnabled(), 'Customer gate missing: '+id);
@@ -70,6 +74,9 @@ function check(value, message) { assert.ok(value, message); checks++; }
         await page.locator('#customerName').selectOption(String(fixture.customerId));
         await page.waitForFunction(() => !document.getElementById('productName').disabled && document.getElementById('productName').options.length === 3);
         await page.waitForFunction(() => document.getElementById('prevDue').value === '35.00');
+        const duePath = new URL(previousDueUrls[previousDueUrls.length - 1]).pathname;
+        check(duePath === appPrefix+'/ajax/public/customer/'+encodeURIComponent(String(fixture.customerId))+'/previous-due', 'Previous due URL was malformed: '+duePath);
+        check(!duePath.includes('/new/ajax/') && duePath.split('/RetailNova/').length <= 2, 'Previous due URL contains an inferred or duplicated base segment: '+duePath);
         check(await page.locator('#prevDueDisplay').innerText().then(t=>t.includes('35.00')),'Customer previous due not displayed');
         await page.locator('#categorySelect').selectOption(String(fixture.categoryId));
         await page.locator('#saleProductSearch').fill('Serialized');
@@ -219,7 +226,7 @@ function check(value, message) { assert.ok(value, message); checks++; }
         await page.waitForFunction(() => document.querySelector('#customerName').dataset.customerReady === '1' && document.querySelector('#customerName').dataset.dueReady === '1');
         check(await page.locator('#saleCustomerGateMessage').innerText() === '', 'Clear-and-reselect did not recover customer readiness');
         check(pageErrors.length===0,'Browser script errors: '+pageErrors.join(';'));
-        cases++;results.push({locale,policy,width,pass:true}); await page.close();
+        cases++;results.push({locale,policy,width,appPrefix,pass:true}); await page.close();
       }
     }
     const report={type:'isolated SQLite HTML/API browser tests; no local database writes',cases,checks,results};

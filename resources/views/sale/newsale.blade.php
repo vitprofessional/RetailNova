@@ -9,12 +9,14 @@
     <div id="rn-route-seeds" class="d-none"
          data-barcode-url="{{ route('product.findByBarcode') }}" data-newsale="{{ route('newsale') }}"
          data-products-template="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}"
+         data-previous-due-template="{{ route('ajax.customer.previousDue.public', ['id' => '__ID__']) }}"
          data-categories-url="{{ route('ajax.categories.public') }}"
          data-category-products-template="{{ route('ajax.category.products.public', ['id' => '__ID__']) }}"
          data-purchase-template="{{ route('ajax.sale.product.purchaseDetails.public', ['id' => '__ID__']) }}"
          data-purchase-by-id-template="{{ route('ajax.purchase.details.public', ['id' => '__ID__']) }}"
          data-product-details-template="{{ route('ajax.product.details.public', ['id' => '__ID__']) }}"
-         data-purchase-serials-template="{{ route('ajax.purchase.serials.public', ['id' => '__ID__']) }}"></div>
+         data-purchase-serials-template="{{ route('ajax.purchase.serials.public', ['id' => '__ID__']) }}"
+         data-product-edit-template="{{ route('editProduct', ['id' => '__ID__']) }}"></div>
 
 @include('sale.new-sale.header')
 @if($errors->any())<div class="alert alert-danger" role="alert">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach<div>{{ __('common.reopen_serial_selection_and_retry_with_the_current_sales_policy') }}</div></div>@endif
