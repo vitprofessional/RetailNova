@@ -24,10 +24,11 @@ class coustomerSupplier extends Controller
 {
     // add coustomer
     public function addCustomer(){
-        $data = Customer::orderBy('id','DESC')->get();
-        $trashed = Customer::onlyTrashed()->orderBy('id','DESC')->get();
-        $openingTotal = Customer::sum('openingBalance');
-        $businesses = \App\Models\BusinessSetup::orderBy('id','asc')->get();
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
+        $data = $workflow->scoped(Customer::query())->orderBy('id','DESC')->get();
+        $trashed = $workflow->scoped(Customer::onlyTrashed())->orderBy('id','DESC')->get();
+        $openingTotal = $workflow->scoped(Customer::query())->sum('openingBalance');
+        $businesses = \App\Models\BusinessSetup::when(!$workflow->platform(),fn($q)=>$q->whereKey(auth('admin')->user()->businessId))->orderBy('id','asc')->get();
         return view('customer&supplier.addCustomer',[
             'listItem'=>$data,
             'trashedList' => $trashed,
@@ -38,7 +39,8 @@ class coustomerSupplier extends Controller
 
     //save custmer
     public function saveCustomer(SaveCustomerRequest $req){
-        $data = $req->profileId ? Customer::find($req->profileId) : new Customer();
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
+        $data = $req->profileId ? $workflow->scoped(Customer::withoutGlobalScopes())->findOrFail($req->profileId) : new Customer();
         if($req->profileId && !$data):
             Alert::error(__('common.notification_failed'), __('common.notification_customer_not_found_for_update'));
             return redirect()->route('addCustomer');
@@ -46,18 +48,24 @@ class coustomerSupplier extends Controller
 
         $data->name          = trim($req->fullName);
         $data->openingBalance= (int)$req->openingBalance;
-        $data->mail          = strtolower(trim($req->mail));
-        $data->mobile        = trim($req->mobile);
-        $data->country       = trim($req->country);
-        $data->state         = trim($req->state);
-        $data->city          = trim($req->city);
-        $data->area          = trim($req->area);
+        $data->mail          = filled($req->mail) ? strtolower(trim((string)$req->mail)) : null;
+        $data->mobile        = filled($req->mobile) ? trim((string)$req->mobile) : null;
+        $data->country       = trim((string)$req->country);
+        $data->state         = trim((string)$req->state);
+        $data->city          = trim((string)$req->city);
+        $data->area          = trim((string)$req->area);
 
         // Assign businessId if provided and actor is admin/superadmin
         $actor = auth('admin')->user();
-        if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
+        if($actor && $workflow->platform()){
             $bizId = (int)($req->input('businessId') ?? 0);
-            if($bizId > 0){ $data->businessId = $bizId; }
+            if($bizId > 0){
+                abort_if($data->exists && (int)$data->businessId!==$bizId,403);
+                abort_unless(\App\Models\BusinessSetup::whereKey($bizId)->exists(),422);
+                $data->businessId = $bizId;
+            }
+        } elseif ($actor) {
+            $data->businessId=$actor->businessId;
         }
 
         if($data->save()):
@@ -72,8 +80,8 @@ class coustomerSupplier extends Controller
 
     //edit customer
      public function editCustomer($id){
-        $data = Customer::find($id);
-        return view('customer&supplier.addCustomer',['profile'=>$data]);
+        $data = app(\App\Services\PurchaseWorkflow::class)->scoped(Customer::withoutGlobalScopes())->findOrFail($id);
+        return view('customer&supplier.addCustomer',['profile'=>$data,'businesses'=>\App\Models\BusinessSetup::whereKey($data->businessId)->get()]);
     }
 
     //delete customer
@@ -195,7 +203,13 @@ class coustomerSupplier extends Controller
             ];
         }
 
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
+        $actor=auth('admin')->user();
+        abort_unless($actor,401);
+        $businessId=$workflow->platform() ? ($req->input('businessId') ?? $actor->businessId) : $actor->businessId;
+        abort_unless(\App\Models\BusinessSetup::whereKey($businessId)->exists(),422);
         $data = new Customer();
+        $data->businessId=$businessId;
         $data->name            = $payload['fullName'];
         $data->mail            = !empty($payload['mail']) ? $payload['mail'] : null;
         $data->mobile          = !empty($payload['mobile']) ? $payload['mobile'] : null;
@@ -216,9 +230,9 @@ class coustomerSupplier extends Controller
 
         $option = '';
         if($saved){
-            $getData = Customer::orderBy('id','DESC')->get();
+            $getData = $workflow->scoped(Customer::query())->orderBy('id','DESC')->get();
             foreach($getData as $d){
-                $option .= '<option value="'.$d->id.'">'.$d->name.'</option>';
+                $option .= '<option value="'.$d->id.'">'.e($d->name).'</option>';
             }
             return [
                 'data'   => $option,
@@ -288,7 +302,7 @@ class coustomerSupplier extends Controller
         $data->name          = trim((string)$req->fullName);
         $data->openingBalance= (int)$req->openingBalance;
         $data->mail          = strtolower(trim((string)$req->mail));
-        $data->mobile        = trim((string)$req->mobile);
+        $data->mobile        = filled($req->mobile) ? trim((string)$req->mobile) : null;
         $data->country       = trim((string)$req->country);
         $data->state         = trim((string)$req->state);
         $data->city          = trim((string)$req->city);

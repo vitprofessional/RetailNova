@@ -729,6 +729,7 @@
         .list-action .badge { margin: 0 .25rem; }
     </style>
 @include('partials.localization')
+@include('partials.pwa-head')
 </head>
   <body class="">
     <!-- loader Start -->
@@ -751,492 +752,7 @@
           </div>
           <div class="data-scrollbar" data-scroll="1">
               <nav class="iq-sidebar-menu">
-                  <ul id="iq-sidebar-toggle" class="iq-menu">
-                      <li class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                          <a href="{{route('dashboard')}}" class="svg-icon">
-                              <svg  class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.dashboards') }} </span>
-                          </a>
-                      </li>
-                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
-                      <li class=" ">
-                          <a href="#product" class="{{ request()->routeIs('addCustomer','addSupplier') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addCustomer','addSupplier') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash2" width="20" height="20"  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                  <circle cx="9" cy="7" r="4"></circle>
-                                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.customer_supplier') }}</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="product" class="iq-submenu collapse{{ request()->routeIs('addCustomer','addSupplier') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                              <li class="{{ request()->routeIs('addCustomer') ? 'active' : '' }}">
-                                  <a href="{{route('addCustomer')}}">
-                                      <i class="las la-minus"></i><span>{{ __('navigation.customer') }}</span>
-                                  </a>
-                              </li>
-                              <li class="{{ request()->routeIs('addSupplier') ? 'active' : '' }}">
-                                  <a href="{{route('addSupplier')}}">
-                                      <i class="las la-minus"></i><span>{{ __('navigation.supplier') }}</span>
-                                  </a>
-                              </li>
-                          </ul>
-                      </li>
-
-                      @php $__adminUser = Auth::guard('admin')->user(); @endphp
-                      @if(isset($__adminUser) && strtolower($__adminUser->role) === 'super admin')
-                      <li class=" ">
-                          <a href="#superadmin" class="collapsed" data-toggle="collapse" aria-expanded="false">
-                              <svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M12 2l9 4-9 4-9-4 9-4z"></path>
-                                  <path d="M2 10l10 4 10-4"></path>
-                                  <path d="M2 18l10 4 10-4"></path>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.super_admin') }}</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="superadmin" class="iq-submenu collapse" data-parent="#iq-sidebar-toggle">
-                              <li><a href="{{ route('admin.super.users.index') }}"><i class="las la-minus"></i><span>{{ __('navigation.user_management') }}</span></a></li>
-                              <li><a href="{{ route('admin.super.subscriptions.plans') }}"><i class="las la-minus"></i><span>{{ __('navigation.subscription_plans') }}</span></a></li>
-                              <li><a href="{{ route('admin.super.subscriptions.index') }}"><i class="las la-minus"></i><span>{{ __('navigation.subscriptions') }}</span></a></li>
-                              <li><a href="{{ route('admin.super.stores.index') }}"><i class="las la-minus"></i><span>{{ __('navigation.stores') }}</span></a></li>
-                              <li><a href="{{ route('admin.super.gateways.index') }}"><i class="las la-minus"></i><span>{{ __('navigation.payment_gateways') }}</span></a></li>
-                          </ul>
-                      </li>
-                      @endif
-                      @if(isset($__adminUser) && in_array(strtolower($__adminUser->role), ['admin','gm']))
-                      <li class=" ">
-                          <a href="{{ route('admin.manage.users.index') }}" class="svg-icon">
-                              <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                  <circle cx="9" cy="7" r="4"></circle>
-                                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.user_management') }}</span>
-                          </a>
-                      </li>
-                      @endif
-                      <li class=" ">
-                          <a href="#sale" class="{{ request()->routeIs('newsale','saleList','returnSaleList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('newsale','saleList','returnSaleList') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                                  <line x1="3" y1="6" x2="21" y2="6"></line>
-                                  <path d="M16 10a4 4 0 0 1-8 0"></path>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.sales') }}</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="sale" class="iq-submenu collapse{{ request()->routeIs('newsale','saleList','returnSaleList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="">
-                                          <a href="{{route('newsale')}}">
-                                              <i class="las la-minus"></i><span>{{ __('navigation.new_sale') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="">
-                                          <a href="{{route('saleList')}}">
-                                              <i class="las la-minus"></i><span>{{ __('navigation.sale_list') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="">
-                                            <a href="{{route('returnSaleList')}}">
-                                                <i class="las la-minus"></i><span>{{ __('navigation.sale_return_list') }}</span>
-                                            </a>
-                                  </li>
-                          </ul>
-                      </li>
-                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
-                      <li class=" ">
-                          <a href="#category" class="{{ request()->routeIs('addProduct','productlist','stockProduct','addBrand','addCategory','addProductUnit') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addProduct','productlist','stockProduct','addBrand','addCategory','addProductUnit') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash3" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
-                                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.product') }}</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="category" class="iq-submenu collapse{{ request()->routeIs('addProduct','productlist','stockProduct','addBrand','addCategory','addProductUnit') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="{{ request()->routeIs('addProduct') ? 'active' : '' }}">
-                                          <a href="{{route('addProduct')}}">
-                                              <i class="las la-minus"></i><span>{{ __('navigation.new_product') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="{{ request()->routeIs('productlist') ? 'active' : '' }}">
-                                          <a href="{{route('productlist')}}">
-                                              <i class="las la-minus"></i><span>{{ __('navigation.product_list') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="{{ request()->routeIs('stockProduct') ? 'active' : '' }}">
-                                          <a href="{{route('stockProduct')}}">
-                                              <i class="las la-minus"></i><span>{{ __('navigation.stock_product') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="{{ request()->routeIs('addBrand') ? 'active' : '' }}">
-                                          <a href="{{route('addBrand')}}">
-                                              <i class="las la-minus"></i><span>{{ __('navigation.brand') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="{{ request()->routeIs('addCategory') ? 'active' : '' }}">
-                                          <a href="{{route('addCategory')}}">
-                                              <i class="las la-minus"></i><span>{{ __('navigation.category') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="{{ request()->routeIs('addProductUnit') ? 'active' : '' }}">
-                                          <a href="{{route('addProductUnit')}}">
-                                              <i class="las la-minus"></i><span>{{ __('navigation.unit') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="{{ request()->routeIs('barcode.index','barcode.generate') ? 'active' : '' }}">
-                                          <a href="{{route('barcode.index')}}">
-                                              <i class="las la-minus"></i><span>{{ __('navigation.barcodes') }}</span>
-                                          </a>
-                                  </li>
-                          </ul>
-                      </li>
-
-                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
-                      <li class=" ">
-                          <a href="#parchase" class="{{ request()->routeIs('addPurchase','purchaseList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addPurchase','purchaseList') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash4" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <circle cx="9" cy="21" r="1"></circle>
-                                  <circle cx="20" cy="21" r="1"></circle>
-                                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.purchase') }}</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="parchase" class="iq-submenu collapse{{ request()->routeIs('addPurchase','purchaseList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="">
-                                          <a href="{{route('addPurchase')}}">
-                                              <i class="las la-minus"></i><span>{{ __('navigation.naw_parchase') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="">
-                                          <a href="{{route('purchaseList')}}">
-                                              <i class="las la-minus"></i><span>{{ __('navigation.parchase_list') }}</span>
-                                          </a>
-                                  </li>
-                          </ul>
-                      </li>
-
-                      @php
-                          $__adminUser = $__adminUser ?? Auth::guard('admin')->user();
-                          $__businessType = $config->count() > 0 ? $config[0]->businessType : null;
-                          $__showService = in_array($__businessType, ['mobile_shop', 'vehicle_shop', 'computer_shop', 'electronics_parts_shop', 'hardware_shop', 'dealership_shop']);
-                      @endphp
-                      @if($__showService)
-                      <li class=" ">
-                          <a href="#service" class="{{ request()->routeIs('provideService','addServiceName','serviceProvideList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('provideService','addServiceName','serviceProvideList') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash6" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.service') }}</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="service" class="iq-submenu collapse{{ request()->routeIs('provideService','addServiceName','serviceProvideList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                              <li class="">
-                                  <a href="{{route('provideService')}}">
-                                      <i class="las la-minus"></i><span>{{ __('navigation.provide_service') }}</span>
-                                  </a>
-                              </li>
-                              <li class="">
-                                  <a href="{{route('addServiceName')}}">
-                                      <i class="las la-minus"></i><span>{{ __('navigation.service_item') }}</span>
-                                  </a>
-                              </li>
-                               <li class="">
-                                  <a href="{{route('serviceProvideList')}}">
-                                      <i class="las la-minus"></i><span>{{ __('navigation.service_list') }}</span>
-                                  </a>
-                              </li>
-                          </ul>
-                      </li>
-                      @endif
-
-                      @php
-                          $__adminUser = $__adminUser ?? Auth::guard('admin')->user();
-                          $__businessType = $config->count() > 0 ? $config[0]->businessType : null;
-                          $__showWarranty = in_array($__businessType, ['mobile_shop', 'vehicle_shop', 'computer_shop', 'electronics_parts_shop', 'hardware_shop', 'dealership_shop']);
-                      @endphp
-                      @if($__showWarranty)
-                      <li class=" ">
-                          <a href="#warranty" class="{{ request()->routeIs('rma','serialList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('rma','serialList') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash6" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.warranty') }}</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                                  <ul id="warranty" class="iq-submenu collapse{{ request()->routeIs('rma.*','serialList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                          <li class="{{ request()->routeIs('rma.*') ? 'active' : '' }}">
-                              <a href="{{ route('rma.index') }}">
-                                  <i class="las la-minus"></i><span>{{ __('navigation.rma') }}</span>
-                              </a>
-                          </li>
-                          <li class="{{ request()->routeIs('serialList') ? 'active' : '' }}">
-                              <a href="{{ route('serialList') }}">
-                                  <i class="las la-minus"></i><span>{{ __('navigation.serial_list') }}</span>
-                              </a>
-                          </li>
-                      </ul>
-                      </li>
-                      @endif
-
-                      @php
-                          $__adminUser = $__adminUser ?? Auth::guard('admin')->user();
-                          $__businessType = $config->count() > 0 ? $config[0]->businessType : null;
-                          $__showQuotations = in_array($__businessType, ['vehicle_shop', 'computer_shop', 'electronics_parts_shop', 'hardware_shop', 'dealership_shop', 'stationary_shop', 'garments_shop']);
-                      @endphp
-                      @if($__showQuotations)
-                      <li class=" ">
-                          <a href="#quotations" class="{{ request()->routeIs('quotation.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('quotation.*') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-quotation" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M4 4h16v16H4z"></path>
-                                  <path d="M8 8h8M8 12h8M8 16h5"></path>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.quotations') }}</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="quotations" class="iq-submenu collapse{{ request()->routeIs('quotation.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                              <li class="{{ request()->routeIs('quotation.create') ? 'active' : '' }}">
-                                  <a href="{{ route('quotation.create') }}">
-                                      <i class="las la-minus"></i><span>{{ __('navigation.new_quotation') }}</span>
-                                  </a>
-                              </li>
-                              <li class="{{ request()->routeIs('quotation.list') ? 'active' : '' }}">
-                                  <a href="{{ route('quotation.list') }}">
-                                      <i class="las la-minus"></i><span>{{ __('navigation.quotation_list') }}</span>
-                                  </a>
-                              </li>
-                          </ul>
-                      </li>
-                      @endif
-
-                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
-                      <li class=" ">
-                          <a href="#damage" class="{{ request()->routeIs('damageProduct','damageProductList') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('damageProduct','damageProductList') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                                  <line x1="12" y1="9" x2="12" y2="13"></line>
-                                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.damage') }}</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="damage" class="iq-submenu collapse{{ request()->routeIs('damageProduct','damageProductList') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="">
-                                          <a href="{{route('damageProduct')}}">
-                                              <i class="las la-minus"></i><span>{{ __('navigation.damage_product') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="">
-                                          <a href="{{route('damageProductList')}}">
-                                              <i class="las la-minus"></i><span>{{ __('navigation.damage_product_list') }}</span>
-                                          </a>
-                                  </li>
-                          </ul>
-                      </li>
-
-                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
-                      @if(!isset($__adminUser) || !in_array(strtolower($__adminUser->role), ['storemanager','salesmanager']))
-                      <li class=" ">
-                          <a href="#account" class="{{ request()->routeIs('account.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('account.*') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash8" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.account_management') }}</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="account" class="iq-submenu collapse{{ request()->routeIs('account.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="{{ request()->routeIs('account.chart','account.create','account.edit') ? 'active' : '' }}">
-                                          <a href="{{route('account.chart')}}">
-                                              <i class="las la-book"></i><span>{{ __('navigation.chart_of_accounts') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="{{ request()->routeIs('account.transactions','account.transactions.create') ? 'active' : '' }}">
-                                          <a href="{{route('account.transactions')}}">
-                                              <i class="las la-exchange-alt"></i><span>{{ __('navigation.transactions') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="{{ request()->routeIs('account.reports') ? 'active' : '' }}">
-                                          <a href="{{route('account.reports')}}">
-                                              <i class="las la-chart-line"></i><span>{{ __('navigation.financial_reports') }}</span>
-                                          </a>
-                                  </li>
-                          </ul>
-                      </li>
-                      <li class=" ">
-                          <a href="#expense" class="{{ request()->routeIs('expense.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('expense.*') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-dash8" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                                  <line x1="1" y1="10" x2="23" y2="10"></line>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.expense_management') }}</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="expense" class="iq-submenu collapse{{ request()->routeIs('expense.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                  <li class="{{ request()->routeIs('expense.categories','expense.categories.*') ? 'active' : '' }}">
-                                          <a href="{{route('expense.categories')}}">
-                                              <i class="las la-tags"></i><span>{{ __('navigation.expense_categories') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="{{ request()->routeIs('expense.create') ? 'active' : '' }}">
-                                          <a href="{{route('expense.create')}}">
-                                              <i class="las la-plus-circle"></i><span>{{ __('navigation.add_expense') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="{{ request()->routeIs('expense.list','expense.edit') ? 'active' : '' }}">
-                                          <a href="{{route('expense.list')}}">
-                                              <i class="las la-list"></i><span>{{ __('navigation.expense_list') }}</span>
-                                          </a>
-                                  </li>
-                                  <li class="{{ request()->routeIs('expense.reports') ? 'active' : '' }}">
-                                          <a href="{{route('expense.reports')}}">
-                                              <i class="las la-chart-bar"></i><span>{{ __('navigation.expense_reports') }}</span>
-                                          </a>
-                                  </li>
-                          </ul>
-                      </li>
-                      @endif
-
-                      @can('viewAudits')
-                      @if(!isset($__adminUser) || !in_array(strtolower($__adminUser->role), ['storemanager','salesmanager']))
-                      <li class=" {{ request()->routeIs('audits.index') ? 'active' : '' }}">
-                          <a href="{{ route('audits.index') }}" class="svg-icon">
-                              <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <circle cx="12" cy="12" r="10"></circle>
-                                  <polyline points="12 6 12 12 16 14"></polyline>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.audits') }}</span>
-                          </a>
-                      </li>
-                      @endif
-                      @endcan
-                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
-                      @if(!isset($__adminUser) || !in_array(strtolower($__adminUser->role), ['storemanager','salesmanager']))
-                      <li class=" ">
-                          <a href="#reports" class="{{ request()->routeIs('reports.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('reports.*') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <line x1="18" y1="20" x2="18" y2="10"></line>
-                                  <line x1="12" y1="20" x2="12" y2="4"></line>
-                                  <line x1="6" y1="20" x2="6" y2="14"></line>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.reports') }}</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="reports" class="iq-submenu collapse{{ request()->routeIs('reports.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                              <li class="{{ request()->routeIs('reports.business') ? 'active' : '' }}">
-                                  <a href="{{route('reports.business')}}">
-                                      <i class="las la-chart-line"></i><span>{{ __('navigation.business_report') }}</span>
-                                  </a>
-                              </li>
-                              <li class="{{ request()->routeIs('reports.sales') ? 'active' : '' }}">
-                                  <a href="{{route('reports.sales')}}">
-                                      <i class="las la-shopping-cart"></i><span>{{ __('navigation.sale_report') }}</span>
-                                  </a>
-                              </li>
-                              <li class="{{ request()->routeIs('reports.purchases') ? 'active' : '' }}">
-                                  <a href="{{route('reports.purchases')}}">
-                                      <i class="las la-dolly"></i><span>{{ __('navigation.purchase_report') }}</span>
-                                  </a>
-                              </li>
-                              <li class="{{ request()->routeIs('reports.topCustomers') ? 'active' : '' }}">
-                                  <a href="{{route('reports.topCustomers')}}">
-                                      <i class="las la-star"></i><span>{{ __('navigation.top_customers') }}</span>
-                                  </a>
-                              </li>
-                              <li class="{{ request()->routeIs('reports.payableReceivable') ? 'active' : '' }}">
-                                  <a href="{{route('reports.payableReceivable')}}">
-                                      <i class="las la-money-bill"></i><span>{{ __('navigation.payable_receivable') }}</span>
-                                  </a>
-                              </li>
-                              <li class="{{ request()->routeIs('reports.stock') ? 'active' : '' }}">
-                                  <a href="{{route('reports.stock')}}">
-                                      <i class="las la-cubes"></i><span>{{ __('navigation.stock_report') }}</span>
-                                  </a>
-                              </li>
-                          </ul>
-                      </li>
-                      @endif
-
-                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
-                      <li class=" {{ request()->routeIs('documentation.*') ? 'active' : '' }}">
-                          <a href="{{ route('documentation.index') }}" class="svg-icon">
-                              <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                              </svg>
-                              <span class="ml-4">{{ __('navigation.documentation') }}</span>
-                          </a>
-                      </li>
-
-                      @php $__adminUser = $__adminUser ?? Auth::guard('admin')->user(); @endphp
-                      @if(!isset($__adminUser) || !in_array(strtolower($__adminUser->role), ['storemanager','salesmanager']))
-                      <li class=" ">
-                          <a href="#settings" class="{{ request()->routeIs('addBusinessSetupPage','business.*','sales.settings.*','language.settings.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ request()->routeIs('addBusinessSetupPage','business.*','sales.settings.*','language.settings.*') ? 'true' : 'false' }}">
-                              <svg class="svg-icon" id="p-settings" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <circle cx="12" cy="12" r="3"></circle>
-                                  <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"></path>
-                              </svg>
-                              <span class="ml-4">{{ __('common.settings') }}</span>
-                              <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                              </svg>
-                          </a>
-                          <ul id="settings" class="iq-submenu collapse{{ request()->routeIs('addBusinessSetupPage','business.*','sales.settings.*','language.settings.*') ? ' show' : '' }}" data-parent="#iq-sidebar-toggle">
-                                @if($__adminUser && $__adminUser->canManageSalesSettings())
-                                <li class="{{ request()->routeIs('sales.settings.*') ? 'active' : '' }}">
-                                    <a href="{{ route('sales.settings.edit') }}"><i class="las la-sliders-h"></i><span>{{ __('settings.sales_settings') }}</span></a>
-                                </li>
-                                @endif
-                                @if($__adminUser && in_array(strtolower(trim($__adminUser->role)), ['admin','superadmin'], true))
-                                <li class="{{ request()->routeIs('language.settings.*') ? 'active' : '' }}">
-                                    <a href="{{ route('language.settings.edit') }}"><i class="las la-language"></i><span>{{ __('settings.language_settings') }}</span></a>
-                                </li>
-                                @endif
-                                <li class="{{ request()->routeIs('addBusinessSetupPage') ? 'active' : '' }}">
-                                        <a href="{{route('addBusinessSetupPage')}}">
-                                            <i class="las la-cog"></i><span>{{ __('navigation.business_configuration') }}</span>
-                                        </a>
-                                </li>
-                                <li class="{{ request()->routeIs('business.locations.*','business.locations') ? 'active' : '' }}">
-                                        <a href="{{route('business.locations')}}">
-                                            <i class="las la-map-marked-alt"></i><span>{{ __('navigation.business_locations') }}</span>
-                                        </a>
-                                </li>
-                          </ul>
-                      </li>
-                      @endif
-                  </ul>
+                  @include('partials.business-navigation')
               </nav>
               <div id="sidebar-bottom" class="position-relative sidebar-bottom">
                   <div class="card border-none">
@@ -1276,6 +792,10 @@
                       </button>
                       <div class="collapse navbar-collapse" id="navbarSupportedContent">
                           <ul class="navbar-nav ml-auto navbar-list align-items-center">
+                              <li class="nav-item mr-2">
+                                  <button type="button" class="btn btn-sm btn-outline-primary" id="rn-pwa-install" hidden
+                                      data-install-mode="" aria-haspopup="dialog">{{ __('pwa.install_app') }}</button>
+                              </li>
                               <li>@include('partials.language-selector')</li>
                               <li>
                                   <a href="#" class="btn border add-btn shadow-none mx-2 d-none d-md-block" data-toggle="modal" data-target="#new-order"><i class="las la-plus mr-2"></i>{{ __('navigation.new_order') }}</a>
@@ -1570,6 +1090,7 @@
             $(e).remove();
         };
     </script>
+    <script src="{{ asset('js/confirm-item-removal.js') }}?v={{ filemtime(public_path('js/confirm-item-removal.js')) }}"></script>
     <!-- SweetAlert2 for nicer confirmations -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
@@ -1810,5 +1331,27 @@
             })();
         </script>
     @yield('scripts')
+    <div class="modal fade" id="rn-pwa-ios-help" tabindex="-1" role="dialog" aria-labelledby="rn-pwa-ios-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rn-pwa-ios-title">{{ __('pwa.ios_title') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ __('pwa.dismiss') }}"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <ol>
+                        <li>{{ __('pwa.ios_open_safari') }}</li>
+                        <li>{{ __('pwa.ios_tap_share') }}</li>
+                        <li>{{ __('pwa.ios_select_add') }}</li>
+                        <li>{{ __('pwa.ios_confirm_add') }}</li>
+                    </ol>
+                    <p class="small text-muted mb-0">{{ __('pwa.ios_note') }}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('pwa.dismiss') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
   </body>
 </html>

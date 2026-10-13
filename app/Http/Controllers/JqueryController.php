@@ -24,6 +24,16 @@ use Illuminate\Support\Facades\DB;
 
 class JqueryController extends Controller
 {
+    private function salesCustomer(int $customerId): \App\Models\Customer
+    {
+        $actor = auth('admin')->user();
+        abort_unless($actor, 401);
+        $customer = \App\Models\Customer::withoutGlobalScope('business')->find($customerId);
+        $legacyWalking = $customer && $customer->businessId === null && $customer->name === 'Walking Customer';
+        abort_if(!$customer || (!$actor->canAccessAllSalesBusinesses()
+            && ((int)$actor->businessId <= 0 || (!$legacyWalking && (int)$customer->businessId !== (int)$actor->businessId))), 404);
+        return $customer;
+    }
     public function getProductDetails($id){
         $getData = Product::find($id);
 
@@ -149,7 +159,7 @@ class JqueryController extends Controller
         // TODO: filter products by customer if needed. For now return all active products.
         $products = Product::orderBy('name','asc')->get();
 
-        $options = '<option value="">Select</option>';
+        $options = '<option value="">'.__('sales.select').'</option>';
         foreach ($products as $p) {
             $options .= '<option value="'.$p->id.'">'.htmlspecialchars($p->name).'</option>';
         }
@@ -164,6 +174,8 @@ class JqueryController extends Controller
      */
     public function getProductsForCustomerPublic($customerId)
     {
+        $customer = $this->salesCustomer((int)$customerId);
+        $businessId = $customer->businessId ?: auth('admin')->user()->businessId;
         // Return ALL purchase rows so the sale product dropdown can list each
         // purchase separately (even when the same product was purchased from
         // the same supplier multiple times). This helps users pick the exact
@@ -172,6 +184,7 @@ class JqueryController extends Controller
         $rows = \App\Models\PurchaseProduct::join('suppliers','purchase_products.supplier','suppliers.id')
             ->join('products','purchase_products.productName','products.id')
             ->leftJoin('product_stocks','product_stocks.purchaseId','purchase_products.id')
+            ->when($businessId, fn($query) => $query->where('purchase_products.businessId', $businessId))
             ->select(
                 'purchase_products.id as purchaseId',
                 'products.id as productId',
@@ -184,7 +197,7 @@ class JqueryController extends Controller
             ->orderBy('purchase_products.id','desc')
             ->get();
 
-        $options = '<option value="">Select</option>';
+        $options = '<option value="">'.__('sales.select').'</option>';
             $outOfStock = [];
             foreach ($rows as $r) {
                 $val = 'purchase_' . $r->purchaseId;
@@ -203,8 +216,8 @@ class JqueryController extends Controller
                     ];
                     continue;
                 }
-                $label = htmlspecialchars($r->productName . ' — ' . ($r->supplierName ?: 'Unknown') . ' (Stock: ' . $stock . ')' . $datePart);
-                $titleAttr = ' title="Stock: ' . $stock . '"';
+                $label = htmlspecialchars($r->productName . ' — ' . ($r->supplierName ?: __('javascript.sale_unknown_supplier')) . ' ('.__('common.stock').': ' . $stock . ')' . $datePart);
+                $titleAttr = ' title="'.htmlspecialchars(__('common.stock')).': ' . $stock . '"';
                 $options .= '<option value="'.$val.'" data-purchase-id="'.$r->purchaseId.'" data-current-stock="'.$stock.'"'.$titleAttr.'>'.$label.'</option>';
         }
 
@@ -286,6 +299,7 @@ class JqueryController extends Controller
      */
     public function getCustomerPreviousDuePublic($customerId)
     {
+        $this->salesCustomer((int)$customerId);
         try {
             // Prefer an explicit dueAmount column if present, otherwise compute grandTotal - paidAmount
             $table = 'sale_products';
@@ -322,14 +336,14 @@ class JqueryController extends Controller
     {
         try {
             $cats = \App\Models\Category::orderBy('name','asc')->get(['id','name']);
-            $options = '<option value="">All Categories</option>';
+            $options = '<option value="">'.__('sales.all_categories').'</option>';
             foreach($cats as $c){
                 $options .= '<option value="'.$c->id.'">'.htmlspecialchars($c->name).'</option>';
             }
             return response()->json(['data' => $options]);
         } catch (\Throwable $e) {
             \Log::warning('getCategoriesPublic error: '.$e->getMessage());
-            return response()->json(['data' => '<option value="">All Categories</option>'], 500);
+            return response()->json(['data' => '<option value="">'.__('sales.all_categories').'</option>'], 500);
         }
     }
 
@@ -364,7 +378,7 @@ class JqueryController extends Controller
                 ->orderBy('purchase_products.id','desc')
                 ->get();
 
-            $options = '<option value="">Select</option>';
+            $options = '<option value="">'.__('sales.select').'</option>';
             $outOfStock = [];
             foreach ($rows as $r) {
                 $stock = intval($r->currentStock ?: 0);
@@ -382,15 +396,15 @@ class JqueryController extends Controller
                 $val = 'purchase_' . $r->purchaseId;
                 $datePart = '';
                 try{ if(!empty($r->purchaseDate)) $datePart = ' ['. \Carbon\Carbon::parse($r->purchaseDate)->format('Y-m-d') .']'; }catch(\Exception $e){}
-                $label = htmlspecialchars(($r->productName ?: '') . ' — ' . ($r->supplierName ?: 'Unknown') . ' (Stock: ' . $stock . ')' . $datePart);
-                $titleAttr = ' title="Stock: ' . $stock . '"';
+                $label = htmlspecialchars(($r->productName ?: '') . ' — ' . ($r->supplierName ?: __('javascript.sale_unknown_supplier')) . ' ('.__('common.stock').': ' . $stock . ')' . $datePart);
+                $titleAttr = ' title="'.htmlspecialchars(__('common.stock')).': ' . $stock . '"';
                 $options .= '<option value="'.$val.'" data-purchase-id="'.$r->purchaseId.'" data-current-stock="'.$stock.'"'.$titleAttr.'>'.$label.'</option>';
             }
 
             return response()->json(['data' => $options, 'outOfStock' => $outOfStock]);
         } catch (\Throwable $e) {
             \Log::warning('getProductsByCategoryPublic error: '.$e->getMessage(), ['categoryId'=>$categoryId]);
-            return response()->json(['data' => '<option value="">Select</option>', 'outOfStock' => []], 500);
+            return response()->json(['data' => '<option value="">'.__('sales.select').'</option>', 'outOfStock' => []], 500);
         }
     }
     public function getPurchaseDetails($id){
@@ -416,7 +430,7 @@ class JqueryController extends Controller
             return response()->json(['status' => 'error', 'serials' => []], 401);
         }
         $purchase = PurchaseProduct::find($purchaseId);
-        $canAccessAllBusinesses = in_array(strtolower(trim((string) $actor->role)), ['admin', 'superadmin'], true);
+        $canAccessAllBusinesses = $actor->canAccessAllSalesBusinesses();
         if (!$purchase || (!$canAccessAllBusinesses && (
             (int) $actor->businessId <= 0 || (int) $purchase->businessId !== (int) $actor->businessId
         ))) {
@@ -437,453 +451,25 @@ class JqueryController extends Controller
     }
 
     public function savePurchase(PurchaseSaveRequest $requ){
-        // Validation moved to FormRequest
-
-        // Debug: log incoming payload during test runs to help diagnose failures
-        try {
-            \Log::debug('savePurchase called', ['payload' => $requ->all()]);
-        } catch (\Exception $e) {
-            // ignore logging errors in test environment
-        }
-        try {
-            // Ensure an error-level log entry exists so it appears in `storage/logs/laravel.log`
-            \Log::error('savePurchase called (error-level)', ['payload' => $requ->all()]);
-        } catch (\Exception $e) {}
-        // debug logging removed
-        // temporary file-based debug removed; framework logging retained above
-
-        $normalizeMoney = function ($value): float {
-            if ($value === null || $value === '') {
-                return 0.0;
-            }
-            if (is_string($value)) {
-                $value = str_replace([',', ' '], '', $value);
-            }
-            return (float) $value;
-        };
-
-        $rowTotals = $requ->input('totalAmount', []);
-        if (!is_array($rowTotals)) {
-            $rowTotals = [$rowTotals];
-        }
-
-        $baseTotal = 0.0;
-        foreach ($rowTotals as $rowTotal) {
-            $baseTotal += $normalizeMoney($rowTotal);
-        }
-
-        $discountStatus = (string) $requ->input('discountStatus', '');
-        $discountAmountInput = $normalizeMoney($requ->input('discountAmount'));
-        $discountPercentInput = $normalizeMoney($requ->input('discountPercent'));
-        $discountAmount = 0.0;
-
-        if ($discountStatus === '1') {
-            $discountAmount = max(0, $discountAmountInput);
-        } elseif ($discountStatus === '2') {
-            $discountAmount = max(0, ($baseTotal * $discountPercentInput) / 100);
-        } else {
-            if ($discountAmountInput > 0) {
-                $discountAmount = $discountAmountInput;
-            } elseif ($discountPercentInput > 0) {
-                $discountAmount = max(0, ($baseTotal * $discountPercentInput) / 100);
-            }
-        }
-
-        $grandTotal = max(0, $baseTotal - $discountAmount);
-        $paidAmount = max(0, $normalizeMoney($requ->input('paidAmount')));
-        if ($paidAmount > $grandTotal) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'paidAmount' => __('common.notification_paid_amount_cannot_exceed_grand_total'),
-            ]);
-        }
-        $dueAmount = max(0, $grandTotal - $paidAmount);
-
-        // Update path (editing existing purchase). Support single or multiple purchaseId values.
-        if(!empty($requ->purchaseId)):
-            $purchaseIds = is_array($requ->purchaseId) ? $requ->purchaseId : [$requ->purchaseId];
-            $quantities = is_array($requ->quantity) ? $requ->quantity : [$requ->quantity];
-            $buyPrices = is_array($requ->get('buyPrice')) ? $requ->get('buyPrice') : [$requ->get('buyPrice')];
-            $salePrices = is_array($requ->get('salePriceExVat')) ? $requ->get('salePriceExVat') : [$requ->get('salePriceExVat')];
-            $vatStatuses = is_array($requ->get('vatStatus')) ? $requ->get('vatStatus') : [$requ->get('vatStatus')];
-            $vatPercents = is_array($requ->get('vatPercent')) ? $requ->get('vatPercent') : [$requ->get('vatPercent')];
-            $profitMargins = is_array($requ->get('profitMargin')) ? $requ->get('profitMargin') : [$requ->get('profitMargin')];
-            $totals = is_array($requ->get('totalAmount')) ? $requ->get('totalAmount') : [$requ->get('totalAmount')];
-            $serialsInput = $requ->input('serialNumber', []);
-
-            DB::beginTransaction();
-            try{
-                $updatedAny = false;
-                foreach($purchaseIds as $idx => $pid){
-                    if(!$pid){
-                        // If this index has no purchaseId, treat it as new row (create)
-                        $productNames = is_array($requ->productName) ? $requ->productName : [$requ->productName];
-                        $pId = isset($productNames[$idx]) ? $productNames[$idx] : null;
-                        $qty = isset($quantities[$idx]) ? (int)$quantities[$idx] : 0;
-                        if(!$pId || $qty <= 0) continue;
-                        $purchase = new PurchaseProduct();
-                        $purchase->productName      = $pId;
-                        $purchase->supplier         = $requ->supplierName;
-                        $purchase->purchase_date    = $requ->purchaseDate;
-                        // Keep the invoice value identical for the whole purchase.
-                        // Do not append a per-row suffix — a single invoice string is sufficient.
-                        // If your DB schema enforces a unique constraint on `invoice`, remove it
-                        // or adjust the schema to allow multiple rows with the same invoice.
-                        $purchase->invoice          = $requ->get('invoiceData') ? $requ->get('invoiceData') : null;
-                        $purchase->reference        = $requ->get('refData');
-                        $purchase->qty              = $qty;
-                        $purchase->buyPrice         = isset($buyPrices[$idx]) ? $buyPrices[$idx] : null;
-                        $purchase->salePriceExVat   = isset($salePrices[$idx]) ? $salePrices[$idx] : null;
-                        $purchase->vatStatus        = isset($vatStatuses[$idx]) ? $vatStatuses[$idx] : null;
-                        $purchase->vatPercent       = isset($vatPercents[$idx]) ? $vatPercents[$idx] : 0;
-                        // Calculate salePriceInVat based on salePriceExVat and vatPercent
-                        $exVat = floatval(isset($salePrices[$idx]) ? $salePrices[$idx] : 0);
-                        $vatPct = floatval(isset($vatPercents[$idx]) ? $vatPercents[$idx] : 0);
-                        $isVatIncluded = isset($vatStatuses[$idx]) ? $vatStatuses[$idx] : 0;
-                        $purchase->salePriceInVat = ($isVatIncluded && $vatPct > 0 && $exVat > 0) ? round($exVat * (1 + ($vatPct/100)), 2) : $exVat;
-                        $purchase->profit           = isset($profitMargins[$idx]) ? $profitMargins[$idx] : null;
-                        $purchase->totalAmount      = isset($totals[$idx]) ? $totals[$idx] : null;
-                        $purchase->disType          = $requ->get('discountStatus');
-                        $purchase->disAmount        = $discountAmount;
-                        $purchase->disParcent       = $requ->get('discountPercent');
-                        $purchase->grandTotal       = $grandTotal;
-                        $purchase->paidAmount       = $paidAmount;
-                        $purchase->dueAmount        = $dueAmount;
-                        $purchase->specialNote      = $requ->get('specialNote');
-                        // Assign businessId from request for admin/superadmin
-                        $actor = auth('admin')->user();
-                        if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
-                            $bizId = (int)($requ->input('businessId') ?? 0);
-                            if($bizId > 0){ $purchase->businessId = $bizId; }
-                        }
-                        if(!$purchase->save()) throw new \Exception('Failed to save new purchase row during update');
-                        $stock = new ProductStock(); $stock->productId = $pId; $stock->purchaseId = $purchase->id; $stock->currentStock = (int)$qty; 
-                        if(isset($purchase->businessId)) { $stock->businessId = $purchase->businessId; }
-                        $stock->save();
-                        // serials: accept either an array or a comma-separated string per-row
-                        $rowSerials = [];
-                        if (isset($serialsInput[$idx])) {
-                            if (is_array($serialsInput[$idx])) {
-                                $rowSerials = $serialsInput[$idx];
-                            } else {
-                                $rowSerials = array_filter(array_map('trim', explode(',', (string)$serialsInput[$idx])));
-                            }
-                        }
-                        if (!empty($rowSerials)) {
-                            foreach ($rowSerials as $s) {
-                                $v = trim($s);
-                                if ($v === '') continue;
-                                if (ProductSerial::where('serialNumber', $v)->exists()) continue;
-                                $ns = new ProductSerial();
-                                $ns->serialNumber = $v;
-                                $ns->productId = $pId;
-                                if (Schema::hasColumn('product_serials','purchaseId')) $ns->purchaseId = $purchase->id;
-                                $ns->save();
-                            }
-                        }
-                        $updatedAny = true;
-                        continue;
-                    }
-
-                    $purchase = PurchaseProduct::find($pid);
-                    if(!$purchase) continue;
-                    $oldQty      = (int)$purchase->qty;
-                    $newQty      = isset($quantities[$idx]) ? (int)$quantities[$idx] : $oldQty;
-                    $returnedQty = (int)ReturnPurchaseItem::where('purchaseId',$purchase->id)->sum('qty');
-                    if($newQty < $returnedQty) continue; // skip invalid update
-                    $delta = $newQty - $oldQty;
-                        // per-row update debug removed
-
-                    // Update fields
-                    // productName array handling
-                    $productNames = is_array($requ->productName) ? $requ->productName : [$requ->productName];
-                    $pName = isset($productNames[$idx]) ? $productNames[$idx] : $purchase->productName;
-                    $purchase->productName      = $pName;
-                    $purchase->supplier         = $requ->supplierName;
-                    $purchase->purchase_date    = $requ->purchaseDate;
-                    // Store the provided invoice string unchanged so rows share the same invoice
-                    // for the overall purchase. If a unique DB constraint exists, remove or
-                    // update it to allow same invoice for multiple product rows in a purchase.
-                    $purchase->invoice          = $requ->get('invoiceData') ? $requ->get('invoiceData') : null;
-                    $purchase->reference        = $requ->get('refData');
-                    $purchase->qty              = $newQty;
-                    $tmp = isset($buyPrices[$idx]) ? $buyPrices[$idx] : $purchase->buyPrice;
-                    $purchase->buyPrice = ($tmp === '' ? null : $tmp);
-                    $tmp = isset($salePrices[$idx]) ? $salePrices[$idx] : $purchase->salePriceExVat;
-                    $purchase->salePriceExVat = ($tmp === '' ? null : $tmp);
-                    $purchase->vatStatus        = isset($vatStatuses[$idx]) ? $vatStatuses[$idx] : $purchase->vatStatus;
-                    $purchase->vatPercent       = isset($vatPercents[$idx]) ? $vatPercents[$idx] : $purchase->vatPercent;
-                    // Calculate salePriceInVat based on salePriceExVat and vatPercent
-                    $exVat = floatval($purchase->salePriceExVat ?? 0);
-                    $vatPct = floatval($purchase->vatPercent ?? 0);
-                    $isVatIncluded = $purchase->vatStatus ? 1 : 0;
-                    $purchase->salePriceInVat = ($isVatIncluded && $vatPct > 0 && $exVat > 0) ? round($exVat * (1 + ($vatPct/100)), 2) : $exVat;
-                    $tmp = isset($profitMargins[$idx]) ? $profitMargins[$idx] : $purchase->profit;
-                    $purchase->profit = ($tmp === '' ? null : $tmp);
-                    $tmp = isset($totals[$idx]) ? $totals[$idx] : $purchase->totalAmount;
-                    $purchase->totalAmount = ($tmp === '' ? null : $tmp);
-                    $purchase->disType          = $requ->get('discountStatus');
-                    $purchase->disAmount        = $discountAmount;
-                    $purchase->disParcent       = $requ->get('discountPercent');
-                    $purchase->grandTotal       = $grandTotal;
-                    $purchase->paidAmount       = $paidAmount;
-                    $purchase->dueAmount        = $dueAmount;
-                    $purchase->specialNote      = $requ->get('specialNote');
-
-                    // Assign/override businessId from request for admin/superadmin (optional on update)
-                    $actor = auth('admin')->user();
-                    if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
-                        $bizId = (int)($requ->input('businessId') ?? 0);
-                        if($bizId > 0){ $purchase->businessId = $bizId; }
-                    }
-                    if(!$purchase->save()) throw new \Exception('Failed to update purchase id '.$pid);
-
-                        // debug removed
-
-                    // adjust stock record
-                    $stock = ProductStock::where('purchaseId',$purchase->id)->first();
-                    if($stock){
-                        if($stock->productId != $purchase->productName) $stock->productId = $purchase->productName;
-                        $stock->currentStock = max(0, (int)$stock->currentStock + $delta);
-                        $stock->save();
-                        // debug removed
-                    }
-
-                    // attach serials for this row if provided (accept array or comma-separated string)
-                    $rowSerials = [];
-                    // Try idx and idx+1 (for 1-based indexing used in DOM)
-                    $serialKey = null;
-                    if (isset($serialsInput[$idx])) {
-                        $serialKey = $idx;
-                    } elseif (isset($serialsInput[$idx + 1])) {
-                        $serialKey = $idx + 1;
-                    }
-                    if ($serialKey !== null) {
-                        if (is_array($serialsInput[$serialKey])) {
-                            $rowSerials = $serialsInput[$serialKey];
-                        } else {
-                            $rowSerials = array_filter(array_map('trim', explode(',', (string)$serialsInput[$serialKey])));
-                        }
-                    }
-
-                    // VALIDATION: qty must not exceed (existing serials + new unique serials)
-                    $existingCount = (int) \App\Models\ProductSerial::where('purchaseId', $purchase->id)->count();
-                    $newSet = [];
-                    foreach ((array)$rowSerials as $sv) {
-                        $v = trim((string)$sv);
-                        if ($v !== '') { $newSet[$v] = true; }
-                    }
-                    $newUnique = array_keys($newSet);
-                    $alreadyForThisPurchase = 0;
-                    if (!empty($newUnique)) {
-                        $alreadyForThisPurchase = (int) \App\Models\ProductSerial::whereIn('serialNumber', $newUnique)
-                            ->where('purchaseId', $purchase->id)
-                            ->count();
-                    }
-                    $newUniqueToAdd = max(0, count($newUnique) - $alreadyForThisPurchase);
-                    $totalSerialsAfter = $existingCount + $newUniqueToAdd;
-                    if ($newQty > $totalSerialsAfter) {
-                        throw new \Exception('Quantity ('.$newQty.') exceeds total serials ('.$totalSerialsAfter.') for row '.($idx+1).'.');
-                    }
-
-                    if (!empty($rowSerials)) {
-                        foreach ($rowSerials as $serialValue) {
-                            $v = trim($serialValue);
-                            if ($v === '') continue;
-                            if (ProductSerial::where('serialNumber', $v)->exists()) continue;
-                            $newSerial = new ProductSerial();
-                            $newSerial->serialNumber = $v;
-                            $newSerial->productId = $purchase->productName;
-                            if (Schema::hasColumn('product_serials', 'purchaseId')) $newSerial->purchaseId = $purchase->id;
-                            $newSerial->save();
-                        }
-                    }
-
-                    $updatedAny = true;
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
+        $header=null;
+        $ids=array_filter((array)$requ->input('purchaseId',[]));
+        if($ids){
+            foreach($ids as $id){
+                $line=$workflow->line((int)$id);
+                if(!$line->purchase_invoice_id){
+                    throw \Illuminate\Validation\ValidationException::withMessages(['items'=>__('purchases.legacy_identity_required')]);
                 }
-
-                DB::commit();
-                if($updatedAny) Alert::success(__('common.notification_success'),__('common.notification_purchase_updated_successfully'));
-                else Alert::warning(__('common.notification_no_changes'),__('common.notification_no_valid_rows_were_updated'));
-                return back();
-            }catch(\Exception $e){
-                DB::rollBack();
-                // update exception debug removed
-                Alert::error(__('common.notification_sorry'),__('common.notification_failed_to_update_purchases').$e->getMessage());
-                return back();
-            }
-
-        else:
-            // Create path: support multi-row purchases. Accept arrays for productName, quantity, buyPrice, etc.
-            $productNames = is_array($requ->productName) ? $requ->productName : [$requ->productName];
-            $quantities = is_array($requ->quantity) ? $requ->quantity : [$requ->quantity];
-            $buyPrices = is_array($requ->get('buyPrice')) ? $requ->get('buyPrice') : [$requ->get('buyPrice')];
-            $salePrices = is_array($requ->get('salePriceExVat')) ? $requ->get('salePriceExVat') : [$requ->get('salePriceExVat')];
-            $vatStatuses = is_array($requ->get('vatStatus')) ? $requ->get('vatStatus') : [$requ->get('vatStatus')];
-            $profitMargins = is_array($requ->get('profitMargin')) ? $requ->get('profitMargin') : [$requ->get('profitMargin')];
-            $totals = is_array($requ->get('totalAmount')) ? $requ->get('totalAmount') : [$requ->get('totalAmount')];
-
-            $serialsInput = $requ->input('serialNumber', []);
-
-            DB::beginTransaction();
-            try{
-                $createdAny = false;
-                foreach($productNames as $idx => $prodId){
-                    try {
-                        \Log::debug('Creating purchase row', ['index' => $idx, 'productId' => $prodId, 'qty' => $quantities[$idx] ?? null]);
-                    } catch (\Exception $e) {}
-                    $qty = isset($quantities[$idx]) ? (int)$quantities[$idx] : 0;
-                    if(!$prodId || $qty <= 0) continue; // skip invalid rows
-
-                    // Duplicate prevention removed: always create a purchase row for each submitted line.
-
-                    $purchase = new PurchaseProduct();
-                    $purchase->productName      = $prodId;
-                    $purchase->supplier         = $requ->supplierName;
-                    $purchase->purchase_date    = $requ->purchaseDate;
-                    // For create: assign the provided invoice value directly (no per-row suffix)
-                    $purchase->invoice          = $requ->get('invoiceData') ? $requ->get('invoiceData') : null;
-                    $purchase->reference        = $requ->get('refData');
-                    $purchase->qty              = $qty;
-                    $tmp = isset($buyPrices[$idx]) ? $buyPrices[$idx] : null;
-                    $purchase->buyPrice = ($tmp === '' ? null : $tmp);
-                    $tmp = isset($salePrices[$idx]) ? $salePrices[$idx] : null;
-                    $purchase->salePriceExVat = ($tmp === '' ? null : $tmp);
-                    $purchase->vatStatus        = isset($vatStatuses[$idx]) ? $vatStatuses[$idx] : null;
-                    $purchase->salePriceInVat   = null;
-                    $tmp = isset($profitMargins[$idx]) ? $profitMargins[$idx] : null;
-                    $purchase->profit = ($tmp === '' ? null : $tmp);
-                    $tmp = isset($totals[$idx]) ? $totals[$idx] : null;
-                    $purchase->totalAmount = ($tmp === '' ? null : $tmp);
-                    // global discount/paid/due stored on each row for compatibility
-                    $purchase->disType          = $requ->get('discountStatus');
-                    $purchase->disAmount        = $discountAmount;
-                    $purchase->disParcent       = $requ->get('discountPercent');
-                    $purchase->grandTotal       = $grandTotal;
-                    $purchase->paidAmount       = $paidAmount;
-                    $purchase->dueAmount        = $dueAmount;
-                    $purchase->specialNote      = $requ->get('specialNote');
-
-                    // Assign businessId from request for admin/superadmin
-                    $actor = auth('admin')->user();
-                    if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
-                        $bizId = (int)($requ->input('businessId') ?? 0);
-                        if($bizId > 0){ $purchase->businessId = $bizId; }
-                    }
-                    if(!$purchase->save()){
-                        throw new \Exception('Failed to save purchase row for product '.$prodId);
-                    }
-
-                    try { \Log::debug('Saved purchase', ['purchaseId' => $purchase->id, 'productId' => $prodId, 'qty' => $qty]); } catch (\Exception $e) {}
-
-                    // create stock record
-                    $prevStock = new ProductStock();
-                    $prevStock->productId    = $prodId;
-                    $prevStock->purchaseId   = $purchase->id;
-                    $prevStock->currentStock = (int)$qty;
-                    if(isset($purchase->businessId)) { $prevStock->businessId = $purchase->businessId; }
-                    $prevStock->save();
-
-                    // attach serials for this row if provided as array or comma-separated string
-                    \Log::info('savePurchase: processing serials for row', [
-                        'idx' => $idx, 
-                        'productId' => $prodId,
-                        'purchaseId' => $purchase->id,
-                        'serialsInput_keys' => array_keys($serialsInput),
-                        'serialsInput_raw' => $serialsInput
-                    ]);
-                    
-                    $rowSerials = [];
-                    // Try to find serials for this row - check both idx and idx+1 (for 1-based indexing)
-                    $serialKey = null;
-                    if (isset($serialsInput[$idx])) {
-                        $serialKey = $idx;
-                    } elseif (isset($serialsInput[$idx + 1])) {
-                        $serialKey = $idx + 1;
-                    }
-                    
-                    if ($serialKey !== null) {
-                        if (is_array($serialsInput[$serialKey])) {
-                            $rowSerials = $serialsInput[$serialKey];
-                        } else {
-                            $rowSerials = array_filter(array_map('trim', explode(',', (string)$serialsInput[$serialKey])));
-                        }
-                        \Log::info('savePurchase: found serials for row', [
-                            'idx' => $idx,
-                            'serialKey' => $serialKey,
-                            'rowSerials' => $rowSerials
-                        ]);
-                    } else {
-                        \Log::info('savePurchase: no serials found for row', ['idx' => $idx]);
-                    }
-                    // VALIDATION: qty must not exceed total provided serials for this row
-                    $providedSerialCount = 0;
-                    if (!empty($rowSerials)) {
-                        $providedSerialCount = count(array_filter(array_map(function($v){ return trim((string)$v) !== '' ? 1 : null; }, $rowSerials)));
-                    }
-                    if ($qty > $providedSerialCount) {
-                        throw new \Exception('Quantity ('.$qty.') exceeds total serials ('.$providedSerialCount.') for row '.($idx+1).'.');
-                    }
-                    
-                    if (!empty($rowSerials)) {
-                        $savedCount = 0;
-                        $skippedCount = 0;
-                        foreach ($rowSerials as $serialValue) {
-                            $v = trim($serialValue);
-                            if ($v === '') continue;
-                            // skip duplicates
-                            if (ProductSerial::where('serialNumber', $v)->exists()) {
-                                $skippedCount++;
-                                \Log::info('savePurchase: skipped duplicate serial', ['serial' => $v]);
-                                continue;
-                            }
-                            $newSerial = new ProductSerial();
-                            $newSerial->serialNumber = $v;
-                            $newSerial->productId = $prodId;
-                            if (Schema::hasColumn('product_serials', 'purchaseId')) {
-                                $newSerial->purchaseId = $purchase->id;
-                            }
-                            $newSerial->save();
-                            $savedCount++;
-                            \Log::info('savePurchase: saved new serial', [
-                                'serial' => $v,
-                                'serialId' => $newSerial->id,
-                                'purchaseId' => $purchase->id,
-                                'productId' => $prodId
-                            ]);
-                        }
-                        \Log::info('savePurchase: serial save summary for row', [
-                            'idx' => $idx,
-                            'saved' => $savedCount,
-                            'skipped' => $skippedCount,
-                            'total' => count($rowSerials)
-                        ]);
-                    }
-
-                    $createdAny = true;
+                if($header && $header->id!==(int)$line->purchase_invoice_id){
+                    throw \Illuminate\Validation\ValidationException::withMessages(['items'=>__('purchases.foreign_line')]);
                 }
-
-                DB::commit();
-
-                if($createdAny){
-                    Alert::success(__('common.notification_success'),__('common.notification_data_saved_successfully'));
-                } else {
-                    Alert::warning(__('common.notification_no_rows'),__('common.notification_no_valid_purchase_rows_to_save_or_duplicates_skipped'));
-                }
-                try {
-                    $count = \App\Models\PurchaseProduct::count();
-                    \Log::info('create_result', ['createdAny' => $createdAny ? 1 : 0, 'purchase_count' => $count]);
-                } catch (\Exception $e) { \Log::warning('create_result_log_failed', ['error' => $e->getMessage()]); }
-                return back();
-            }catch(\Exception $e){
-                DB::rollBack();
-                try { \Log::error('create_exception', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]); } catch (\Exception $_) {}
-                Alert::error(__('common.notification_sorry'),__('common.notification_data_failed_to_save').$e->getMessage());
-                return back();
+                $header=$workflow->header((int)$line->purchase_invoice_id);
             }
-        endif; // end create/update branching
+        }
+        $header=$workflow->save($requ->all(),$header);
+        return redirect()->route('purchase.invoice.show',$header->id)->with('status',__('purchases.invoice_saved'));
     }
 
-    //service
     public function getserviceDetails($id){
         $getData = Service::find($id);
 
@@ -955,15 +541,20 @@ class JqueryController extends Controller
                 $sales->status          = "Ordered";
                 // Assign businessId from request for admin/superadmin
                 $actor = auth('admin')->user();
-                if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
+                if($actor && $actor->canAccessAllSalesBusinesses()){
                     $bizId = (int)($requ->input('businessId') ?? 0);
                     if($bizId > 0){ $sales->businessId = $bizId; }
                 }
-                if ($actor && !in_array(strtolower(trim($actor->role)), ['admin','superadmin'], true)) {
+                if ($actor && !$actor->canAccessAllSalesBusinesses()) {
                     $sales->businessId = $actor->businessId;
                 }
                 if (!$sales->businessId) {
                     $sales->businessId = PurchaseProduct::withoutGlobalScopes()->find($requ->purchaseData[0] ?? 0)?->businessId;
+                }
+                $customer = \App\Models\Customer::withoutGlobalScope('business')->lockForUpdate()->find($requ->customerId);
+                $legacyWalking = $customer && $customer->businessId === null && $customer->name === 'Walking Customer';
+                if (!$customer || (!$legacyWalking && (int)$customer->businessId !== (int)$sales->businessId)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['customerId' => __('sales.customer_unavailable_for_business')]);
                 }
                 // Record salesperson (the admin user who created this sale)
                 try{ if($actor && isset($actor->id)){ $sales->salespersonId = $actor->id; } }catch(\Throwable $_){}
@@ -1071,7 +662,7 @@ class JqueryController extends Controller
                     ? ('sale_printer_profile_admin_' . (int)$actor->id)
                     : 'sale_printer_profile_admin_guest';
                 session([$printerSessionKey => $selectedPrinter]);
-                return redirect()->route('invoiceGenerate', ['id' => $createdSaleId, 'autoprint' => 1, 'printer' => $selectedPrinter]);
+                return redirect()->route('invoiceGenerate', ['id' => $createdSaleId, 'autoprint' => $requ->input('saleAction', 'save_print') === 'save' ? 0 : 1, 'printer' => $selectedPrinter]);
             }
             return back();
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -1110,102 +701,42 @@ class JqueryController extends Controller
     /**
      * Delete a product serial by id (AJAX)
      */
-    public function deleteProductSerial($id)
-    {
-        $serial = ProductSerial::find($id);
-        if (!$serial) {
-            return response()->json(['status' => 'error', 'message' => __('common.api_serial_not_found')], 404);
-        }
-
-        try {
-            $serial->delete();
-            return response()->json(['status' => 'success', 'message' => __('common.api_serial_deleted')]);
-        } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => __('common.api_failed_to_delete_serial')], 500);
-        }
+    public function deleteProductSerial($id){
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
+        DB::transaction(function() use($workflow,$id){
+            $workflow->lockSerialNamespace();$serial=ProductSerial::findOrFail($id);
+            $line=$workflow->line((int)$serial->purchaseId);$workflow->mutableSerial($line,(int)$id)->delete();
+        });
+        return response()->json(['status'=>'success','message'=>__('common.api_serial_deleted')]);
     }
 
-    /**
-     * Update a product serial by id (AJAX)
-     */
-    public function updateProductSerial(Request $request, $id)
-    {
-        \Log::info('updateProductSerial called', ['id' => $id, 'input' => $request->all()]);
-        
-        $serial = ProductSerial::find($id);
-        if (!$serial) {
-            \Log::warning('updateProductSerial: Serial not found', ['id' => $id]);
-            return response()->json(['status' => 'error', 'message' => __('common.api_serial_not_found')], 404);
-        }
-
-        \Log::info('updateProductSerial: Found serial', ['oldValue' => $serial->serialNumber]);
-
-        $request->validate([
-            'serialNumber' => 'required|string'
-        ]);
-
-        try {
-            $oldValue = $serial->serialNumber;
-            $serial->serialNumber = $request->input('serialNumber');
-            $serial->save();
-            \Log::info('updateProductSerial: Serial updated successfully', [
-                'id' => $id,
-                'oldValue' => $oldValue,
-                'newValue' => $serial->serialNumber
-            ]);
-            return response()->json(['status' => 'success', 'message' => __('common.api_serial_updated')]);
-        } catch (\Exception $e) {
-            \Log::error('updateProductSerial: Failed to update', ['id' => $id, 'error' => $e->getMessage()]);
-            return response()->json(['status' => 'error', 'message' => __('common.api_failed_to_update_serial') . $e->getMessage()], 500);
-        }
+    public function updateProductSerial(Request $request,$id){
+        $data=$request->validate(['serialNumber'=>['required','string']]);
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
+        DB::transaction(function() use($workflow,$id,$data){
+            $workflow->lockSerialNamespace();$serial=ProductSerial::findOrFail($id);$line=$workflow->line((int)$serial->purchaseId);
+            $workflow->serials($line,['serial_updates'=>[$id=>$data['serialNumber']]]);
+        });
+        return response()->json(['status'=>'success','message'=>__('common.api_serial_updated')]);
     }
 
-    /**
-     * Add product serials via AJAX for an existing purchase
-     */
-    public function addProductSerial(Request $request)
-    {
-        $request->validate([
-            'purchaseId' => 'required|integer',
-            'serials' => 'required|array',
-            'serials.*' => 'nullable|string'
-        ]);
-
-        $purchase = PurchaseProduct::find($request->purchaseId);
-        if (!$purchase) {
-            return response()->json(['status' => 'error', 'message' => __('common.api_purchase_not_found')], 404);
-        }
-
-        $created = [];
-        $skipped = [];
-        $serials = $request->input('serials', []);
-        foreach ($serials as $val) {
-            $v = trim($val);
-            if ($v === '') continue;
-            // skip if already exists
-            $exists = ProductSerial::where('serialNumber', $v)->first();
-            if ($exists) {
-                $skipped[] = $v;
-                continue;
+    public function addProductSerial(Request $request){
+        $data=$request->validate(['purchaseId'=>['required','integer'],'serials'=>['required','array'],'serials.*'=>['nullable','string']]);
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
+        $created=DB::transaction(function() use($workflow,$data){
+            $workflow->lockSerialNamespace();$line=$workflow->line($data['purchaseId']);
+            $line=PurchaseProduct::withoutGlobalScopes()->whereKey($line->id)->lockForUpdate()->firstOrFail();
+            $before=ProductSerial::where('purchaseId',$line->id)->pluck('id');$workflow->serials($line,['serials'=>$data['serials']]);
+            $stock=ProductStock::where('purchaseId',$line->id)->lockForUpdate()->first();
+            if(ProductSerial::where('purchaseId',$line->id)->count()>(int)$line->qty || !$stock
+                || app(\App\Services\SalesSerialPolicy::class)->available(ProductSerial::where('purchaseId',$line->id))->count()>(int)$stock->currentStock){
+                throw \Illuminate\Validation\ValidationException::withMessages(['serials'=>__('purchases.serials_exceed_qty')]);
             }
-            $newSerial = new ProductSerial();
-            $newSerial->serialNumber = $v;
-            // link to the product on this purchase
-            $newSerial->productId = $purchase->productName;
-            if (Schema::hasColumn('product_serials', 'purchaseId')) {
-                $newSerial->purchaseId = $purchase->id;
-            }
-            $newSerial->save();
-            $created[] = ['id' => $newSerial->id, 'serialNumber' => $newSerial->serialNumber];
-        }
-
-        return response()->json(['status' => 'success', 'created' => $created, 'skipped' => $skipped]);
+            return ProductSerial::where('purchaseId',$line->id)->whereNotIn('id',$before)->get(['id','serialNumber']);
+        });
+        return response()->json(['status'=>'success','created'=>$created,'skipped'=>[]]);
     }
 
-    /**
-     * Find product by barcode (AJAX)
-     * Returns product details including pricing and stock
-     */
     public function findProductByBarcode(Request $request)
     {
         $barcode = trim($request->input('barcode', ''));

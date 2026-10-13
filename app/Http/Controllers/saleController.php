@@ -109,7 +109,7 @@ class saleController extends Controller
         // Ownership check
         $actor = auth('admin')->user();
         // The legacy first-user privilege must not expose another business's serials.
-        if ($actor && !in_array(strtolower(trim($actor->role)), ['admin','superadmin'], true)
+        if ($actor && !$actor->canAccessAllSalesBusinesses()
             && (int)$sale->businessId > 0 && (int)$sale->businessId !== (int)$actor->businessId) {
             abort(403, 'This sale belongs to another business.');
         }
@@ -230,7 +230,7 @@ class saleController extends Controller
             return back();
         }
 
-        if ($actor && !in_array(strtolower(trim($actor->role)), ['admin','superadmin'], true)
+        if ($actor && !$actor->canAccessAllSalesBusinesses()
             && ((int)$actor->businessId <= 0 || (int)$sale->businessId !== (int)$actor->businessId)) {
             abort(403, 'This sale belongs to another business.');
         }
@@ -391,7 +391,7 @@ class saleController extends Controller
         if($invoice):
             // Ownership check for viewing invoices
             $actor = auth('admin')->user();
-            if ($actor && !in_array(strtolower(trim($actor->role)), ['admin','superadmin'], true)
+            if ($actor && !$actor->canAccessAllSalesBusinesses()
                 && (int)$invoice->businessId > 0 && (int)$invoice->businessId !== (int)$actor->businessId) {
                 abort(403, 'This sale belongs to another business.');
             }

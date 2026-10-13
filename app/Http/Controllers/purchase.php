@@ -28,14 +28,15 @@ class purchase extends Controller
        });
    }
    public function addPurchase(){
-       $supplier = Supplier::orderBy('id','DESC')->get();
-       $product = Product::orderBy('id','DESC')->get();
+       $workflow=app(\App\Services\PurchaseWorkflow::class);
+       $supplier = $workflow->scoped(Supplier::query())->orderBy('id','DESC')->get();
+       $product = $workflow->scoped(Product::query())->orderBy('id','DESC')->get();
        $productUnit = ProductUnit::orderBy('id','DESC')->get();
        $category = Category::orderBy('id','DESC')->get();
        $brand = Brand::orderBy('id','DESC')->get();
        // robust invoice generation using sequence table
        $generatedInvoice = app(InvoiceService::class)->generatePurchaseInvoice();
-                $businesses = \App\Models\BusinessSetup::orderBy('id','asc')->get();
+                $businesses = \App\Models\BusinessSetup::when(!$workflow->platform(),fn($q)=>$q->whereKey(auth('admin')->user()->businessId))->orderBy('id','asc')->get();
 
          return view('purchase.addPurchase',[
              'brandList'=>$brand,
@@ -48,38 +49,15 @@ class purchase extends Controller
          ]);
    }
 
-   public function purchaseList(){
-      $purchaseList = PurchaseProduct::join('products','products.id','purchase_products.productName')
-      ->join('suppliers','suppliers.id','purchase_products.supplier')
-      ->join('product_stocks','product_stocks.purchaseId','purchase_products.id')
-      ->select(
-            'purchase_products.id as purchaseId',
-            'products.id as productId',
-            'products.name as productName',
-            'suppliers.id as supplierId',
-            'suppliers.name as supplierName',
-            'product_stocks.id as stockId',
-            'product_stocks.currentStock',
-            'purchase_products.invoice',
-            'purchase_products.qty',
-            'purchase_products.totalAmount',
-            'purchase_products.grandTotal',
-            'purchase_products.paidAmount',
-            'purchase_products.paidAmount',
-            'purchase_products.dueAmount',
-            'purchase_products.salePriceExVat',
-            'purchase_products.salePriceInVat',
-            'purchase_products.vatStatus',
-            'purchase_products.buyPrice',
-            'purchase_products.purchase_date',
-            'purchase_products.id',
-      )->orderBy('totalAmount','desc')->get();
-      return view('purchase.purchaseList',['purchaseList'=>$purchaseList]);
-   }
+    public function purchaseList(){
+        return app(PurchaseInvoiceController::class)->index(request(),app(\App\Services\PurchaseWorkflow::class));
+    }
+
+
 
 
    public function returnPurchase($id){
-        $purchase = PurchaseProduct::find($id);
+        $purchase = app(\App\Services\PurchaseWorkflow::class)->line((int)$id);
         if($purchase):
             $supplier = Supplier::find($purchase->supplier);
             $product = Product::find($purchase->productName);
@@ -99,45 +77,34 @@ class purchase extends Controller
     }
 
     public function purchaseReturnSave(Request $request){
-        $validated = $request->validate([
-            'purchaseId' => ['required','integer','exists:purchase_products,id'],
-            'supplierId' => ['required','integer','exists:suppliers,id'],
-            'productId'  => ['required','integer','exists:products,id'],
-            'returnQty'  => ['required','integer','min:1'],
-            'totalReturnAmount' => ['nullable','numeric','min:0'],
-            'adjustAmount'      => ['nullable','numeric','min:0']
-        ]);
-
-        $service = new StockService();
-        if(!$service->validatePurchaseReturn($validated['purchaseId'], (int)$validated['returnQty'])){
-            Alert::error(__('common.notification_sorry'),__('common.notification_return_quantity_exceeds_available_purchase_quantity'));
-            return back();
-        }
-
-        $history = new PurchaseReturn();
-        $history->purchaseId = $validated['purchaseId'];
-        $history->totalReturnAmount = $validated['totalReturnAmount'] ?? 0;
-        $history->adjustAmount = $validated['adjustAmount'] ?? 0;
-
-        if($history->save()){
-            $returnItem = new ReturnPurchaseItem();
-            $returnItem->returnId = $history->id;
-            $returnItem->purchaseId = $validated['purchaseId'];
-            $returnItem->supplierId = $validated['supplierId'];
-            $returnItem->productId = $validated['productId'];
-            $returnItem->qty = (int)$validated['returnQty'];
-            if($returnItem->save()){
-                $service->decreaseStockForPurchaseReturn($validated['purchaseId'], (int)$validated['returnQty']);
-            }
-            Alert::success(__('common.notification_success'),__('common.notification_purchase_return_saved_successfully'));
-            return redirect()->route('purchaseList');
-        }
-        Alert::error(__('common.notification_sorry'),__('common.purchase_return_failed'));
-        return back();
+        $data=$request->validate(['purchaseId'=>['required','integer'],'supplierId'=>['required','integer'],
+            'productId'=>['required','integer'],'returnQty'=>['required','integer','min:1'],
+            'adjustAmount'=>['nullable','numeric','min:0'],'serialIds'=>['sometimes','array'],
+            'serialIds.*'=>['integer','distinct']]);
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
+        \Illuminate\Support\Facades\DB::transaction(function() use($data,$workflow){
+            $workflow->lockSerialNamespace();$line=$workflow->line((int)$data['purchaseId']);
+            $line=PurchaseProduct::withoutGlobalScopes()->whereKey($line->id)->lockForUpdate()->firstOrFail();
+            $stock=ProductStock::withoutGlobalScopes()->where('purchaseId',$line->id)->lockForUpdate()->first();
+            $qty=(int)$data['returnQty'];$total=round($qty*(float)$line->buyPrice,2);
+            if(!$stock || $qty>(int)$stock->currentStock || (int)$line->supplier!==(int)$data['supplierId'] || (int)$line->productName!==(int)$data['productId']
+                || (float)($data['adjustAmount']??0)>$total){throw \Illuminate\Validation\ValidationException::withMessages(['returnQty'=>__('purchases.invalid_return')]);}
+            $ids=$data['serialIds']??[];
+            if($line->serials()->exists()){
+                if(count($ids)!==$qty){throw \Illuminate\Validation\ValidationException::withMessages(['serialIds'=>__('purchases.return_serials_required')]);}
+                foreach($ids as $id){$serial=$workflow->mutableSerial($line,$id);$serial->status='returned';$serial->save();}
+            } elseif($ids){throw \Illuminate\Validation\ValidationException::withMessages(['serialIds'=>__('purchases.foreign_serial')]);}
+            $history=PurchaseReturn::create(['purchaseId'=>$line->id,'totalReturnAmount'=>$total,'adjustAmount'=>$data['adjustAmount']??0]);
+            $item=new ReturnPurchaseItem();$item->returnId=$history->id;$item->purchaseId=$line->id;$item->supplierId=$line->supplier;$item->productId=$line->productName;$item->qty=$qty;$item->save();
+            $stock->currentStock-=$qty;$stock->save();
+        });
+        return redirect()->route('purchaseList')->with('status',__('purchases.return_saved'));
     }
 
+
+
     public function returnPurchaseList(){
-        $returnList = PurchaseReturn::join('purchase_products', 'purchase_products.id', 'purchase_returns.purchaseId')
+        $returnList = PurchaseReturn::when(!app(\App\Services\PurchaseWorkflow::class)->platform(),fn($q)=>$q->where('purchase_products.businessId',auth('admin')->user()->businessId))->join('purchase_products', 'purchase_products.id', 'purchase_returns.purchaseId')
             ->join('suppliers', 'suppliers.id', 'purchase_products.supplier')
             ->join('products', 'products.id', 'purchase_products.productName')
             ->select(
@@ -154,8 +121,9 @@ class purchase extends Controller
     }
 
     public function purchaseView($id){
-        $purchase = PurchaseProduct::find($id);
+        $purchase = app(\App\Services\PurchaseWorkflow::class)->line((int)$id);
         if($purchase):
+            if($purchase->purchase_invoice_id){return redirect()->route('purchase.invoice.show',$purchase->purchase_invoice_id);}
             $supplier = Supplier::find($purchase->supplier);
             $product = Product::find($purchase->productName);
             $stock = ProductStock::where('purchaseId', $id)->first();
@@ -198,8 +166,9 @@ class purchase extends Controller
     }
 
     public function editPurchase($id){
-        $purchase = PurchaseProduct::find($id);
+        $purchase = app(\App\Services\PurchaseWorkflow::class)->line((int)$id);
         if($purchase):
+            if($purchase->purchase_invoice_id){return redirect()->route('purchase.invoice.edit',$purchase->purchase_invoice_id);}
             $supplier = Supplier::orderBy('id','DESC')->get();
             $product = Product::orderBy('id','DESC')->get();
             $productUnit = ProductUnit::orderBy('id','DESC')->get();
@@ -239,246 +208,38 @@ class purchase extends Controller
     }
 
     public function updatePurchase(Request $request){
-        \Log::info('updatePurchase called', ['purchaseId' => $request->purchaseId, 'data' => $request->all()]);
-        
-        $purchase = PurchaseProduct::find($request->purchaseId);
-        if($purchase):
-            // Basic validation inline (could be moved to Form Request later)
-            $request->validate([
-                'supplierName'    => ['required','integer','exists:suppliers,id'],
-                'productName'     => ['required','integer','exists:products,id'],
-                'buyPrice'        => ['nullable','numeric','min:0'],
-                'salePriceExVat'  => ['nullable','numeric','min:0'],
-                'salePriceInVat'  => ['nullable','numeric','min:0'],
-                'vatStatus'       => ['nullable','numeric','in:0,1'],
-                'quantity'        => ['required','integer','min:0'],
-                'totalAmount'     => ['nullable','numeric','min:0'],
-                'grandTotal'      => ['nullable','numeric','min:0'],
-                'paidAmount'      => ['nullable','numeric','min:0'],
-                'dueAmount'       => ['nullable','numeric','min:0'],
-                'discountAmount'  => ['nullable','numeric','min:0'],
-                'discountPercent' => ['nullable','numeric','min:0'],
-            ]);
-
-            $normalizeMoney = function ($value): float {
-                if ($value === null || $value === '') {
-                    return 0.0;
-                }
-                if (is_string($value)) {
-                    $value = str_replace([',', ' '], '', $value);
-                }
-                return (float) $value;
-            };
-
-            $rawTotal = $request->input('totalAmount', $request->grandTotal ?? 0);
-            if (is_array($rawTotal)) {
-                $baseTotal = 0.0;
-                foreach ($rawTotal as $item) {
-                    $baseTotal += $normalizeMoney($item);
-                }
-            } else {
-                $baseTotal = $normalizeMoney($rawTotal);
-            }
-
-            $discountType = (string) $request->input('discountStatus', '');
-            $discountAmountInput = $normalizeMoney($request->input('discountAmount'));
-            $discountPercentInput = $normalizeMoney($request->input('discountPercent'));
-            $discountAmount = 0.0;
-
-            if ($discountType === '1') {
-                $discountAmount = max(0, $discountAmountInput);
-            } elseif ($discountType === '2') {
-                $discountAmount = max(0, ($baseTotal * $discountPercentInput) / 100);
-            } else {
-                if ($discountAmountInput > 0) {
-                    $discountAmount = $discountAmountInput;
-                } elseif ($discountPercentInput > 0) {
-                    $discountAmount = max(0, ($baseTotal * $discountPercentInput) / 100);
-                }
-            }
-
-            $grandTotal = max(0, $baseTotal - $discountAmount);
-            $paidAmount = max(0, $normalizeMoney($request->paidAmount));
-            if ($paidAmount > $grandTotal) {
-                Alert::error(__('common.notification_sorry'), __('common.notification_paid_amount_cannot_exceed_grand_total'));
-                return back();
-            }
-            $dueAmount = max(0, $grandTotal - $paidAmount);
-
-            $oldQty = (int)$purchase->qty;
-            $newQty = (int)$request->quantity;
-            
-            \Log::info('updatePurchase before update', [
-                'purchaseId' => $purchase->id,
-                'oldQty' => $oldQty,
-                'newQty' => $newQty,
-                'oldBuyPrice' => $purchase->buyPrice,
-                'newBuyPrice' => $request->buyPrice,
-            ]);
-
-            $purchase->purchase_date    = $request->purchaseDate;
-            $purchase->supplier         = $request->supplierName;
-            $purchase->productName      = $request->productName;
-            $purchase->buyPrice         = $request->buyPrice;
-            $purchase->salePriceExVat   = $request->salePriceExVat;
-            $purchase->salePriceInVat   = $request->salePriceInVat;
-            $purchase->vatStatus        = $request->vatStatus;
-            $purchase->qty              = $newQty;
-            $purchase->totalAmount      = $request->totalAmount;
-            $purchase->grandTotal       = $grandTotal;
-            $purchase->paidAmount       = $paidAmount;
-            $purchase->dueAmount        = $dueAmount;
-            $purchase->profit           = $request->profitMargin ?? $purchase->profit;
-            $purchase->disType          = $request->discountStatus ?? $purchase->disType;
-            $purchase->disAmount        = $discountAmount;
-            $purchase->disParcent       = $request->discountPercent ?? $purchase->disParcent;
-            $purchase->specialNote      = $request->specialNote ?? $purchase->specialNote;
-
-            if($purchase->save()):
-                \Log::info('updatePurchase: purchase saved successfully', ['purchaseId' => $purchase->id]);
-                $service = new StockService();
-                $result = $service->adjustStockForPurchaseQtyChange($purchase->id, $oldQty, $newQty);
-                if(!$result['success']):
-                    \Log::error('updatePurchase: stock adjustment failed', ['purchaseId' => $purchase->id, 'error' => $result['message']]);
-                    Alert::error(__('common.notification_sorry'),$result['message']);
-                    return redirect()->route('editPurchase',['id'=>$purchase->id]);
-                endif;
-
-                // Save new serials (handle both direct array and nested array format)
-                if($request->has('serialNumber')):
-                    $serials = $request->input('serialNumber', []);
-                    \Log::info('updatePurchase: serialNumber raw input', ['serials' => $serials, 'type' => gettype($serials)]);
-                    $serialsToSave = [];
-                    
-                    // Check if it's nested array format serialNumber[purchaseId][]
-                    if(is_array($serials) && count($serials) > 0):
-                        // If first key is numeric string (purchase ID), extract the nested array
-                        $firstKey = array_key_first($serials);
-                        \Log::info('updatePurchase: first key analysis', ['firstKey' => $firstKey, 'isNumeric' => is_numeric($firstKey)]);
-                        if(is_numeric($firstKey) && isset($serials[$firstKey]) && is_array($serials[$firstKey])):
-                            $serialsToSave = $serials[$firstKey];
-                            \Log::info('updatePurchase: found nested serials format', ['count' => count($serialsToSave), 'serials' => $serialsToSave]);
-                        else:
-                            // Direct array format
-                            $serialsToSave = $serials;
-                            \Log::info('updatePurchase: found direct serials format', ['count' => count($serialsToSave), 'serials' => $serialsToSave]);
-                        endif;
-                    endif;
-                    
-                    // VALIDATION: qty must not exceed (existing serials + new unique serials)
-                    $existingCount = (int) ProductSerial::where('purchaseId', $purchase->id)->count();
-                    $newSet = [];
-                    foreach ((array)$serialsToSave as $sv) {
-                        $v = trim((string)$sv);
-                        if ($v !== '') { $newSet[$v] = true; }
-                    }
-                    $newUnique = array_keys($newSet);
-                    $alreadyForThisPurchase = 0;
-                    if (!empty($newUnique)) {
-                        $alreadyForThisPurchase = (int) ProductSerial::whereIn('serialNumber', $newUnique)
-                            ->where('purchaseId', $purchase->id)
-                            ->count();
-                    }
-                    $newUniqueToAdd = max(0, count($newUnique) - $alreadyForThisPurchase);
-                    $totalSerialsAfter = $existingCount + $newUniqueToAdd;
-                    if ($newQty > $totalSerialsAfter) {
-                        \Log::warning('updatePurchase: qty exceeds total serials', ['purchaseId' => $purchase->id, 'qty' => $newQty, 'existing' => $existingCount, 'newUniqueToAdd' => $newUniqueToAdd, 'totalAfter' => $totalSerialsAfter]);
-                        Alert::error(__('common.notification_validation'),__('purchases.quantity_exceeds_serials', ['qty'=>$newQty,'count'=>$totalSerialsAfter]));
-                        return redirect()->route('editPurchase', ['id' => $purchase->id])->withInput();
-                    }
-
-                    if(count($serialsToSave) > 0):
-                        $savedCount = 0;
-                        $skippedCount = 0;
-                        foreach($serialsToSave as $idx => $serialValue):
-                            \Log::info('updatePurchase: processing serial', ['index' => $idx, 'value' => $serialValue, 'trimmed' => trim($serialValue), 'isEmpty' => empty(trim($serialValue))]);
-                            if(!empty(trim($serialValue))):
-                                // Check if this serial already exists for this purchase
-                                $exists = ProductSerial::where('serialNumber', trim($serialValue))
-                                    ->where('productId', $purchase->productName)
-                                    ->where('purchaseId', $purchase->id)
-                                    ->exists();
-                                
-                                \Log::info('updatePurchase: duplicate check', [
-                                    'serial' => trim($serialValue),
-                                    'productId' => $purchase->productName,
-                                    'purchaseId' => $purchase->id,
-                                    'exists' => $exists
-                                ]);
-                                    
-                                if(!$exists):
-                                    $newSerial = new ProductSerial();
-                                    $newSerial->serialNumber = trim($serialValue);
-                                    $newSerial->productId = $purchase->productName;
-                                    if (Schema::hasColumn('product_serials', 'purchaseId')) {
-                                        $newSerial->purchaseId = $purchase->id;
-                                    }
-                                    $newSerial->save();
-                                    $savedCount++;
-                                    \Log::info('updatePurchase: saved new serial', ['serial' => trim($serialValue), 'serialId' => $newSerial->id]);
-                                else:
-                                    $skippedCount++;
-                                    \Log::info('updatePurchase: skipped duplicate serial', ['serial' => trim($serialValue)]);
-                                endif;
-                            endif;
-                        endforeach;
-                        \Log::info('updatePurchase: serial save summary', ['saved' => $savedCount, 'skipped' => $skippedCount, 'total' => count($serialsToSave)]);
-                    else:
-                        \Log::info('updatePurchase: no serials to save');
-                    endif;
-                endif;
-
-                Alert::success(__('common.notification_success'),__('common.notification_purchase_updated_successfully'));
-                return redirect()->route('editPurchase', ['id' => $purchase->id]);
-            else:
-                \Log::error('updatePurchase: purchase->save() failed', ['purchaseId' => $purchase->id]);
-                Alert::error(__('common.notification_sorry'),__('common.notification_failed_to_update_purchase'));
-                return redirect()->route('editPurchase', ['id' => $purchase->id])->withInput();
-            endif;
-        else:
-            \Log::warning('updatePurchase: purchase not found', ['purchaseId' => $request->purchaseId]);
-            Alert::error(__('common.notification_sorry'),__('common.notification_purchase_not_found'));
-            return back();
-        endif;
+        $line=app(\App\Services\PurchaseWorkflow::class)->line((int)$request->purchaseId);
+        throw \Illuminate\Validation\ValidationException::withMessages(['items'=>__('purchases.legacy_identity_required')]);
     }
+
+
 
     
 
     public function delPurchase($id){
-        $purchase = PurchaseProduct::find($id);
-        if($purchase):
-            // Also consider deleting related stock and return records if necessary
-            ProductStock::where('purchaseId', $id)->delete();
-            ReturnPurchaseItem::where('purchaseId', $id)->delete();
-            PurchaseReturn::where('purchaseId', $id)->delete();
-            
-            $purchase->delete();
-            Alert::success(__('common.notification_success'),__('common.notification_purchase_deleted_successfully'));
-            return redirect()->route('purchaseList');
-        else:
-            Alert::error(__('common.notification_sorry'),__('common.notification_purchase_not_found'));
-            return back();
-        endif;
+        $workflow=app(\App\Services\PurchaseWorkflow::class);$line=$workflow->line((int)$id);
+        if(request()->isMethod('get') || $line->purchase_invoice_id || (float)$line->paidAmount>0){
+            throw \Illuminate\Validation\ValidationException::withMessages(['items'=>__('purchases.use_invoice_actions')]);
+        }
+        \Illuminate\Support\Facades\DB::transaction(function() use($workflow,$line){$workflow->lockSerialNamespace();$workflow->removeLine($line);});
+        return redirect()->route('purchaseList');
     }
 
+
+
         /** Bulk delete purchases (simple hard delete with related cleanup) */
-        public function bulkDeletePurchases(Request $req){
-            $ids = (array)$req->input('ids', $req->input('selected', []));
-            if(empty($ids)){ return back()->with('error',__('common.notification_no_purchases_selected')); }
-            try{
-                foreach($ids as $id){
-                    $purchase = PurchaseProduct::find($id);
-                    if(!$purchase) continue;
-                    ProductStock::where('purchaseId', $id)->delete();
-                    ReturnPurchaseItem::where('purchaseId', $id)->delete();
-                    PurchaseReturn::where('purchaseId', $id)->delete();
-                    $purchase->delete();
-                }
-                Alert::success(__('common.notification_deleted'),__('common.notification_selected_purchases_deleted'));
-            }catch(\Exception $e){
-                \Log::error('bulkDeletePurchases failed: '.$e->getMessage());
-                Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_selected_purchases'));
+        public function bulkDeletePurchases(Request $request){
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
+        $ids=$request->validate(['ids'=>['required','array','min:1'],'ids.*'=>['integer']])['ids'];
+        \Illuminate\Support\Facades\DB::transaction(function() use($workflow,$ids){
+            $workflow->lockSerialNamespace();
+            foreach($ids as $id){$line=$workflow->line((int)$id);
+                if($line->purchase_invoice_id || (float)$line->paidAmount>0){throw \Illuminate\Validation\ValidationException::withMessages(['items'=>__('purchases.use_invoice_actions')]);}
+                $workflow->removeLine($line);
             }
-            return back();
-        }
+        });
+        return redirect()->route('purchaseList');
+    }
+
+
 }

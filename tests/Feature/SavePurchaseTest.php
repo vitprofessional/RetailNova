@@ -10,12 +10,20 @@ class SavePurchaseTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \App\Models\BusinessSetup::forceCreate(['id'=>1,'businessName'=>'Purchase QA','businessType'=>'computer_shop']);
+        $this->actingAs(\App\Models\AdminUser::create(['fullName'=>'Purchase QA','mail'=>'purchase@example.test','password'=>'unused','role'=>'superadmin','businessId'=>1]),'admin');
+    }
+
+
     /** @test */
     public function multi_row_purchase_creates_purchase_stock_and_serials()
     {
         // Prepare minimal supplier and products
         $supplierId = DB::table('suppliers')->insertGetId([
-            'name' => 'Test Supplier',
+            'businessId'=>1, 'name' => 'Test Supplier',
             'mail' => 'supplier@example.test',
             'mobile' => '0123456789',
             'created_at' => now(),
@@ -23,19 +31,19 @@ class SavePurchaseTest extends TestCase
         ]);
 
         $productA = DB::table('products')->insertGetId([
-            'name' => 'Product A',
+            'businessId'=>1, 'name' => 'Product A',
             'created_at' => now(),
             'updated_at' => now()
         ]);
 
         $productB = DB::table('products')->insertGetId([
-            'name' => 'Product B',
+            'businessId'=>1, 'name' => 'Product B',
             'created_at' => now(),
             'updated_at' => now()
         ]);
 
         $payload = [
-            'purchaseDate' => now()->toDateString(),
+            'businessId'=>1, 'purchaseDate' => now()->toDateString(),
             'supplierName' => $supplierId,
             'invoiceData'  => 'INV-TEST',
             'refData'      => 'REF-TEST',
@@ -66,21 +74,21 @@ class SavePurchaseTest extends TestCase
         ];
 
         // Bypass middleware (routes are protected in web.php)
-        $this->withoutMiddleware();
+
 
         $response = $this->post(route('savePurchase'), $payload);
 
         // Expect redirect back
-        $response->assertStatus(302);
+        $response->assertStatus(302)->assertSessionHasNoErrors();
 
         // Assert purchases created
         $this->assertDatabaseHas('purchase_products', [
-            'productName' => (string)$productA,
+            'businessId'=>1, 'productName' => (string)$productA,
             'qty' => 2,
         ]);
 
         $this->assertDatabaseHas('purchase_products', [
-            'productName' => (string)$productB,
+            'businessId'=>1, 'productName' => (string)$productB,
             'qty' => 3,
         ]);
 
@@ -104,5 +112,46 @@ class SavePurchaseTest extends TestCase
         $this->assertDatabaseHas('product_serials', [
             'serialNumber' => 'B-1'
         ]);
+    }
+
+    public function test_purchase_save_redirect_and_invoice_refresh_keep_the_selected_locale_and_serials(): void
+    {
+        $supplierId = DB::table('suppliers')->insertGetId([
+            'businessId'=>1, 'name'=>'Locale Supplier', 'created_at'=>now(), 'updated_at'=>now(),
+        ]);
+        $productId = DB::table('products')->insertGetId([
+            'businessId'=>1, 'name'=>'Locale Product', 'created_at'=>now(), 'updated_at'=>now(),
+        ]);
+
+        foreach ([
+            'bn' => ['PURCHASE-BN-SERIAL', 'চালান ও সরবরাহকারীর তথ্য'],
+            'en' => ['PURCHASE-EN-SERIAL', 'Invoice & supplier information'],
+        ] as $locale => [$serial, $heading]) {
+            auth('admin')->user()->forceFill(['preferred_locale'=>$locale])->save();
+            $this->get(route('addPurchase'))->assertOk()->assertSee('lang="'.$locale.'"', false);
+
+            $payload = [
+                'businessId'=>1, 'purchaseDate'=>now()->toDateString(), 'supplierName'=>$supplierId,
+                'invoiceData'=>'INV-LOCALE-'.$locale, 'refData'=>'',
+                'productName'=>[$productId], 'quantity'=>[1], 'buyPrice'=>[12],
+                'salePriceExVat'=>[15], 'vatStatus'=>[''], 'profitMargin'=>[''], 'totalAmount'=>[12],
+                'serialNumber'=>[[$serial]], 'discountStatus'=>'', 'discountAmount'=>0,
+                'discountPercent'=>0, 'grandTotal'=>12, 'paidAmount'=>0, 'dueAmount'=>12,
+                'specialNote'=>'Locale persistence regression fixture',
+            ];
+
+            $save = $this->post(route('savePurchase'), $payload)->assertRedirect();
+            $invoice = DB::table('purchase_invoices')->where('invoice', 'INV-LOCALE-'.$locale)->first();
+            $this->assertNotNull($invoice);
+            $save->assertRedirect(route('purchase.invoice.show', $invoice->id));
+
+            foreach ([
+                $this->get(route('purchase.invoice.show', $invoice->id)),
+                $this->get(route('purchase.invoice.show', $invoice->id)),
+            ] as $page) {
+                $page->assertOk()->assertSee('lang="'.$locale.'"', false)
+                    ->assertSee($heading)->assertSee($serial);
+            }
+        }
     }
 }

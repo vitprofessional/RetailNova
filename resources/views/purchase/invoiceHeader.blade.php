@@ -1,0 +1,6 @@
+<header class="rn-invoice-header">
+<div><nav class="rn-invoice-breadcrumb rn-purchase-no-print" aria-label="{{ __('purchases.invoice_navigation') }}"><a href="{{ route('purchaseList') }}">{{ __('navigation.purchase') }}</a><span aria-hidden="true">/</span><a href="{{ route('purchaseList') }}">{{ __('purchases.purchase_list') }}</a><span aria-hidden="true">/</span><span aria-current="page">{{ $invoice->invoice }}</span></nav>
+<h1>{{ __($editing ? 'purchases.edit_invoice' : 'purchases.purchase_invoice') }} <span>{{ $invoice->invoice }}</span></h1><p class="rn-invoice-subtitle">{{ __($editing ? 'purchases.edit_context' : 'purchases.view_context') }}</p></div>
+<div class="rn-invoice-actions rn-purchase-no-print"><a data-invoice-back class="btn btn-outline-secondary" href="{{ route('purchaseList') }}">{{ __('purchases.back_to_list') }}</a>
+@if(!$editing)<a class="btn btn-primary" href="{{ route('purchase.invoice.edit',$invoice->id) }}">{{ __('purchases.edit_invoice') }}</a><button id="purchaseInvoicePrintButton" type="button" class="btn btn-outline-primary">{{ __('common.print') }}</button>@endif
+</div></header>

@@ -25,3 +25,6 @@ yarn-error.log
 /storage/framework/localized-*.html
 /storage/framework/serial-invoice-fixture-*.html
 /storage/framework/serial-check-*.json
+
+/storage/framework/sprint02-*.html
+/storage/framework/sprint02-*.png

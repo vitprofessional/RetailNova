@@ -556,7 +556,7 @@ document.addEventListener('DOMContentLoaded', function(){
             }
             productSelect.dataset.origOptions = html;
             // Replace current options with the supplier-prompt and disable
-            productSelect.innerHTML = '<option value="">Please select a Supplier First</option>';
+            productSelect.replaceChildren(new Option(@json(__('purchases.please_select_a_supplier_first')), ''));
             productSelect.disabled = true;
         }
 
@@ -569,7 +569,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         if(productSelect.dataset.origOptions && productSelect.dataset.origOptions.length>0) productSelect.innerHTML = productSelect.dataset.origOptions;
                         productSelect.disabled = false;
                     } else {
-                        productSelect.innerHTML = '<option value="">Please select a Supplier First</option>';
+                        productSelect.replaceChildren(new Option(@json(__('purchases.please_select_a_supplier_first')), ''));
                         productSelect.disabled = true;
                     }
                 }catch(e){ console.warn('supplier change handler', e); }
@@ -647,7 +647,7 @@ window.syncSerialsFromModal = function(modalId){
         });
 
         // notify user if any serials were synced
-        try{ if(added > 0){ showToast(window.RNTranslate('common.client_serials_saved'), window.RNTranslate('common.client_saved')+added+' serial(s) for row '+ (idx || ''), 'success'); } }catch(e){}
+        try{ if(added > 0){ showToast(window.RNTranslate('common.client_serials_saved'), window.RNTranslate('purchase_serials_saved_for_row',{count:added,row:idx||''}), 'success'); } }catch(e){}
     }catch(e){ console.warn('syncSerialsFromModal error', e); }
 };
 

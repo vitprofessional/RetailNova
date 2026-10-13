@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1769e0">
+  <title>RetailNova — Offline</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 24px; background: #f4f7fb; color: #172b4d; }
+    main { width: min(100%, 480px); padding: 36px 28px; text-align: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 18px; box-shadow: 0 12px 36px #18324f14; }
+    .brand { color: #1769e0; font-size: 1rem; font-weight: 750; letter-spacing: .01em; }
+    h1 { margin: 20px 0 8px; font-size: 1.45rem; }
+    p { margin: 8px 0; line-height: 1.6; color: #58677d; }
+    .divider { height: 1px; margin: 20px 0; background: #e8edf4; }
+    button { margin-top: 18px; min-height: 44px; padding: 0 18px; border: 0; border-radius: 9px; background: #1769e0; color: #fff; font: inherit; font-weight: 650; cursor: pointer; }
+    button:focus-visible { outline: 3px solid #95bdff; outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand">RetailNova</div>
+    <h1>You're offline</h1>
+    <p>Connect to the internet to continue using RetailNova.</p>
+    <div class="divider" aria-hidden="true"></div>
+    <h1 lang="bn">আপনি অফলাইনে আছেন</h1>
+    <p lang="bn">RetailNova ব্যবহার চালিয়ে যেতে ইন্টারনেটে সংযোগ করুন।</p>
+    <button type="button" onclick="location.reload()">Try again · আবার চেষ্টা করুন</button>
+  </main>
+</body>
+</html>

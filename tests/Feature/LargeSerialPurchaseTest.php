@@ -10,10 +10,18 @@ class LargeSerialPurchaseTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \App\Models\BusinessSetup::forceCreate(['id'=>1,'businessName'=>'Purchase QA','businessType'=>'computer_shop']);
+        $this->actingAs(\App\Models\AdminUser::create(['fullName'=>'Purchase QA','mail'=>'purchase@example.test','password'=>'unused','role'=>'superadmin','businessId'=>1]),'admin');
+    }
+
+
     private function createSupplierAndProduct(): array
     {
         $supplierId = DB::table('suppliers')->insertGetId([
-            'name' => 'Perf Supplier',
+            'businessId'=>1, 'name' => 'Perf Supplier',
             'mail' => 'perf@example.test',
             'mobile' => '0123456789',
             'created_at' => now(),
@@ -21,7 +29,7 @@ class LargeSerialPurchaseTest extends TestCase
         ]);
 
         $productId = DB::table('products')->insertGetId([
-            'name' => 'Perf Product',
+            'businessId'=>1, 'name' => 'Perf Product',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -39,7 +47,7 @@ class LargeSerialPurchaseTest extends TestCase
         for ($i = 1; $i <= 200; $i++) { $serials[] = $prefix . $i; }
 
         $payload = [
-            'purchaseDate' => now()->toDateString(),
+            'businessId'=>1, 'purchaseDate' => now()->toDateString(),
             'supplierName' => $supplierId,
             'invoiceData'  => 'INV-P200',
             'refData'      => 'REF-P200',
@@ -60,12 +68,12 @@ class LargeSerialPurchaseTest extends TestCase
             'specialNote' => 'Perf 200 test',
         ];
 
-        $this->withoutMiddleware();
+
         $start = microtime(true);
         $response = $this->post(route('savePurchase'), $payload);
         $elapsed = microtime(true) - $start;
 
-        $response->assertStatus(302);
+        $response->assertStatus(302)->assertSessionHasNoErrors();
 
         // Assert 200 serials created matching the prefix
         $count = DB::table('product_serials')->where('serialNumber', 'like', $prefix . '%')->count();
@@ -85,7 +93,7 @@ class LargeSerialPurchaseTest extends TestCase
         for ($i = 1; $i <= 500; $i++) { $serials[] = $prefix . $i; }
 
         $payload = [
-            'purchaseDate' => now()->toDateString(),
+            'businessId'=>1, 'purchaseDate' => now()->toDateString(),
             'supplierName' => $supplierId,
             'invoiceData'  => 'INV-P500',
             'refData'      => 'REF-P500',
@@ -106,12 +114,12 @@ class LargeSerialPurchaseTest extends TestCase
             'specialNote' => 'Perf 500 test',
         ];
 
-        $this->withoutMiddleware();
+
         $start = microtime(true);
         $response = $this->post(route('savePurchase'), $payload);
         $elapsed = microtime(true) - $start;
 
-        $response->assertStatus(302);
+        $response->assertStatus(302)->assertSessionHasNoErrors();
 
         // Assert 500 serials created matching the prefix
         $count = DB::table('product_serials')->where('serialNumber', 'like', $prefix . '%')->count();

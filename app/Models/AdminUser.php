@@ -50,6 +50,13 @@ class AdminUser extends Authenticatable
         return $this->normalizedRole() === 'admin' || $this->hasSuperAdminPrivileges();
     }
 
+    public function canAccessAllSalesBusinesses(): bool
+    {
+        // Honor legacy unassigned platform owners without lifting explicit operator business scope.
+        return in_array($this->normalizedRole(), ['admin', 'superadmin'], true)
+            || ($this->normalizedRole() === '' && $this->hasSuperAdminPrivileges());
+    }
+
     public static function superAdminExists(): bool
     {
         return static::query()

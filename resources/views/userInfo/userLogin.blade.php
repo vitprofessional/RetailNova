@@ -9,6 +9,7 @@
     <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
       <title>@if($config->count()>0){{ $config[0]->businessName ?? 'Retail Nova' }}@else Retail Nova @endif | User Login</title>
+      @include('partials.pwa-head')
 
       <!-- Favicon -->
       <link rel="shortcut icon" href="{{asset('/public/eshop/')}}/assets/images/favicon.ico" />

@@ -12,6 +12,11 @@ class SaveCustomerRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['mail'=>filled($this->mail) ? strtolower(trim((string)$this->mail)) : null]);
+    }
+
     public function rules(): array
     {
         $ignoreId = $this->input('profileId');

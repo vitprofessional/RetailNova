@@ -117,6 +117,61 @@ class SalesRegressionTest extends TestCase
         $this->actingAs($this->actor(), 'admin');
     }
 
+    public function test_existing_owner_and_spaced_superadmin_can_save_optional_sales_with_both_actions(): void
+    {
+        $inventory = $this->inventory();
+        $this->optional();
+        $owner = $this->actor();
+        $owner->update(['role' => null, 'businessId' => null]);
+        $spaced = $this->actor('super admin', 0);
+        foreach ([$owner, $spaced] as $index => $actor) {
+            $this->actingAs($actor, 'admin');
+            $this->getJson(route('ajax.purchase.serials.public', $inventory['purchase']->id))
+                ->assertOk()->assertJsonPath('selection_required', false);
+            $payload = $this->payload($inventory, 1);
+            unset($payload['serialId']);
+            $payload['businessId'] = 1;
+            $payload['saleAction'] = $index === 0 ? 'save' : 'save_print';
+            $response = $this->post(route('saveSale'), $payload)->assertSessionHasNoErrors();
+            $sale = SaleProduct::orderByDesc('id')->firstOrFail();
+            $response->assertRedirect(route('invoiceGenerate', ['id' => $sale->id, 'autoprint' => $index, 'printer' => 'thermal80']));
+            $this->assertSame(1, ProductSerial::where('saleId', $sale->id)->count());
+            $this->assertSame(1, (int) $sale->businessId);
+            $this->get(route('invoiceGenerate', $sale->id))->assertOk();
+            $this->get(route('sale.items.edit', $sale->id))->assertOk();
+        }
+        $this->assertSame(1, (int) $inventory['stock']->fresh()->currentStock);
+    }
+
+    public function test_unassigned_nonowner_cannot_lookup_or_submit_optional_inventory(): void
+    {
+        $inventory = $this->inventory();
+        $this->optional();
+        $this->actor('superadmin');
+        $actor = $this->actor();
+        $actor->update(['role' => null, 'businessId' => null]);
+        $this->actingAs($actor, 'admin');
+        $this->getJson(route('ajax.purchase.serials.public', $inventory['purchase']->id))->assertNotFound();
+        $payload = $this->payload($inventory);
+        unset($payload['serialId']);
+        $this->postJson(route('saveSale'), $payload)->assertUnprocessable();
+        $this->assertRolledBack($inventory);
+    }
+
+    public function test_unassigned_legacy_owner_still_requires_selection_when_mandatory(): void
+    {
+        $inventory = $this->inventory();
+        $owner = $this->actor();
+        $owner->update(['role' => null, 'businessId' => null]);
+        $this->actingAs($owner, 'admin');
+        $payload = $this->payload($inventory);
+        unset($payload['serialId']);
+        $this->postJson(route('saveSale'), $payload)->assertUnprocessable()->assertJsonValidationErrors('serialId.0');
+        $this->assertRolledBack($inventory);
+        $this->post(route('saveSale'), $this->payload($inventory))->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertSame(2, ProductSerial::whereNotNull('saleId')->count());
+    }
+
     private function assertRolledBack(array $inventory): void
     {
         $this->assertDatabaseCount('sale_products', 0);
@@ -331,5 +386,147 @@ class SalesRegressionTest extends TestCase
         foreach ($inventory['serials'] as $serial) {
             $this->assertNull($serial->fresh()->saleId);
         }
+    }
+    public function test_new_sale_save_intents_only_change_autoprint_and_keep_legacy_default(): void
+    {
+        $inventory=$this->inventory();$this->login();
+        foreach (['save'=>0,'save_print'=>1,'legacy'=>1] as $index=>$autoprint) {
+            $payload=$this->payload($inventory,1);
+            $serial=$inventory['serials'][SaleProduct::count()];$payload['serialId']=[[$serial->id]];
+            if ($index!=='legacy') {$payload['saleAction']=$index;}
+            $this->post(route('saveSale'),$payload)->assertSessionHasNoErrors()
+                ->assertRedirect(route('invoiceGenerate',['id'=>SaleProduct::latest('id')->first()->id,'autoprint'=>$autoprint,'printer'=>'thermal80']));
+            $sale=SaleProduct::latest('id')->first();
+            $this->assertEquals(145,$sale->grandTotal);$this->assertEquals(100,$sale->paidAmount);
+            $this->assertEquals(45,$sale->invoiceDue);$this->assertEquals($sale->id,$serial->fresh()->saleId);
+        }
+        $this->assertEquals(0,$inventory['stock']->fresh()->currentStock);
+        $this->assertDatabaseCount('invoice_items',3);
+    }
+
+    public function test_invalid_new_sale_action_is_rejected_before_stock_or_serial_changes(): void
+    {
+        $inventory=$this->inventory();$this->login();$payload=$this->payload($inventory);
+        $payload['saleAction']='unsupported';$this->postJson(route('saveSale'),$payload)->assertUnprocessable()->assertJsonValidationErrors('saleAction');
+        $this->assertRolledBack($inventory);
+    }
+
+    public function test_new_sale_has_one_authoritative_input_and_explicit_actions_in_both_languages(): void
+    {
+        $this->inventory();$this->login();
+        foreach (['en','bn'] as $locale) {
+            auth('admin')->user()->update(['preferred_locale'=>$locale]);
+            $page=$this->get(route('newsale'))->assertOk()->assertSee(__('sales.billing_summary'))->assertSee(__('sales.find_products'));
+            $doc=new \DOMDocument;@$doc->loadHTML('<?xml encoding="UTF-8">'.$page->getContent());$xpath=new \DOMXPath($doc);
+            foreach (['customerId','date','invoice','note','saleAction','totalSaleAmount','discountAmount','additionalChargeName','additionalChargeAmount','grandTotal','paidAmount','dueAmount','prevDue','curDue','printerProfile'] as $name) {
+                $this->assertCount(1,$xpath->query('//*[@id="saveSaleForm"]//*[@name="'.$name.'"]'),$locale.' '.$name);
+            }
+            $this->assertCount(2,$xpath->query('//*[@id="saveSaleForm"]//button[@type="submit" and @disabled]'));
+            $this->assertCount(1,$xpath->query('//a[@data-sale-back and @href="'.route('saleList').'"]'));
+            $this->assertCount(1,$xpath->query('//*[@id="productDetails"]'));
+            $this->assertCount(1,$xpath->query('//*[@id="saleSerialModal"]'));
+            $this->assertCount(1,$xpath->query('//*[@id="customerModal"]'));
+            $this->assertCount(1,$xpath->query('//*[@id="barcodeInput" and not(@name)]'));
+        }
+    }
+
+    public function test_new_sale_field_errors_render_without_creating_a_transaction(): void
+    {
+        $inventory=$this->inventory();$this->login();$payload=$this->payload($inventory);$payload['customerId']='';
+        $this->from(route('newsale'))->post(route('saveSale'),$payload)->assertRedirect(route('newsale'))->assertSessionHasErrors('customerId');
+        $this->get(route('newsale'))->assertOk()->assertSee('invalid-feedback',false);
+        $this->assertRolledBack($inventory);
+    }
+
+    public function test_customer_first_form_starts_unselected_with_all_product_controls_disabled(): void
+    {
+        $this->inventory(); $this->login();
+        $page = $this->get(route('newsale'))->assertOk();
+        $doc = new \DOMDocument; @$doc->loadHTML($page->getContent()); $xpath = new \DOMXPath($doc);
+        $this->assertCount(0, $xpath->query('//*[@id="customerName"]/option[@selected and @value!=""]'));
+        foreach (['saleProductSearch','barcodeInput','searchBarcodeBtn','categorySelect','productName','outOfStockBtn'] as $id) {
+            $this->assertTrue($xpath->query('//*[@id="'.$id.'"]')->item(0)->hasAttribute('disabled'), $id);
+        }
+    }
+
+    public function test_sale_rejects_a_customer_from_a_different_business_before_inventory_changes(): void
+    {
+        $inventory = $this->inventory(); $this->login();
+        $customer = Customer::forceCreate(['name'=>'Foreign Customer','businessId'=>2]);
+        $payload = $this->payload($inventory); $payload['customerId'] = $customer->id;
+        $this->postJson(route('saveSale'), $payload)->assertUnprocessable()->assertJsonValidationErrors('customerId');
+        $this->assertRolledBack($inventory);
+    }
+
+    public function test_customer_lookups_reject_guests_and_foreign_business_customers(): void
+    {
+        $this->inventory();
+        $own=Customer::forceCreate(['name'=>'Own','businessId'=>1]);
+        $foreign=Customer::forceCreate(['name'=>'Foreign','businessId'=>2]);
+        foreach (['ajax.customer.products.public','ajax.customer.previousDue.public'] as $route) {
+            $this->getJson(route($route,$own->id))->assertUnauthorized();
+        }
+        $this->login();
+        foreach (['ajax.customer.products.public','ajax.customer.previousDue.public'] as $route) {
+            $this->getJson(route($route,$own->id))->assertOk();
+            $this->getJson(route($route,$foreign->id))->assertNotFound();
+        }
+    }
+
+    public function test_missing_invalid_and_deleted_customer_ids_roll_back_and_walk_in_remains_valid(): void
+    {
+        $inventory=$this->inventory(); $this->optional(); $this->login();
+        $payload=$this->payload($inventory); unset($payload['serialId']);
+        $customer=Customer::findOrFail($payload['customerId']); $customer->delete();
+        foreach (['',999999,'walk-in',$customer->id] as $id) {
+            $payload['customerId']=$id;
+            $this->postJson(route('saveSale'),$payload)->assertUnprocessable()->assertJsonValidationErrors('customerId');
+            $this->assertRolledBack($inventory);
+        }
+        $walk=Customer::forceCreate(['name'=>'Walking Customer','businessId'=>null]);
+        $payload['customerId']=$walk->id;
+        $this->post(route('saveSale'),$payload)->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertSame($walk->id,(int)SaleProduct::firstOrFail()->customerId);
+        $this->assertSame(1,Customer::withoutGlobalScopes()->where('name','Walking Customer')->count());
+    }
+
+    public function test_new_sale_isolated_browser_fixtures_include_real_sales_handlers_and_policy_responses(): void
+    {
+        $inventory=$this->inventory();$plain=$this->inventory(1,false);$this->login();
+        $category=\App\Models\Category::forceCreate(['name'=>'Sprint03 QA Category']);
+        foreach ([$inventory,$plain] as $i=>$stock) {
+            Product::find($stock['purchase']->productName)->update(['name'=>$i===0 ? 'Sprint03 QA Serialized' : 'Sprint03 QA Plain','barCode'=>$i===0 ? 'SPRINT03-QA-SCAN' : 'SPRINT03-QA-PLAIN','category'=>$category->id]);
+        }
+        $customer=Customer::create(['name'=>'Sprint03 QA Customer','businessId'=>1]);
+        SaleProduct::forceCreate(['invoice'=>'SPRINT03-PRIOR-DUE','date'=>'2026-10-12','customerId'=>$customer->id,'businessId'=>1,'salespersonId'=>auth('admin')->id(),'totalSale'=>50,'grandTotal'=>50,'paidAmount'=>15,'invoiceDue'=>35,'curDue'=>35,'prevDue'=>0,'status'=>'Ordered']);
+        foreach (['en','bn'] as $locale) {
+            auth('admin')->user()->update(['preferred_locale'=>$locale]);
+            foreach ([true,false] as $required) {
+                \App\Models\BusinessSetup::find(1)->update(['sales_serial_selection_required'=>$required]);
+                $page=$this->get(route('newsale'))->assertOk()->assertSee('lang="'.$locale.'"',false);
+                $responses=[];
+                foreach (Customer::all() as $c) {
+                    foreach (['ajax.customer.products.public','ajax.customer.previousDue.public'] as $route) {
+                        $url=route($route,['id'=>$c->id]);$responses[parse_url($url,PHP_URL_PATH)]=$this->getJson($url)->assertOk()->json();
+                    }
+                }
+                $url=route('ajax.categories.public');$responses[parse_url($url,PHP_URL_PATH)]=$this->getJson($url)->assertOk()->json();
+                $url=route('ajax.category.products.public',['id'=>$category->id]);$responses[parse_url($url,PHP_URL_PATH)]=$this->getJson($url)->assertOk()->json();
+                foreach ([$inventory,$plain] as $stock) {
+                    foreach (['ajax.purchase.details.public','ajax.purchase.serials.public'] as $route) {
+                        $url=route($route,['id'=>$stock['purchase']->id]);$responses[parse_url($url,PHP_URL_PATH)]=$this->getJson($url)->assertOk()->json();
+                    }
+                    $url=route('ajax.sale.product.purchaseDetails.public',['id'=>$stock['purchase']->productName]);$responses[parse_url($url,PHP_URL_PATH)]=$this->getJson($url)->assertOk()->json();
+                }
+                $url=route('product.findByBarcode');$responses[parse_url($url,PHP_URL_PATH)]=$this->postJson($url,['barcode'=>'SPRINT03-QA-SCAN'])->assertOk()->json();
+                if(getenv('RN_EXPORT_SALE_FIXTURES')==='1') {
+                    $stem=storage_path('logs/sprint03-sale-'.$locale.'-'.($required ? 'required' : 'optional'));
+                    file_put_contents($stem.'.html',$page->getContent());
+                    file_put_contents($stem.'.json',json_encode(['responses'=>$responses,'customerId'=>$customer->id,'purchaseId'=>$inventory['purchase']->id,'plainPurchaseId'=>$plain['purchase']->id,'categoryId'=>$category->id]));
+                }
+            }
+        }
+        $this->assertDatabaseCount('sale_products',1);
+        $this->assertEquals(6,ProductStock::sum('currentStock'));
     }
 }

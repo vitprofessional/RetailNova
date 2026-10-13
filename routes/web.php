@@ -457,6 +457,12 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
             'damageProductDelete'
         ])->name('damageProductDelete');
 
+    Route::get('/purchase/invoices/{id}', [\App\Http\Controllers\PurchaseInvoiceController::class,'show'])->name('purchase.invoice.show')->whereNumber('id');
+    Route::get('/purchase/invoices/{id}/edit', [\App\Http\Controllers\PurchaseInvoiceController::class,'edit'])->name('purchase.invoice.edit')->whereNumber('id');
+    Route::post('/purchase/invoices/{id}', [\App\Http\Controllers\PurchaseInvoiceController::class,'update'])->name('purchase.invoice.update')->whereNumber('id');
+    Route::delete('/purchase/invoices/{id}', [\App\Http\Controllers\PurchaseInvoiceController::class,'destroy'])->name('purchase.invoice.destroy')->whereNumber('id');
+    Route::post('/purchase/invoices/bulk-delete', [\App\Http\Controllers\PurchaseInvoiceController::class,'bulkDelete'])->name('purchase.invoice.bulkDelete');
+
     //purchase str-------------------------
 
     Route::get('/add/purchase',[

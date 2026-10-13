@@ -1,4 +1,4 @@
-@extends('include') @section('backTitle') purchase return @endsection @section('container')
+@extends('include') @section('backTitle'){{ __('navigation.purchase_returns') }}@endsection @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -11,6 +11,11 @@
         <h4>{{ __('purchases.purchase_return') }}</h4>
     </div>
     <div class="card-body">
+        @if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif
+        @if($purchase->serials()->exists())<fieldset class="mb-3"><legend>{{ __('purchases.return_serials_required') }}</legend>
+        @foreach($purchase->serials as $serial)@if($serial->saleId===null && in_array($serial->status,[null,'available'],true))
+        <label class="mr-3"><input type="checkbox" name="serialIds[]" value="{{ $serial->id }}"> {{ $serial->serialNumber }}</label>
+        @endif @endforeach</fieldset>@endif
         <div class="row">
             <div class="col-md-4">
                 <h5>{{ __('purchases.supplier_details') }}</h5>

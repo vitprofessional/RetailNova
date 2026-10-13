@@ -1,9 +1,10 @@
 @php
     $actor = auth('admin')->user();
     $role = $actor ? strtolower($actor->role) : null;
-    $isAdminLike = in_array($role, ['admin','superadmin']);
+    $isAdminLike = $businessSelectionAllowed ?? in_array($role, ['admin','superadmin']);
     $bizList = isset($businesses) ? $businesses : \App\Models\BusinessSetup::orderBy('id','asc')->get();
-    $selectedBizId = isset($selectedBusinessId) ? $selectedBusinessId : old('businessId');
+    $selectedBizId = old('businessId',$selectedBusinessId ?? null);
+    if(isset($businessSelectionAllowed) && !$selectedBizId && count($bizList)===1){$selectedBizId=$bizList->first()->id;}
 @endphp
 
 @if($isAdminLike)

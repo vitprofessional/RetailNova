@@ -321,7 +321,7 @@ window.addPurchaseRow = function(productId){
     try{
         // prevent duplicates: if productId already exists in productName[] hidden inputs, skip
         try{
-            var existingInputs = document.querySelectorAll('input[name="productName[]"]');
+            var existingInputs = document.querySelectorAll('input[name^="productName["]');
             for(var ei=0; ei<existingInputs.length; ei++){
                 if(String(existingInputs[ei].value) === String(productId)){
                     showToast(window.RNTranslate('common.client_warning'),window.RNTranslate('common.client_product_already_added_to_the_list'),'warning');
@@ -402,7 +402,7 @@ window.addPurchaseRow = function(productId){
             try{
                 var row = document.querySelector('tr.product-row[data-idx="'+idx+'"]');
                 if(!row) return;
-                var nameInput = row.querySelector('input[name="selectProductName[]"]'); if(nameInput) nameInput.value = data.productName || data.name || '';
+                var nameInput = row.querySelector('input[name^="selectProductName["]'); if(nameInput) nameInput.value = data.productName || data.name || '';
                 var cur = row.querySelector('#currentStock'+idx) || row.querySelector('#currentStock__IDX__'.replace('__IDX__', idx)); if(cur) cur.value = (data.currentStock || 0);
                 var buy = row.querySelector('#buyPrice'+idx) || row.querySelector('#buyPrice__IDX__'.replace('__IDX__', idx));
                 var sale = row.querySelector('#salePriceExVat'+idx) || row.querySelector('#salePriceExVat__IDX__'.replace('__IDX__', idx));
@@ -455,19 +455,19 @@ function createSerialRow(value){
         // Use a simple flex layout to avoid grid column wrapping issues inside modal bodies
         var wrap = document.createElement('div'); wrap.className = 'serial-input-row d-flex mb-3 align-items-center';
         // input (flex-grow)
-        var inp = document.createElement('input'); inp.className = 'form-control flex-grow-1'; inp.name = 'serialNumber[]'; inp.value = value || ''; inp.placeholder = 'Enter serial number';
+        var inp = document.createElement('input'); inp.className = 'form-control flex-grow-1'; inp.name = 'serialNumber[]'; inp.setAttribute('form','purchaseSerialStaging'); inp.value = value || ''; inp.placeholder = @json(__('common.enter_serial_number'));
         inp.style.marginRight = '12px';
         // buttons container
         var btnGroup = document.createElement('div'); btnGroup.className = 'd-flex';
         var btnRemove = document.createElement('button'); btnRemove.type='button'; btnRemove.className='btn btn-sm btn-outline-danger remove-serial'; btnRemove.textContent=window.RNTranslate('common.client_remove');
-        var btnAuto = document.createElement('button'); btnAuto.type='button'; btnAuto.className='btn btn-sm btn-outline-info auto-gen-serial-row'; btnAuto.textContent='Auto'; btnAuto.style.marginLeft='6px';
+        var btnAuto = document.createElement('button'); btnAuto.type='button'; btnAuto.className='btn btn-sm btn-outline-info auto-gen-serial-row'; btnAuto.textContent=@json(__('purchases.auto')); btnAuto.style.marginLeft='6px';
         btnGroup.appendChild(btnRemove); btnGroup.appendChild(btnAuto);
         wrap.appendChild(inp); wrap.appendChild(btnGroup);
         return wrap;
     }catch(e){
         console.warn('createSerialRow error', e);
         var r = document.createElement('div'); r.className='serial-input-row d-flex mb-3';
-        r.innerHTML = '<input class="form-control flex-grow-1" name="serialNumber[]" value="'+(value||'')+'" style="margin-right:12px;" /><div class="d-flex"><button type="button" class="btn btn-sm btn-outline-danger remove-serial">{{ __('purchases.remove') }}</button><button type="button" class="btn btn-sm btn-outline-info auto-gen-serial-row" style="margin-left:6px;">Auto</button></div>';
+        r.innerHTML = '<input class="form-control flex-grow-1" name="serialNumber[]" form="purchaseSerialStaging" value="'+(value||'')+'" style="margin-right:12px;" /><div class="d-flex"><button type="button" class="btn btn-sm btn-outline-danger remove-serial">{{ __('purchases.remove') }}</button><button type="button" class="btn btn-sm btn-outline-info auto-gen-serial-row" style="margin-left:6px;">{{ __('purchases.auto') }}</button></div>';
         return r;
     }
 }
@@ -654,7 +654,7 @@ document.addEventListener('click', function(e){
                         // Professional serial format: <PROD>-YYYYMMDD-<ROW>-<NNNN>
                         var row = document.querySelector('tr.product-row[data-idx="'+(idx||'')+'"]');
                         var prodName = '';
-                        try{ if(row) prodName = (row.querySelector('input[name="selectProductName[]"]')||{}).value || ''; }catch(e){}
+                        try{ if(row) prodName = (row.querySelector('input[name^="selectProductName["]')||{}).value || ''; }catch(e){}
                         var prodCode = buildProductCode(prodName) || ('P'+(idx||'0'));
                         var dt = new Date();
                         var ymd = dt.getFullYear().toString() + String(dt.getMonth()+1).padStart(2,'0') + String(dt.getDate()).padStart(2,'0');
@@ -758,7 +758,7 @@ document.addEventListener('click', function(e){
 
             // generate codes and assign to all inputs (existing + new) up to qty
             var prodName = '';
-            try{ prodName = (row.querySelector('input[name="selectProductName[]"]')||{}).value || ''; }catch(e){}
+            try{ prodName = (row.querySelector('input[name^="selectProductName["]')||{}).value || ''; }catch(e){}
             var prodCode = buildProductCode(prodName) || ('P'+idx);
             var dt = new Date();
             var ymd = dt.getFullYear().toString() + String(dt.getMonth()+1).padStart(2,'0') + String(dt.getDate()).padStart(2,'0');
@@ -771,14 +771,16 @@ document.addEventListener('click', function(e){
             enforceSerialCapacity(modal);
             return;
         }
-        if(target && target.classList && target.classList.contains('remove-row')){
+        if(target && target.classList && target.classList.contains('remove-row') && target.closest('#savePurchase')){
             var tr = target.closest('tr');
             if(!tr) return;
 
             var doRemove = function(){
                 try{ tr.remove(); }catch(e){}
-                try{ if(typeof updateTotalsClientSide === 'function') updateTotalsClientSide(); }catch(e){}
-                try{ if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); }catch(e){}
+                try{
+                    if(typeof window.recalcFinancials === 'function') window.recalcFinancials();
+                    else if(typeof updateTotalsClientSide === 'function') updateTotalsClientSide();
+                }catch(e){}
                 try{
                     var rows = document.querySelectorAll('tr.product-row');
                     if(!rows || rows.length === 0){
@@ -791,19 +793,8 @@ document.addEventListener('click', function(e){
                 }catch(e){}
             };
 
-            // Prefer SweetAlert2 (Swal.fire) or older swal if available, otherwise fallback to confirm()
-            try{
-                if(window.Swal && typeof window.Swal.fire === 'function'){
-                    window.Swal.fire({ title: window.RNTranslate('common.remove_row'), text: window.RNTranslate('common.confirm_remove_row'), icon: 'warning', showCancelButton: true, confirmButtonText: window.RNTranslate('common.remove'), cancelButtonText: window.RNTranslate('common.cancel') })
-                        .then(function(result){ if(result && result.isConfirmed){ doRemove(); } });
-                } else if(window.swal && typeof window.swal === 'function'){
-                    // some versions expose swal as a function returning a promise
-                    try{ window.swal({ title: window.RNTranslate('common.remove_row'), text: window.RNTranslate('common.confirm_remove_row'), icon: 'warning', buttons: true }).then(function(ok){ if(ok) doRemove(); }); }
-                    catch(e){ if(confirm(window.RNTranslate('common.client_remove_this_row'))) doRemove(); }
-                } else {
-                    if(confirm(window.RNTranslate('common.client_remove_this_row'))) doRemove();
-                }
-            }catch(e){ if(confirm(window.RNTranslate('common.client_remove_this_row'))) doRemove(); }
+            e.preventDefault();
+            window.RNConfirmItemRemoval(tr, doRemove);
         }
         // open serial modal
         if(target && target.classList && target.classList.contains('open-serials')){
@@ -811,6 +802,7 @@ document.addEventListener('click', function(e){
             if(!idx) return;
             var modal = document.getElementById('serialModal');
             if(!modal) return;
+            syncPurchaseSerialsFromModal();
             // set a data attribute to know which row's serials we're editing
             modal.setAttribute('data-current-idx', idx);
             // clear modal inputs and populate with any existing hidden serial inputs from the row
@@ -841,6 +833,23 @@ document.addEventListener('click', function(e){
     }catch(e){ console.warn('row click handler', e); }
 });
 
+function syncPurchaseSerialsFromModal(){
+    var modal=document.getElementById('serialModal'); if(!modal)return;
+    var idx=modal.getAttribute('data-current-idx'); if(!idx)return;
+    var row=document.querySelector('tr.product-row[data-idx="'+idx+'"]'); if(!row)return;
+    row.querySelectorAll('input[type="hidden"][data-serial]').forEach(function(el){el.remove();});
+    modal.querySelectorAll('#serialNumberBox input[name="serialNumber[]"]').forEach(function(el){
+        if(!el.value.trim())return;
+        var hidden=document.createElement('input');hidden.type='hidden';hidden.value=el.value.trim();
+        hidden.name=document.getElementById('purchase-row-template') ? 'serialNumber['+idx+'][]' : 'serialNumber[]';
+        hidden.setAttribute('data-serial','1');row.appendChild(hidden);
+    });
+}
+document.addEventListener('submit',function(e){if(e.target.id==='savePurchase')syncPurchaseSerialsFromModal();},true);
+document.addEventListener('click',function(e){
+    if(e.target.closest('[data-dismiss="modal"], [data-bs-dismiss="modal"]'))syncPurchaseSerialsFromModal();
+});
+
 // Validate serial counts against quantities before submitting the purchase form (create or edit)
 document.addEventListener('submit', function(e){
     try{
@@ -869,10 +878,10 @@ document.addEventListener('submit', function(e){
                 }
                 var totalSerials = newHidden + existing;
 
-                if(qty > totalSerials){
+                if(totalSerials > qty){
                     var productName = '';
-                    try{ productName = (row.querySelector('input[name="selectProductName[]"]')||{}).value || (row.querySelector('#productName')||{}).value || ''; }catch(_){ }
-                    problems.push('Row '+(idx+1)+(productName? (' ['+productName+']'):'')+': Qty '+qty+' > Serials '+totalSerials);
+                    try{ productName = (row.querySelector('input[name^="selectProductName["]')||{}).value || (row.querySelector('#productName')||{}).value || ''; }catch(_){ }
+                    problems.push(window.RNTranslate('purchase_item_error',{row:idx+1,product:productName?(' ['+productName+']'):''})+window.RNTranslate('common.purchase_serial_capacity'));
                     if(!firstBadRow) firstBadRow = row;
                 }
             }catch(_){ }
@@ -893,7 +902,7 @@ document.addEventListener('submit', function(e){
                 if(window.Swal && typeof window.Swal.fire === 'function'){
                     window.Swal.fire({
                         title: window.RNTranslate('common.validation_error'),
-                        html: window.RNTranslate('common.rows_need_serials')+problems.join('<br>'),
+                        text: problems.join('\n'),
                         icon: 'error'
                     });
                 } else if(window.swal && typeof window.swal === 'function'){
@@ -901,9 +910,9 @@ document.addEventListener('submit', function(e){
                 } else if(typeof showToast === 'function'){
                     showToast(window.RNTranslate('common.client_validation'), problems.join('\n'), 'error');
                 } else {
-                    alert('Validation error:\n'+problems.join('\n'));
+                    alert(window.RNTranslate('common.validation_error')+'\n'+problems.join('\n'));
                 }
-            }catch(_){ alert('Validation error:\n'+problems.join('\n')); }
+            }catch(_){ alert(window.RNTranslate('common.validation_error')+'\n'+problems.join('\n')); }
             try{ if(firstBadRow) firstBadRow.scrollIntoView({behavior:'smooth', block:'center'}); }catch(_){}
         }
     }catch(err){ console.warn('submit validation error', err); }
@@ -937,7 +946,7 @@ if(window.jQuery){
             newInputs.forEach(function(inp){ allInputs.push(inp); });
 
             // Detect if this is an edit page (single row with simple form structure)
-            var isEditPage = !document.querySelector('input[name="productName[]"]');
+            var isEditPage = !document.querySelector('input[name^="productName["]');
 
             allInputs.forEach(function(inp){
                 var v = inp.value.trim();
@@ -1063,7 +1072,7 @@ if(window.jQuery){
                         var r = rows[i];
                         // Support multiple templates: per-row product hidden (`productName[]`), per-row display (`selectProductName[]`),
                         // or single-row edit form using top-level `productName` select/input.
-                        var prod = r.querySelector('input[name="productName[]"], input[name="selectProductName[]"], select[name="productName_select"], input[name="productName"]');
+                        var prod = r.querySelector('input[name^="productName["], input[name^="selectProductName["], select[name="productName_select"], input[name="productName"]');
                         // if row doesn't have a per-row product input, fall back to top-level product selector
                         if(!prod){
                             prod = document.querySelector('select[name="productName_select"], input[name="productName"]');

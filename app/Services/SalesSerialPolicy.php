@@ -35,7 +35,7 @@ class SalesSerialPolicy
     {
         $purchase = PurchaseProduct::withoutGlobalScopes()->lockForUpdate()->find($purchaseId);
         $actor = auth('admin')->user();
-        $platform = $actor && in_array(strtolower(trim($actor->role)), ['admin', 'superadmin'], true);
+        $platform = $actor && $actor->canAccessAllSalesBusinesses();
         $product = $purchase ? Product::withoutGlobalScopes()->find($purchase->productName) : null;
         if (!$purchase || !$actor || (!$platform && ((int) $actor->businessId <= 0
             || (int) $actor->businessId !== (int) $purchase->businessId))

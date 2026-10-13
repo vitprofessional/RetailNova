@@ -20,12 +20,16 @@ class PurchaseSaveRequest extends FormRequest
             'purchaseId'          => ['nullable','array'],
             'purchaseId.*'        => ['nullable','integer','exists:purchase_products,id'],
             // Allow either a single product id or an array of product ids for multi-row purchases
-            'productName'         => ['required'],
+            'productName'         => ['required_without:rows'],
+            'rows'               => ['sometimes','array','min:1'],
+            'rows.*.product_id'   => ['required','integer'],
+            'rows.*.qty'          => ['required','integer','min:1'],
+            'rows.*.buy_price'    => ['required','numeric','min:0'],
             'productName.*'       => ['nullable','integer','exists:products,id'],
             'supplierName'        => ['required','integer','exists:suppliers,id'],
             'purchaseDate'        => ['required','date'],
             // quantities may be a single integer or an array matching productName
-            'quantity'            => ['required'],
+            'quantity'            => ['required_without:rows'],
             'quantity.*'          => ['nullable','integer','min:1'],
             'buyPrice'            => ['nullable'],
             'buyPrice.*'          => ['nullable','numeric','min:0'],

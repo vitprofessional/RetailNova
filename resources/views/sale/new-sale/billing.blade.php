@@ -1,0 +1,21 @@
+<section class="rn-sale-panel" id="paymentDetails"><h2>{{ __('sales.billing_summary') }}</h2>
+<div class="rn-sale-billing-row "><label for="totalSaleAmount">{{ __('common.subtotal') }}</label><input type="number" class="form-control" id="totalSaleAmount" name="totalSaleAmount" value="0" step="0.01" min="0" readonly>@error('totalSaleAmount')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+<div class="rn-sale-billing-row "><label for="discountAmount">{{ __('common.discount_amount') }}</label><input type="number" class="form-control" id="discountAmount" name="discountAmount" value="0" step="0.01" min="0">@error('discountAmount')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+<div class="rn-sale-billing-row "><label for="additionalChargeName">{{ __('sales.additional_charge_name') }}</label><input type="text" class="form-control" id="additionalChargeName" name="additionalChargeName" maxlength="190">@error('additionalChargeName')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+<div class="rn-sale-billing-row "><label for="additionalChargeAmount">{{ __('sales.additional_charge_amount') }}</label><input type="number" class="form-control" id="additionalChargeAmount" name="additionalChargeAmount" value="0" step="0.01" min="0">@error('additionalChargeAmount')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+<div class="rn-sale-billing-row rn-sale-grand"><label for="grandTotal">{{ __('common.grand_total') }}</label><input type="number" class="form-control" id="grandTotal" name="grandTotal" value="0" step="0.01" min="0" readonly>@error('grandTotal')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+<p class="rn-sale-help">{{ __('sales.pricing_context') }}</p></section>
+<section class="rn-sale-panel rn-sale-payment"><h2>{{ __('sales.payment_details') }}</h2>
+<div class="rn-sale-billing-row"><label for="paidAmount">{{ __('common.paid_amount') }}</label><input type="number" class="form-control" id="paidAmount" name="paidAmount" value="0" min="0" step="0.01">@error('paidAmount')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+<button type="button" id="rnReceiveAmountBtn" class="btn btn-outline-primary btn-sm">{{ __('sales.receive_amount') }}</button>
+<div class="rn-sale-billing-row rn-sale-outstanding"><label for="dueAmount">{{ __('common.due_amount') }}</label><input type="number" class="form-control" id="dueAmount" name="dueAmount" value="0" readonly></div>
+<div class="rn-sale-help">{{ __('sales.recorded_by') }}: {{ optional(auth('admin')->user())->fullName ?? '' }}</div>
+<span id="totalOutstandingDisplay" class="rn-sale-due" aria-live="polite">{{ __('common.total_outstanding_0_00') }}</span>
+<input type="hidden" id="prevDue" name="prevDue" value="0"><input type="hidden" id="curDue" name="curDue" value="0">
+</section>
+<section class="rn-sale-panel rn-sale-field"><h2><label for="note">{{ __('sales.note_if_applicable') }}</label></h2><textarea class="form-control" id="note" name="note" maxlength="1000" placeholder="{{ __('common.enter_some_notes_if_you_have') }}">{{ old('note') }}</textarea>@error('note')<div class="invalid-feedback">{{ $message }}</div>@enderror</section>
+<section class="rn-sale-panel rn-sale-field"><label for="printerProfile">{{ __('sales.printer_profile') }}</label>
+@php $defaultInvoicePrinter=in_array($defaultInvoicePrinter ?? '',['a4','thermal80','thermal58'],true) ? $defaultInvoicePrinter : 'thermal80'; @endphp
+<select class="form-control" id="printerProfile" name="printerProfile"><option value="a4" @selected($defaultInvoicePrinter==='a4')>{{ __('sales.a4_invoice') }}</option><option value="thermal80" @selected($defaultInvoicePrinter==='thermal80')>{{ __('sales.pos_thermal_80mm') }}</option><option value="thermal58" @selected($defaultInvoicePrinter==='thermal58')>{{ __('sales.pos_thermal_58mm') }}</option></select>
+<div class="rn-sale-save-actions"><button type="submit" id="saleSaveButton" data-sale-action="save" class="btn btn-outline-primary save-btn" disabled>{{ __('common.save') }}</button><button type="submit" id="saleSavePrintButton" data-sale-action="save_print" class="btn btn-primary save-btn" disabled>{{ __('sales.save_and_print') }}</button></div>
+<div id="saleSubmitStatus" class="rn-sale-help" role="status" aria-live="polite"></div></section>

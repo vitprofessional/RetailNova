@@ -15,7 +15,7 @@ class PurchaseProduct extends Model implements AuditableContract
     protected $fillable = [
         'productName', 'supplier', 'invoice', 'qty', 'buyPrice', 'salePriceExVat', 
         'salePriceInVat', 'vatStatus', 'vatPercent', 'totalAmount', 'grandTotal', 'paidAmount', 
-        'dueAmount', 'purchase_date', 'reference', 'businessId'
+        'dueAmount', 'purchase_date', 'reference', 'businessId', 'purchase_invoice_id'
     ];
 
     protected $casts = [
@@ -43,6 +43,9 @@ class PurchaseProduct extends Model implements AuditableContract
     {
         return $this->belongsTo(Product::class, 'productName');
     }
+
+    public function invoiceHeader() { return $this->belongsTo(PurchaseInvoice::class, 'purchase_invoice_id'); }
+    public function serials() { return $this->hasMany(ProductSerial::class, 'purchaseId'); }
 
     /**
      * Get the supplier for this purchase.

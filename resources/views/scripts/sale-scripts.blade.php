@@ -44,7 +44,24 @@
         return { base: base, productsTpl: productsTpl, categoriesUrl: categoriesUrl, categoryProductsTpl: categoryProductsTpl, purchaseTpl: purchaseTpl, purchaseByIdTpl: purchaseByIdTpl, purchaseSerialTpl: purchaseSerialTpl };
     }
     var ROUTES = {}; // will populate on DOMContentLoaded
+    var SALE_SUBMITTING = false;
     var SALE_ROW_COUNTER = 0; // per-row counter to track serial selections
+    var SALE_CUSTOMER_VERSION = 0;
+    var SALE_PRODUCT_REQUEST = 0;
+    function customerReady(){
+        var customer = byId('customerName');
+        return !!(customer && customer.value && customer.dataset.customerReady === '1');
+    }
+    function refreshCustomerGate(){
+        var customer = byId('customerName');
+        if(!customer) return;
+        var ready = !!customer.value && customer.dataset.productsReady === '1' && customer.dataset.dueReady === '1';
+        customer.dataset.customerReady = ready ? '1' : '0';
+        ['saleProductSearch','barcodeInput','searchBarcodeBtn','categorySelect','productName','outOfStockBtn'].forEach(function(id){ var el=byId(id); if(el) el.disabled=!ready; });
+        var note=byId('saleCustomerGateMessage');
+        if(note) note.textContent=ready ? '' : window.RNTranslate(!customer.value ? 'sale_customer_first_instruction' : customer.dataset.lookupError === '1' ? 'sale_customer_lookup_failed' : 'sale_customer_loading');
+        toggleSaveButton();
+    }
 
     // Ensure AJAX URLs are finalized safely. If a template is absolute or root-relative,
     // use it as-is. Otherwise fall back to `adjustForSubfolder` for legacy relative paths.
@@ -68,6 +85,7 @@
         if(!productSel) return;
         productSel.disabled = true;
         if(categorySel) categorySel.disabled = true;
+        refreshCustomerGate();
         // Ensure form action posts to subfolder-aware URL
         try{
             var form = byId('saveSaleForm');
@@ -114,14 +132,21 @@
                 if(customerSel){
             customerSel.addEventListener('change', function(){
                 var cid = this.value;
+                var version = ++SALE_CUSTOMER_VERSION; ++SALE_PRODUCT_REQUEST;
+                customerSel.dataset.selectionVersion=String(version);
+                customerSel.dataset.productsReady='0'; customerSel.dataset.dueReady='0'; customerSel.dataset.lookupError='0';
+                if(byId('prevDue')) byId('prevDue').value=0;
+                if(byId('prevDueDisplay')) byId('prevDueDisplay').textContent=window.RNTranslate('previous_due_value',{amount:'0.00'});
+                recalcTotals(); refreshCustomerGate();
+                if(!cid){ productSel.innerHTML='<option value="">'+window.RNTranslate('common.select')+'</option>'; if(categorySel) categorySel.value=''; return; }
                         // Fetch and display customer's previous due
                         try{
                             var prevTpl = ROUTES.base + '/ajax/public/customer/'+encodeURIComponent(cid)+'/previous-due';
                             prevTpl = safeFinalizeUrl(prevTpl);
                             fetch(prevTpl, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                                 .then(function(res){ if(res.status >= 400) throw new Error('prevDue fetch failed'); return res.json(); })
-                                .then(function(json){ try{ var v = (json && json.prevDue) ? json.prevDue : '0.00'; var prevEl = byId('prevDue'); if(prevEl) prevEl.value = v; var disp = byId('prevDueDisplay'); if(disp) disp.textContent = window.RNTranslate('previous_due_value',{amount:v}); }catch(e){} })
-                                .catch(function(e){ if(window.__SALEDEBUG) console.warn('prevDue fetch error', e); var prevEl = byId('prevDue'); if(prevEl) prevEl.value = 0; var disp = byId('prevDueDisplay'); if(disp) disp.textContent = window.RNTranslate('previous_due_value',{amount:'0.00'}); });
+                                .then(function(json){ if(version!==SALE_CUSTOMER_VERSION) return; if(!json || json.status!=='ok') throw new Error('Invalid customer balance'); var v=json.prevDue || '0.00'; if(byId('prevDue')) byId('prevDue').value=v; if(byId('prevDueDisplay')) byId('prevDueDisplay').textContent=window.RNTranslate('previous_due_value',{amount:v}); customerSel.dataset.dueReady='1'; recalcTotals(); refreshCustomerGate(); })
+                                .catch(function(e){ if(version!==SALE_CUSTOMER_VERSION) return; customerSel.dataset.lookupError='1'; refreshCustomerGate(); });
                         }catch(e){ /* ignore prev due fetch errors */ }
                 if(!cid){ productSel.innerHTML = ('<option value="">' + window.RNTranslate('common.select') + '</option>'); productSel.disabled = true; if(categorySel){ categorySel.innerHTML = ('<option value="">' + window.RNTranslate('common.all_categories') + '</option>'); categorySel.disabled = true; } return; }
                 var tpl = ROUTES.productsTpl || customerSel.getAttribute('data-products-url') || '';
@@ -146,17 +171,19 @@
                         return res.json();
                     })
                     .then(function(data){
+                        if(version!==SALE_CUSTOMER_VERSION || customerSel.value!==cid) return;
                         try{
                             productSel.innerHTML = (data && data.data) ? data.data : ('<option value="">' + window.RNTranslate('common.select') + '</option>');
                             productSel.disabled = false;
+                            customerSel.dataset.productsReady='1'; refreshCustomerGate();
                             // Load categories
                             if(categorySel){
                                 var cUrl = ROUTES.categoriesUrl || (ROUTES.base + '/ajax/public/categories');
                                 cUrl = safeFinalizeUrl(cUrl);
                                 fetch(cUrl, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                                   .then(function(res){ return res.json(); })
-                                  .then(function(json){ try{ categorySel.innerHTML = (json && json.data) ? json.data : ('<option value="">' + window.RNTranslate('common.all_categories') + '</option>'); categorySel.disabled = false; }catch(e){} })
-                                  .catch(function(){ try{ categorySel.innerHTML = ('<option value="">' + window.RNTranslate('common.all_categories') + '</option>'); categorySel.disabled = false; }catch(e){} });
+                                  .then(function(json){ if(version!==SALE_CUSTOMER_VERSION) return; categorySel.innerHTML=(json && json.data) || '<option value="">'+window.RNTranslate('common.all_categories')+'</option>'; refreshCustomerGate(); })
+                                  .catch(function(){ if(version===SALE_CUSTOMER_VERSION) refreshCustomerGate(); });
                             }
                             // If there are out-of-stock items returned, populate modal data and show note/button
                             try{
@@ -165,24 +192,24 @@
                                 var outList = byId('outOfStockList');
                                 var outArr = (data && data.outOfStock) ? data.outOfStock : [];
                                 if(outBtn){
-                                    try{ var cnt = (outArr && outArr.length) ? outArr.length : 0; outBtn.innerText = 'View Out of Stock(' + cnt + ')'; }catch(e){}
-                                    try{ outBtn.title = (outArr && outArr.length) ? (outArr.length + ' product(s) out of stock') : 'No out-of-stock items'; }catch(e){}
+                                    try{ var cnt = (outArr && outArr.length) ? outArr.length : 0; outBtn.innerText = window.RNTranslate('sale_out_of_stock',{count:cnt}); }catch(e){}
+                                    try{ outBtn.title = (outArr && outArr.length) ? window.RNTranslate('sale_out_of_stock',{count:outArr.length}) : window.RNTranslate('sale_no_out_of_stock'); }catch(e){}
                                     try{ outBtn.style.display = (outArr && outArr.length) ? 'inline-block' : 'none'; }catch(e){}
                                 }
                                 if(outNote){ try{ outNote.style.display = 'none'; outNote.textContent = ''; }catch(e){} }
                                 if(outList){
-                                    if(outArr.length === 0){ outList.innerHTML = '<p class="text-muted">No out-of-stock items.</p>'; }
+                                    if(outArr.length === 0){ outList.innerHTML = '<p class="text-muted">'+window.RNTranslate('sale_no_out_of_stock')+'</p>'; }
                                     else {
                                         var html = '<div class="list-group">';
                                         outArr.forEach(function(it){
                                             var pd = it.purchaseDate ? (' ['+it.purchaseDate+']') : '';
                                             var viewLink = it.productId ? (adjustForSubfolder('/product/edit/' + encodeURIComponent(it.productId))) : '#';
                                             html += '<div class="list-group-item d-flex justify-content-between align-items-center">'+
-                                                '<div><strong>'+ (it.productName || '') +'</strong> — '+ (it.supplierName || 'Unknown') + pd +
-                                                ' <span class="badge bg-secondary ms-2">Stock: '+ (it.currentStock || 0) +'</span></div>' +
+                                                '<div><strong>'+ (it.productName || '') +'</strong> — '+ (it.supplierName || window.RNTranslate('sale_unknown_supplier')) + pd +
+                                                ' <span class="badge bg-secondary ms-2">'+window.RNTranslate('common.stock')+': '+ (it.currentStock || 0) +'</span></div>' +
                                                 '<div>' +
                                                     (it.productId ? '<a class="btn btn-sm btn-outline-primary me-2" href="'+viewLink+'" target="_blank">'+window.RNTranslate('view')+'</a>' : '') +
-                                                    '<button style="display:none;" class="btn btn-sm btn-outline-success add-backorder" data-purchase-id="'+(it.purchaseId||'')+'">Add as backorder</button>' +
+                                                    '<button style="display:none;" class="btn btn-sm btn-outline-success add-backorder" data-purchase-id="'+(it.purchaseId||'')+'">'+window.RNTranslate('sale_add_backorder')+'</button>' +
                                                 '</div>' +
                                                 '</div>';
                                         });
@@ -191,13 +218,15 @@
                                     }
                                 }
                             }catch(e){}
-                        }catch(e){ productSel.disabled = false; }
-                    }).catch(function(err){ console.warn('products fetch error', err); productSel.disabled = false; });
+                        }catch(e){ customerSel.dataset.lookupError='1'; refreshCustomerGate(); }
+                    }).catch(function(err){ if(version!==SALE_CUSTOMER_VERSION) return; customerSel.dataset.lookupError='1'; refreshCustomerGate(); });
             });
         }
 
         // When a product is selected, fetch purchase rows and prefill first one; allow adding multiple via table
         productSel.addEventListener('change', function(){
+            if(!customerReady()) return;
+            var customerVersion=SALE_CUSTOMER_VERSION;
             var pid = this.value; if(!pid) return;
             var tpl2 = ROUTES.purchaseTpl || productSel.getAttribute('data-purchase-url') || '';
             // If the option value indicates a specific purchase row (purchase_123),
@@ -218,6 +247,7 @@
             try{ var low2 = String(url2).toLowerCase(); if(low2.indexOf('/logout')!==-1 || low2.indexOf('/login')!==-1){ console.warn('[SALE] Aborting AJAX to auth route:', url2); showToast && showToast(window.RNTranslate('common.client_ajax_blocked'),window.RNTranslate('common.client_invalid_product_details_url'),'error'); return; } }catch(e){}
             fetch(url2, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                         .then(function(res){
+                            if(customerVersion!==SALE_CUSTOMER_VERSION || !customerReady()) return;
                             if(!res.ok || res.redirected){
                                 try{ showToast(window.RNTranslate('common.client_product_details_blocked'),window.RNTranslate('common.client_authentication_required_or_redirected'),'error'); }catch(_){}
                                 throw new Error('Purchase details fetch redirected/unauthorized');
@@ -241,6 +271,8 @@
         // When a category is selected, filter product list by that category
         if(categorySel){
             categorySel.addEventListener('change', function(){
+                if(!customerReady()) return;
+                var requestVersion=++SALE_PRODUCT_REQUEST, customerVersion=SALE_CUSTOMER_VERSION;
                 try{
                     var catId = this.value;
                     if(!catId){
@@ -252,7 +284,7 @@
                         url = safeFinalizeUrl(url);
                         fetch(url, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                           .then(function(res){ return res.json(); })
-                          .then(function(json){ try{ productSel.innerHTML = (json && json.data) ? json.data : ('<option value="">' + window.RNTranslate('common.select') + '</option>'); }catch(e){} });
+                          .then(function(json){ if(requestVersion!==SALE_PRODUCT_REQUEST || customerVersion!==SALE_CUSTOMER_VERSION || !customerReady()) return; productSel.innerHTML=(json && json.data) || '<option value="">'+window.RNTranslate('common.select')+'</option>'; });
                         return;
                     }
                     var cpTpl = ROUTES.categoryProductsTpl || '';
@@ -261,6 +293,7 @@
                     fetch(cpUrl, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                       .then(function(res){ return res.json(); })
                       .then(function(json){
+                        if(requestVersion!==SALE_PRODUCT_REQUEST || customerVersion!==SALE_CUSTOMER_VERSION || !customerReady()) return;
                         try{
                             productSel.innerHTML = (json && json.data) ? json.data : ('<option value="">' + window.RNTranslate('common.select') + '</option>');
                             // update out-of-stock modal list if provided
@@ -269,24 +302,24 @@
                             var outBtn = byId('outOfStockBtn');
                             var outList = byId('outOfStockList');
                             if(outBtn){
-                                try{ var cnt2 = (outArr && outArr.length) ? outArr.length : 0; outBtn.innerText = 'View Out of Stock(' + cnt2 + ')'; }catch(e){}
-                                try{ outBtn.title = (outArr && outArr.length) ? (outArr.length + ' product(s) out of stock') : 'No out-of-stock items'; }catch(e){}
+                                try{ var cnt2 = (outArr && outArr.length) ? outArr.length : 0; outBtn.innerText = window.RNTranslate('sale_out_of_stock',{count:cnt2}); }catch(e){}
+                                try{ outBtn.title = (outArr && outArr.length) ? window.RNTranslate('sale_out_of_stock',{count:outArr.length}) : window.RNTranslate('sale_no_out_of_stock'); }catch(e){}
                                 try{ outBtn.style.display = (outArr && outArr.length) ? 'inline-block' : 'none'; }catch(e){}
                             }
                             if(outNote){ try{ outNote.style.display = 'none'; outNote.textContent = ''; }catch(e){} }
                             if(outList){
-                                if(outArr.length === 0){ outList.innerHTML = '<p class="text-muted">No out-of-stock items.</p>'; }
+                                if(outArr.length === 0){ outList.innerHTML = '<p class="text-muted">'+window.RNTranslate('sale_no_out_of_stock')+'</p>'; }
                                 else {
                                     var html = '<div class="list-group">';
                                     outArr.forEach(function(it){
                                         var pd = it.purchaseDate ? (' ['+it.purchaseDate+']') : '';
                                         var viewLink = it.productId ? (adjustForSubfolder('/product/edit/' + encodeURIComponent(it.productId))) : '#';
                                         html += '<div class="list-group-item d-flex justify-content-between align-items-center">'+
-                                            '<div><strong>'+ (it.productName || '') +'</strong> — '+ (it.supplierName || 'Unknown') + pd +
-                                            ' <span class="badge bg-secondary ms-2">Stock: '+ (it.currentStock || 0) +'</span></div>' +
+                                            '<div><strong>'+ (it.productName || '') +'</strong> — '+ (it.supplierName || window.RNTranslate('sale_unknown_supplier')) + pd +
+                                            ' <span class="badge bg-secondary ms-2">'+window.RNTranslate('common.stock')+': '+ (it.currentStock || 0) +'</span></div>' +
                                             '<div>' +
                                                 (it.productId ? '<a class="btn btn-sm btn-outline-primary me-2" href="'+viewLink+'" target="_blank">'+window.RNTranslate('view')+'</a>' : '') +
-                                                '<button style="display:none;" class="btn btn-sm btn-outline-success add-backorder" data-purchase-id="'+(it.purchaseId||'')+'">Add as backorder</button>' +
+                                                '<button style="display:none;" class="btn btn-sm btn-outline-success add-backorder" data-purchase-id="'+(it.purchaseId||'')+'">'+window.RNTranslate('sale_add_backorder')+'</button>' +
                                             '</div>' +
                                             '</div>';
                                     });
@@ -302,6 +335,7 @@
     });
 
     function appendSaleRow(p){
+        if(!customerReady()) return;
         try{
             var tbody = byId('productDetails'); if(!tbody) return;
             // If this purchaseId already exists in the table, increment qty instead of adding a duplicate row
@@ -317,12 +351,12 @@
                             var newQty = (parseInt(qtyEl.value||0,10) || 0) + 1;
                             if(currentStock <= 0){
                                 // show friendly UI message and do not add
-                                try{ var errBox = byId('saleErrorSummary'); if(errBox) errBox.innerHTML = '<div class="alert alert-warning mb-0">Product "'+(p.productName||'')+'" is out of stock and cannot be added.</div>'; setTimeout(function(){ try{ errBox.innerHTML=''; }catch(_){} },4000); }catch(e){}
-                                showToast && showToast(window.RNTranslate('common.client_out_of_stock'),'Product "'+(p.productName||'')+'" has no stock','error');
+                                try{ var errBox = byId('saleErrorSummary'); if(errBox) errBox.innerHTML = '<div class="alert alert-warning mb-0">'+window.RNTranslate('sale_out_of_stock_product',{product:p.productName||''})+'</div>'; setTimeout(function(){ try{ errBox.innerHTML=''; }catch(_){} },4000); }catch(e){}
+                                showToast && showToast(window.RNTranslate('common.client_out_of_stock'),window.RNTranslate('sale_out_of_stock_product',{product:p.productName||''}),'error');
                                 return;
                             }
                             if(newQty > currentStock){
-                                try{ var errBox2 = byId('saleErrorSummary'); if(errBox2) errBox2.innerHTML = '<div class="alert alert-danger mb-0">Cannot increase quantity beyond available stock ('+currentStock+').</div>'; setTimeout(function(){ try{ errBox2.innerHTML=''; }catch(_){} },4000); }catch(e){}
+                                try{ var errBox2 = byId('saleErrorSummary'); if(errBox2) errBox2.innerHTML = '<div class="alert alert-danger mb-0">'+window.RNTranslate('sale_stock_limit',{stock:currentStock})+'</div>'; setTimeout(function(){ try{ errBox2.innerHTML=''; }catch(_){} },4000); }catch(e){}
                                 showToast && showToast(window.RNTranslate('common.client_low_stock'),window.RNTranslate('common.client_cannot_increase_quantity_beyond_available_stock'),'error');
                                 return;
                             }
@@ -347,11 +381,11 @@
             tr.setAttribute('data-serial-available', '0');
             tr.innerHTML = `
                 <td data-label="${window.RNTranslate('remove')}"><button type="button" class="btn btn-sm btn-danger remove-row">${window.RNTranslate('remove')}</button></td>
-                <td data-label="${window.RNTranslate('product')}"><input type="text" class="form-control" value="${p.productName || ''}" readonly></td>
+                <td data-label="${window.RNTranslate('product')}"><span class="rn-sale-product-name"></span></td>
                 <td data-label="${window.RNTranslate('purchase_stock')}">
                     <input type="hidden" name="purchaseData[]" value="${purchaseId}">
                     <div class="small">${window.RNTranslate('common.supplier')}: ${p.supplierName || ''}</div>
-                    <div class="small">${window.RNTranslate('common.invoice')}: ${p.invoice || ''}</div>
+                    <div class="small">${window.RNTranslate('sale_purchase_reference')}: ${purchaseId}</div>
                     <div class="small">${window.RNTranslate('common.stock')}: <span class="row-stock">${p.currentStock || 0}</span></div>
                 </td>
                 <td data-label="${window.RNTranslate('serial_numbers')}">
@@ -362,21 +396,23 @@
                     <div class="text-danger small serial-note" style="display:none;"></div>
                     <div class="serial-hidden" style="display:none"></div>
                 </td>
-                <td data-label="${window.RNTranslate('warranty_days')}"><input type="text" class="form-control warrantyDays" name="warranty_days[]" placeholder="e.g. 365"></td>
-                <td data-label="${window.RNTranslate('quantity')}"><input type="number" class="form-control qty" name="qty[]" min="1" step="1" value="1"></td>
+                <td data-label="${window.RNTranslate('warranty_days')}"><input type="text" class="form-control warrantyDays" name="warranty_days[]" placeholder="${window.RNTranslate('sale_warranty_hint')}"></td>
+                <td data-label="${window.RNTranslate('quantity')}"><div class="rn-sale-quantity"><button type="button" data-sale-qty="-1" aria-label="${window.RNTranslate('sale_decrease_quantity')}" class="btn btn-outline-secondary">−</button><input type="number" class="form-control qty" name="qty[]" min="1" step="1" value="1" inputmode="numeric"><button type="button" data-sale-qty="1" aria-label="${window.RNTranslate('sale_increase_quantity')}" class="btn btn-outline-secondary">+</button></div></td>
                 <td data-label="${window.RNTranslate('sale_price')}"><input type="number" class="form-control salePrice" name="salePrice[]" value="${salePrice}" readonly></td>
                 <td data-label="${window.RNTranslate('line_total')}"><input type="number" class="form-control totalSale" readonly></td>
-                <td data-label="${window.RNTranslate('purchase_price')}"><input type="number" class="form-control buyPrice" name="buyPrice[]" value="${buyPrice}" readonly></td>
-                <td data-label="${window.RNTranslate('purchase_total')}"><input type="number" class="form-control totalPurchase" readonly></td>
-                <td data-label="${window.RNTranslate('profit_margin')}"><input type="text" class="form-control profitMargin" readonly></td>
-                <td data-label="${window.RNTranslate('profit_total')}"><input type="number" class="form-control profitTotal" readonly></td>
+                <td data-label="${window.RNTranslate('sale_cost_details')}" class="rn-sale-cost-cell"><details><summary>${window.RNTranslate('sale_cost_details')}</summary>
+                    <label>${window.RNTranslate('purchase_price')}<input type="number" class="form-control buyPrice" name="buyPrice[]" value="${buyPrice}" readonly></label>
+                    <label>${window.RNTranslate('purchase_total')}<input type="number" class="form-control totalPurchase" readonly></label>
+                    <label>${window.RNTranslate('profit_margin')}<input type="text" class="form-control profitMargin" readonly></label>
+                    <label>${window.RNTranslate('profit_total')}<input type="number" class="form-control profitTotal" readonly></label>
+                </details></td>
             `;
             // If this row was created as a backorder, mark it and include hidden marker for server
             try{
                 if(p && p.__backorder){
                     tr.classList.add('backorder-row');
                     var nameCell = tr.children[1];
-                    if(nameCell){ nameCell.innerHTML = nameCell.innerHTML + ' <span class="badge bg-warning text-dark backorder-badge ms-2">Backorder</span>'; }
+                    if(nameCell){ nameCell.innerHTML = nameCell.innerHTML + ' <span class="badge bg-warning text-dark backorder-badge ms-2">'+window.RNTranslate('sale_backorder')+'</span>'; }
                     var hin = document.createElement('input'); hin.type = 'hidden'; hin.name = 'backorder[]'; hin.value = purchaseId || '';
                     tr.appendChild(hin);
                 }
@@ -384,10 +420,12 @@
             // Prevent adding when there's no stock
             var stockAvailable = parseInt(p.currentStock || 0, 10);
             if(stockAvailable <= 0){
-                try{ var errBox3 = byId('saleErrorSummary'); if(errBox3) errBox3.innerHTML = '<div class="alert alert-warning mb-0">Product "'+(p.productName||'')+'" is out of stock and cannot be added.</div>'; setTimeout(function(){ try{ errBox3.innerHTML=''; }catch(_){} },4000); }catch(e){}
-                showToast && showToast(window.RNTranslate('common.client_out_of_stock'),'Product "'+(p.productName||'')+'" has no stock','error');
+                try{ var errBox3 = byId('saleErrorSummary'); if(errBox3) errBox3.innerHTML = '<div class="alert alert-warning mb-0">'+window.RNTranslate('sale_out_of_stock_product',{product:p.productName||''})+'</div>'; setTimeout(function(){ try{ errBox3.innerHTML=''; }catch(_){} },4000); }catch(e){}
+                showToast && showToast(window.RNTranslate('common.client_out_of_stock'),window.RNTranslate('sale_out_of_stock_product',{product:p.productName||''}),'error');
                 return;
             }
+            tr.querySelector('.rn-sale-product-name').textContent = p.productName || '';
+            tr.querySelectorAll('input:not([type=hidden])').forEach(function(input){ if(!input.closest('label')) input.setAttribute('aria-label', input.closest('td').dataset.label); });
             tbody.appendChild(tr);
 
             // Attach current stock as attribute for validation
@@ -396,9 +434,13 @@
             var qtyEl = tr.querySelector('.qty');
             var saleEl = tr.querySelector('.salePrice');
             var buyEl = tr.querySelector('.buyPrice');
-            try{ if(saleEl) saleEl.title = 'Sale price (managed from database)'; if(buyEl) buyEl.title = 'Buy price (managed from database)'; }catch(e){}
+            try{ if(saleEl) saleEl.title = window.RNTranslate('sale_price_managed'); if(buyEl) buyEl.title = window.RNTranslate('sale_buy_price_managed'); }catch(e){}
             [qtyEl, saleEl, buyEl].forEach(function(inp){ inp && inp.addEventListener('input', function(){ recalcRow(tr, p.currentStock || 0); recalcTotals(); validateSerialsForRow(tr); }); });
-            tr.querySelector('.remove-row').addEventListener('click', function(){ tr.parentNode.removeChild(tr); reindexSaleSerialInputs(); recalcTotals(); toggleSaveButton(); });
+            tr.querySelector('.remove-row').addEventListener('click', function(event){
+                event.preventDefault();
+                event.stopPropagation();
+                window.RNConfirmItemRemoval(tr, function(){ tr.remove(); reindexSaleSerialInputs(); recalcTotals(); toggleSaveButton(); });
+            });
             // initial calc
             recalcRow(tr, p.currentStock || 0);
             validateSerialsForRow(tr);
@@ -467,7 +509,7 @@
                 '<input class="form-check-input serial-pick" type="checkbox" name="serialPick[]" value="'+(s.id||'')+'" data-serial-number="'+(s.serialNumber||'')+'" '+(checked ? 'checked' : '')+'>\n'+
                 '<span class="ms-2">'+ (s.serialNumber || '') +'</span>'+
                 '</div>'+
-                '<span class="badge bg-light text-muted">Available</span>';
+                '<span class="badge bg-light text-muted">'+window.RNTranslate('sale_available')+'</span>';
             list.appendChild(li);
         });
         enforceSerialLimit();
@@ -579,7 +621,7 @@
             var picks = Array.prototype.slice.call(document.querySelectorAll('#saleSerialModal input.serial-pick:checked'));
             if(qty > 0 && picks.length !== qty && !(row.dataset.serialRequired === '0' && picks.length === 0)){
                 var status = byId('saleSerialStatus');
-                if(status){ status.className = 'alert alert-warning mb-2'; status.textContent = window.RNTranslate('select_prefix')+qty+' serial(s). Selected '+picks.length+'.'; }
+                if(status){ status.className = 'alert alert-warning mb-2'; status.textContent = window.RNTranslate('sale_serial_selection_count',{qty:qty,count:picks.length}); }
                 return;
             }
             // clear previous hidden serial inputs within the serial container (safer than direct tr children)
@@ -622,7 +664,7 @@
         if(mismatch){
             tr.classList.add('serial-mismatch');
             // show a per-row toast to prompt user to select serials
-            try{ showRowSerialToast(tr, window.RNTranslate('select_quantity')); }catch(e){}
+            try{ showRowSerialToast(tr, window.RNTranslate(tr.dataset.serialPolicyError === '1' ? 'unable_to_verify_serial_policy_retry_selection_before_saving' : 'select_quantity')); }catch(e){}
         }
         else {
             tr.classList.remove('serial-mismatch');
@@ -640,15 +682,16 @@
             var mismatches = rows.filter(function(r){ return r.classList && r.classList.contains('serial-mismatch'); });
             var count = mismatches.length;
             var errBox = byId('saleErrorSummary');
-            var submitBtn = document.querySelector('form#saveSaleForm button[type="submit"]');
+            var submitBtns = document.querySelectorAll('form#saveSaleForm button[type="submit"]');
             if(count > 0){
-                var msg = '<div class="alert alert-warning mb-0">'+window.RNTranslate('missing_products',{count:count})+'</div>';
+                var policyFailed = mismatches.some(function(row){ return row.dataset.serialPolicyError === '1'; });
+                var msg = '<div class="alert alert-warning mb-0">'+(policyFailed ? window.RNTranslate('unable_to_verify_serial_policy_retry_selection_before_saving') : window.RNTranslate('missing_products',{count:count}))+'</div>';
                 if(errBox) errBox.innerHTML = msg;
-                if(submitBtn) submitBtn.disabled = true;
+                submitBtns.forEach(function(btn){ btn.disabled = true; });
             } else {
                 if(errBox) errBox.innerHTML = '';
                 // Re-evaluate save button enablement based on presence of rows
-                try{ if(submitBtn) submitBtn.disabled = (document.querySelectorAll('#productDetails tr').length === 0); }catch(e){}
+                try{ toggleSaveButton(); }catch(e){}
             }
         }catch(e){ console.warn('updateSerialMismatchIndicator failed', e); }
     }
@@ -661,7 +704,7 @@
             if(tr.getAttribute('data-serial-toast') === '1') return;
             tr.setAttribute('data-serial-toast','1');
             // Use global toast if available
-            try{ if(typeof showToast === 'function'){ showToast(window.RNTranslate('serial_required'), message, 'warning'); } }catch(e){}
+            try{ if(typeof showToast === 'function'){ showToast(window.RNTranslate(tr.dataset.serialPolicyError === '1' ? 'serial_numbers' : 'serial_required'), message, 'warning'); } }catch(e){}
             // Add a quick visual highlight
             var oldOutline = tr.style.boxShadow || '';
             tr.style.boxShadow = '0 0 10px rgba(255,165,0,0.6)';
@@ -739,9 +782,9 @@
     // Disable/enable Save button depending on whether any product rows exist
     function toggleSaveButton(){
         try{
-            var saveBtn = document.querySelector('form#saveSaleForm button[type="submit"]');
+            var saveBtns = document.querySelectorAll('form#saveSaleForm button[type="submit"]');
             var hasRows = document.querySelectorAll('#productDetails tr').length > 0;
-            if(saveBtn) saveBtn.disabled = !hasRows || document.querySelectorAll('#productDetails tr.serial-mismatch').length > 0;
+            saveBtns.forEach(function(btn){ btn.disabled = SALE_SUBMITTING || !customerReady() || !hasRows || document.querySelectorAll('#productDetails tr.serial-mismatch').length > 0; });
         }catch(e){}
     }
 
@@ -753,6 +796,9 @@
             if(!form) return;
             form.addEventListener('submit', function(ev){
                 try{
+                    if(ev.defaultPrevented) return;
+                    if(SALE_SUBMITTING){ ev.preventDefault(); return; }
+                    if(!customerReady()){ ev.preventDefault(); refreshCustomerGate(); return; }
                     reindexSaleSerialInputs();
                     // basic validation: at least one row
                     var rows = Array.prototype.slice.call(document.querySelectorAll('#productDetails tr'));
@@ -777,9 +823,11 @@
                             }
                         }catch(e){}
                     }
-                    // disable submit to avoid double-post and show saving indicator
-                    var submitBtn = form.querySelector('button[type="submit"]');
-                    if(submitBtn){ submitBtn.disabled = true; var old = submitBtn.innerHTML; submitBtn.setAttribute('data-old-label', old); submitBtn.innerHTML = 'Saving...'; }
+                    var action = byId('saleAction');
+                    if(action && ev.submitter && ev.submitter.dataset.saleAction){ action.value = ev.submitter.dataset.saleAction; }
+                    SALE_SUBMITTING = true;
+                    form.querySelectorAll('button[type="submit"]').forEach(function(btn){ btn.disabled = true; });
+                    var submitStatus = byId('saleSubmitStatus'); if(submitStatus) submitStatus.textContent = window.RNTranslate('sale_saving');
                     return true;
                 }catch(e){ console.warn('saveSale form validation failed', e); }
             });
@@ -788,6 +836,8 @@
             var target = document.getElementById('productDetails'); if(target) observer.observe(target, { childList: true, subtree: false });
         }catch(e){ console.warn('sale form init failed', e); }
     });
+
+    window.addEventListener('pageshow', function(){ SALE_SUBMITTING = false; var status=byId('saleSubmitStatus'); if(status) status.textContent=''; toggleSaveButton(); });
 
     function recalcRow(tr, stock){
         try{
@@ -827,7 +877,7 @@
         try{
             // Guard: only run on Sale pages where `.totalSale` inputs exist
             var totals = Array.prototype.slice.call(document.querySelectorAll('#productDetails .totalSale'));
-            if(!totals.length){ return; }
+            if(!totals.length && !byId('saveSaleForm')){ return; }
             var base = 0; totals.forEach(function(t){ base += num(t.value); });
             var discount = num(byId('discountAmount') && byId('discountAmount').value);
             var addCharge = num(byId('additionalChargeAmount') && byId('additionalChargeAmount').value);
@@ -852,7 +902,9 @@
         try{
             var btn = ev.target.closest && ev.target.closest('.add-backorder');
             if(!btn) return;
+            if(!customerReady()) return;
             var purchaseId = btn.getAttribute('data-purchase-id'); if(!purchaseId) return;
+            var customerVersion=SALE_CUSTOMER_VERSION;
             // Fetch the purchase row details then force-add as backorder by overriding stock
             var tplById = ROUTES.purchaseByIdTpl || '';
             var url = tplById ? tplById.replace('__ID__', encodeURIComponent(purchaseId)) : (ROUTES.base + '/ajax/public/purchase/'+encodeURIComponent(purchaseId)+'/details');
@@ -864,6 +916,7 @@
                     if(ct.indexOf('application/json') === -1) throw new Error('invalid-response');
                     return res.json();
                 }).then(function(json){
+                        if(customerVersion!==SALE_CUSTOMER_VERSION || !customerReady()) return;
                         try{
                             if(!json || !json.getData || !json.getData.length) { showToast && showToast(window.RNTranslate('common.client_not_found'),window.RNTranslate('common.client_purchase_row_not_found'),'error'); return; }
                             var p = json.getData[0];
@@ -882,7 +935,7 @@
                                             var hin = document.createElement('input'); hin.type = 'hidden'; hin.name = 'backorder[]'; hin.value = (p.purchaseId || p.id || ''); row.appendChild(hin);
                                         }
                                         // add visual badge
-                                        try{ var nameCell = row.children[1]; if(nameCell && nameCell.querySelector('.badge.backorder-badge')===null){ nameCell.innerHTML = nameCell.innerHTML + ' <span class="badge bg-warning text-dark backorder-badge ms-2">Backorder</span>'; } }catch(e){}
+                                        try{ var nameCell = row.children[1]; if(nameCell && nameCell.querySelector('.badge.backorder-badge')===null){ nameCell.innerHTML = nameCell.innerHTML + ' <span class="badge bg-warning text-dark backorder-badge ms-2">'+window.RNTranslate('sale_backorder')+'</span>'; } }catch(e){}
                                         row.classList.add('backorder-row');
                                         recalcTotals();
                                         // close modal

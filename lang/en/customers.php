@@ -80,4 +80,6 @@ return [
     'total_spent' => 'Total Spent',
     'last_purchase' => 'Last Purchase',
     'no_customer_data_found_for_the_selected_period' => 'No customer data found for the selected period.',
+    'add_customer' => 'Add Customer',
+    'update_customer' => 'Update Customer',
 ];

@@ -1470,4 +1470,5 @@ return [
     'double_entry_explanation' => 'Every transaction must have equal debit and credit amounts. The debit account increases and the credit account decreases (or vice versa depending on account type).',
     'accounting_integration_explanation' => 'If you select both Expense Account and Payment Account, a double-entry transaction will be automatically created.',
     'client_please_select_at_least_one_item_to_delete' => 'Please select at least one item to delete.',
+    'purchase_serial_capacity' => 'Serial count cannot exceed quantity.',
 ];

@@ -80,4 +80,6 @@ return [
     'total_spent' => 'মোট খরচ',
     'last_purchase' => 'শেষ ক্রয়',
     'no_customer_data_found_for_the_selected_period' => 'নির্বাচিত সময়ে ক্রেতার তথ্য পাওয়া যায়নি।',
+    'add_customer' => 'গ্রাহক যোগ করুন',
+    'update_customer' => 'গ্রাহক হালনাগাদ করুন',
 ];

@@ -34,14 +34,14 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between">
                 <div class="header-title">
-                    <h4 class="card-title">@if(isset($profile)) Update @else Add @endif Customer</h4>
+                    <h4 class="card-title">{{ isset($profile) ? __('customers.update_customer') : __('customers.add_customer') }}</h4>
                 </div>
             </div>
             <div class="card-body">
                 <form action="{{route('saveCustomer')}}" method="POST" >
                     @csrf
                     <div class="row">
-                        @include('partials.business_selector', ['businesses' => $businesses ?? [] , 'selectedBusinessId' => $profile->businessId ?? null])
+                        @include('partials.business_selector', ['businessSelectionAllowed'=>app(\App\Services\PurchaseWorkflow::class)->platform(), 'businesses' => $businesses ?? [] , 'selectedBusinessId' => $profile->businessId ?? null])
                         <input type="hidden" name="profileId" value="{{ $profileId }}">
                         <div class="col-md-4">
                             <div class="form-group">
@@ -64,7 +64,8 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>{{ __('customers.email') }}</label>
-                                <input type="email" class="form-control" placeholder="{{ __('common.enter_email') }}" id="mail" name="mail" value="{{$mail}}" />
+                                @error('mail')<div class="text-danger">{{ $message }}</div>@enderror
+                                <input type="email" class="form-control" placeholder="{{ __('common.enter_email') }}" id="mail" name="mail" value="{{old('mail',$mail)}}" />
                                 <div class="help-block with-errors"></div>
                             </div>
                         </div>
@@ -100,7 +101,7 @@
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary mr-2">@if(isset($profile)) Update @else Add @endif Customer</button>
+                    <button type="submit" class="btn btn-primary mr-2">{{ isset($profile) ? __('customers.update_customer') : __('customers.add_customer') }}</button>
                     <button type="reset" class="btn btn-danger">{{ __('customers.reset') }}</button>
                 </form>
             </div>
