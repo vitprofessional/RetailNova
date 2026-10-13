@@ -78,7 +78,7 @@
 </div>
 
 <!-- Barcode Generation Script -->
-<script src="{{ asset('/public/eshop/assets/vendor/jsbarcode/JsBarcode.all.min.js') }}"></script>
+<script src="{{ asset('eshop/assets/vendor/jsbarcode/JsBarcode.all.min.js') }}"></script>
 
 <script>
 (function() {

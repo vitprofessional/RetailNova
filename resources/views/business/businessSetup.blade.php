@@ -65,7 +65,7 @@
                         <div class="card border-0 bg-light">
                             <div class="card-body text-center py-4">
                                 @if(!empty($businessLogo))
-                                <img class="img-fluid rounded" src="{{ asset('/public/uploads/business/') }}/{{ $businessLogo }}" alt="{{ $businessName }}" style="max-width: 150px; max-height: 150px;">
+                                <img class="img-fluid rounded" src="{{ asset('uploads/business') }}/{{ $businessLogo }}" alt="{{ $businessName }}" style="max-width: 150px; max-height: 150px;">
                                 <p class="text-muted small mt-3">{{ $businessName }} {{ __('common.logo') }}</p>
                                 <button type="button" class="btn btn-sm btn-info mt-2" data-toggle="modal" data-target="#logoModal">
                                     <i class="las la-upload mr-1"></i>{{ __('settings.change_logo') }}

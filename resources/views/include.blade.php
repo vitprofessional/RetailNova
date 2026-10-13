@@ -7,14 +7,14 @@
     <title>@yield('title', isset($pageTitle) ? $pageTitle : config('app.name', 'Retail Nova'))</title>
 
     <!-- Favicon -->
-    <link rel="shortcut icon" href="{{asset('/public/eshop/')}}/assets/images/favicon.ico" />
-    <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/backend-plugin.min.css">
-    <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/backende209.css?v=1.0.0">
-    <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/rn-custom.css">
-    <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/rn-table-pro.css">
-    <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
+    <link rel="shortcut icon" href="{{asset('eshop')}}/assets/images/favicon.ico" />
+    <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/backend-plugin.min.css">
+    <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/backende209.css?v=1.0.0">
+    <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/rn-custom.css">
+    <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/rn-table-pro.css">
+    <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
     <link rel= "stylesheet" href= "https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css" >
-    <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/remixicon/fonts/remixicon.css">
+    <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/remixicon/fonts/remixicon.css">
     <script src="https://kit.fontawesome.com/7001e2ea29.js" crossorigin="anonymous"></script>
     <!-- Ensure jQuery is available early for inline scripts -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -744,7 +744,7 @@
       <div class="iq-sidebar  sidebar-default ">
           <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
               <a href="{{ route('dashboard') }}" class="header-logo">
-                  <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('/public/uploads/business/' . $config[0]->businessLogo) : asset('public/logo.png') }}" class="img-fluid rounded-normal light-logo" alt="logo"><h5 class="logo-title light-logo ml-3">{{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h5>
+                  <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('uploads/business/' . $config[0]->businessLogo) : asset('logo.png') }}" class="img-fluid rounded-normal light-logo" alt="logo"><h5 class="logo-title light-logo ml-3">{{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h5>
               </a>
               <div class="iq-menu-bt-sidebar ml-0">
                   <i class="las la-bars wrapper-menu"></i>
@@ -758,7 +758,7 @@
                   <div class="card border-none">
                       <div class="card-body p-0">
                           <div class="sidebarbottom-content">
-                              <div class="image"><img src="{{asset('/public/eshop/')}}/assets/images/layouts/side-bkg.png" class="img-fluid" alt="side-bkg"></div>
+                              <div class="image"><img src="{{asset('eshop')}}/assets/images/layouts/side-bkg.png" class="img-fluid" alt="side-bkg"></div>
                               <h6 class="mt-4 px-4 body-title">{{ __('navigation.get_more_feature_by_upgrading') }}</h6>
                               <button type="button" class="btn sidebar-bottom-btn mt-4">{{ __('navigation.go_premium') }}</button>
                           </div>
@@ -773,7 +773,7 @@
                   <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
                       <i class="ri-menu-line wrapper-menu"></i>
                       <a href="{{route('dashboard')}}" class="header-logo">
-                          <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('/public/uploads/business/' . $config[0]->businessLogo) : asset('/public/logo.png') }}" class="img-fluid rounded-normal" alt="logo">
+                          <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('uploads/business/' . $config[0]->businessLogo) : asset('logo.png') }}" class="img-fluid rounded-normal" alt="logo">
                           <h5 class="logo-title ml-3">{{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h5>
 
                       </a>
@@ -842,7 +842,7 @@
                                                       <div class="media align-items-center cust-card py-3 border-bottom">
                                                           <div class="">
                                                               <img class="avatar-50 rounded-small"
-                                                                  src="{{asset('/public/eshop/')}}/assets/images/user/01.jpg" alt="01">
+                                                                  src="{{asset('eshop')}}/assets/images/user/01.jpg" alt="01">
                                                           </div>
                                                           <div class="media-body ml-3">
                                                               <div class="d-flex align-items-center justify-content-between">
@@ -857,7 +857,7 @@
                                                       <div class="media align-items-center cust-card py-3 border-bottom">
                                                           <div class="">
                                                               <img class="avatar-50 rounded-small"
-                                                                  src="{{asset('/public/eshop/')}}/assets/images/user/02.jpg" alt="02">
+                                                                  src="{{asset('eshop')}}/assets/images/user/02.jpg" alt="02">
                                                           </div>
                                                           <div class="media-body ml-3">
                                                               <div class="d-flex align-items-center justify-content-between">
@@ -872,7 +872,7 @@
                                                       <div class="media align-items-center cust-card py-3">
                                                           <div class="">
                                                               <img class="avatar-50 rounded-small"
-                                                                  src="{{asset('/public/eshop/')}}/assets/images/user/03.jpg" alt="03">
+                                                                  src="{{asset('eshop')}}/assets/images/user/03.jpg" alt="03">
                                                           </div>
                                                           <div class="media-body ml-3">
                                                               <div class="d-flex align-items-center justify-content-between">
@@ -917,7 +917,7 @@
                                                       <div class="media align-items-center cust-card py-3 border-bottom">
                                                           <div class="">
                                                               <img class="avatar-50 rounded-small"
-                                                                  src="{{asset('/public/eshop/')}}/assets/images/user/01.jpg" alt="01">
+                                                                  src="{{asset('eshop')}}/assets/images/user/01.jpg" alt="01">
                                                           </div>
                                                           <div class="media-body ml-3">
                                                               <div class="d-flex align-items-center justify-content-between">
@@ -932,7 +932,7 @@
                                                       <div class="media align-items-center cust-card py-3 border-bottom">
                                                           <div class="">
                                                               <img class="avatar-50 rounded-small"
-                                                                  src="{{asset('/public/eshop/')}}/assets/images/user/02.jpg" alt="02">
+                                                                  src="{{asset('eshop')}}/assets/images/user/02.jpg" alt="02">
                                                           </div>
                                                           <div class="media-body ml-3">
                                                               <div class="d-flex align-items-center justify-content-between">
@@ -947,7 +947,7 @@
                                                       <div class="media align-items-center cust-card py-3">
                                                           <div class="">
                                                               <img class="avatar-50 rounded-small"
-                                                                  src="{{asset('/public/eshop/')}}/assets/images/user/03.jpg" alt="03">
+                                                                  src="{{asset('eshop')}}/assets/images/user/03.jpg" alt="03">
                                                           </div>
                                                           <div class="media-body ml-3">
                                                               <div class="d-flex align-items-center justify-content-between">
@@ -970,17 +970,11 @@
                               <li class="nav-item nav-icon dropdown caption-content">
                                   @php
                                       $adminUser = auth('admin')->user();
-                                      $topAvatar = asset('/public/eshop/') . '/assets/images/user/1.png';
+                                      $topAvatar = asset('eshop/assets/images/user/1.png');
                                       if($adminUser && !empty($adminUser->avatar) && \Illuminate\Support\Facades\Storage::disk('public')->exists($adminUser->avatar)){
                                           $file = storage_path('app/public/' . $adminUser->avatar);
                                           $timestamp = @filemtime($file) ?: time();
-                                          $root = rtrim(request()->root(), '/');
-                                          $publicPath = public_path('storage/' . $adminUser->avatar);
-                                          if(file_exists($publicPath)){
-                                              $topAvatar = $root . '/storage/app/public/' . $adminUser->avatar . '?v=' . $timestamp;
-                                          } else {
-                                              $topAvatar = $root . '/storage/app/public/' . $adminUser->avatar . '?v=' . $timestamp;
-                                          }
+                                          $topAvatar = \Illuminate\Support\Facades\Storage::disk('public')->url($adminUser->avatar) . '?v=' . $timestamp;
                                       }
                                   @endphp
                                   <a href="#" class="search-toggle dropdown-toggle" id="dropdownMenuButton4"
@@ -992,7 +986,7 @@
                                           <div class="card-body p-0 text-center">
                                               <div class="media-body profile-detail text-center">
                                                   <div class="rounded-top img-fluid mb-3" style="background:#f5f5f7;">
-                                                      <img src="{{asset('/public/eshop/')}}/assets/images/page-img/profile-bg.jpg" alt="profile-bg" class="img-fluid" style="width:100%;height:90px;object-fit:cover;border-top-left-radius:6px;border-top-right-radius:6px;">
+                                                      <img src="{{asset('eshop')}}/assets/images/page-img/profile-bg.jpg" alt="profile-bg" class="img-fluid" style="width:100%;height:90px;object-fit:cover;border-top-left-radius:6px;border-top-right-radius:6px;">
                                                   </div>
                                                   <img src="{{ $topAvatar }}" alt="profile-img" class="rounded profile-img img-fluid avatar-70" style="margin-top:-36px;border:4px solid #fff;">
                                               </div>
@@ -1196,7 +1190,7 @@
     </script>
     <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
     <!-- Backend Bundle JavaScript -->
-    <script src="{{asset('/public/eshop/')}}/assets/js/backend-bundle.min.js"></script>
+    <script src="{{asset('eshop')}}/assets/js/backend-bundle.min.js"></script>
     <script>
         if(window.jQuery && jQuery.fn.dataTable) {
             jQuery.extend(true, jQuery.fn.dataTable.defaults, {language:window.RNDataTableLanguage});
@@ -1204,16 +1198,16 @@
     </script>
 
     <!-- Table Treeview JavaScript -->
-    <script src="{{asset('/public/eshop/')}}/assets/js/table-treeview.js"></script>
+    <script src="{{asset('eshop')}}/assets/js/table-treeview.js"></script>
 
     <!-- Chart Custom JavaScript -->
-    <script src="{{asset('/public/eshop/')}}/assets/js/customizer.js"></script>
+    <script src="{{asset('eshop')}}/assets/js/customizer.js"></script>
 
     <!-- Chart Custom JavaScript -->
-    <script async src="{{asset('/public/eshop/')}}/assets/js/chart-custom.js"></script>
+    <script async src="{{asset('eshop')}}/assets/js/chart-custom.js"></script>
 
     <!-- app JavaScript -->
-    <script src="{{asset('/public/eshop/')}}/assets/js/app.js"></script>
+    <script src="{{asset('eshop')}}/assets/js/app.js"></script>
     <script>
         // Reusable search binding (DataTables aware, fallback to text filter)
         (function(){

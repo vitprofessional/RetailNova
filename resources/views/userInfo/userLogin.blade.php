@@ -12,12 +12,12 @@
       @include('partials.pwa-head')
 
       <!-- Favicon -->
-      <link rel="shortcut icon" href="{{asset('/public/eshop/')}}/assets/images/favicon.ico" />
-      <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/backend-plugin.min.css">
-      <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/css/backende209.css?v=1.0.0">
-      <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
-      <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/line-awesome/dist/line-awesome/css/line-awesome.min.css">
-      <link rel="stylesheet" href="{{asset('/public/eshop/')}}/assets/vendor/remixicon/fonts/remixicon.css">
+      <link rel="shortcut icon" href="{{asset('eshop')}}/assets/images/favicon.ico" />
+      <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/backend-plugin.min.css">
+      <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/backende209.css?v=1.0.0">
+      <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
+      <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/line-awesome/dist/line-awesome/css/line-awesome.min.css">
+      <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/remixicon/fonts/remixicon.css">
    <head>
       <style>
          .bg-login {
@@ -148,7 +148,7 @@
                                           @if($displayShop)
                                              <div class="mb-3 px-3 py-3 shop-info-card" style="background:#f3f6fb;border-radius:12px;box-shadow:0 2px 8px rgba(60,72,120,0.07);display:block;width:100%;max-width:400px;margin:0 auto;">
                                                    <div class="d-flex flex-column align-items-start">
-                                                   <img src="{{ !empty($displayShop->businessLogo) ? asset('/public/uploads/business/' . $displayShop->businessLogo) : asset('/public/logo.png') }}" alt="Logo" style="max-width:70px;max-height:70px;border-radius:8px;margin-bottom:8px;">
+                                                   <img src="{{ !empty($displayShop->businessLogo) ? asset('uploads/business/' . $displayShop->businessLogo) : asset('logo.png') }}" alt="Logo" style="max-width:70px;max-height:70px;border-radius:8px;margin-bottom:8px;">
                                                       <h4 class="mb-1" style="color:#3b82f6;margin-bottom:0.25rem;text-align:left;width:100%;word-break:break-word;">{{ $displayShop->businessName ?? '' }}, <small style="font-size:12px">{{ $displayShop->businessLocation }}</small></h4>
                                                    <div style="color:#64748b;font-size:1rem;width:100%;">
                                                       <div style="display:flex;flex-wrap:wrap;justify-content:flex-start;gap:12px;">
@@ -259,19 +259,19 @@
       </div>
 
     <!-- Backend Bundle JavaScript -->
-    <script src="{{asset('/public/eshop/')}}/assets/js/backend-bundle.min.js"></script>
+    <script src="{{asset('eshop')}}/assets/js/backend-bundle.min.js"></script>
 
     <!-- Table Treeview JavaScript -->
-    <script src="{{asset('/public/eshop/')}}/assets/js/table-treeview.js"></script>
+    <script src="{{asset('eshop')}}/assets/js/table-treeview.js"></script>
 
     <!-- Chart Custom JavaScript -->
-    <script src="{{asset('/public/eshop/')}}/assets/js/customizer.js"></script>
+    <script src="{{asset('eshop')}}/assets/js/customizer.js"></script>
 
     <!-- Chart Custom JavaScript -->
-    <script async src="{{asset('/public/eshop/')}}/assets/js/chart-custom.js"></script>
+    <script async src="{{asset('eshop')}}/assets/js/chart-custom.js"></script>
 
     <!-- app JavaScript -->
-    <script src="{{asset('/public/eshop/')}}/assets/js/app.js"></script>
+    <script src="{{asset('eshop')}}/assets/js/app.js"></script>
   </body>
 
 <!-- Mirrored from templates.iqonic.design/posdash/html/backend/auth-sign-in.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 12 Mar 2025 08:08:13 GMT -->

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>{{ __('common.service_invoice') }} {{ $invoice->invoice_number }}</title>
-    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}" />
     <style>
         @page{ margin: 10mm; }
         body{ font-family: Arial, Helvetica, sans-serif; font-size: 12px; }

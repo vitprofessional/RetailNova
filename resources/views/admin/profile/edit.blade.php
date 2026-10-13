@@ -43,7 +43,7 @@
                     <label>{{ __('common.avatar') }}</label>
                     <input type="file" name="avatar" class="form-control-file">
                     @if($admin->avatar)
-                        <div class="mt-2"><img src="{{ asset('/public/storage/'.$admin->avatar) }}" alt="avatar" style="max-width:120px"></div>
+                        <div class="mt-2"><img src="{{ asset('storage/'.$admin->avatar) }}" alt="avatar" style="max-width:120px"></div>
                     @endif
                 </div>
             </div>

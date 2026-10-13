@@ -52,7 +52,7 @@
     if($business && !empty($business->businessLogo)){
       $logoUrl = (strpos($business->businessLogo, 'http') === 0)
         ? $business->businessLogo
-        : asset('public/uploads/business/' . ltrim($business->businessLogo, '/'));
+        : asset('uploads/business/' . ltrim($business->businessLogo, '/'));
     }
     $currencyName = null;
     switch($currencySymbol){

@@ -18,16 +18,9 @@ class AdminProfileController extends Controller
         if (!empty($admin->avatar) && Storage::disk('public')->exists($admin->avatar)) {
             $file = storage_path('app/public/' . $admin->avatar);
             $timestamp = @filemtime($file) ?: time();
-            $root = rtrim($request->root(), '/');
-            $publicPath = public_path('storage/' . $admin->avatar);
-            if (file_exists($publicPath)) {
-                // common XAMPP dev setup: public appears in the served path
-                $avatarUrl = $root . '/storage/app/public/' . $admin->avatar . '?v=' . $timestamp;
-            } else {
-                $avatarUrl = $root . '/storage/app/public/' . $admin->avatar . '?v=' . $timestamp;
-            }
+            $avatarUrl = Storage::disk('public')->url($admin->avatar) . '?v=' . $timestamp;
         } else {
-            $avatarUrl = rtrim($request->root(), '/') . '/public/eshop/assets/images/user/1.png';
+            $avatarUrl = asset('eshop/assets/images/user/1.png');
         }
 
         return view('admin.profile.show', compact('admin', 'avatarUrl'));

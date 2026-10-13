@@ -174,7 +174,7 @@
     <main class="page">
         <section class="hero">
             <div class="logo-wrap">
-                <img src="{{ asset('public/logo.png') }}" alt="RetailNova Logo" class="logo">
+                <img src="{{ asset('logo.png') }}" alt="RetailNova Logo" class="logo">
                 <h1 class="brand">RetailNova</h1>
                 <p class="tagline">Smart POS + Accounting + Expense Control</p>
             </div>

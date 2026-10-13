@@ -10,7 +10,7 @@
   if($b && !empty($b->businessLogo)){
     $logoUrl = (strpos($b->businessLogo, 'http') === 0)
       ? $b->businessLogo
-      : asset('public/uploads/business/' . ltrim($b->businessLogo, '/'));
+      : asset('uploads/business/' . ltrim($b->businessLogo, '/'));
   }
   // Map currency symbol to name
   $currencyName = null;

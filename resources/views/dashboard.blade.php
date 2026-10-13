@@ -280,7 +280,7 @@
                                 <div class="card card-block card-stretch card-height mb-0">
                                     <div class="card-body">
                                         <div class="bg-warning-light rounded">
-                                            <img src="{{ asset('public/eshop/assets/') }}/images/product/01.png" class="style-img img-fluid m-auto p-3" alt="image">
+                                            <img src="{{ asset('eshop/assets/') }}/images/product/01.png" class="style-img img-fluid m-auto p-3" alt="image">
                                         </div>
                                         <div class="style-text text-left mt-3">
                                             <h5 class="mb-1">Organic Cream</h5>
@@ -293,7 +293,7 @@
                                 <div class="card card-block card-stretch card-height mb-0">
                                     <div class="card-body">
                                         <div class="bg-danger-light rounded">
-                                            <img src="{{ asset('public/eshop/assets/') }}/images/product/02.png" class="style-img img-fluid m-auto p-3" alt="image">
+                                            <img src="{{ asset('eshop/assets/') }}/images/product/02.png" class="style-img img-fluid m-auto p-3" alt="image">
                                         </div>
                                         <div class="style-text text-left mt-3">
                                             <h5 class="mb-1">Rain Umbrella</h5>
@@ -306,7 +306,7 @@
                                 <div class="card card-block card-stretch card-height mb-0">
                                     <div class="card-body">
                                         <div class="bg-info-light rounded">
-                                            <img src="{{ asset('public/eshop/assets/') }}/images/product/03.png" class="style-img img-fluid m-auto p-3" alt="image">
+                                            <img src="{{ asset('eshop/assets/') }}/images/product/03.png" class="style-img img-fluid m-auto p-3" alt="image">
                                         </div>
                                         <div class="style-text text-left mt-3">
                                             <h5 class="mb-1">Serum Bottle</h5>
@@ -319,7 +319,7 @@
                                 <div class="card card-block card-stretch card-height mb-0">
                                     <div class="card-body">
                                         <div class="bg-success-light rounded">
-                                            <img src="{{ asset('public/eshop/assets/') }}/images/product/02.png" class="style-img img-fluid m-auto p-3" alt="image">
+                                            <img src="{{ asset('eshop/assets/') }}/images/product/02.png" class="style-img img-fluid m-auto p-3" alt="image">
                                         </div>
                                         <div class="style-text text-left mt-3">
                                             <h5 class="mb-1">Organic Cream</h5>

@@ -99,7 +99,7 @@
                 if($b && !empty($b->businessLogo)){
                   $companyLogoUrl = (strpos($b->businessLogo, 'http') === 0)
                     ? $b->businessLogo
-                    : asset('public/uploads/business/' . ltrim($b->businessLogo, '/'));
+                    : asset('uploads/business/' . ltrim($b->businessLogo, '/'));
                 }
               @endphp
               @if($companyLogoUrl)
@@ -368,7 +368,7 @@
                 if($b && !empty($b->businessLogo)){
                   $ackLogoUrl = (strpos($b->businessLogo, 'http') === 0)
                     ? $b->businessLogo
-                    : asset('public/uploads/business/' . ltrim($b->businessLogo, '/'));
+                    : asset('uploads/business/' . ltrim($b->businessLogo, '/'));
                 }
               @endphp
               @if($ackLogoUrl)
