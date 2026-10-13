@@ -34,6 +34,8 @@ class RoleAccessTest extends TestCase
 
     public function test_admin_cannot_access_super_routes()
     {
+        // The first-created admin is intentionally treated as the platform owner.
+        $this->createAdmin('superadmin');
         $user = $this->createAdmin('admin');
         $this->actingAs($user, 'admin');
         $this->get(route('admin.super.users.index'))->assertRedirect(route('dashboard'));

@@ -38,6 +38,8 @@ class RoleAccessMatrixTest extends TestCase
 
     public function test_admin_cannot_access_super_admin_panel_but_can_view_audits()
     {
+        // The first-created admin is intentionally treated as the platform owner.
+        $this->createAdmin('superadmin');
         $user = $this->createAdmin('admin');
         $this->actingAs($user, 'admin');
 
@@ -90,6 +92,8 @@ class RoleAccessMatrixTest extends TestCase
 
     public function test_sales_manager_unrestricted_except_super_admin_and_audits()
     {
+        // Keep the tested operator distinct from the legacy first-admin owner.
+        $this->createAdmin('superadmin');
         $user = $this->createAdmin('salesmanager');
         $this->actingAs($user, 'admin');
 
