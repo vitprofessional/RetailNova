@@ -27,11 +27,12 @@ class productController extends Controller
         });
     }
     public function addProduct(){
+        $workflow = app(\App\Services\PurchaseWorkflow::class);
         $productUnit = ProductUnit::orderBy('id','DESC')->get();
         $category = Category::orderBy('id','DESC')->get();
         $brand = Brand::orderBy('id','DESC')->get();
-        $data = Product::with(['brandModel','categoryModel','unitModel','stocks'])->orderBy('id','DESC')->get();
-        $businesses = \App\Models\BusinessSetup::orderBy('id','asc')->get();
+        $data = $workflow->scoped(Product::withoutGlobalScopes()->with(['brandModel','categoryModel','unitModel','stocks']))->orderBy('id','DESC')->get();
+        $businesses = \App\Models\BusinessSetup::when(!$workflow->platform(),fn($q)=>$q->whereKey($workflow->resolveBusinessId()))->orderBy('id','asc')->get();
 
         return view('product.newProduct',[
             'listItem'=>$data,
@@ -44,27 +45,24 @@ class productController extends Controller
 
    public function saveProduct(ProductSaveRequest $req){
        $validated = $req->validated();
-
-        $data = $req->profileId ? Product::find($req->profileId) : new Product();
-        if($req->profileId && !$data){
-            Alert::error(__('common.notification_failed'),__('common.notification_product_not_found_for_update'));
-            return redirect()->route('addProduct');
+        $workflow = app(\App\Services\PurchaseWorkflow::class);
+        $data = $req->profileId ? $workflow->scoped(Product::withoutGlobalScopes())->findOrFail($req->profileId) : new Product();
+        $requestedBusinessId = $req->input('businessId');
+        if ($req->profileId && ($requestedBusinessId === null || $requestedBusinessId === '')) {
+            $requestedBusinessId = $data->businessId;
         }
+        $businessId = $workflow->resolveBusinessId($requestedBusinessId);
+        abort_if($req->profileId && (int)$data->businessId !== $businessId, 403, 'Products cannot be moved between businesses through edit.');
 
         $data->name     = trim($validated['name']);
-        $data->brand    = (int)$validated['brand'];
-        $data->category = (int)$validated['category'];
-        $data->unitName = (int)$validated['unitName'];
+        $data->brand    = isset($validated['brand']) ? (int)$validated['brand'] : null;
+        $data->category = isset($validated['category']) ? (int)$validated['category'] : null;
+        $data->unitName = isset($validated['unitName']) ? (int)$validated['unitName'] : null;
         $data->quantity = $validated['quantity'] ?? 0;
         $data->details  = $validated['details'] ?? null;
         $data->barCode  = $validated['barCode'] ?? null;
 
-        // Assign businessId if provided and actor is admin/superadmin
-        $actor = auth('admin')->user();
-        if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
-            $bizId = (int)($req->input('businessId') ?? 0);
-            if($bizId > 0){ $data->businessId = $bizId; }
-        }
+        $data->businessId = $businessId;
 
         if($data->save()){
             $msg = $req->profileId ? __('common.product_updated') : __('common.product_created');
@@ -77,16 +75,17 @@ class productController extends Controller
 
     //edit product
      public function editProduct($id){
+        $workflow = app(\App\Services\PurchaseWorkflow::class);
         $productUnit = ProductUnit::orderBy('id','DESC')->get();
         $category = Category::orderBy('id','DESC')->get();
         $brand = Brand::orderBy('id','DESC')->get();
-        $data = product::find($id);
+        $data = $workflow->scoped(Product::withoutGlobalScopes())->findOrFail($id);
         return view('product.newProduct',['profile'=>$data,'brandList'=>$brand,'categoryList'=>$category,'productUnitList'=>$productUnit]);
     }
 
     //delete product
     public function delProduct($id){
-        $data = Product::find($id);
+        $data = app(\App\Services\PurchaseWorkflow::class)->scoped(Product::withoutGlobalScopes())->find($id);
         if(!empty($data)):
             // Authorization hook
             $this->authorize('delete', $data);
@@ -102,6 +101,8 @@ class productController extends Controller
     
     // submit product by ajax
     public function createProduct(Request $req){
+        $workflow = app(\App\Services\PurchaseWorkflow::class);
+        $businessId = $workflow->resolveBusinessId($req->input('businessId'));
         $payload = [
             'fullName' => trim((string)$req->fullName),
             'brand'    => $req->brand,
@@ -138,16 +139,11 @@ class productController extends Controller
         $data->quantity = (int)($payload['quantity'] ?? 0);
         $data->details  = $payload['details'];
         $data->barCode  = $payload['barCode'];
-        // Assign businessId if provided and actor is admin/superadmin
-        $actor = auth('admin')->user();
-        if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
-            $bizId = (int)($req->input('businessId') ?? 0);
-            if($bizId > 0){ $data->businessId = $bizId; }
-        }
+        $data->businessId = $businessId;
         $option = '';
 
         if($data->save()){
-            $getData = Product::orderBy('id','DESC')->get();
+            $getData = $workflow->scoped(Product::withoutGlobalScopes())->orderBy('id','DESC')->get();
             if($getData->count() > 0){
                 $option .= '<option value="">Select</option>';
                 foreach($getData as $d){
@@ -161,10 +157,11 @@ class productController extends Controller
 
     //product list page
     public function productlist(){
+                $workflow = app(\App\Services\PurchaseWorkflow::class);
                 $productUnit = ProductUnit::orderBy('id','DESC')->get();
                 $category = Category::orderBy('id','DESC')->get();
                 $brand = Brand::orderBy('id','DESC')->get();
-                $data = Product::with(['brandModel','categoryModel','unitModel','stocks'])->orderBy('id','DESC')->get();
+                $data = $workflow->scoped(Product::withoutGlobalScopes()->with(['brandModel','categoryModel','unitModel','stocks']))->orderBy('id','DESC')->get();
                 return view('product.productList',[
                         'listItem'=>$data,
                         'brandList'=>$brand,
@@ -359,10 +356,17 @@ class productController extends Controller
         }
         try{
             DB::transaction(function() use ($d){
+                $workflow = app(\App\Services\PurchaseWorkflow::class);
+                $product = $workflow->scoped(Product::withoutGlobalScopes())->findOrFail($d->product_id);
+                $businessId = filter_var($product->businessId, FILTER_VALIDATE_INT);
+                abort_if($businessId === false || (int)$businessId <= 0
+                    || !\App\Models\BusinessSetup::whereKey((int)$businessId)->exists(), 422,
+                    'Product ownership is incomplete.');
                 // restore stock by adding a new ProductStock record
                 ProductStock::create([
                     'purchaseId' => null,
                     'productId' => $d->product_id,
+                    'businessId' => (int)$businessId,
                     'currentStock' => (int)($d->qty ?? 0)
                 ]);
                 $d->delete();

@@ -41,10 +41,10 @@ class coustomerSupplier extends Controller
     public function saveCustomer(SaveCustomerRequest $req){
         $workflow=app(\App\Services\PurchaseWorkflow::class);
         $data = $req->profileId ? $workflow->scoped(Customer::withoutGlobalScopes())->findOrFail($req->profileId) : new Customer();
-        if($req->profileId && !$data):
-            Alert::error(__('common.notification_failed'), __('common.notification_customer_not_found_for_update'));
-            return redirect()->route('addCustomer');
-        endif;
+        $requestedBusinessId=$req->input('businessId');
+        if($req->profileId && ($requestedBusinessId===null || $requestedBusinessId==='')) {$requestedBusinessId=$data->businessId;}
+        $businessId=$workflow->resolveBusinessId($requestedBusinessId);
+        abort_if($req->profileId && (int)$data->businessId !== $businessId,403,'Customers cannot be moved between businesses through edit.');
 
         $data->name          = trim($req->fullName);
         $data->openingBalance= (int)$req->openingBalance;
@@ -55,18 +55,7 @@ class coustomerSupplier extends Controller
         $data->city          = trim((string)$req->city);
         $data->area          = trim((string)$req->area);
 
-        // Assign businessId if provided and actor is admin/superadmin
-        $actor = auth('admin')->user();
-        if($actor && $workflow->platform()){
-            $bizId = (int)($req->input('businessId') ?? 0);
-            if($bizId > 0){
-                abort_if($data->exists && (int)$data->businessId!==$bizId,403);
-                abort_unless(\App\Models\BusinessSetup::whereKey($bizId)->exists(),422);
-                $data->businessId = $bizId;
-            }
-        } elseif ($actor) {
-            $data->businessId=$actor->businessId;
-        }
+        $data->businessId=$businessId;
 
         if($data->save()):
             $message = $req->profileId ? __('common.customer_updated') : __('common.customer_created');
@@ -206,8 +195,7 @@ class coustomerSupplier extends Controller
         $workflow=app(\App\Services\PurchaseWorkflow::class);
         $actor=auth('admin')->user();
         abort_unless($actor,401);
-        $businessId=$workflow->platform() ? ($req->input('businessId') ?? $actor->businessId) : $actor->businessId;
-        abort_unless(\App\Models\BusinessSetup::whereKey($businessId)->exists(),422);
+        $businessId=$workflow->resolveBusinessId($req->input('businessId'));
         $data = new Customer();
         $data->businessId=$businessId;
         $data->name            = $payload['fullName'];
@@ -260,10 +248,11 @@ class coustomerSupplier extends Controller
 
     // add supplier
     public function addSupplier(){
-        $data = Supplier::orderBy('id','DESC')->get();
-        $trashed = Supplier::onlyTrashed()->orderBy('id','DESC')->get();
-        $openingTotal = Supplier::sum('openingBalance');
-        $businesses = \App\Models\BusinessSetup::orderBy('id','asc')->get();
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
+        $data = $workflow->scoped(Supplier::withoutGlobalScopes())->orderBy('id','DESC')->get();
+        $trashed = $workflow->scoped(Supplier::withoutGlobalScopes()->onlyTrashed())->orderBy('id','DESC')->get();
+        $openingTotal = $workflow->scoped(Supplier::withoutGlobalScopes())->sum('openingBalance');
+        $businesses = \App\Models\BusinessSetup::when(!$workflow->platform(),fn($q)=>$q->whereKey($workflow->resolveBusinessId()))->orderBy('id','asc')->get();
         return view('customer&supplier.addSupplier',[
             'listItem'=>$data,
             'trashedList' => $trashed,
@@ -274,6 +263,7 @@ class coustomerSupplier extends Controller
 
     //save supplier
     public function saveSupplier(Request $req){
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
         $isUpdate = (bool)$req->profileId;
         // Validate supplier form with uniqueness
         $req->validate([
@@ -292,11 +282,11 @@ class coustomerSupplier extends Controller
             'area'          => ['nullable','string','max:150'],
             'openingBalance'=> ['nullable','integer'],
         ]);
-        $data = $isUpdate ? Supplier::find($req->profileId) : new Supplier();
-        if($isUpdate && !$data){
-            Alert::error(__('common.notification_failed'),__('common.notification_supplier_not_found'));
-            return back();
-        }
+        $data = $isUpdate ? $workflow->scoped(Supplier::withoutGlobalScopes())->findOrFail($req->profileId) : new Supplier();
+        $requestedBusinessId=$req->input('businessId');
+        if($isUpdate && ($requestedBusinessId===null || $requestedBusinessId==='')) {$requestedBusinessId=$data->businessId;}
+        $businessId=$workflow->resolveBusinessId($requestedBusinessId);
+        abort_if($isUpdate && (int)$data->businessId !== $businessId,403,'Suppliers cannot be moved between businesses through edit.');
 
         // Basic server-side sanitization and integer enforcement
         $data->name          = trim((string)$req->fullName);
@@ -308,12 +298,7 @@ class coustomerSupplier extends Controller
         $data->city          = trim((string)$req->city);
         $data->area          = trim((string)$req->area);
 
-        // Assign businessId if provided and actor is admin/superadmin
-        $actor = auth('admin')->user();
-        if($actor && in_array(strtolower($actor->role), ['admin','superadmin'])){
-            $bizId = (int)($req->input('businessId') ?? 0);
-            if($bizId > 0){ $data->businessId = $bizId; }
-        }
+        $data->businessId = $businessId;
 
         if($data->save()){
             $msg = $isUpdate ? __('common.supplier_updated') : __('common.supplier_created');
@@ -326,7 +311,8 @@ class coustomerSupplier extends Controller
 
     //edit supplier
      public function editSupplier($id){
-        $data = Supplier::find($id);
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
+        $data = $workflow->scoped(Supplier::withoutGlobalScopes())->findOrFail($id);
         return view('customer&supplier.addSupplier',['profile'=>$data]);
     }
 
@@ -471,6 +457,8 @@ class coustomerSupplier extends Controller
     
     // submit supplier by ajax
     public function createSupplier(Request $req){
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
+        $businessId=$workflow->resolveBusinessId($req->input('businessId'));
         // Validate incoming AJAX payload (keeps route unchanged)
         $payload = [
             'fullName'    => trim((string)$req->fullName),
@@ -519,6 +507,7 @@ class coustomerSupplier extends Controller
         }
 
         $data = new Supplier();
+        $data->businessId = $businessId;
         $data->name    = $payload['fullName'];
         $data->mail    = !empty($payload['email']) ? $payload['email'] : null;
         $data->mobile  = !empty($payload['phoneNumber']) ? $payload['phoneNumber'] : null;
@@ -537,7 +526,7 @@ class coustomerSupplier extends Controller
         }
 
         if($saved){
-            $getData = Supplier::orderBy('id','DESC')->get();
+            $getData = $workflow->scoped(Supplier::withoutGlobalScopes())->orderBy('id','DESC')->get();
             if(!empty($getData)){
                 foreach($getData as $d){
                     $option .= '<option value="'.$d->id.'">'.$d->name.'</option>';

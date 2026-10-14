@@ -35,7 +35,8 @@ class JqueryController extends Controller
         return $customer;
     }
     public function getProductDetails($id){
-        $getData = Product::find($id);
+        $workflow = app(\App\Services\PurchaseWorkflow::class);
+        $getData = $workflow->scoped(Product::withoutGlobalScopes())->find($id);
 
         if ($getData) {
             // total current stock across all stock records for this product
@@ -114,11 +115,20 @@ class JqueryController extends Controller
      */
     public function getSaleProductDetailsPublic($id)
     {
+        $workflow = app(\App\Services\PurchaseWorkflow::class);
+        $businessId = $workflow->resolveBusinessId();
         try {
             // In our schema, `purchase_products.productName` stores the Product ID
-            $rows = PurchaseProduct::where('productName', $id)
+            $rows = PurchaseProduct::withoutGlobalScopes()->where('productName', $id)
+                ->where('purchase_products.businessId', $businessId)
                 ->join('suppliers','purchase_products.supplier','suppliers.id')
-                ->join('product_stocks','product_stocks.purchaseId','purchase_products.id')
+                ->join('products','products.id','=','purchase_products.productName')
+                ->join('product_stocks',function($join) use ($businessId){
+                    $join->on('product_stocks.purchaseId','=','purchase_products.id')
+                        ->where('product_stocks.businessId','=',$businessId);
+                })
+                ->where('suppliers.businessId', $businessId)
+                ->where('products.businessId', $businessId)
                 ->select(
                     'purchase_products.id as purchaseId',
                     'purchase_products.buyPrice',
@@ -130,7 +140,7 @@ class JqueryController extends Controller
             if($rows->count() === 0){
                 return response()->json(['status'=>'ok','getData'=>[]]);
             }
-            $product = Product::find($id);
+            $product = Product::withoutGlobalScopes()->where('businessId', $businessId)->find($id);
             $pname = $product ? $product->name : '';
             // Ensure each row includes productName for UI table rendering
             $rows = $rows->map(function($r) use ($pname){
@@ -175,16 +185,22 @@ class JqueryController extends Controller
     public function getProductsForCustomerPublic($customerId)
     {
         $customer = $this->salesCustomer((int)$customerId);
-        $businessId = $customer->businessId ?: auth('admin')->user()->businessId;
+        $businessId = (int)($customer->businessId ?: auth('admin')->user()->businessId);
+        abort_if($businessId <= 0, 404);
         // Return ALL purchase rows so the sale product dropdown can list each
         // purchase separately (even when the same product was purchased from
         // the same supplier multiple times). This helps users pick the exact
         // purchase row (purchase_products.id) and ensures stock and pricing
         // are accurate per purchase.
-        $rows = \App\Models\PurchaseProduct::join('suppliers','purchase_products.supplier','suppliers.id')
+        $rows = \App\Models\PurchaseProduct::withoutGlobalScopes()->where('purchase_products.businessId', $businessId)
+            ->join('suppliers','purchase_products.supplier','suppliers.id')
             ->join('products','purchase_products.productName','products.id')
-            ->leftJoin('product_stocks','product_stocks.purchaseId','purchase_products.id')
-            ->when($businessId, fn($query) => $query->where('purchase_products.businessId', $businessId))
+            ->leftJoin('product_stocks',function($join) use ($businessId){
+                $join->on('product_stocks.purchaseId','=','purchase_products.id')
+                    ->where('product_stocks.businessId','=',$businessId);
+            })
+            ->where('suppliers.businessId', $businessId)
+            ->where('products.businessId', $businessId)
             ->select(
                 'purchase_products.id as purchaseId',
                 'products.id as productId',
@@ -233,11 +249,20 @@ class JqueryController extends Controller
      */
     public function getPurchaseDetailsPublic($id)
     {
+        $workflow = app(\App\Services\PurchaseWorkflow::class);
+        $purchase = $workflow->line((int)$id);
+        $businessId = (int)$purchase->businessId;
         try{
-            $p = PurchaseProduct::where('purchase_products.id', $id)
+            $p = PurchaseProduct::withoutGlobalScopes()->where('purchase_products.id', $id)
+                ->where('purchase_products.businessId', $businessId)
                 ->join('products','purchase_products.productName','products.id')
                 ->join('suppliers','purchase_products.supplier','suppliers.id')
-                ->leftJoin('product_stocks','product_stocks.purchaseId','purchase_products.id')
+                ->leftJoin('product_stocks',function($join) use ($businessId){
+                    $join->on('product_stocks.purchaseId','=','purchase_products.id')
+                        ->where('product_stocks.businessId','=',$businessId);
+                })
+                ->where('products.businessId', $businessId)
+                ->where('suppliers.businessId', $businessId)
                 ->select(
                     'purchase_products.id as purchaseId',
                     'products.id as productId',
@@ -262,10 +287,12 @@ class JqueryController extends Controller
      */
     public function getProductDetailsPublic($id)
     {
-        $getData = Product::find($id);
+        $workflow = app(\App\Services\PurchaseWorkflow::class);
+        $businessId = $workflow->resolveBusinessId();
+        $getData = $workflow->scoped(Product::withoutGlobalScopes())->find($id);
 
         if ($getData) {
-            $stockHistory = ProductStock::where(['productId' => $getData->id])->get();
+            $stockHistory = ProductStock::withoutGlobalScopes()->where(['productId' => $getData->id, 'businessId' => $businessId])->get();
             $currentStock = $stockHistory ? $stockHistory->sum('currentStock') : 0;
 
             $brand = Brand::find($getData->brand);
@@ -273,7 +300,8 @@ class JqueryController extends Controller
             $productName = $getData->name;
             $productWithBrand = $productName . ($brandName ? ' - ' . $brandName : '');
 
-            $lastPurchase = PurchaseProduct::where('productName', $getData->id)->orderBy('id', 'desc')->first();
+            $lastPurchase = PurchaseProduct::withoutGlobalScopes()->where('productName', $getData->id)
+                ->where('businessId', $businessId)->orderBy('id', 'desc')->first();
 
             $buyPrice = $lastPurchase ? ($lastPurchase->buyPrice ?? '') : '';
             $salePrice = $lastPurchase ? ($lastPurchase->salePriceExVat ?? '') : '';
@@ -290,7 +318,7 @@ class JqueryController extends Controller
             ]);
         }
 
-        return response()->json(['productName' => '', 'currentStock' => 0, 'buyPrice' => '', 'salePrice' => '', 'purchaseDate'=>null, 'message' => __('common.api_not_found'), 'id' => '']);
+        return response()->json(['productName' => '', 'currentStock' => 0, 'buyPrice' => '', 'salePrice' => '', 'purchaseDate'=>null, 'message' => __('common.api_not_found'), 'id' => ''], 404);
     }
 
     /**
@@ -299,7 +327,9 @@ class JqueryController extends Controller
      */
     public function getCustomerPreviousDuePublic($customerId)
     {
-        $this->salesCustomer((int)$customerId);
+        $customer = $this->salesCustomer((int)$customerId);
+        $businessId = (int)($customer->businessId ?: auth('admin')->user()->businessId);
+        abort_if($businessId <= 0, 404);
         try {
             // Prefer an explicit dueAmount column if present, otherwise compute grandTotal - paidAmount
             $table = 'sale_products';
@@ -308,16 +338,16 @@ class JqueryController extends Controller
             $hasTotal = Schema::hasColumn($table, 'totalAmount');
 
             if ($hasDue) {
-                $prevDue = SaleProduct::where('customerId', $customerId)->sum('dueAmount');
+                $prevDue = SaleProduct::withoutGlobalScopes()->where('customerId', $customerId)->where('businessId', $businessId)->sum('dueAmount');
             } else if ($hasGrand) {
-                $prevDue = SaleProduct::where('customerId', $customerId)
+                $prevDue = SaleProduct::withoutGlobalScopes()->where('customerId', $customerId)->where('businessId', $businessId)
                     ->selectRaw('COALESCE(SUM(COALESCE(grandTotal,0) - COALESCE(paidAmount,0)),0) as s')->value('s');
             } else if ($hasTotal) {
-                $prevDue = SaleProduct::where('customerId', $customerId)
+                $prevDue = SaleProduct::withoutGlobalScopes()->where('customerId', $customerId)->where('businessId', $businessId)
                     ->selectRaw('COALESCE(SUM(COALESCE(totalAmount,0) - COALESCE(paidAmount,0)),0) as s')->value('s');
             } else {
                 // Fallback: try to compute from known fields if present
-                $prevDue = SaleProduct::where('customerId', $customerId)
+                $prevDue = SaleProduct::withoutGlobalScopes()->where('customerId', $customerId)->where('businessId', $businessId)
                     ->selectRaw('COALESCE(SUM(COALESCE(grandTotal, totalAmount, 0) - COALESCE(paidAmount,0)),0) as s')->value('s');
             }
 
@@ -353,12 +383,20 @@ class JqueryController extends Controller
      */
     public function getProductsByCategoryPublic($categoryId)
     {
+        $workflow = app(\App\Services\PurchaseWorkflow::class);
+        $businessId = $workflow->resolveBusinessId();
         try {
             $cat = \App\Models\Category::find($categoryId);
             $catName = $cat ? $cat->name : null;
-            $rows = \App\Models\PurchaseProduct::join('suppliers','purchase_products.supplier','suppliers.id')
+            $rows = \App\Models\PurchaseProduct::withoutGlobalScopes()->where('purchase_products.businessId', $businessId)
+                ->join('suppliers','purchase_products.supplier','suppliers.id')
                 ->join('products','purchase_products.productName','products.id')
-                ->leftJoin('product_stocks','product_stocks.purchaseId','purchase_products.id')
+                ->leftJoin('product_stocks',function($join) use ($businessId){
+                    $join->on('product_stocks.purchaseId','=','purchase_products.id')
+                        ->where('product_stocks.businessId','=',$businessId);
+                })
+                ->where('suppliers.businessId', $businessId)
+                ->where('products.businessId', $businessId)
                 ->when($categoryId, function($q) use ($categoryId, $catName){
                     $q->where(function($w) use ($categoryId, $catName){
                         $w->where('products.category', (string)$categoryId);

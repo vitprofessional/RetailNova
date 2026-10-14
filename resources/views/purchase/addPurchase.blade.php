@@ -39,7 +39,7 @@
             <div class="modal-body">
                     <div class="card-body">
                 <div class="row">
-                    <form action="{{ route('createSupplier') }}" method="GET" id="supplierForm" data-ajax="true" data-target="#supplierName" data-modal-id="supplier">
+                    <form action="{{ route('createSupplier') }}" method="POST" id="supplierForm" data-ajax="true" data-target="#supplierName" data-modal-id="supplier">
                         @csrf
                         <div class="row">
                             <div class="col-md-4">
@@ -117,7 +117,7 @@
                     <div class="card-body">
 
                 <div class="row">
-                    <form action="{{ route('createProduct') }}" method="GET" id="productForm" data-ajax="true" data-target="#productName" data-modal-id="newProduct">
+                    <form action="{{ route('createProduct') }}" method="POST" id="productForm" data-ajax="true" data-target="#productName" data-modal-id="newProduct">
                     @csrf
                     <div class="row align-items-center">
                         <div class="col-md-4">

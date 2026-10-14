@@ -230,7 +230,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
 
     
     // submit supplier by ajax
-    Route::get('/customer/save',[
+    Route::post('/customer/save',[
         coustomerSupplier::class,
         'createCustomer'
     ])->name('createCustomer');
@@ -256,7 +256,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
     ])->name('restoreSupplier');
 
     // submit supplier by ajax
-    Route::get('/supplier/save',[
+    Route::post('/supplier/save',[
         coustomerSupplier::class,
         'createSupplier'
     ])->name('createSupplier');
@@ -312,7 +312,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
     ])->name('productlist');
 
     // submit product by ajax
-    Route::get('/product/save',[
+    Route::post('/product/save',[
         productController::class,
         'createProduct'
     ])->name('createProduct');

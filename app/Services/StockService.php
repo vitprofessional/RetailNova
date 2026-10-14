@@ -5,6 +5,8 @@ namespace App\Services;
 use Illuminate\Support\Facades\DB;
 use App\Models\ProductStock;
 use App\Models\PurchaseProduct;
+use App\Models\Product;
+use App\Models\BusinessSetup;
 use App\Models\InvoiceItem;
 use App\Models\ReturnPurchaseItem;
 use App\Models\ReturnSaleItem;
@@ -106,9 +108,17 @@ class StockService
     public function adjustStockForPurchaseQtyChange(int $purchaseId, int $oldQty, int $newQty): array
     {
         return DB::transaction(function () use ($purchaseId, $oldQty, $newQty) {
-            $purchase = PurchaseProduct::lockForUpdate()->find($purchaseId);
+            $purchase = app(PurchaseWorkflow::class)->line($purchaseId);
+            $purchase = PurchaseProduct::withoutGlobalScopes()->lockForUpdate()->find($purchaseId);
             if(!$purchase){
                 return ['success'=>false,'message'=>'Purchase not found'];
+            }
+            $businessId = filter_var($purchase->businessId, FILTER_VALIDATE_INT);
+            $product = Product::withoutGlobalScopes()->find($purchase->productName);
+            if($businessId === false || (int)$businessId <= 0
+                || !BusinessSetup::whereKey((int)$businessId)->exists()
+                || !$product || (int)$product->businessId !== (int)$businessId){
+                return ['success'=>false,'message'=>'Purchase ownership is incomplete or inconsistent'];
             }
             $returnedQty = (int)ReturnPurchaseItem::where('purchaseId', $purchaseId)->sum('qty');
             if($newQty < $returnedQty){
@@ -117,6 +127,10 @@ class StockService
             $delta = $newQty - $oldQty;
             $stock = ProductStock::where('purchaseId', $purchaseId)->lockForUpdate()->first();
             if($stock){
+                if ((int)$stock->businessId !== (int)$businessId
+                    || (int)$stock->productId !== (int)$purchase->productName) {
+                    return ['success'=>false,'message'=>'Stock ownership is inconsistent'];
+                }
                 $stock->currentStock = max(0, (int)$stock->currentStock + $delta);
                 $stock->save();
             } else {
@@ -125,6 +139,7 @@ class StockService
                 $stock = new ProductStock();
                 $stock->purchaseId = $purchaseId;
                 $stock->productId = $purchase->productName; // existing schema field
+                $stock->businessId = (int)$businessId;
                 $stock->currentStock = $newStockQty;
                 $stock->save();
             }

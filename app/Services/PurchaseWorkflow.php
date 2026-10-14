@@ -19,8 +19,44 @@ class PurchaseWorkflow
     {
         $actor=auth('admin')->user();
         abort_unless($actor,401);
-        if (!$this->platform()) { $query->where($query->getModel()->qualifyColumn('businessId'),(int)$actor->businessId); }
+        if (!$this->platform()) {
+            $businessId = $this->resolveBusinessId();
+            $query->where($query->getModel()->qualifyColumn('businessId'),$businessId);
+        }
         return $query;
+    }
+
+    /** Resolve one authorized tenant context for all tenant-owned writes. */
+    public function resolveBusinessId(mixed $requested = null): int
+    {
+        $actor = auth('admin')->user();
+        abort_unless($actor, 401);
+
+        $actorBusinessId = filter_var($actor->businessId, FILTER_VALIDATE_INT);
+        $actorBusinessId = $actorBusinessId !== false && $actorBusinessId > 0 ? (int)$actorBusinessId : null;
+        $hasRequested = $requested !== null && $requested !== '';
+        $requestedBusinessId = $hasRequested ? filter_var($requested, FILTER_VALIDATE_INT) : null;
+        if ($hasRequested && ($requestedBusinessId === false || (int)$requestedBusinessId <= 0)) {
+            $this->fail('business_required', 'businessId');
+        }
+
+        if ($this->platform()) {
+            $businessId = $hasRequested ? (int)$requestedBusinessId : $actorBusinessId;
+        } else {
+            if (!$actorBusinessId) {
+                $this->fail('business_required', 'businessId');
+            }
+            if ($hasRequested && (int)$requestedBusinessId !== $actorBusinessId) {
+                abort(403, 'The requested business is not authorized.');
+            }
+            $businessId = $actorBusinessId;
+        }
+
+        if (!$businessId || !BusinessSetup::whereKey($businessId)->exists()) {
+            $this->fail('business_required', 'businessId');
+        }
+
+        return (int)$businessId;
     }
 
     public function line(int $id): PurchaseProduct
@@ -65,8 +101,7 @@ class PurchaseWorkflow
         return DB::transaction(function() use($input,$header) {
             $this->lockSerialNamespace();
             if($header) {$header=$this->scoped(PurchaseInvoice::query())->lockForUpdate()->findOrFail($header->id);}
-            $business=$header?->businessId ?? ($this->platform() ? ($input['businessId']??auth('admin')->user()->businessId) : auth('admin')->user()->businessId);
-            if(!BusinessSetup::whereKey($business)->exists()) {$this->fail('business_required','businessId');}
+            $business=$this->resolveBusinessId($header?->businessId ?? ($input['businessId'] ?? null));
             $supplierId=$input['supplierName']??$header?->supplier_id;
             $supplier=Supplier::withoutGlobalScopes()->find($supplierId);
             if(!$supplier || (int)$supplier->businessId!==(int)$business) {$this->fail('foreign_supplier','supplierName');}

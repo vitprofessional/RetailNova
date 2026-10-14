@@ -65,7 +65,8 @@
             <div class="modal-body">
                 <div class="card">
                     <div class="card-body">
-                        <form action="{{ route('createCustomer') }}" method="GET" id="customerForm" data-ajax="true" data-target="#customerName" data-modal-id="customerModal">
+                        <form action="{{ route('createCustomer') }}" method="POST" id="customerForm" data-ajax="true" data-target="#customerName" data-modal-id="customerModal">
+                            @csrf
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="form-group">

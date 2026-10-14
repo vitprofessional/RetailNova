@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\AdminUser;
+use App\Models\BusinessSetup;
 use Illuminate\Support\Facades\Hash;
 
 class RoleAccessMatrixTest extends TestCase
@@ -13,6 +14,7 @@ class RoleAccessMatrixTest extends TestCase
 
     protected function createAdmin(string $role = 'admin'): AdminUser
     {
+        BusinessSetup::firstOrCreate(['id' => 1], ['businessName' => 'RetailNova']);
         return AdminUser::create([
             'fullName' => ucfirst($role).' User',
             'sureName' => $role,

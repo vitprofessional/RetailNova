@@ -162,9 +162,9 @@ class Sprint02PurchaseCustomerTest extends TestCase
         $this->postJson(route('saveCustomer'),['profileId'=>$foreignCustomer->id,'fullName'=>'Hijack'])->assertNotFound();
         $this->getJson(route('editCustomer',$foreignCustomer->id))->assertNotFound();
         $payload=['supplierName'=>$foreignSupplier->id,'businessId'=>2,'purchaseDate'=>'2026-10-12','productName'=>[$foreignProduct->id],'quantity'=>[1],'buyPrice'=>[10]];
-        $this->postJson(route('savePurchase'),$payload)->assertUnprocessable();
+        $this->postJson(route('savePurchase'),$payload)->assertForbidden();
         $payload['supplierName']=$invoice->supplier_id;
-        $this->postJson(route('savePurchase'),$payload)->assertUnprocessable();
+        $this->postJson(route('savePurchase'),$payload)->assertForbidden();
         $this->assertDatabaseCount('purchase_invoices',1);
     }
 
@@ -232,7 +232,7 @@ class Sprint02PurchaseCustomerTest extends TestCase
         $this->setupBusiness();
         $this->post(route('saveCustomer'),['fullName'=>'First','mail'=>'unique@example.test','businessId'=>1])->assertSessionHasNoErrors();
         $this->postJson(route('saveCustomer'),['fullName'=>'Second','mail'=>'unique@example.test','businessId'=>1])->assertUnprocessable();
-        $this->getJson(route('createCustomer',['fullName'=>'Ajax Customer','businessId'=>1]))->assertOk();
+        $this->postJson(route('createCustomer'),['fullName'=>'Ajax Customer','businessId'=>1])->assertOk();
         $this->assertDatabaseHas('customers',['name'=>'Ajax Customer','mail'=>null,'businessId'=>1]);
         $customer=Customer::where('name','First')->firstOrFail();
         $this->get(route('editCustomer',$customer->id))->assertOk();
