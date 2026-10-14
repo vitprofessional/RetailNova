@@ -24,14 +24,26 @@ use Illuminate\Support\Facades\DB;
 
 class JqueryController extends Controller
 {
-    private function salesCustomer(int $customerId): \App\Models\Customer
+    private function salesBusinessId(Request $request): int
     {
-        $actor = auth('admin')->user();
-        abort_unless($actor, 401);
+        $workflow = app(\App\Services\PurchaseWorkflow::class);
+        if ($workflow->platform() && !$request->filled('businessId')) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'businessId' => __('purchases.business_required'),
+            ]);
+        }
+
+        return $workflow->resolveBusinessId($request->query('businessId'));
+    }
+
+    private function salesCustomer(int $customerId, int $businessId): \App\Models\Customer
+    {
+        abort_unless(auth('admin')->user(), 401);
         $customer = \App\Models\Customer::withoutGlobalScope('business')->find($customerId);
+        // The one intentionally shared legacy customer is virtual at tenant level;
+        // its product and due data are still constrained by the resolved business.
         $legacyWalking = $customer && $customer->businessId === null && $customer->name === 'Walking Customer';
-        abort_if(!$customer || (!$actor->canAccessAllSalesBusinesses()
-            && ((int)$actor->businessId <= 0 || (!$legacyWalking && (int)$customer->businessId !== (int)$actor->businessId))), 404);
+        abort_if(!$customer || (!$legacyWalking && (int)$customer->businessId !== $businessId), 404);
         return $customer;
     }
     public function getProductDetails($id){
@@ -179,14 +191,13 @@ class JqueryController extends Controller
 
     /**
      * Public variant of getProductsForCustomer used by AJAX on the sale page.
-     * This intentionally does not require authentication and returns the same
-     * option HTML payload so the frontend can populate the select safely.
+     * This same-origin AJAX endpoint uses the selected, server-authorized
+     * business context before returning its option HTML payload.
      */
-    public function getProductsForCustomerPublic($customerId)
+    public function getProductsForCustomerPublic($customerId, Request $request)
     {
-        $customer = $this->salesCustomer((int)$customerId);
-        $businessId = (int)($customer->businessId ?: auth('admin')->user()->businessId);
-        abort_if($businessId <= 0, 404);
+        $businessId = $this->salesBusinessId($request);
+        $this->salesCustomer((int)$customerId, $businessId);
         // Return ALL purchase rows so the sale product dropdown can list each
         // purchase separately (even when the same product was purchased from
         // the same supplier multiple times). This helps users pick the exact
@@ -325,11 +336,10 @@ class JqueryController extends Controller
      * Public endpoint: return aggregate previous due for a customer.
      * Computes sum of outstanding due for all sales belonging to the customer.
      */
-    public function getCustomerPreviousDuePublic($customerId)
+    public function getCustomerPreviousDuePublic($customerId, Request $request)
     {
-        $customer = $this->salesCustomer((int)$customerId);
-        $businessId = (int)($customer->businessId ?: auth('admin')->user()->businessId);
-        abort_if($businessId <= 0, 404);
+        $businessId = $this->salesBusinessId($request);
+        $this->salesCustomer((int)$customerId, $businessId);
         try {
             // Prefer an explicit dueAmount column if present, otherwise compute grandTotal - paidAmount
             $table = 'sale_products';

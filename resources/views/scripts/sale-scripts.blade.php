@@ -21,6 +21,12 @@
     function routeForId(template, id){
         return template ? safeFinalizeUrl(template.replace('__ID__', encodeURIComponent(String(id)))) : '';
     }
+    function withSelectedBusiness(url){
+        var form = byId('saveSaleForm');
+        var business = form && form.querySelector('[name="businessId"]');
+        if(!url || !business || !String(business.value || '').trim()) return url;
+        return url + (url.indexOf('?') === -1 ? '?' : '&') + 'businessId=' + encodeURIComponent(String(business.value).trim());
+    }
     var ROUTES = {}; // will populate on DOMContentLoaded
     var SALE_SUBMITTING = false;
     var SALE_ROW_COUNTER = 0; // per-row counter to track serial selections
@@ -127,7 +133,7 @@
                 if(!cid){ productSel.innerHTML='<option value="">'+window.RNTranslate('common.select')+'</option>'; if(categorySel) categorySel.value=''; return; }
                         // Fetch and display customer's previous due
                         try{
-                            var prevTpl = routeForId(ROUTES.previousDueTpl, cid);
+                            var prevTpl = withSelectedBusiness(routeForId(ROUTES.previousDueTpl, cid));
                             if(!prevTpl) throw new Error('Previous balance route is not configured');
                             fetch(prevTpl, { headers: { 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin' })
                                 .then(function(res){ if(res.status >= 400) throw new Error('prevDue fetch failed'); return res.json(); })
@@ -136,7 +142,7 @@
                         }catch(e){ customerSel.dataset.dueLookupError='1'; refreshCustomerGate(); }
                 if(!cid){ productSel.innerHTML = ('<option value="">' + window.RNTranslate('common.select') + '</option>'); productSel.disabled = true; if(categorySel){ categorySel.innerHTML = ('<option value="">' + window.RNTranslate('common.all_categories') + '</option>'); categorySel.disabled = true; } return; }
                 var tpl = ROUTES.productsTpl || customerSel.getAttribute('data-products-url') || '';
-                    var url = routeForId(tpl, cid);
+                    var url = withSelectedBusiness(routeForId(tpl, cid));
                     if(!url){ customerSel.dataset.productLookupError='1'; refreshCustomerGate(); return; }
                     if(window.__SALEDEBUG) console.debug('[SALE] Products final URL:', url);
                     // Guard: do not accidentally call auth routes which may destroy session

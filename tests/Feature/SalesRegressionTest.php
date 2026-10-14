@@ -473,6 +473,68 @@ class SalesRegressionTest extends TestCase
         }
     }
 
+    public function test_walk_in_customer_lookups_use_the_resolved_business_and_reject_invalid_targets(): void
+    {
+        $inventory = $this->inventory();
+        $walkIn = Customer::forceCreate(['name' => 'Walking Customer', 'businessId' => null]);
+        SaleProduct::forceCreate([
+            'invoice' => 'WALKIN-DUE-TEST', 'date' => '2026-10-15', 'customerId' => $walkIn->id,
+            'businessId' => 1, 'grandTotal' => 50, 'paidAmount' => 37.5, 'invoiceDue' => 12.5,
+            'prevDue' => 0, 'curDue' => 12.5, 'status' => 'Ordered',
+        ]);
+        $this->login();
+        $this->assertNull($walkIn->fresh()->businessId, 'Fixture must represent the legacy shared Walk-in record.');
+
+        $products = $this->getJson(route('ajax.customer.products.public', [
+            'id' => $walkIn->id, 'businessId' => 1,
+        ]))->assertOk();
+        $products->assertSee('purchase_'.$inventory['purchase']->id);
+        $this->getJson(route('ajax.customer.previousDue.public', [
+            'id' => $walkIn->id, 'businessId' => 1,
+        ]))->assertOk()->assertJsonPath('prevDue', '12.50');
+
+        foreach (['ajax.customer.products.public', 'ajax.customer.previousDue.public'] as $route) {
+            $this->getJson(route($route, ['id' => 999999, 'businessId' => 1]))->assertNotFound();
+            $this->getJson(route($route, ['id' => $walkIn->id, 'businessId' => 2]))->assertForbidden();
+        }
+    }
+
+    public function test_platform_customer_lookups_require_an_explicit_authorized_business(): void
+    {
+        $inventory = $this->inventory();
+        \App\Models\BusinessSetup::forceCreate(['id' => 2, 'businessName' => 'Other Business']);
+        $walkIn = Customer::forceCreate(['name' => 'Walking Customer', 'businessId' => null]);
+        $this->actingAs($this->actor('superadmin'), 'admin');
+
+        $this->getJson(route('ajax.customer.products.public', [
+            'id' => $walkIn->id, 'businessId' => 1,
+        ]))->assertOk()->assertSee('purchase_'.$inventory['purchase']->id);
+        $this->getJson(route('ajax.customer.products.public', $walkIn->id))
+            ->assertUnprocessable()->assertJsonValidationErrors('businessId');
+    }
+
+    public function test_platform_customer_creation_requires_explicit_business_and_saves_to_that_business(): void
+    {
+        $this->inventory();
+        \App\Models\BusinessSetup::forceCreate(['id' => 2, 'businessName' => 'Other Business']);
+        $this->actingAs($this->actor('superadmin'), 'admin');
+
+        $salePage = $this->get(route('newsale'))->assertOk();
+        $salePage->assertSee("if(f.id === 'customerForm')", false)
+            ->assertSee('#saveSaleForm [name="businessId"]', false)
+            ->assertSee('id="businessId" name="businessId"', false);
+
+        $this->postJson(route('createCustomer'), [
+            'fullName' => 'Explicit Business Customer', 'businessId' => 2,
+        ])->assertOk();
+        $this->assertDatabaseHas('customers', [
+            'name' => 'Explicit Business Customer', 'businessId' => 2,
+        ]);
+        $this->postJson(route('createCustomer'), ['fullName' => 'Missing Business Customer'])
+            ->assertUnprocessable()->assertJsonValidationErrors('businessId');
+        $this->assertDatabaseMissing('customers', ['name' => 'Missing Business Customer']);
+    }
+
     public function test_missing_invalid_and_deleted_customer_ids_roll_back_and_walk_in_remains_valid(): void
     {
         $inventory=$this->inventory(); $this->optional(); $this->login();

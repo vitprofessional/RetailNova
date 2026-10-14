@@ -342,6 +342,13 @@ document.addEventListener('submit', function(e){
                 formData.append('businessId', purchaseBusiness.value);
             }
         }
+        if(f.id === 'customerForm'){
+            var saleBusiness = document.querySelector('#saveSaleForm [name="businessId"]');
+            if(saleBusiness){
+                formData.delete('businessId');
+                formData.append('businessId', saleBusiness.value);
+            }
+        }
         var url = action;
         var opts = { method: method, credentials: 'same-origin', headers: {'X-Requested-With':'XMLHttpRequest'} };
         // If GET, serialize FormData to query string (fetch doesn't support body for GET reliably)

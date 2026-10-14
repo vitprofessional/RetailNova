@@ -146,6 +146,12 @@ class coustomerSupplier extends Controller
 
      // submit customer by ajax
     public function createCustomer(Request $req){
+        $workflow=app(\App\Services\PurchaseWorkflow::class);
+        if($workflow->platform() && !$req->filled('businessId')){
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'businessId' => __('purchases.business_required'),
+            ]);
+        }
         $payload = [
             'fullName'       => trim((string)$req->fullName),
             'mail'           => strtolower(trim((string)$req->mail)),
@@ -192,7 +198,6 @@ class coustomerSupplier extends Controller
             ];
         }
 
-        $workflow=app(\App\Services\PurchaseWorkflow::class);
         $actor=auth('admin')->user();
         abort_unless($actor,401);
         $businessId=$workflow->resolveBusinessId($req->input('businessId'));
