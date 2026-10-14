@@ -458,6 +458,11 @@ class coustomerSupplier extends Controller
     // submit supplier by ajax
     public function createSupplier(Request $req){
         $workflow=app(\App\Services\PurchaseWorkflow::class);
+        if($workflow->platform() && !$req->filled('businessId')){
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'businessId' => __('purchases.business_required'),
+            ]);
+        }
         $businessId=$workflow->resolveBusinessId($req->input('businessId'));
         // Validate incoming AJAX payload (keeps route unchanged)
         $payload = [

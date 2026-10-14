@@ -144,6 +144,13 @@ class BusinessOwnershipIntegrityTest extends TestCase
         $this->postJson(route('saveProduct'), ['name' => 'Ownerless Product'])->assertUnprocessable()
             ->assertJsonValidationErrors('businessId');
         $this->assertDatabaseMissing('products', ['name' => 'Ownerless Product']);
+
+        $this->postJson(route('createSupplier'), ['fullName' => 'Explicit Tenant Supplier', 'businessId' => 2])
+            ->assertOk();
+        $this->assertDatabaseHas('suppliers', ['name' => 'Explicit Tenant Supplier', 'businessId' => 2]);
+        $this->postJson(route('createSupplier'), ['fullName' => 'Unscoped Tenant Supplier'])
+            ->assertUnprocessable()->assertJsonValidationErrors('businessId');
+        $this->assertDatabaseMissing('suppliers', ['name' => 'Unscoped Tenant Supplier']);
     }
 
     public function test_platform_edit_preserves_existing_owner_and_rejects_implicit_tenant_transfer(): void

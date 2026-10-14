@@ -333,6 +333,15 @@ document.addEventListener('submit', function(e){
         var action = f.getAttribute('action') || window.location.href;
         var method = (f.getAttribute('method') || 'POST').toUpperCase();
         var formData = new FormData(f);
+        // The Purchase business selector belongs to the purchase form, while the
+        // supplier modal form is a sibling. Forward its selected target explicitly.
+        if(f.id === 'supplierForm'){
+            var purchaseBusiness = document.querySelector('#savePurchase [name="businessId"]');
+            if(purchaseBusiness){
+                formData.delete('businessId');
+                formData.append('businessId', purchaseBusiness.value);
+            }
+        }
         var url = action;
         var opts = { method: method, credentials: 'same-origin', headers: {'X-Requested-With':'XMLHttpRequest'} };
         // If GET, serialize FormData to query string (fetch doesn't support body for GET reliably)
