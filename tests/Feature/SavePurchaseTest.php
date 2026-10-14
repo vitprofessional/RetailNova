@@ -114,6 +114,37 @@ class SavePurchaseTest extends TestCase
         ]);
     }
 
+    public function test_new_purchase_uses_authenticated_business_when_request_omits_business_id(): void
+    {
+        $actor = auth('admin')->user();
+        $actor->forceFill(['role' => 'admin', 'businessId' => 1])->save();
+
+        $supplierId = DB::table('suppliers')->insertGetId([
+            'businessId'=>1, 'name'=>'Scoped Supplier', 'created_at'=>now(), 'updated_at'=>now(),
+        ]);
+        $productId = DB::table('products')->insertGetId([
+            'businessId'=>1, 'name'=>'Scoped Product', 'created_at'=>now(), 'updated_at'=>now(),
+        ]);
+
+        $this->post(route('savePurchase'), [
+            'purchaseDate'=>now()->toDateString(), 'supplierName'=>$supplierId,
+            'invoiceData'=>'INV-AUTHENTICATED-BUSINESS', 'productName'=>[$productId],
+            'quantity'=>[1], 'buyPrice'=>[10], 'salePriceExVat'=>[12],
+            'serialNumber'=>[[]], 'discountAmount'=>0, 'discountPercent'=>0,
+            'grandTotal'=>10, 'paidAmount'=>0,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('purchase_products', [
+            'invoice'=>'INV-AUTHENTICATED-BUSINESS', 'businessId'=>1, 'productName'=>$productId,
+        ]);
+        $this->assertDatabaseMissing('purchase_products', [
+            'invoice'=>'INV-AUTHENTICATED-BUSINESS', 'businessId'=>null,
+        ]);
+        $this->assertDatabaseHas('product_stocks', [
+            'productId'=>$productId, 'businessId'=>1, 'currentStock'=>1,
+        ]);
+    }
+
     public function test_purchase_save_redirect_and_invoice_refresh_keep_the_selected_locale_and_serials(): void
     {
         $supplierId = DB::table('suppliers')->insertGetId([

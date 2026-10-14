@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         \App\Console\Commands\ScanDuplicates::class,
         \App\Console\Commands\CheckSaleInvoiceDuplicates::class,
         \App\Console\Commands\BackfillSerialPurchase::class,
+        \App\Console\Commands\AuditLegacyPurchaseOwnership::class,
     ])
     ->withProviders([
         \App\Providers\AuthServiceProvider::class,
