@@ -55,88 +55,66 @@
 </div>
 
 <!-- start_model -->
- <div class="modal fade" id="customerModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="customerModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+ <div class="modal fade rn-customer-modal" id="customerModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="customerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title fs-5" id="customerModalLabel">{{ __('sales.create_customer') }}</h6>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="{{ __('sales.close') }}"></button>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="{{ __('sales.close') }}"><i class="ri-close-line" aria-hidden="true"></i></button>
             </div>
             <div class="modal-body">
-                <div class="card">
-                    <div class="card-body">
-                        <form action="{{ route('createCustomer') }}" method="POST" id="customerForm" data-ajax="true" data-target="#customerName" data-modal-id="customerModal">
-                            @csrf
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ __('common.name') }} *</label>
-                                        <input type="text" class="form-control" placeholder="{{ __('common.enter_name') }}" id="fullName" name="fullName" required />
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ __('common.email') }} *</label>
-                                        <input type="email" class="form-control" placeholder="{{ __('common.enter_email') }}" id="mail" name="mail" />
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ __('sales.phone_number') }}</label>
-                                        <input type="text" class="form-control" placeholder="{{ __('common.enter_phone_number') }}" id="mobile" name="mobile" />
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="inputState" class="form-label">{{ __('sales.country') }}</label>
-
-                                        <input type="text" class="form-control" placeholder="{{ __('common.enter_the_country') }}" id="country" name="country" />
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="inputState" class="form-label">{{ __('sales.state') }}</label>
-
-                                        <input type="text" class="form-control" placeholder="{{ __('common.enter_the_state') }}" id="state" name="state" />
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="inputState" class="form-label">{{ __('sales.city') }}</label>
-
-                                        <input type="text" class="form-control" placeholder="{{ __('common.enter_the_city') }}" id="city" name="city" />
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="inputState" class="form-label">{{ __('sales.area') }}</label>
-
-                                        <input type="text" class="form-control" placeholder="{{ __('common.enter_the_area') }}" id="area" name="area" />
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="openingBalance" class="form-label">{{ __('sales.opening_balance') }}
-                                            <span class="ml-1" data-toggle="tooltip" title="{{ __('common.positive_customer_owes_you_negative_you_owe_customer_leave_0_for_new_customers') }}">
-                                                <i class="ri-information-line"></i>
-                                            </span>
-                                        </label>
-                                        <input type="number" step="1" class="form-control" placeholder="0" id="openingBalance" name="openingBalance" value="0" />
-                                        <small class="text-muted">{{ __('sales.use_positive_for_receivable_negative_for_payable') }}</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary mr-2" id="add-customer">{{ __('sales.add_customer') }}</button>
-                            <button type="reset" class="btn btn-danger">{{ __('sales.reset') }}</button>
-                        </form>
+                <form action="{{ route('createCustomer') }}" method="POST" id="customerForm" data-ajax="true" data-target="#customerName" data-modal-id="customerModal">
+                    @csrf
+                    <div class="rn-customer-form-grid">
+                        <div class="rn-customer-field">
+                            <label for="fullName">{{ __('common.name') }} <span aria-hidden="true">*</span></label>
+                            <input type="text" class="form-control" placeholder="{{ __('common.enter_name') }}" id="fullName" name="fullName" required />
+                            <div class="help-block with-errors"></div>
+                        </div>
+                        <div class="rn-customer-field">
+                            <label for="mail">{{ __('common.email') }}</label>
+                            <input type="email" class="form-control" placeholder="{{ __('common.enter_email') }}" id="mail" name="mail" />
+                            <div class="help-block with-errors"></div>
+                        </div>
+                        <div class="rn-customer-field">
+                            <label for="mobile">{{ __('sales.phone_number') }}</label>
+                            <input type="text" class="form-control" placeholder="{{ __('common.enter_phone_number') }}" id="mobile" name="mobile" />
+                            <div class="help-block with-errors"></div>
+                        </div>
+                        <div class="rn-customer-field">
+                            <label for="country">{{ __('sales.country') }}</label>
+                            <input type="text" class="form-control" placeholder="{{ __('common.enter_the_country') }}" id="country" name="country" />
+                        </div>
+                        <div class="rn-customer-field">
+                            <label for="state">{{ __('sales.state') }}</label>
+                            <input type="text" class="form-control" placeholder="{{ __('common.enter_the_state') }}" id="state" name="state" />
+                        </div>
+                        <div class="rn-customer-field">
+                            <label for="city">{{ __('sales.city') }}</label>
+                            <input type="text" class="form-control" placeholder="{{ __('common.enter_the_city') }}" id="city" name="city" />
+                        </div>
+                        <div class="rn-customer-field">
+                            <label for="area">{{ __('sales.area') }}</label>
+                            <input type="text" class="form-control" placeholder="{{ __('common.enter_the_area') }}" id="area" name="area" />
+                        </div>
+                        <div class="rn-customer-field rn-customer-opening-balance">
+                            <label for="openingBalance">{{ __('sales.opening_balance') }}
+                                <span class="rn-customer-info" data-toggle="tooltip" title="{{ __('common.positive_customer_owes_you_negative_you_owe_customer_leave_0_for_new_customers') }}" aria-label="{{ __('common.positive_customer_owes_you_negative_you_owe_customer_leave_0_for_new_customers') }}">
+                                    <i class="ri-information-line" aria-hidden="true"></i>
+                                </span>
+                            </label>
+                            <input type="number" step="1" class="form-control" placeholder="0" id="openingBalance" name="openingBalance" value="0" />
+                            <small class="text-muted">{{ __('sales.use_positive_for_receivable_negative_for_payable') }}</small>
+                        </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-light" data-dismiss="modal">{{ __('sales.cancel') }}</button>
-                    </div>
+                </form>
+            </div>
+            <div class="modal-footer rn-customer-modal-footer">
+                <div class="rn-customer-modal-actions">
+                    <button type="submit" form="customerForm" class="btn btn-primary" id="add-customer">{{ __('sales.add_customer') }}</button>
+                    <button type="reset" form="customerForm" class="btn btn-outline-danger">{{ __('sales.reset') }}</button>
                 </div>
+                <button type="button" class="btn btn-light" data-dismiss="modal">{{ __('sales.cancel') }}</button>
             </div>
         </div>
     </div>

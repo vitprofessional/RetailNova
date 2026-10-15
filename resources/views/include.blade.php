@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/backende209.css?v=1.0.0">
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/rn-custom.css">
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/rn-table-pro.css">
+    <link rel="stylesheet" href="{{ asset('css/retailnova-shell.css') }}?v={{ filemtime(public_path('css/retailnova-shell.css')) }}">
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
     <link rel= "stylesheet" href= "https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css" >
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/remixicon/fonts/remixicon.css">
@@ -61,7 +62,7 @@
         body {
             font-family: 'Segoe UI', sans-serif;
             background-color: #f4f6f8;
-            padding: 30px;
+            padding: 0;
             color: #333;
         }
         .login-form .form-control, .floating-label .floating-input {
@@ -741,13 +742,13 @@
     <!-- Wrapper Start -->
     <div class="wrapper">
 
-      <div class="iq-sidebar  sidebar-default ">
+      <div class="iq-sidebar sidebar-default rn-sidebar" id="rn-sidebar">
           <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
               <a href="{{ route('dashboard') }}" class="header-logo">
                   <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('uploads/business/' . $config[0]->businessLogo) : asset('logo.png') }}" class="img-fluid rounded-normal light-logo" alt="logo"><h5 class="logo-title light-logo ml-3">{{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h5>
               </a>
               <div class="iq-menu-bt-sidebar ml-0">
-                  <i class="las la-bars wrapper-menu"></i>
+                  <button type="button" class="rn-sidebar-toggle wrapper-menu" aria-label="{{ __('navigation.toggle_navigation') }}" aria-controls="rn-sidebar" aria-expanded="false"><i class="las la-bars" aria-hidden="true"></i></button>
               </div>
           </div>
           <div class="data-scrollbar" data-scroll="1">
@@ -767,11 +768,11 @@
               </div>
               <div class="p-3"></div>
           </div>
-          </div>      <div class="iq-top-navbar">
+      </div>      <div class="iq-top-navbar rn-topbar">
           <div class="iq-navbar-custom">
               <nav class="navbar navbar-expand-lg navbar-light p-0">
                   <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
-                      <i class="ri-menu-line wrapper-menu"></i>
+                      <button type="button" class="rn-top-sidebar-toggle wrapper-menu" aria-label="{{ __('navigation.toggle_navigation') }}" aria-controls="rn-sidebar" aria-expanded="false"><i class="ri-menu-line" aria-hidden="true"></i></button>
                       <a href="{{route('dashboard')}}" class="header-logo">
                           <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('uploads/business/' . $config[0]->businessLogo) : asset('logo.png') }}" class="img-fluid rounded-normal" alt="logo">
                           <h5 class="logo-title ml-3">{{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h5>
@@ -779,9 +780,9 @@
                       </a>
                   </div>
                   <div class="iq-search-bar device-search">
-                      <form action="#" class="searchbox">
-                          <a class="search-link" href="#"><i class="ri-search-line"></i></a>
-                          <input type="text" class="text search-input" placeholder="{{ __('navigation.search_here') }}">
+                      <form action="#" class="searchbox" role="search" aria-label="{{ __('navigation.search_here') }}">
+                          <a class="search-link" href="#" aria-hidden="true" tabindex="-1"><i class="ri-search-line"></i></a>
+                          <input type="text" class="text search-input" aria-label="{{ __('navigation.search_here') }}" placeholder="{{ __('navigation.search_here') }}">
                       </form>
                   </div>
                   <div class="d-flex align-items-center">
@@ -1014,6 +1015,7 @@
               </nav>
           </div>
       </div>
+      <button type="button" id="rn-sidebar-backdrop" aria-label="{{ __('navigation.toggle_navigation') }}" tabindex="-1"></button>
       <div class="content-page">
         <div class="container-fluid">
             @yield('container')
@@ -1045,19 +1047,19 @@
       </div>
     </div>
     <!-- Wrapper End-->
-    <footer class="iq-footer">
+    <footer class="iq-footer rn-footer">
         <div class="container-fluid">
-            <div class="card border-0">
-                <div class="card-body">
-                    <div class="p-3">
-                        <h5 class="mb-1">{{ $adminUser->mail ?? 'user@domain' }}</h5>
-                        <p class="mb-0">{{ __('common.since') }} {{ optional($adminUser->created_at)->format('j M, Y') ?? '26 Mar, 2020' }}</p>
-                        <div class="d-flex align-items-center justify-content-center mt-3">
-                            <a href="{{ route('admin.profile.show') }}" class="btn border mr-2">{{ __('navigation.my_profile') }}</a>
-                            <a href="{{ route('dashboard') }}" class="btn border mr-2">{{ __('navigation.dashboard') }}</a>
-                            <a href="{{ route('logout') }}" class="btn border">{{ __('navigation.sign_out') }}</a>
-                        </div>
-                    </div>
+            <div class="rn-footer-inner">
+                <div class="rn-footer-identity">
+                    <strong>{{ $config->count() > 0 ? ($config[0]->businessName ?? config('app.name', 'Retail Nova')) : config('app.name', 'Retail Nova') }}</strong>
+                    <span>{{ $adminUser->mail ?? 'user@domain' }}</span>
+                    <span>{{ __('common.since') }} {{ optional($adminUser->created_at)->format('j M, Y') ?? '26 Mar, 2020' }}</span>
+                    @if(config('app.version'))<span class="rn-footer-version">v{{ config('app.version') }}</span>@endif
+                </div>
+                <div class="rn-footer-links">
+                    <a href="{{ route('admin.profile.show') }}">{{ __('navigation.my_profile') }}</a>
+                    <a href="{{ route('dashboard') }}">{{ __('navigation.dashboard') }}</a>
+                    <a href="{{ route('logout') }}">{{ __('navigation.sign_out') }}</a>
                 </div>
             </div>
         </div>
@@ -1325,6 +1327,46 @@
             })();
         </script>
     @yield('scripts')
+    <script>
+    (function(){
+        var sidebar=document.getElementById('rn-sidebar');
+        var backdrop=document.getElementById('rn-sidebar-backdrop');
+        var toggles=document.querySelectorAll('.wrapper-menu');
+        function syncSidebarState(){
+            var compactViewport=window.matchMedia('(max-width: 1299px)').matches;
+            var hasSidebarState=document.body.classList.contains('sidebar-main');
+            var open=compactViewport ? hasSidebarState : !hasSidebarState;
+            toggles.forEach(function(toggle){toggle.setAttribute('aria-expanded',open?'true':'false');});
+            if(backdrop) backdrop.setAttribute('aria-hidden',open?'false':'true');
+        }
+        document.addEventListener('click',function(event){
+            if(event.target.closest && event.target.closest('.wrapper-menu')){window.requestAnimationFrame(syncSidebarState);}
+        });
+        if(backdrop) backdrop.addEventListener('click',function(){
+            document.body.classList.remove('sidebar-main');
+            toggles.forEach(function(toggle){toggle.classList.remove('open');});
+            syncSidebarState();
+            var opener=document.querySelector('.rn-top-sidebar-toggle'); if(opener) opener.focus();
+        });
+        document.addEventListener('keydown',function(event){
+            if(event.key==='Escape' && document.body.classList.contains('sidebar-main') && window.matchMedia('(max-width: 1299px)').matches){
+                document.body.classList.remove('sidebar-main');
+                toggles.forEach(function(toggle){toggle.classList.remove('open');});
+                syncSidebarState();
+                var opener=document.querySelector('.rn-top-sidebar-toggle'); if(opener) opener.focus();
+            }
+        });
+        window.addEventListener('resize',syncSidebarState,{passive:true});
+        if(sidebar) sidebar.addEventListener('click',function(event){
+            if(window.matchMedia('(max-width: 1299px)').matches && event.target.closest('a[href]:not([href^="#"])')){
+                document.body.classList.remove('sidebar-main');
+                toggles.forEach(function(toggle){toggle.classList.remove('open');});
+                syncSidebarState();
+            }
+        });
+        syncSidebarState();
+    })();
+    </script>
     <div class="modal fade" id="rn-pwa-ios-help" tabindex="-1" role="dialog" aria-labelledby="rn-pwa-ios-title" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">

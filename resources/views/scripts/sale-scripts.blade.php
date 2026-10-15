@@ -116,8 +116,8 @@
                 } else if(window.jQuery){
                     try{ window.jQuery(custModal).on('shown.bs.modal', function(){ try{ window.jQuery('#fullName').trigger('focus'); }catch(e){} }); }catch(e){}
                 } else {
-                    var plusBtn = document.querySelector('button[title="Add customer"]');
-                    if(plusBtn){ plusBtn.addEventListener('click', function(){ setTimeout(function(){ try{ var fn = byId('fullName'); if(fn) fn.focus(); }catch(e){} }, 450); }); }
+                    var addCustomerBtn = document.querySelector('button.rn-sale-new-customer');
+                    if(addCustomerBtn){ addCustomerBtn.addEventListener('click', function(){ setTimeout(function(){ try{ var fn = byId('fullName'); if(fn) fn.focus(); }catch(e){} }, 450); }); }
                 }
             }
         }catch(e){}

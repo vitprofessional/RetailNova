@@ -416,7 +416,10 @@ class SalesRegressionTest extends TestCase
         $this->inventory();$this->login();
         foreach (['en','bn'] as $locale) {
             auth('admin')->user()->update(['preferred_locale'=>$locale]);
-            $page=$this->get(route('newsale'))->assertOk()->assertSee(__('sales.billing_summary'))->assertSee(__('sales.find_products'));
+            $page=$this->get(route('newsale'))->assertOk()
+                ->assertSee(\Illuminate\Support\Facades\Lang::get('sales.billing_summary', [], $locale))
+                ->assertSee(\Illuminate\Support\Facades\Lang::get('sales.add_products', [], $locale))
+                ->assertSee(\Illuminate\Support\Facades\Lang::get('sales.product_search', [], $locale));
             $doc=new \DOMDocument;@$doc->loadHTML('<?xml encoding="UTF-8">'.$page->getContent());$xpath=new \DOMXPath($doc);
             foreach (['customerId','date','invoice','note','saleAction','totalSaleAmount','discountAmount','additionalChargeName','additionalChargeAmount','grandTotal','paidAmount','dueAmount','prevDue','curDue','printerProfile'] as $name) {
                 $this->assertCount(1,$xpath->query('//*[@id="saveSaleForm"]//*[@name="'.$name.'"]'),$locale.' '.$name);
@@ -424,6 +427,12 @@ class SalesRegressionTest extends TestCase
             $this->assertCount(2,$xpath->query('//*[@id="saveSaleForm"]//button[@type="submit" and @disabled]'));
             $this->assertCount(1,$xpath->query('//a[@data-sale-back and @href="'.route('saleList').'"]'));
             $this->assertCount(1,$xpath->query('//*[@id="productDetails"]'));
+            $this->assertCount(1,$xpath->query('//*[@id="saleProductSearch"]'),$locale.' product search input');
+            $searchLabels=$xpath->query('//label[@for="saleProductSearch"]');
+            $this->assertCount(1,$searchLabels,$locale.' product search label');
+            $this->assertSame(\Illuminate\Support\Facades\Lang::get('sales.product_search', [], $locale),trim($searchLabels->item(0)->textContent),$locale.' product search label text');
+            $this->assertCount(1,$xpath->query('//*[@id="categorySelect"]'),$locale.' product category selector');
+            $this->assertCount(1,$xpath->query('//*[@id="productName"]'),$locale.' product selector');
             $this->assertCount(1,$xpath->query('//*[@id="saleSerialModal"]'));
             $this->assertCount(1,$xpath->query('//*[@id="customerModal"]'));
             $this->assertCount(1,$xpath->query('//*[@id="barcodeInput" and not(@name)]'));
