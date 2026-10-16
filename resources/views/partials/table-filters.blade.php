@@ -9,17 +9,18 @@
     $selects = $selects ?? [];
     $showDate = $date ?? false;
     $searchPlaceholder = $searchPlaceholder ?? __('common.search');
+    $selectBindings = $selectBindings ?? true;
 @endphp
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
     <div class="d-flex align-items-center gap-2">
         @foreach($selects as $s)
             <div class="form-inline">
-                <select id="{{ $s['id'] }}" class="form-control rn-filter-input" data-filter-for="{{ $s['id'] }}" data-table-target="{{ $tableId }}">
+                <select id="{{ $s['id'] }}" class="form-control {{ $selectBindings ? 'rn-filter-input' : 'rn-product-catalog-filter' }}" @if($selectBindings) data-filter-for="{{ $s['id'] }}" data-table-target="{{ $tableId }}" @else data-column="{{ $s['column'] ?? '' }}" @endif>
                     <option value="">{{ __('common.all') }} {{ $s['label'] }}</option>
                     @if(!empty($s['options']))
                         @foreach($s['options'] as $opt)
                             @if(is_object($opt))
-                                <option value="{{ $opt->id ?? $opt->name ?? $opt->title ?? $opt }}">{{ $opt->name ?? $opt->title ?? $opt }}</option>
+                                <option value="{{ isset($s['valueField']) ? ($opt->{$s['valueField']} ?? '') : ($opt->id ?? $opt->name ?? $opt->title ?? $opt) }}">{{ $opt->name ?? $opt->title ?? $opt }}</option>
                             @else
                                 <option value="{{ $opt }}">{{ $opt }}</option>
                             @endif

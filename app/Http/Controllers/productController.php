@@ -31,15 +31,14 @@ class productController extends Controller
         $productUnit = ProductUnit::orderBy('id','DESC')->get();
         $category = Category::orderBy('id','DESC')->get();
         $brand = Brand::orderBy('id','DESC')->get();
-        $data = $workflow->scoped(Product::withoutGlobalScopes()->with(['brandModel','categoryModel','unitModel','stocks']))->orderBy('id','DESC')->get();
         $businesses = \App\Models\BusinessSetup::when(!$workflow->platform(),fn($q)=>$q->whereKey($workflow->resolveBusinessId()))->orderBy('id','asc')->get();
 
         return view('product.newProduct',[
-            'listItem'=>$data,
             'brandList'=>$brand,
             'categoryList'=>$category,
             'productUnitList'=>$productUnit,
-            'businesses' => $businesses
+            'businesses' => $businesses,
+            'businessSelectionAllowed' => $workflow->platform(),
         ]);
    }
 
@@ -80,7 +79,9 @@ class productController extends Controller
         $category = Category::orderBy('id','DESC')->get();
         $brand = Brand::orderBy('id','DESC')->get();
         $data = $workflow->scoped(Product::withoutGlobalScopes())->findOrFail($id);
-        return view('product.newProduct',['profile'=>$data,'brandList'=>$brand,'categoryList'=>$category,'productUnitList'=>$productUnit]);
+        $businesses = \App\Models\BusinessSetup::when(!$workflow->platform(),fn($q)=>$q->whereKey($data->businessId))->orderBy('id')->get();
+        return view('product.newProduct',['profile'=>$data,'brandList'=>$brand,'categoryList'=>$category,
+            'productUnitList'=>$productUnit,'businesses'=>$businesses,'businessSelectionAllowed'=>$workflow->platform()]);
     }
 
     //delete product
@@ -124,11 +125,11 @@ class productController extends Controller
         ]);
 
         if($validator->fails()){
-            return [
+            return response()->json([
                 'data' => '',
                 'message' => __('common.api_validation_failed'),
                 'errors' => $validator->errors()->toArray(),
-            ];
+            ], 422);
         }
 
         $data = new Product();
@@ -147,7 +148,7 @@ class productController extends Controller
             if($getData->count() > 0){
                 $option .= '<option value="">Select</option>';
                 foreach($getData as $d){
-                    $option .= '<option value="'.$d->id.'">'.$d->name.'</option>';
+                    $option .= '<option value="'.e($d->id).'">'.e($d->name).'</option>';
                 }
             }
             return ['data' => $option, 'message' => __('common.api_success_product_created')];
@@ -162,8 +163,19 @@ class productController extends Controller
                 $category = Category::orderBy('id','DESC')->get();
                 $brand = Brand::orderBy('id','DESC')->get();
                 $data = $workflow->scoped(Product::withoutGlobalScopes()->with(['brandModel','categoryModel','unitModel','stocks']))->orderBy('id','DESC')->get();
+                $stockSummary = ['total' => $data->count(), 'in_stock' => 0, 'low_stock' => 0, 'out_of_stock' => 0];
+                foreach ($data as $product) {
+                    if ($product->is_out_of_stock) {
+                        $stockSummary['out_of_stock']++;
+                    } elseif ($product->is_low_stock) {
+                        $stockSummary['low_stock']++;
+                    } else {
+                        $stockSummary['in_stock']++;
+                    }
+                }
                 return view('product.productList',[
                         'listItem'=>$data,
+                        'stockSummary'=>$stockSummary,
                         'brandList'=>$brand,
                         'categoryList'=>$category,
                         'productUnitList'=>$productUnit

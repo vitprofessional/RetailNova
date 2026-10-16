@@ -247,4 +247,9 @@ return [
     'selected_serials' => 'serial(s) selected',
     'select_supplier' => 'Please select a supplier',
     'no_discount' => 'None',
+    'product_modal_intro' => 'Quickly add a product and use it in this purchase.',
+    'product_information' => 'Product Information',
+    'product_classification' => 'Classification',
+    'additional_product_information' => 'Additional Information',
+    'save_product' => 'Save Product',
 ];

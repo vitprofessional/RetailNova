@@ -49,6 +49,12 @@ class Product extends Model implements AuditableContract
      */
     public function getTotalStockAttribute()
     {
+        // Catalog pages eager-load stocks. Reuse those authorized rows to avoid a
+        // per-product SUM query while preserving the normal relation fallback.
+        if ($this->relationLoaded('stocks')) {
+            return (int) $this->getRelation('stocks')->sum('currentStock');
+        }
+
         return $this->stocks()->sum('currentStock') ?? 0;
     }
 

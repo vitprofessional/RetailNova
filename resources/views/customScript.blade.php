@@ -330,6 +330,14 @@ document.addEventListener('submit', function(e){
         var f = e.target;
         if(!f || !f.matches || !f.matches('form[data-ajax="true"]')) return;
         e.preventDefault();
+        var productSubmitControls = [];
+        if(f.id === 'productForm'){
+            if(f.dataset.submitting === 'true') return;
+            f.dataset.submitting = 'true';
+            f.setAttribute('aria-busy', 'true');
+            productSubmitControls = Array.prototype.slice.call(document.querySelectorAll('#productForm button[type="submit"], button[type="submit"][form="productForm"]'));
+            productSubmitControls.forEach(function(button){ button.disabled = true; });
+        }
         var action = f.getAttribute('action') || window.location.href;
         var method = (f.getAttribute('method') || 'POST').toUpperCase();
         var formData = new FormData(f);
@@ -342,6 +350,15 @@ document.addEventListener('submit', function(e){
                 formData.append('businessId', purchaseBusiness.value);
             }
         }
+        if(f.id === 'productForm'){
+            // Product creation is a sibling modal; carry the purchase form's
+            // currently selected target. The server still authorizes it.
+            var purchaseProductBusiness = document.querySelector('#savePurchase [name="businessId"]');
+            if(purchaseProductBusiness){
+                formData.delete('businessId');
+                formData.append('businessId', purchaseProductBusiness.value);
+            }
+        }
         if(f.id === 'customerForm'){
             var saleBusiness = document.querySelector('#saveSaleForm [name="businessId"]');
             if(saleBusiness){
@@ -350,7 +367,7 @@ document.addEventListener('submit', function(e){
             }
         }
         var url = action;
-        var opts = { method: method, credentials: 'same-origin', headers: {'X-Requested-With':'XMLHttpRequest'} };
+        var opts = { method: method, credentials: 'same-origin', headers: {'X-Requested-With':'XMLHttpRequest', 'Accept':'application/json'} };
         // If GET, serialize FormData to query string (fetch doesn't support body for GET reliably)
         if(method === 'GET'){
             var params = new URLSearchParams();
@@ -364,24 +381,39 @@ document.addEventListener('submit', function(e){
             if(result && result.errors){
                 // Display validation errors
                 try{
-                    var errorMsg = 'Validation failed:\n';
+                    var errorMsg = '';
                     for(var field in result.errors){
                         if(result.errors.hasOwnProperty(field)){
                             errorMsg += result.errors[field].join(', ') + '\n';
                         }
                     }
+                    var errorBox = f.querySelector('.rn-ajax-form-errors');
+                    if(!errorMsg.trim() && result.message){ errorMsg = result.message; }
+                    if(errorBox){ errorBox.textContent = errorMsg.trim(); errorBox.hidden = false; }
                     if(typeof window.showToast === 'function'){
                         window.showToast(window.RNTranslate('common.client_validation_error'), errorMsg, 'error');
                     }
                 }catch(e){}
                 return; // Don't close modal or reset form on validation error
             }
+            var errorBox = f.querySelector('.rn-ajax-form-errors');
+            if(errorBox){ errorBox.hidden = true; errorBox.textContent = ''; }
             // On success, if the form has data-target attribute, update that element's innerHTML
             try{
                 var tgt = f.getAttribute('data-target');
                 if(tgt && result && result.data){
                     var nodes = document.querySelectorAll(tgt);
                     nodes.forEach(function(n){ try{ n.innerHTML = result.data; }catch(e){} });
+                    if(tgt === '#productName'){
+                        var productSelect = document.querySelector('#productName');
+                        if(productSelect){
+                            var productOptions = Array.prototype.slice.call(productSelect.options);
+                            var newestProduct = productOptions.filter(function(o){ return /^\d+$/.test(o.value); }).reduce(function(best, option){
+                                return !best || Number(option.value) > Number(best.value) ? option : best;
+                            }, null);
+                            if(newestProduct){ productSelect.value = newestProduct.value; productSelect.dispatchEvent(new Event('change', {bubbles:true})); }
+                        }
+                    }
                             // If we updated the customer select, attempt to auto-select the newly created customer
                             try{
                                 if(tgt === '#customerName'){
@@ -502,6 +534,12 @@ document.addEventListener('submit', function(e){
                     window.showToast(window.RNTranslate('common.client_error'), window.RNTranslate('common.client_failed_to_submit_form_please_try_again'), 'error');
                 }
             }catch(e){}
+        }).finally(function(){
+            if(f.id === 'productForm'){
+                f.dataset.submitting = 'false';
+                f.removeAttribute('aria-busy');
+                productSubmitControls.forEach(function(button){ button.disabled = false; });
+            }
         });
     }catch(e){}
 });

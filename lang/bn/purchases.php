@@ -246,4 +246,9 @@ return [
     'selected_serials' => 'টি সিরিয়াল নির্বাচিত',
     'select_supplier' => 'সরবরাহকারী নির্বাচন করুন',
     'no_discount' => 'কোনো ছাড় নেই',
+    'product_modal_intro' => 'দ্রুত পণ্য যোগ করে এই ক্রয়ে ব্যবহার করুন।',
+    'product_information' => 'পণ্যের তথ্য',
+    'product_classification' => 'শ্রেণিবিন্যাস',
+    'additional_product_information' => 'অতিরিক্ত তথ্য',
+    'save_product' => 'পণ্য সংরক্ষণ করুন',
 ];

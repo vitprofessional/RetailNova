@@ -14,6 +14,7 @@
     @include('sweetalert::alert')
 </div>
 <link rel="stylesheet" href="{{ asset('css/new-purchase.css') }}?v={{ filemtime(public_path('css/new-purchase.css')) }}">
+<link rel="stylesheet" href="{{ asset('css/inventory-products.css') }}?v={{ filemtime(public_path('css/inventory-products.css')) }}">
 <div class="col-12 rn-new-purchase-shell"><form action="{{ route('savePurchase') }}" class="rn-new-purchase" method="POST" id="savePurchase" data-onsubmit="handleFormSubmit" data-leave-title="{{ __('purchases.unsaved_title') }}" data-leave-message="{{ __('purchases.unsaved_message') }}" data-leave-confirm="{{ __('purchases.leave_page') }}" data-leave-cancel="{{ __('common.cancel') }}">
  @csrf
  @include('purchase.new-purchase.header')
@@ -106,109 +107,51 @@
     </div>
 </div>
 <!-- new product Modal -->
-<div class="modal fade" id="newProduct" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="newProduct" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade rn-purchase-product-modal" id="newProduct" data-backdrop="static" data-keyboard="true" tabindex="-1" aria-labelledby="newProductTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fs-5">{{ __('purchases.create_product') }}</h5>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="{{ __('purchases.close') }}"></button>
+                <span class="rn-product-modal-mark" aria-hidden="true"><i class="las la-cube"></i></span>
+                <div class="rn-product-modal-heading">
+                    <h2 class="modal-title" id="newProductTitle">{{ __('purchases.create_product') }}</h2>
+                    <p class="rn-product-modal-subtitle">{{ __('purchases.product_modal_intro') }}</p>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{{ __('purchases.close') }}"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
-                    <div class="card-body">
-
-                <div class="row">
-                    <form action="{{ route('createProduct') }}" method="POST" id="productForm" data-ajax="true" data-target="#productName" data-modal-id="newProduct">
+                <form action="{{ route('createProduct') }}" method="POST" id="productForm" data-ajax="true" data-target="#productName" data-modal-id="newProduct">
                     @csrf
-                    <div class="row align-items-center">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>{{ __('common.product_name') }} *</label>
-                                <input type="text" class="form-control" placeholder="{{ __('common.enter_name') }}" id="productNameModal" name="fullName" required />
-                            </div>
+                    <input type="hidden" name="businessId" value="{{ old('businessId', '') }}" data-purchase-business-context>
+                    <div class="rn-ajax-form-errors alert alert-danger" role="alert" aria-live="polite" hidden></div>
+                    <section class="rn-product-modal-section" aria-labelledby="rn-product-modal-info">
+                        <div class="rn-product-modal-section-heading"><i class="las la-store" aria-hidden="true"></i><h3 id="rn-product-modal-info">{{ __('purchases.product_information') }}</h3></div>
+                        <div class="rn-product-modal-section-body">
+                            <div class="form-group"><label for="productNameModal">{{ __('common.product_name') }} <span class="text-danger">*</span></label><div class="rn-product-modal-input"><span aria-hidden="true"><i class="las la-cube"></i></span><input type="text" class="form-control" placeholder="{{ __('common.enter_name') }}" id="productNameModal" name="fullName" required></div></div>
+                            <div class="form-group"><label for="barCodeNum">{{ __('purchases.barcode') }}</label><div class="rn-product-modal-input"><span aria-hidden="true"><i class="las la-barcode"></i></span><input type="text" class="form-control" id="barCodeNum" name="barCode" placeholder="{{ __('common.optional') }}"></div></div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>{{ __('purchases.brand_name') }} *</label>
-                                <label for="brandName" class="form-label"></label>
-                                <select id="brandName" class="form-control" name="brand">
-                                    <!--  form option show proccessing -->
-                                    <option value="">{{ __('purchases.select') }}</option>
-                                    @if(!empty($brandList) && count($brandList)>0)
-                                        @foreach($brandList as $brandData)
-                                        <option value="{{$brandData->id}}">{{$brandData->name}}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                            </div>
+                    </section>
+                    <section class="rn-product-modal-section" aria-labelledby="rn-product-modal-classification">
+                        <div class="rn-product-modal-section-heading"><i class="las la-tags" aria-hidden="true"></i><h3 id="rn-product-modal-classification">{{ __('purchases.product_classification') }}</h3></div>
+                        <div class="rn-product-modal-section-body rn-product-modal-three">
+                            <div class="form-group"><label for="brandName">{{ __('purchases.brand_name') }} <span class="text-danger">*</span></label><div class="rn-product-select-action"><span class="rn-product-select-icon" aria-hidden="true"><i class="las la-building"></i></span><select id="brandName" class="form-control" name="brand" required><option value="">{{ __('purchases.select') }}</option>@foreach($brandList ?? [] as $brandData)<option value="{{ $brandData->id }}">{{ $brandData->name }}</option>@endforeach</select><button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#createBrand" aria-label="{{ __('purchases.brand') }}"><i class="las la-plus" aria-hidden="true"></i></button></div></div>
+                            <div class="form-group"><label for="categoryName">{{ __('purchases.product_category') }} <span class="text-danger">*</span></label><div class="rn-product-select-action"><span class="rn-product-select-icon" aria-hidden="true"><i class="las la-tag"></i></span><select id="categoryName" class="form-control" name="category" required><option value="">{{ __('purchases.select') }}</option>@foreach($categoryList ?? [] as $categoryData)<option value="{{ $categoryData->id }}">{{ $categoryData->name }}</option>@endforeach</select><button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#categoryModal" aria-label="{{ __('purchases.category') }}"><i class="las la-plus" aria-hidden="true"></i></button></div></div>
+                            <div class="form-group"><label for="unit">{{ __('purchases.product_unit') }} <span class="text-danger">*</span></label><div class="rn-product-select-action"><span class="rn-product-select-icon" aria-hidden="true"><i class="las la-layer-group"></i></span><select id="unit" class="form-control" name="unitName" required><option value="">{{ __('purchases.select') }}</option>@foreach($productUnitList ?? [] as $productUnitData)<option value="{{ $productUnitData->id }}">{{ $productUnitData->name }}</option>@endforeach</select><button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#productUnitModal" aria-label="{{ __('purchases.product_unit') }}"><i class="las la-plus" aria-hidden="true"></i></button></div></div>
                         </div>
-                        <div class="col-md-1 mt-4 p-0">
-                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#createBrand" ><i class="las la-plus mr-2"></i>{{ __('purchases.brand') }}</button>
+                    </section>
+                    <section class="rn-product-modal-section" aria-labelledby="rn-product-modal-additional">
+                        <div class="rn-product-modal-section-heading"><i class="las la-cube" aria-hidden="true"></i><h3 id="rn-product-modal-additional">{{ __('purchases.additional_product_information') }}</h3></div>
+                        <div class="rn-product-modal-section-body">
+                            <div class="form-group"><label for="quantityName">{{ __('purchases.alert_quantity') }}</label><div class="rn-product-modal-input"><span aria-hidden="true"><i class="las la-hashtag"></i></span><input type="number" min="0" step="1" class="form-control" placeholder="0" id="quantityName" name="quantity"></div></div>
+                            <div class="form-group"><label for="detailsName">{{ __('inventory.details') }}</label><div class="rn-product-modal-input rn-modal-textarea"><span aria-hidden="true"><i class="las la-file-alt"></i></span><textarea class="form-control" id="detailsName" name="details" rows="2" placeholder="{{ __('common.optional') }}"></textarea></div></div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>{{ __('purchases.product_category') }}</label>
-                                <label for="categoryName" class="form-label"></label>
-                                <select id="categoryName" class="form-control" name="category">
-
-                                  <!--  form option show proccessing -->
-                                    <option value="">{{ __('purchases.select') }}</option>
-                                  @if(!empty($categoryList) && count($categoryList)>0)
-                                  @foreach($categoryList as $categoryData)
-                                    <option value="{{$categoryData->id}}">{{$categoryData->name}}</option>
-                                    @endforeach
-                                    @endif
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-2 mt-4 p-0">
-                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#categoryModal" ><i class="las la-plus mr-2"></i>{{ __('purchases.category') }}</button>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>{{ __('purchases.product_unit') }}</label>
-                                <label for="unit" class="form-label"></label>
-                                <select id="unit" class="form-control" name="unitName">
-
-                                  <!--  form option show proccessing -->
-                                    <option value="">{{ __('purchases.select') }}</option>
-                                  @if(!empty($productUnitList) && count($productUnitList)>0)
-                                  @foreach($productUnitList as $productUnitData)
-                                    <option value="{{$productUnitData->id}}">{{$productUnitData->name}}</option>
-                                    @endforeach
-                                    @endif
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-2 mt-4 p-0">
-                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#productUnitModal" ><i class="las la-plus mr-2"></i>{{ __('purchases.product_unit') }}</button>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="quantityName" class="form-label">{{ __('purchases.alert_quantity') }}</label>
-                                <input type="text" class="form-control" placeholder="{{ __('common.optional') }}" id="quantityName" name="quantity" />
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="detailsName" class="form-label">{{ __('purchases.deatils') }}</label>
-                                <input type="text" class="form-control" id="detailsName" name="details" placeholder="{{ __('common.optional') }}"  />
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="barCodeNum" class="form-label">{{ __('purchases.barcode') }}</label>
-                                <input type="text" class="form-control" id="barCodeNum" name="barCode" placeholder="{{ __('common.optional') }}"/>
-                            </div>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary mt-4 mr-2" id="add-product"> {{ __('purchases.add_product') }}</button>
-                    <button type="reset" class="btn btn-danger mt-4 mr-2">{{ __('purchases.reset') }}</button>
+                    </section>
                 </form>
-                </div>
-                </div>
             </div>
             <div class="modal-footer">
+                <button type="reset" form="productForm" class="btn btn-outline-secondary">{{ __('purchases.reset') }}</button>
                 <button type="button" class="btn btn-light" data-dismiss="modal">{{ __('purchases.cancel') }}</button>
+                <button type="submit" form="productForm" class="btn btn-primary" id="add-product"><i class="las la-save mr-1" aria-hidden="true"></i>{{ __('purchases.save_product') }}</button>
+            </div>
         </div>
     </div>
 </div>

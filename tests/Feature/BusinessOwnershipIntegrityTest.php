@@ -153,6 +153,68 @@ class BusinessOwnershipIntegrityTest extends TestCase
         $this->assertDatabaseMissing('suppliers', ['name' => 'Unscoped Tenant Supplier']);
     }
 
+    public function test_product_creation_pages_expose_authorized_platform_business_target_and_purchase_ajax_requires_it(): void
+    {
+        $owner = $this->operator(1, 'admin');
+        BusinessSetup::forceCreate(['id' => 2, 'businessName' => 'Second Authorized Tenant']);
+        $owner->update(['businessId' => null]);
+
+        $this->get(route('addProduct'))->assertOk()
+            ->assertSee('name="businessId"', false)
+            ->assertSee('Second Authorized Tenant')
+            ->assertSee(__('inventory.create_product'))
+            ->assertDontSee('class="data-tables table mb-0 tbl-server-info rn-table-pro"', false);
+
+        $brand = \App\Models\Brand::forceCreate(['name' => 'Modal Brand']);
+        $category = \App\Models\Category::forceCreate(['name' => 'Modal Category']);
+        $unit = \App\Models\ProductUnit::forceCreate(['name' => 'Modal Unit']);
+        $payload = ['fullName' => 'Purchase Modal Product', 'brand' => $brand->id,
+            'category' => $category->id, 'unitName' => $unit->id];
+
+        $this->postJson(route('createProduct'), array_merge($payload, ['businessId' => 2, 'fullName' => 'X']))
+            ->assertUnprocessable()->assertJsonValidationErrors('fullName');
+        $this->assertDatabaseMissing('products', ['name' => 'X']);
+        $this->postJson(route('createProduct'), $payload)->assertUnprocessable()->assertJsonValidationErrors('businessId');
+        $this->assertDatabaseMissing('products', ['name' => 'Purchase Modal Product']);
+        $this->postJson(route('createProduct'), array_merge($payload, ['businessId' => 2]))->assertOk();
+        $this->assertDatabaseHas('products', ['name' => 'Purchase Modal Product', 'businessId' => 2]);
+
+        $this->get(route('addPurchase'))->assertOk()
+            ->assertSee('id="productForm"', false)
+            ->assertSee('data-purchase-business-context', false)
+            ->assertSee('data-target="#productName"', false)
+            ->assertSee("if(f.id === 'productForm')", false)
+            ->assertSee("#savePurchase [name=\"businessId\"]", false);
+    }
+
+    public function test_product_catalog_summary_is_derived_from_only_the_authorized_business_stock(): void
+    {
+        $this->operator(1, 'gm');
+        BusinessSetup::forceCreate(['id' => 2, 'businessName' => 'Other Tenant']);
+
+        $inStock = Product::forceCreate(['name' => 'Catalog In Stock', 'businessId' => 1, 'quantity' => 3]);
+        $lowStock = Product::forceCreate(['name' => 'Catalog Low Stock', 'businessId' => 1, 'quantity' => 5]);
+        $outOfStock = Product::forceCreate(['name' => 'Catalog Out Of Stock', 'businessId' => 1, 'quantity' => 2]);
+        $foreign = Product::forceCreate(['name' => 'Foreign Catalog Product', 'businessId' => 2, 'quantity' => 1]);
+
+        ProductStock::forceCreate(['productId' => $inStock->id, 'businessId' => 1, 'currentStock' => 10]);
+        ProductStock::forceCreate(['productId' => $lowStock->id, 'businessId' => 1, 'currentStock' => 2]);
+        ProductStock::forceCreate(['productId' => $foreign->id, 'businessId' => 2, 'currentStock' => 100]);
+
+        $response = $this->get(route('productlist'))->assertOk()
+            ->assertSee('Catalog In Stock')
+            ->assertSee('Catalog Low Stock')
+            ->assertDontSee('Foreign Catalog Product')
+            ->assertSeeInOrder([
+                __('inventory.catalog_metrics_total'), 'data-stat-value="3"',
+                __('inventory.catalog_metrics_in_stock'), 'data-stat-value="1"',
+                __('inventory.catalog_metrics_low_stock'), 'data-stat-value="1"',
+                __('inventory.catalog_metrics_out_of_stock'), 'data-stat-value="1"',
+            ], false);
+
+        $this->assertDatabaseHas('products', ['id' => $outOfStock->id, 'businessId' => 1]);
+    }
+
     public function test_platform_edit_preserves_existing_owner_and_rejects_implicit_tenant_transfer(): void
     {
         $this->operator(1, 'admin');

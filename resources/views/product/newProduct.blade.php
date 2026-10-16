@@ -1,10 +1,11 @@
 @extends('include')
 @section('backTitle'){{ __('common.heading_new_products') }}@endsection
 @section('container')
+<link rel="stylesheet" href="{{ asset('css/inventory-products.css') }}?v={{ filemtime(public_path('css/inventory-products.css')) }}">
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<div class="row">
+<main class="rn-product-create">
     <div class="col-12">
         @if(session()->has('success'))
         <div class="alert alert-success w-100">{{ session()->get('success') }}</div>
@@ -17,6 +18,7 @@
     @php
         // Ensure view variables exist to avoid "Undefined variable" errors
         $profile = $profile ?? null;
+        $isEditing = $profile !== null;
         $brandList = $brandList ?? [];
         $categoryList = $categoryList ?? [];
         $productUnitList = $productUnitList ?? [];
@@ -32,59 +34,75 @@
         $profileId = $profile->id ?? '';
     @endphp
 
-    <div class="col-sm-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between">
-                <div class="header-title">
-                    <h4 class="card-title">@if(isset($profile)) Update @else Create @endif Product</h4>
+    <div class="rn-product-card">
+            <header class="rn-product-page-heading">
+                <div class="rn-product-heading-mark" aria-hidden="true"><i class="las la-cube"></i></div>
+                <div class="rn-product-heading-copy">
+                    <div class="rn-product-breadcrumb">{{ __('inventory.product_page_breadcrumb') }} <span aria-hidden="true">/</span> {{ $isEditing ? __('inventory.edit_product') : __('inventory.create_product') }}</div>
+                    <h1>{{ $isEditing ? __('inventory.edit_product') : __('inventory.create_product') }}</h1>
+                    <p>{{ __('inventory.product_form_intro') }}</p>
                 </div>
-            </div>
-            <div class="card-body">
+                <a href="{{ route('productlist') }}" class="btn btn-outline-primary rn-product-page-action"><i class="las la-list mr-1" aria-hidden="true"></i>{{ __('inventory.product_list') }}</a>
+            </header>
+            <div class="rn-product-card-body">
+                @if($errors->any())
+                    <div class="alert alert-danger" role="alert" aria-live="polite">
+                        <strong>{{ __('inventory.check_product_form') }}</strong>
+                        <ul class="mb-0 mt-2">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+                    </div>
+                @endif
                 <form action="{{ route('saveProduct') }}" method="POST">
                     @csrf
                     <input type="hidden" name="profileId" value="{{ $profileId }}" />
 
-                    <div class="row g-3">
-                        @include('partials.business_selector', ['businesses' => $businesses ?? [] , 'selectedBusinessId' => $profile->businessId ?? null])
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label class="form-label">{{ __('inventory.product_name') }} <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" placeholder="{{ __('common.e_g_nokia_1110') }}" id="name" name="name" value="{{ $name }}" required />
+                    <section class="rn-product-section" aria-labelledby="rn-product-basic-heading">
+                        <div class="rn-product-section-heading"><i class="las la-store" aria-hidden="true"></i><h2 id="rn-product-basic-heading">{{ __('inventory.product_basic_information') }}</h2></div>
+                        <div class="rn-product-section-body rn-product-form-grid">
+                        @include('partials.business_selector', ['businesses' => $businesses ?? [], 'selectedBusinessId' => $profile->businessId ?? old('businessId'), 'businessSelectionAllowed' => $businessSelectionAllowed ?? false, 'businessSelectorClass' => 'rn-product-business-field', 'businessSelectorIcon' => true])
+                        <div class="rn-product-field rn-product-field-name">
+                            <div class="form-group">
+                                <label for="name" class="form-label">{{ __('inventory.product_name') }} <span class="text-danger">*</span></label>
+                                <div class="rn-product-control"><span class="rn-product-control-icon" aria-hidden="true"><i class="las la-cube"></i></span><input type="text" class="form-control" placeholder="{{ __('common.e_g_nokia_1110') }}" id="name" name="name" value="{{ old('name', $name) }}" required /></div>
+                                @error('name')<small class="text-danger" role="alert">{{ $message }}</small>@enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label class="form-label">{{ __('inventory.barcode') }}</label>
-                                <input type="text" class="form-control" id="barCode" placeholder="{{ __('common.optional') }}" name="barCode" value="{{ $barCode }}" />
+                        <div class="rn-product-field rn-product-field-barcode">
+                            <div class="form-group">
+                                <label for="barCode" class="form-label">{{ __('inventory.barcode') }}</label>
+                                <div class="rn-product-control"><span class="rn-product-control-icon" aria-hidden="true"><i class="las la-barcode"></i></span><input type="text" class="form-control" id="barCode" placeholder="{{ __('common.optional') }}" name="barCode" value="{{ old('barCode', $barCode) }}" /></div>
+                                @error('barCode')<small class="text-danger" role="alert">{{ $message }}</small>@enderror
                             </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
+                        <div class="rn-product-field rn-product-field-brand">
+                            <div class="form-group">
                                 <label for="brand" class="form-label">{{ __('inventory.brand') }}</label>
-                                <div class="input-group input-append-equal">
-                                    <select id="brand" class="form-control" name="brand" style="min-width:0;">
+                                <div class="input-group input-append-equal rn-product-select-control">
+                                    <span class="rn-product-control-icon" aria-hidden="true"><i class="las la-tag"></i></span>
+                                    <select id="brand" class="form-control" name="brand">
                                       <option value="">{{ __('inventory.select') }}</option>
                                       @php $updateBrand = \App\Models\Brand::find($brandId); @endphp
                                       @if(!empty($updateBrand))
-                                      <option value="{{$updateBrand->id}}">{{$updateBrand->name}}</option>
+                                      <option value="{{$updateBrand->id}}" selected>{{ $updateBrand->name }}</option>
                                       @endif
                                       @if(!empty($brandList) && count($brandList)>0)
                                       @foreach($brandList as $brandData)
-                                        <option value="{{$brandData->id}}">{{$brandData->name}}</option>
+                                        <option value="{{$brandData->id}}" {{ (string)old('brand', $brandId) === (string)$brandData->id ? 'selected' : '' }}>{{$brandData->name}}</option>
                                       @endforeach
                                       @endif
                                     </select>
-                                    <button type="button" class="btn btn-outline-primary rounded-0" data-toggle="modal" data-target="#createBrand" style="flex:0 0 auto;"><i class="las la-plus"></i></button>
+                                    <button type="button" class="btn btn-outline-primary rounded-0" data-toggle="modal" data-target="#createBrand" aria-label="{{ __('inventory.create_brand') }}"><i class="las la-plus" aria-hidden="true"></i></button>
                                 </div>
+                                @error('brand')<small class="text-danger" role="alert">{{ $message }}</small>@enderror
                             </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
+                        <div class="rn-product-field rn-product-field-category">
+                            <div class="form-group">
                                 <label for="categoryList" class="form-label">{{ __('inventory.category') }}</label>
-                                <div class="input-group input-append-equal">
-                                    <select id="categoryList" class="form-control" name="category" style="min-width:0;">
+                                <div class="input-group input-append-equal rn-product-select-control">
+                                    <span class="rn-product-control-icon" aria-hidden="true"><i class="las la-th-large"></i></span>
+                                    <select id="categoryList" class="form-control" name="category">
                                       <option value="">{{ __('inventory.select') }}</option>
                                       @php $updateCategory = \App\Models\Category::find($categoryId); @endphp
                                       @if(!empty($updateCategory))
@@ -92,113 +110,68 @@
                                       @endif
                                       @if(!empty($categoryList) && count($categoryList)>0)
                                       @foreach($categoryList as $categoryData)
-                                        <option value="{{$categoryData->id}}">{{$categoryData->name}}</option>
+                                        <option value="{{$categoryData->id}}" {{ (string)old('category', $categoryId) === (string)$categoryData->id ? 'selected' : '' }}>{{$categoryData->name}}</option>
                                       @endforeach
                                       @endif
                                     </select>
-                                    <button type="button" class="btn btn-outline-primary rounded-0" data-toggle="modal" data-target="#categoryModal" style="flex:0 0 auto;"><i class="las la-plus"></i></button>
+                                    <button type="button" class="btn btn-outline-primary rounded-0" data-toggle="modal" data-target="#categoryModal" aria-label="{{ __('inventory.create_category') }}"><i class="las la-plus" aria-hidden="true"></i></button>
                                 </div>
+                                @error('category')<small class="text-danger" role="alert">{{ $message }}</small>@enderror
                             </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
+                        <div class="rn-product-field rn-product-field-unit">
+                            <div class="form-group">
                                 <label for="unitName" class="form-label">{{ __('inventory.unit') }}</label>
-                                <div class="input-group input-append-equal">
-                                    <select id="unitName" class="form-control" name="unitName" style="min-width:0;">
+                                <div class="input-group input-append-equal rn-product-select-control">
+                                    <span class="rn-product-control-icon" aria-hidden="true"><i class="las la-layer-group"></i></span>
+                                    <select id="unitName" class="form-control" name="unitName">
                                       @php $updateProductUnit = \App\Models\ProductUnit::find($unitId); @endphp
                                       @if(!empty($updateProductUnit))
                                       <option value="{{$updateProductUnit->id}}">{{$updateProductUnit->name}}</option>
                                       @endif
                                       @if(!empty($productUnitList) && count($productUnitList)>0)
                                       @foreach($productUnitList as $productUnitData)
-                                        <option value="{{$productUnitData->id}}">{{$productUnitData->name}}</option>
+                                        <option value="{{$productUnitData->id}}" {{ (string)old('unitName', $unitId) === (string)$productUnitData->id ? 'selected' : '' }}>{{$productUnitData->name}}</option>
                                       @endforeach
                                       @endif
                                     </select>
-                                    <button type="button" class="btn btn-outline-primary rounded-0" data-toggle="modal" data-target="#productUnitModal" style="flex:0 0 auto;"><i class="las la-plus"></i></button>
+                                    <button type="button" class="btn btn-outline-primary rounded-0" data-toggle="modal" data-target="#productUnitModal" aria-label="{{ __('inventory.create_product_unit') }}"><i class="las la-plus" aria-hidden="true"></i></button>
                                 </div>
+                                @error('unitName')<small class="text-danger" role="alert">{{ $message }}</small>@enderror
                             </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
+                        <div class="rn-product-field rn-product-field-quantity">
+                            <div class="form-group">
                                 <label for="quantity" class="form-label">{{ __('inventory.alert_quantity') }}</label>
-                                <input type="number" class="form-control" placeholder="0" id="quantity" name="quantity" value="{{ $quantity }}" min="0" step="1" />
+                                <div class="rn-product-control"><span class="rn-product-control-icon" aria-hidden="true"><i class="las la-hashtag"></i></span><input type="number" class="form-control" placeholder="0" id="quantity" name="quantity" value="{{ old('quantity', $quantity) }}" min="0" step="1" /></div>
+                                @error('quantity')<small class="text-danger" role="alert">{{ $message }}</small>@enderror
                             </div>
                         </div>
 
-                        <div class="col-12">
-                            <div class="form-group mb-3">
+                        <div class="rn-product-field rn-product-field-wide">
+                            <div class="form-group">
                                 <label for="details" class="form-label">{{ __('inventory.details') }}</label>
-                                <textarea class="form-control" id="details" placeholder="{{ __('common.optional_notes_about_the_product') }}" name="details" rows="2">{{ $details }}</textarea>
+                                <div class="rn-product-control rn-product-textarea"><span class="rn-product-control-icon" aria-hidden="true"><i class="las la-file-alt"></i></span><textarea class="form-control" id="details" placeholder="{{ __('common.optional_notes_about_the_product') }}" name="details" rows="2">{{ old('details', $details) }}</textarea></div>
+                                @error('details')<small class="text-danger" role="alert">{{ $message }}</small>@enderror
                             </div>
                         </div>
 
-                        <div class="col-12 d-flex justify-content-end mt-2">
-                            <button type="reset" class="btn btn-light mr-2">{{ __('inventory.reset') }}</button>
-                            @if(isset($profile))
-                            <a href="{{ route('addProduct') }}" class="btn btn-outline-secondary mr-2">{{ __('inventory.back') }}</a>
-                            @endif
-                            <button type="submit" class="btn btn-primary">@if(isset($profile)) Update @else Save @endif</button>
                         </div>
+                    </section>
+
+                    <div class="rn-product-form-actions">
+                            <button type="reset" class="btn btn-light">{{ __('inventory.reset') }}</button>
+                            @if($isEditing)
+                            <a href="{{ route('addProduct') }}" class="btn btn-outline-secondary">{{ __('inventory.back') }}</a>
+                            @endif
+                            <button type="submit" class="btn btn-primary">{{ $isEditing ? __('inventory.update_product') : __('inventory.save_product') }}</button>
                     </div>
                 </form>
             </div>
-        </div>
     </div>
-</div>
-
-@if(!isset($profile))
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h4 class="mb-0">{{ __('inventory.product_list') }}</h4>
-            </div>
-            <div class="card-body table-responsive rounded mb-3">
-                <table class="data-tables table mb-0 tbl-server-info rn-table-pro">
-                    <thead class="bg-white text-uppercase">
-                        <tr class="table">
-                            <th scope="col">{{ __('inventory.product_name') }}</th>
-                            <th scope="col">{{ __('inventory.category') }}</th>
-                            <th scope="col">{{ __('inventory.brand') }}</th>
-                            <th scope="col">{{ __('inventory.unit') }}</th>
-                            <th scope="col">{{ __('inventory.created_date') }}</th>
-                            <th scope="col">{{ __('inventory.action') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if(!empty($listItem) && $listItem->count()>0)
-                                                @foreach($listItem as $productList)
-                        <tr>
-                            <td>{{ $productList->name }}</td>
-                            <td>{{ $productList->categoryModel->name ?? '-' }}</td>
-                            <td>{{ $productList->brandModel->name ?? '-' }}</td>
-                            <td>{{ $productList->unitModel->name ?? '-' }}</td>
-                            <td>{{ $productList->created_at->format('d-m-Y') }}</td>
-                            <td>
-                                <div class="d-flex align-items-center list-action">
-                                    <a href="{{ route('editProduct',['id'=>$productList->id]) }}" class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title="{{ __('inventory.edit') }}">
-                                        <i class="ri-pencil-line mr-0"></i>
-                                    </a>
-                                    <form method="POST" action="{{ route('delProduct',['id'=>$productList->id]) }}" style="display:inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="badge bg-warning mr-2" data-confirm="delete" data-toggle="tooltip" data-placement="top" title="{{ __('inventory.delete') }}"><i class="ri-delete-bin-line mr-0"></i></button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                        @endif
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
+</main>
 
 <!-- Page end  -->
 
@@ -282,13 +255,5 @@
     <script>
     // Legacy click handlers removed. Forms are submitted via data-ajax handler in `customScript`.
     </script>
-    <style>
-    /* Make appended buttons match select height across Bootstrap 4/5 */
-    .input-group.input-append-equal > .btn {
-        align-self: stretch;
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-    }
-    </style>
 @endsection
 
