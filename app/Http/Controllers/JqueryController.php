@@ -27,13 +27,14 @@ class JqueryController extends Controller
     private function salesBusinessId(Request $request): int
     {
         $workflow = app(\App\Services\PurchaseWorkflow::class);
-        if ($workflow->platform() && !$request->filled('businessId')) {
+        $requestedBusinessId = $request->input('businessId');
+        if ($workflow->platform() && ($requestedBusinessId === null || $requestedBusinessId === '')) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'businessId' => __('purchases.business_required'),
             ]);
         }
 
-        return $workflow->resolveBusinessId($request->query('businessId'));
+        return $workflow->resolveBusinessId($requestedBusinessId);
     }
 
     private function salesCustomer(int $customerId, int $businessId): \App\Models\Customer
@@ -45,6 +46,124 @@ class JqueryController extends Controller
         $legacyWalking = $customer && $customer->businessId === null && $customer->name === 'Walking Customer';
         abort_if(!$customer || (!$legacyWalking && (int)$customer->businessId !== $businessId), 404);
         return $customer;
+    }
+
+    /**
+     * Validate the product-to-lot allocation created by the aggregate New Sale
+     * selector. The request still carries lot-level rows for pricing and serials;
+     * this check makes non-serialized FIFO order authoritative while allowing a
+     * serialized line to retain the exact purchase batch selected for its serials.
+     */
+    private function validateSaleBatchAllocation(int $businessId, array $items, array $purchasesByRow, array $backorders): void
+    {
+        $backorderIds = array_fill_keys(array_map('intval', $backorders), true);
+        $actual = [];
+        $purchaseById = [];
+        foreach ($items as $index => $quantity) {
+            $purchase = $purchasesByRow[$index] ?? null;
+            if (!$purchase || isset($backorderIds[(int)$purchase->id])) {
+                continue;
+            }
+            $productId = (int)$purchase->productName;
+            $purchaseId = (int)$purchase->id;
+            $actual[$productId][$purchaseId] = ($actual[$productId][$purchaseId] ?? 0) + (int)$quantity;
+            $purchaseById[$purchaseId] = $purchase;
+        }
+        if (!$actual) {
+            return;
+        }
+
+        ksort($actual, SORT_NUMERIC);
+        foreach ($actual as $productId => $actualLots) {
+            $product = Product::withoutGlobalScopes()->whereKey($productId)
+                ->where('businessId', $businessId)->first();
+            if (!$product) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'purchaseData' => __('sales.the_purchase_is_unavailable_for_this_business'),
+                ]);
+            }
+
+            $lines = PurchaseProduct::withoutGlobalScopes()
+                ->where('businessId', $businessId)->where('productName', $productId)
+                ->orderBy('id')->lockForUpdate()->get();
+            $remaining = array_sum($actualLots);
+            $expected = [];
+            $eligibleStock = [];
+            $serializedProduct = false;
+            foreach ($actualLots as $purchaseId => $_quantity) {
+                $selectedPurchase = $purchaseById[(int)$purchaseId] ?? null;
+                if ($selectedPurchase && app(\App\Services\SalesSerialPolicy::class)->serialized($selectedPurchase)) {
+                    $serializedProduct = true;
+                    break;
+                }
+            }
+            foreach ($lines as $line) {
+                $supplier = \App\Models\Supplier::withoutGlobalScopes()->whereKey($line->supplier)
+                    ->where('businessId', $businessId)->exists();
+                if (!$supplier) {
+                    continue;
+                }
+                $stock = ProductStock::withoutGlobalScopes()->where('purchaseId', $line->id)
+                    ->where('businessId', $businessId)->where('productId', $productId)
+                    ->lockForUpdate()->first();
+                $available = max(0, (int)($stock->currentStock ?? 0));
+                if ($available > 0 && app(\App\Services\SalesSerialPolicy::class)->serialized($line)) {
+                    $serials = app(\App\Services\SalesSerialPolicy::class)->available(
+                        ProductSerial::where('purchaseId', $line->id)->where('productId', $productId)
+                    )->count();
+                    $available = min($available, $serials);
+                }
+                if (!$stock || $available === 0 || $remaining === 0) {
+                    $eligibleStock[(int)$line->id] = $available;
+                    continue;
+                }
+                $eligibleStock[(int)$line->id] = $available;
+                $allocated = min($available, $remaining);
+                $expected[(int)$line->id] = $allocated;
+                $remaining -= $allocated;
+            }
+
+            if ($remaining > 0) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'purchaseData' => __('sales.insufficient_stock'),
+                ]);
+            }
+            ksort($actualLots, SORT_NUMERIC);
+            if ($serializedProduct) {
+                foreach ($actualLots as $purchaseId => $quantity) {
+                    if ((int)$quantity > (int)($eligibleStock[(int)$purchaseId] ?? 0)) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'purchaseData' => __('sales.insufficient_stock'),
+                        ]);
+                    }
+                }
+            } elseif ($actualLots !== $expected) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'purchaseData' => __('sales.purchase_batch_selection_changed'),
+                ]);
+            }
+        }
+    }
+
+    private function saleMoneyCents($value): int
+    {
+        $raw = trim((string)$value);
+        if (!preg_match('/^([+-]?)(\d+)(?:\.(\d{1,2}))?$/D', $raw, $parts)) {
+            throw new \InvalidArgumentException('Invalid monetary value');
+        }
+        $whole = ltrim($parts[2], '0');
+        $whole = $whole === '' ? '0' : $whole;
+        if (strlen($whole) > 10 || (strlen($whole) === 10 && strcmp($whole, '9999999999') > 0)) {
+            throw new \OverflowException('Monetary value exceeds supported precision');
+        }
+        $cents = ((int)$whole * 100) + (int)str_pad($parts[3] ?? '', 2, '0');
+        return ($parts[1] ?? '') === '-' ? -$cents : $cents;
+    }
+
+    private function formatSaleMoney(int $cents): string
+    {
+        $absolute = abs($cents);
+        return ($cents < 0 ? '-' : '') . intdiv($absolute, 100) . '.' . str_pad((string)($absolute % 100), 2, '0', STR_PAD_LEFT);
     }
     public function getProductDetails($id){
         $workflow = app(\App\Services\PurchaseWorkflow::class);
@@ -125,35 +244,17 @@ class JqueryController extends Controller
      * Public variant of getSaleProductDetails returning a simplified JSON payload.
      * Exposed to avoid auth guard redirects breaking the new sale page dynamic load.
      */
-    public function getSaleProductDetailsPublic($id)
+    public function getSaleProductDetailsPublic($id, Request $request)
     {
-        $workflow = app(\App\Services\PurchaseWorkflow::class);
-        $businessId = $workflow->resolveBusinessId();
+        $businessId = $this->salesBusinessId($request);
         try {
-            // In our schema, `purchase_products.productName` stores the Product ID
-            $rows = PurchaseProduct::withoutGlobalScopes()->where('productName', $id)
-                ->where('purchase_products.businessId', $businessId)
-                ->join('suppliers','purchase_products.supplier','suppliers.id')
-                ->join('products','products.id','=','purchase_products.productName')
-                ->join('product_stocks',function($join) use ($businessId){
-                    $join->on('product_stocks.purchaseId','=','purchase_products.id')
-                        ->where('product_stocks.businessId','=',$businessId);
-                })
-                ->where('suppliers.businessId', $businessId)
-                ->where('products.businessId', $businessId)
-                ->select(
-                    'purchase_products.id as purchaseId',
-                    'purchase_products.buyPrice',
-                    'purchase_products.salePriceExVat',
-                    'purchase_products.vatStatus',
-                    'suppliers.name as supplierName',
-                    'product_stocks.currentStock'
-                )->orderBy('purchaseId','desc')->get();
+            $rows = $this->salesProductStockRows($businessId, null, null, (int)$id)
+                ->filter(fn ($row) => (int)$row->currentStock > 0)->values();
             if($rows->count() === 0){
                 return response()->json(['status'=>'ok','getData'=>[]]);
             }
-            $product = Product::withoutGlobalScopes()->where('businessId', $businessId)->find($id);
-            $pname = $product ? $product->name : '';
+            $pname = (string)($rows->first()->productName ?? '');
+            $latest = $this->latestEligibleSalesBatch($rows);
             // Ensure each row includes productName for UI table rendering
             $rows = $rows->map(function($r) use ($pname){
                 $r->productName = $pname;
@@ -162,7 +263,9 @@ class JqueryController extends Controller
             return response()->json([
                 'status' => 'ok',
                 'productName' => $pname,
-                'getData' => $rows
+                'getData' => $rows,
+                'defaultSalePrice' => (string)($latest->salePriceExVat ?? '0.00'),
+                'defaultPricePurchaseId' => (int)$latest->purchaseId,
             ]);
         } catch (\Throwable $e) {
             \Log::warning('getSaleProductDetailsPublic error: '.$e->getMessage(), ['id'=>$id]);
@@ -198,54 +301,147 @@ class JqueryController extends Controller
     {
         $businessId = $this->salesBusinessId($request);
         $this->salesCustomer((int)$customerId, $businessId);
-        // Return ALL purchase rows so the sale product dropdown can list each
-        // purchase separately (even when the same product was purchased from
-        // the same supplier multiple times). This helps users pick the exact
-        // purchase row (purchase_products.id) and ensures stock and pricing
-        // are accurate per purchase.
-        $rows = \App\Models\PurchaseProduct::withoutGlobalScopes()->where('purchase_products.businessId', $businessId)
+        $rows = $this->salesProductStockRows($businessId, $request->input('categoryId'), $request->input('brandId'));
+
+        return $this->salesProductOptionsResponse($rows);
+    }
+
+    /** Return one current-stock row per purchase lot, scoped to a verified business. */
+    private function salesProductStockRows(int $businessId, $categoryId = null, $brandId = null, $productId = null)
+    {
+        $stocks = DB::table('product_stocks')
+            ->select('purchaseId', 'productId')
+            ->selectRaw('SUM(COALESCE(currentStock, 0)) AS currentStock')
+            ->where('businessId', $businessId)
+            ->groupBy('purchaseId', 'productId');
+
+        $rows = PurchaseProduct::withoutGlobalScopes()->where('purchase_products.businessId', $businessId)
             ->join('suppliers','purchase_products.supplier','suppliers.id')
             ->join('products','purchase_products.productName','products.id')
-            ->leftJoin('product_stocks',function($join) use ($businessId){
-                $join->on('product_stocks.purchaseId','=','purchase_products.id')
-                    ->where('product_stocks.businessId','=',$businessId);
+            ->leftJoinSub($stocks, 'sale_product_stock', function ($join) use ($businessId) {
+                $join->on('sale_product_stock.purchaseId', '=', 'purchase_products.id')
+                    ->on('sale_product_stock.productId', '=', 'purchase_products.productName');
             })
             ->where('suppliers.businessId', $businessId)
             ->where('products.businessId', $businessId)
+            ->when($categoryId !== null && $categoryId !== '', function ($query) use ($categoryId) {
+                $category = Category::find($categoryId);
+                $query->where(function ($match) use ($categoryId, $category) {
+                    $match->where('products.category', (string)$categoryId);
+                    if ($category && $category->name !== null) {
+                        $match->orWhere('products.category', $category->name);
+                    }
+                });
+            })
+            ->when($brandId !== null && $brandId !== '', function ($query) use ($brandId) {
+                $query->where('products.brand', (string)$brandId);
+            })
+            ->when($productId !== null, function ($query) use ($productId) {
+                $query->where('products.id', (int)$productId);
+            })
             ->select(
                 'purchase_products.id as purchaseId',
                 'products.id as productId',
                 'products.name as productName',
+                'products.brand as brandId',
+                'products.category as categoryId',
+                'purchase_products.purchase_date as purchaseDate',
+                'purchase_products.created_at as purchaseCreatedAt',
+                'suppliers.name as supplierName',
                 'purchase_products.buyPrice',
                 'purchase_products.salePriceExVat',
-                'purchase_products.purchase_date as purchaseDate',
-                'suppliers.name as supplierName',
-                'product_stocks.currentStock as currentStock')
-            ->orderBy('purchase_products.id','desc')
+                'purchase_products.vatPercent',
+                'purchase_products.vatStatus',
+                'sale_product_stock.currentStock as currentStock')
+            ->orderBy('purchase_products.id','asc')
             ->get();
+        return $this->applySaleableSerialStock($rows);
+    }
 
+    /** Latest eligible price uses purchase date, then purchase row ID as deterministic tie-breaker. */
+    private function latestEligibleSalesBatch($rows)
+    {
+        return $rows->sort(function ($left, $right) {
+            $leftDate = $this->salesPurchaseChronology($left);
+            $rightDate = $this->salesPurchaseChronology($right);
+            if ($leftDate !== $rightDate) {
+                return $rightDate <=> $leftDate;
+            }
+            return (int)$right->purchaseId <=> (int)$left->purchaseId;
+        })->first();
+    }
+
+    private function salesPurchaseChronology($batch): int
+    {
+        $date = trim((string)($batch->purchaseDate ?? ''));
+        if ($date === '') {
+            $date = (string)($batch->purchaseCreatedAt ?? '');
+        }
+        try {
+            return $date !== '' ? \Carbon\CarbonImmutable::parse($date)->getTimestamp() : PHP_INT_MIN;
+        } catch (\Throwable $e) {
+            return PHP_INT_MIN;
+        }
+    }
+
+    /** Cap serialized lot availability by the serials the existing policy can actually allocate. */
+    private function applySaleableSerialStock($rows)
+    {
+        if ($rows->isEmpty()) {
+            return $rows;
+        }
+
+        $purchaseIds = $rows->pluck('purchaseId')->map(fn ($id) => (int)$id)->unique()->values();
+        $productIds = $rows->pluck('productId')->map(fn ($id) => (int)$id)->unique()->values();
+        $serialRows = ProductSerial::query()
+            ->where(function ($query) use ($purchaseIds, $productIds) {
+                $query->whereIn('purchaseId', $purchaseIds)->orWhereIn('productId', $productIds);
+            })
+            ->get(['purchaseId', 'productId', 'saleId', 'status']);
+
+        $serializedProducts = $serialRows->pluck('productId')->map(fn ($id) => (int)$id)->unique()->all();
+        $serializedPurchases = $serialRows->pluck('purchaseId')->map(fn ($id) => (int)$id)->unique()->all();
+        $availableByLot = $serialRows
+            ->filter(fn ($serial) => $serial->saleId === null && in_array($serial->status, [null, 'available'], true))
+            ->groupBy(fn ($serial) => (int)$serial->purchaseId.':'.(int)$serial->productId)
+            ->map->count();
+
+        return $rows->map(function ($row) use ($serializedProducts, $serializedPurchases, $availableByLot) {
+            $purchaseId = (int)$row->purchaseId;
+            $productId = (int)$row->productId;
+            if (in_array($productId, $serializedProducts, true) || in_array($purchaseId, $serializedPurchases, true)) {
+                $serialAvailability = (int)($availableByLot[$purchaseId.':'.$productId] ?? 0);
+                $row->currentStock = min(max(0, (int)($row->currentStock ?? 0)), $serialAvailability);
+            }
+            return $row;
+        });
+    }
+
+    /** Keep the selector unique by Product ID while retaining lot-level stock details for allocation. */
+    private function salesProductOptionsResponse($rows)
+    {
+        $products = $rows->groupBy('productId');
         $options = '<option value="">'.__('sales.select').'</option>';
-            $outOfStock = [];
-            foreach ($rows as $r) {
-                $val = 'purchase_' . $r->purchaseId;
-                $datePart = '';
-                try{ if(!empty($r->purchaseDate)) $datePart = ' ['. \Carbon\Carbon::parse($r->purchaseDate)->format('Y-m-d') .']'; }catch(\Exception $e){}
-                $stock = intval($r->currentStock ?: 0);
-                // If out of stock, add to separate list and do not include in options
-                if($stock <= 0){
+        $outOfStock = [];
+        foreach ($products as $productId => $lots) {
+            $product = $lots->first();
+            $totalStock = (int)$lots->sum(fn ($lot) => max(0, (int)($lot->currentStock ?? 0)));
+            if ($totalStock <= 0) {
+                foreach ($lots as $lot) {
                     $outOfStock[] = [
-                        'purchaseId' => $r->purchaseId,
-                        'productId' => $r->productId ?? null,
-                        'productName' => $r->productName,
-                        'supplierName' => $r->supplierName,
-                        'currentStock' => $stock,
-                        'purchaseDate' => !empty($r->purchaseDate) ? \Carbon\Carbon::parse($r->purchaseDate)->format('Y-m-d') : null,
+                        'purchaseId' => $lot->purchaseId,
+                        'productId' => $lot->productId,
+                        'productName' => $lot->productName,
+                        'supplierName' => $lot->supplierName,
+                        'currentStock' => max(0, (int)($lot->currentStock ?? 0)),
+                        'purchaseDate' => $lot->purchaseDate,
                     ];
-                    continue;
                 }
-                $label = htmlspecialchars($r->productName . ' — ' . ($r->supplierName ?: __('javascript.sale_unknown_supplier')) . ' ('.__('common.stock').': ' . $stock . ')' . $datePart);
-                $titleAttr = ' title="'.htmlspecialchars(__('common.stock')).': ' . $stock . '"';
-                $options .= '<option value="'.$val.'" data-purchase-id="'.$r->purchaseId.'" data-current-stock="'.$stock.'"'.$titleAttr.'>'.$label.'</option>';
+                continue;
+            }
+            $label = htmlspecialchars((string)$product->productName, ENT_QUOTES, 'UTF-8');
+            $stockLabel = htmlspecialchars(__('common.stock'), ENT_QUOTES, 'UTF-8');
+            $options .= '<option value="'.(int)$productId.'" data-product-id="'.(int)$productId.'" data-current-stock="'.$totalStock.'" title="'.$stockLabel.': '.$totalStock.'">'.$label.' — '.$stockLabel.': '.$totalStock.'</option>';
         }
 
         return response()->json([
@@ -372,18 +568,51 @@ class JqueryController extends Controller
     /**
      * Public endpoint: return categories as <option> HTML for filtering products on sale page.
      */
-    public function getCategoriesPublic()
+    public function getBrandsPublic(Request $request)
     {
+        // Let authorization and business-context validation produce their
+        // intended 403/422 responses instead of turning them into lookup 500s.
+        $businessId = $this->salesBusinessId($request);
         try {
-            $cats = \App\Models\Category::orderBy('name','asc')->get(['id','name']);
-            $options = '<option value="">'.__('sales.all_categories').'</option>';
-            foreach($cats as $c){
-                $options .= '<option value="'.$c->id.'">'.htmlspecialchars($c->name).'</option>';
+            $brandIds = $this->salesProductStockRows($businessId)->pluck('brandId')
+                ->filter(fn ($id) => is_numeric($id) && (int)$id > 0)->map(fn ($id) => (int)$id)->unique()->values();
+            $brands = Brand::whereIn('id', $brandIds)->orderBy('name')->get(['id','name']);
+            $options = '<option value="">'.e(__('sales.all_brands')).'</option>';
+            foreach ($brands as $brand) {
+                $options .= '<option value="'.(int)$brand->id.'">'.e((string)$brand->name).'</option>';
+            }
+            return response()->json(['data' => $options]);
+        } catch (\Throwable $e) {
+            \Log::warning('getBrandsPublic error: '.$e->getMessage());
+            return response()->json(['data' => '<option value="">'.e(__('sales.all_brands')).'</option>'], 500);
+        }
+    }
+
+    /** Categories are derived only from saleable products in the active business and selected brand. */
+    public function getCategoriesPublic(Request $request)
+    {
+        // Business authorization is not a recoverable lookup failure.
+        $businessId = $this->salesBusinessId($request);
+        try {
+            $rows = $this->salesProductStockRows($businessId, null, $request->input('brandId'));
+            $categoryValues = $rows->pluck('categoryId')->filter(fn ($value) => trim((string)$value) !== '')
+                ->map(fn ($value) => (string)$value)->unique()->values();
+            $numericIds = $categoryValues->filter(fn ($value) => ctype_digit($value))->map(fn ($value) => (int)$value);
+            $categories = Category::whereIn('id', $numericIds)->get(['id','name'])->keyBy(fn ($category) => (string)$category->id);
+            $options = '<option value="">'.e(__('sales.all_categories')).'</option>';
+            $labels = [];
+            foreach ($categoryValues as $value) {
+                $category = $categories->get($value);
+                $labels[$value] = $category ? (string)$category->name : $value;
+            }
+            asort($labels, SORT_NATURAL | SORT_FLAG_CASE);
+            foreach ($labels as $value => $label) {
+                $options .= '<option value="'.e((string)$value).'">'.e($label).'</option>';
             }
             return response()->json(['data' => $options]);
         } catch (\Throwable $e) {
             \Log::warning('getCategoriesPublic error: '.$e->getMessage());
-            return response()->json(['data' => '<option value="">'.__('sales.all_categories').'</option>'], 500);
+            return response()->json(['data' => '<option value="">'.e(__('sales.all_categories')).'</option>'], 500);
         }
     }
 
@@ -391,65 +620,11 @@ class JqueryController extends Controller
      * Public endpoint: return product options filtered by a category id.
      * Options include stock and supplier, consistent with customer products endpoint.
      */
-    public function getProductsByCategoryPublic($categoryId)
+    public function getProductsByCategoryPublic($categoryId, Request $request)
     {
-        $workflow = app(\App\Services\PurchaseWorkflow::class);
-        $businessId = $workflow->resolveBusinessId();
+        $businessId = $this->salesBusinessId($request);
         try {
-            $cat = \App\Models\Category::find($categoryId);
-            $catName = $cat ? $cat->name : null;
-            $rows = \App\Models\PurchaseProduct::withoutGlobalScopes()->where('purchase_products.businessId', $businessId)
-                ->join('suppliers','purchase_products.supplier','suppliers.id')
-                ->join('products','purchase_products.productName','products.id')
-                ->leftJoin('product_stocks',function($join) use ($businessId){
-                    $join->on('product_stocks.purchaseId','=','purchase_products.id')
-                        ->where('product_stocks.businessId','=',$businessId);
-                })
-                ->where('suppliers.businessId', $businessId)
-                ->where('products.businessId', $businessId)
-                ->when($categoryId, function($q) use ($categoryId, $catName){
-                    $q->where(function($w) use ($categoryId, $catName){
-                        $w->where('products.category', (string)$categoryId);
-                        if($catName){ $w->orWhere('products.category', $catName); }
-                    });
-                })
-                ->select(
-                    'purchase_products.id as purchaseId',
-                    'products.id as productId',
-                    'products.name as productName',
-                    'purchase_products.buyPrice',
-                    'purchase_products.salePriceExVat',
-                    'purchase_products.purchase_date as purchaseDate',
-                    'suppliers.name as supplierName',
-                    'product_stocks.currentStock as currentStock'
-                )
-                ->orderBy('purchase_products.id','desc')
-                ->get();
-
-            $options = '<option value="">'.__('sales.select').'</option>';
-            $outOfStock = [];
-            foreach ($rows as $r) {
-                $stock = intval($r->currentStock ?: 0);
-                if($stock <= 0){
-                    $outOfStock[] = [
-                        'purchaseId' => $r->purchaseId,
-                        'productId' => $r->productId ?? null,
-                        'productName' => $r->productName,
-                        'supplierName' => $r->supplierName,
-                        'currentStock' => $stock,
-                        'purchaseDate' => !empty($r->purchaseDate) ? \Carbon\Carbon::parse($r->purchaseDate)->format('Y-m-d') : null,
-                    ];
-                    continue;
-                }
-                $val = 'purchase_' . $r->purchaseId;
-                $datePart = '';
-                try{ if(!empty($r->purchaseDate)) $datePart = ' ['. \Carbon\Carbon::parse($r->purchaseDate)->format('Y-m-d') .']'; }catch(\Exception $e){}
-                $label = htmlspecialchars(($r->productName ?: '') . ' — ' . ($r->supplierName ?: __('javascript.sale_unknown_supplier')) . ' ('.__('common.stock').': ' . $stock . ')' . $datePart);
-                $titleAttr = ' title="'.htmlspecialchars(__('common.stock')).': ' . $stock . '"';
-                $options .= '<option value="'.$val.'" data-purchase-id="'.$r->purchaseId.'" data-current-stock="'.$stock.'"'.$titleAttr.'>'.$label.'</option>';
-            }
-
-            return response()->json(['data' => $options, 'outOfStock' => $outOfStock]);
+            return $this->salesProductOptionsResponse($this->salesProductStockRows($businessId, $categoryId, $request->input('brandId')));
         } catch (\Throwable $e) {
             \Log::warning('getProductsByCategoryPublic error: '.$e->getMessage(), ['categoryId'=>$categoryId]);
             return response()->json(['data' => '<option value="">'.__('sales.select').'</option>', 'outOfStock' => []], 500);
@@ -561,12 +736,8 @@ class JqueryController extends Controller
         $serialNumbersInput = (array)$requ->input('serialNumber', []);
         $serialPolicy = app(\App\Services\SalesSerialPolicy::class);
 
-        // Extract VAT data from request (same pattern as savePurchase)
-        $vatPercents = is_array($requ->get('vatPercent')) ? $requ->get('vatPercent') : [$requ->get('vatPercent')];
-        $vatIncludeds = is_array($requ->get('includeVat')) ? $requ->get('includeVat') : [$requ->get('includeVat')];
-
         try {
-            DB::transaction(function() use ($requ, $items, $stockService, $invoiceService, $serialPolicy, $serialIdsInput, $serialNumbersInput, $vatPercents, $vatIncludeds, &$createdSaleId) {
+            DB::transaction(function() use ($requ, $items, $stockService, $invoiceService, $serialPolicy, $serialIdsInput, $serialNumbersInput, &$createdSaleId) {
                 $sales = new SaleProduct();
                 // Generate a sequenced sale invoice (replaces client-provided invoice)
                 $sales->invoice         = $invoiceService->generateSaleInvoice();
@@ -574,18 +745,18 @@ class JqueryController extends Controller
                 $sales->customerId      = $requ->customerId;
                 $sales->reference       = $requ->reference;
                 $sales->note            = $requ->note;
-                $sales->totalSale       = $requ->totalSaleAmount;
-                $sales->discountAmount  = $requ->discountAmount;
+                $sales->totalSale       = 0;
+                $sales->discountAmount  = 0;
                 // Persist optional additional charge (e.g., service charge)
                 try{
                     $sales->additionalChargeName   = $requ->input('additionalChargeName');
                     $sales->additionalChargeAmount = $requ->input('additionalChargeAmount');
                 }catch(\Throwable $_){ /* ignore */ }
-                $sales->grandTotal      = $requ->grandTotal;
-                $sales->paidAmount      = $requ->paidAmount;
-                $sales->invoiceDue      = $requ->dueAmount;
-                $sales->prevDue         = $requ->prevDue;
-                $sales->curDue          = $requ->curDue;
+                $sales->grandTotal      = 0;
+                $sales->paidAmount      = 0;
+                $sales->invoiceDue      = 0;
+                $sales->prevDue         = 0;
+                $sales->curDue          = 0;
                 $sales->status          = "Ordered";
                 // Assign businessId from request for admin/superadmin
                 $actor = auth('admin')->user();
@@ -607,14 +778,11 @@ class JqueryController extends Controller
                 // Record salesperson (the admin user who created this sale)
                 try{ if($actor && isset($actor->id)){ $sales->salespersonId = $actor->id; } }catch(\Throwable $_){}
 
-                if(!$sales->save()){
-                    throw new \Exception('Failed to save sale');
-                }
-                $createdSaleId = (int)$sales->id;
-
                 $seenPurchases = [];
+                $purchasesByRow = [];
                 foreach ($requ->purchaseData as $row => $pid) {
                     $purchase = $serialPolicy->purchase((int)$pid, $sales->businessId, "purchaseData.$row");
+                    $purchasesByRow[$row] = $purchase;
                     if (isset($seenPurchases[(int)$pid]) && $serialPolicy->serialized($purchase)) {
                         throw \Illuminate\Validation\ValidationException::withMessages(["purchaseData.$row" => __('common.notification_combine_duplicate_serialized_purchase_rows_into_one_quantity')]);
                     }
@@ -623,8 +791,77 @@ class JqueryController extends Controller
 
                 $backorders = $requ->backorder ?? [];
                 if(!is_array($backorders)) $backorders = [$backorders];
+                $this->validateSaleBatchAllocation((int)$sales->businessId, $items, $purchasesByRow, $backorders);
+
+                $salePrices = (array)$requ->input('salePrice', []);
+                $unitPriceByProduct = [];
+                $subtotalCents = 0;
+                $maxStoredCents = 999999999999;
+                foreach ($items as $index => $quantity) {
+                    $purchase = $purchasesByRow[$index] ?? null;
+                    if (!$purchase) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            "purchaseData.$index" => __('sales.the_purchase_is_unavailable_for_this_business'),
+                        ]);
+                    }
+                    $priceCents = $this->saleMoneyCents($salePrices[$index] ?? 0);
+                    if ($priceCents < 0 || $priceCents > 999999999999) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            "salePrice.$index" => __('validation.numeric', ['attribute' => __('sales.sale_price')]),
+                        ]);
+                    }
+                    $productId = (int)$purchase->productName;
+                    if (isset($unitPriceByProduct[$productId]) && $unitPriceByProduct[$productId] !== $priceCents) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            "salePrice.$index" => __('sales.product_group_price_must_match'),
+                        ]);
+                    }
+                    $unitPriceByProduct[$productId] = $priceCents;
+                    $subtotalCents += $priceCents * (int)$quantity;
+                    if ($subtotalCents > $maxStoredCents) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'totalSaleAmount' => __('sales.amount_exceeds_supported_limit'),
+                        ]);
+                    }
+                }
+
+                $discountCents = $this->saleMoneyCents($requ->input('discountAmount', 0));
+                $chargeCents = $this->saleMoneyCents($requ->input('additionalChargeAmount', 0));
+                $paidCents = $this->saleMoneyCents($requ->input('paidAmount', 0));
+                if ($discountCents > $subtotalCents) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'discountAmount' => __('sales.discount_cannot_exceed_subtotal'),
+                    ]);
+                }
+                $grandCents = max(0, $subtotalCents - $discountCents + $chargeCents);
+                if ($grandCents > $maxStoredCents || $paidCents > $maxStoredCents) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'grandTotal' => __('sales.amount_exceeds_supported_limit'),
+                    ]);
+                }
+                $dueCents = max(0, $grandCents - $paidCents);
+                $dueColumn = Schema::hasColumn('sale_products', 'dueAmount') ? 'dueAmount'
+                    : (Schema::hasColumn('sale_products', 'invoiceDue') ? 'invoiceDue' : 'curDue');
+                $previousDueCents = $this->saleMoneyCents(SaleProduct::withoutGlobalScopes()
+                    ->where('businessId', (int)$sales->businessId)
+                    ->where('customerId', (int)$sales->customerId)
+                    ->sum($dueColumn));
+
+                $sales->totalSale = $this->formatSaleMoney($subtotalCents);
+                $sales->discountAmount = $this->formatSaleMoney($discountCents);
+                $sales->additionalChargeAmount = $this->formatSaleMoney($chargeCents);
+                $sales->grandTotal = $this->formatSaleMoney($grandCents);
+                $sales->paidAmount = $this->formatSaleMoney($paidCents);
+                $sales->invoiceDue = $this->formatSaleMoney($dueCents);
+                $sales->prevDue = $this->formatSaleMoney($previousDueCents);
+                $sales->curDue = $this->formatSaleMoney($dueCents);
+                if(!$sales->save()){
+                    throw new \Exception('Failed to save sale');
+                }
+                $createdSaleId = (int)$sales->id;
 
                 if(count($items)>0){
+                    $totalVatCents = 0;
                     foreach($items as $index => $item){
                         $invoice = new InvoiceItem();
                         $invoice->purchaseId = $requ->purchaseData[$index];
@@ -638,29 +875,60 @@ class JqueryController extends Controller
                         $invoice->qty = $item;
                         // Persist optional per-item warranty in days from request
                         try{ $invoice->warranty_days = isset($requ->warranty_days[$index]) ? $requ->warranty_days[$index] : null; }catch(\Throwable $_){ $invoice->warranty_days = null; }
-                        $invoice->salePrice = $requ->salePrice[$index];
-                        $invoice->buyPrice = $requ->buyPrice[$index];
+                        $purchase = $purchasesByRow[$index];
+                        $invoice->salePrice = $this->formatSaleMoney($this->saleMoneyCents($salePrices[$index]));
+                        $invoice->buyPrice = $purchase->buyPrice ?? 0;
                         
-                        // Set VAT data from request
-                        $vatPct = isset($vatPercents[$index]) ? floatval($vatPercents[$index]) : 0;
-                        $isVatIncluded = isset($vatIncludeds[$index]) ? $vatIncludeds[$index] : 0;
+                        // VAT and cost come from the authorized purchase batch, never from client input.
+                        $vatPct = (float)($purchase->vatPercent ?? 0);
+                        $isVatIncluded = (bool)($purchase->vatStatus ?? false);
                         $invoice->vatPercent = $vatPct;
                         $invoice->vatIncluded = $isVatIncluded ? 1 : 0;
                         
                         // Calculate VAT amount and salePriceIncVat
-                        $basePrice = floatval($requ->salePrice[$index]);
+                        $basePrice = (float)$invoice->salePrice;
+                        $basePriceCents = $this->saleMoneyCents($invoice->salePrice);
                         if($isVatIncluded && $vatPct > 0) {
-                            $invoice->salePriceIncVat = round($basePrice * (1 + ($vatPct / 100)), 2);
-                            $invoice->vatAmount = round($basePrice * ($vatPct / 100) * $item, 2);
+                            $salePriceIncVatCents = (int)round($basePriceCents * (1 + ($vatPct / 100)), 0, PHP_ROUND_HALF_UP);
+                            $vatAmount = round($basePrice * ($vatPct / 100) * (int)$item, 2, PHP_ROUND_HALF_UP);
+                            if ($salePriceIncVatCents > 999999999999 || !is_finite($vatAmount) || $vatAmount < 0 || $vatAmount > 9999999999.99) {
+                                throw \Illuminate\Validation\ValidationException::withMessages([
+                                    "salePrice.$index" => __('sales.amount_exceeds_supported_limit'),
+                                ]);
+                            }
+                            $invoice->salePriceIncVat = $this->formatSaleMoney($salePriceIncVatCents);
+                            $invoice->vatAmount = number_format($vatAmount, 2, '.', '');
                         } else {
-                            $invoice->salePriceIncVat = $basePrice;
+                            $invoice->salePriceIncVat = $this->formatSaleMoney($basePriceCents);
                             $invoice->vatAmount = 0;
                         }
+                        $vatAmountCents = $this->saleMoneyCents($invoice->vatAmount);
+                        $totalVatCents += $vatAmountCents;
+                        if ($totalVatCents > 999999999999) {
+                            throw \Illuminate\Validation\ValidationException::withMessages([
+                                'grandTotal' => __('sales.amount_exceeds_supported_limit'),
+                            ]);
+                        }
 
-                        $totalSale      = $requ->salePrice[$index]*$item;
-                        $totalPurchase  = $requ->buyPrice[$index]*$item;
-                        $profitTotal    = $totalSale - $totalPurchase;
-                        $profitMargin   = $totalPurchase != 0 ? ($profitTotal / $totalPurchase) * 100 : 0;
+                        $unitSaleCents = $this->saleMoneyCents($invoice->salePrice);
+                        $unitCostCents = $this->saleMoneyCents($purchase->buyPrice ?? 0);
+                        $maxStoredCents = 999999999999;
+                        if ($unitCostCents < 0 || $unitCostCents > $maxStoredCents
+                            || ($unitCostCents > 0 && (int)$item > intdiv($maxStoredCents, $unitCostCents))) {
+                            throw \Illuminate\Validation\ValidationException::withMessages([
+                                "purchaseData.$index" => __('sales.amount_exceeds_supported_limit'),
+                            ]);
+                        }
+                        $totalSale      = $this->formatSaleMoney($unitSaleCents * (int)$item);
+                        $totalPurchase  = $this->formatSaleMoney($unitCostCents * (int)$item);
+                        $profitCents    = ($unitSaleCents - $unitCostCents) * (int)$item;
+                        if (abs($profitCents) > $maxStoredCents) {
+                            throw \Illuminate\Validation\ValidationException::withMessages([
+                                "salePrice.$index" => __('sales.amount_exceeds_supported_limit'),
+                            ]);
+                        }
+                        $profitTotal    = $this->formatSaleMoney($profitCents);
+                        $profitMargin   = $unitCostCents != 0 ? ($profitCents / ($unitCostCents * (int)$item)) * 100 : 0;
                         $profitParcent  = number_format($profitMargin,2);
 
                         $invoice->totalSale     = $totalSale;
@@ -689,8 +957,7 @@ class JqueryController extends Controller
                     }
                     
                     // Calculate total VAT from all invoice items and save to SaleProduct
-                    $totalVat = InvoiceItem::where('saleId', $sales->id)->sum('vatAmount');
-                    $sales->totalVat = $totalVat;
+                    $sales->totalVat = $this->formatSaleMoney($totalVatCents);
                     $sales->save();
                 }
             });
@@ -796,11 +1063,18 @@ class JqueryController extends Controller
             ], 400);
         }
 
+        // Resolve authorization outside the lookup catch so unauthorized
+        // tenant targets remain controlled 403 responses.
+        $businessId = $this->salesBusinessId($request);
         try {
-            // Find product by barcode
-            $product = Product::where('barCode', $barcode)
+            // A barcode lookup follows the active, server-authorized shop just like
+            // customer and category product lists.
+            $product = Product::withoutGlobalScopes()->where('businessId', $businessId)
+                ->where(function ($query) use ($barcode) {
+                    $query->where('barCode', $barcode)
                 ->orWhere('barCode', strtoupper($barcode))
-                ->orWhere('barCode', strtolower($barcode))
+                ->orWhere('barCode', strtolower($barcode));
+                })
                 ->first();
 
             if (!$product) {
@@ -811,9 +1085,13 @@ class JqueryController extends Controller
                 ], 404);
             }
 
-            // Get stock and pricing info
-            $stockHistory = ProductStock::where('productId', $product->id)->get();
-            $currentStock = $stockHistory ? $stockHistory->sum('currentStock') : 0;
+            // Barcode uses the same authorized, saleable-batch view as the selector.
+            $eligibleBatches = $this->salesProductStockRows($businessId, null, null, (int)$product->id)
+                ->filter(fn ($batch) => (int)$batch->currentStock > 0)->values();
+            if ($eligibleBatches->isEmpty()) {
+                return response()->json(['status'=>'error','message'=>__('sales.insufficient_stock')], 404);
+            }
+            $currentStock = (int)$eligibleBatches->sum(fn ($batch) => (int)$batch->currentStock);
 
             // Get brand info
             $brand = Brand::find($product->brand);
@@ -821,10 +1099,8 @@ class JqueryController extends Controller
             $productName = $product->name;
             $productWithBrand = $productName . ($brandName ? ' - ' . $brandName : '');
 
-            // Get latest purchase pricing
-            $lastPurchase = PurchaseProduct::where('productName', $product->id)
-                ->orderBy('id', 'desc')
-                ->first();
+            // Default price follows purchase chronology among currently eligible batches.
+            $lastPurchase = $this->latestEligibleSalesBatch($eligibleBatches);
 
             $buyPrice = $lastPurchase ? ($lastPurchase->buyPrice ?? '') : '';
             $salePrice = $lastPurchase ? ($lastPurchase->salePriceExVat ?? '') : '';
@@ -839,7 +1115,8 @@ class JqueryController extends Controller
                     'currentStock' => $currentStock,
                     'buyPrice' => $buyPrice,
                     'salePrice' => $salePrice,
-                    'vatStatus' => $vatStatus
+                    'vatStatus' => $vatStatus,
+                    'defaultPricePurchaseId' => (int)$lastPurchase->purchaseId,
                 ]
             ]);
         } catch (\Exception $e) {

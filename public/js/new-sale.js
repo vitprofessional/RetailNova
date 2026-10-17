@@ -24,7 +24,7 @@
   });
 
   const presentRows = () => {
-    const count = rows.querySelectorAll('tr').length;
+    const count = rows.querySelectorAll('tr[data-product-summary]').length;
     document.getElementById('saleEmptyState').hidden = count > 0;
     document.getElementById('saleItemCount').textContent = String(count);
     form.querySelector('.rn-sale-table-wrap').hidden = count === 0;
@@ -55,22 +55,34 @@
     if (!barcode.value.trim()) { message.textContent = t('sale_barcode_empty'); return; }
     barcodeButton.disabled = true;
     try {
+      const business = document.querySelector('#saveSaleForm [name="businessId"]');
       const response = await fetch(seed.dataset.barcodeUrl, {
         method: 'POST', credentials: 'same-origin',
         headers: {'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content},
-        body: JSON.stringify({barcode: barcode.value.trim()})
+        body: JSON.stringify({barcode: barcode.value.trim(), ...(business && business.value ? {businessId: business.value} : {})})
       });
       const result = await response.json();
       if (customer.value !== selectedCustomer || customer.dataset.selectionVersion !== selectionVersion || customer.dataset.customerReady !== '1') return;
       if (!response.ok || result.status !== 'success') { message.textContent = result.message || t('sale_search_error'); return; }
-      const details = await fetch(seed.dataset.purchaseTemplate.replace('__ID__', encodeURIComponent(result.product.id)), {
-        credentials: 'same-origin', headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}
-      });
-      if (!details.ok || details.redirected) throw new Error('Purchase lookup unavailable');
-      const batches = await details.json();
-      if (customer.value !== selectedCustomer || customer.dataset.selectionVersion !== selectionVersion || customer.dataset.customerReady !== '1') return;
-      const batch = (batches.getData || []).find(item => Number(item.currentStock) > 0 && Array.from(product.options).some(option => option.value === 'purchase_' + item.purchaseId));
-      const option = batch ? Array.from(product.options).find(item => item.value === 'purchase_' + batch.purchaseId) : Array.from(product.options).find(item => item.value === String(result.product.id));
+      let option = Array.from(product.options).find(item => item.value === String(result.product.id));
+      if (!option) {
+        // Barcode is an explicit product target. If the current category filter
+        // hid it, reload the selected customer's authorized catalog first.
+        const productsTemplate = seed.dataset.productsTemplate || '';
+        const productsUrl = productsTemplate.replace('__ID__', encodeURIComponent(String(selectedCustomer))) +
+          (business && business.value ? (productsTemplate.includes('?') ? '&' : '?') + 'businessId=' + encodeURIComponent(business.value) : '');
+        const catalog = await fetch(productsUrl, {credentials:'same-origin', headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}});
+        if (!catalog.ok || catalog.redirected) throw new Error('Authorized catalog lookup unavailable');
+        const catalogData = await catalog.json();
+        if (customer.value !== selectedCustomer || customer.dataset.selectionVersion !== selectionVersion || customer.dataset.customerReady !== '1') return;
+        if (!catalogData || typeof catalogData.data !== 'string') throw new Error('Invalid authorized catalog response');
+        product.innerHTML = catalogData.data;
+        const brand = document.getElementById('brandSelect');
+        if (brand) brand.value = '';
+        const category = document.getElementById('categorySelect');
+        if (category) category.value = '';
+        option = Array.from(product.options).find(item => item.value === String(result.product.id));
+      }
       if (!option) { message.textContent = t('sale_barcode_unavailable'); return; }
       search.value = ''; filter(); product.value = option.value;
       product.dispatchEvent(new Event('change', {bubbles: true}));

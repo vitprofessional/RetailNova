@@ -141,6 +141,10 @@ Route::get('/ajax/public/customer/{id}/previous-due', [
     'getCustomerPreviousDuePublic'
 ])->name('ajax.customer.previousDue.public');
 // Public categories list for sale page filtering
+Route::get('/ajax/public/brands', [
+    JqueryController::class,
+    'getBrandsPublic'
+])->name('ajax.brands.public');
 Route::get('/ajax/public/categories', [
     JqueryController::class,
     'getCategoriesPublic'

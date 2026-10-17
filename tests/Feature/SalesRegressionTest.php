@@ -29,6 +29,16 @@ class SalesRegressionTest extends TestCase
         $this->refreshIsolatedDatabase();
     }
 
+    private function assertHtmlOptionValue(string $html, int|string $value): void
+    {
+        $document = new \DOMDocument();
+        @$document->loadHTML('<?xml encoding="UTF-8"><select>'.$html.'</select>');
+        $xpath = new \DOMXPath($document);
+        $options = $xpath->query('//select/option[@value="'.(int)$value.'"]');
+        $this->assertNotFalse($options);
+        $this->assertCount(1, $options, 'Expected one option with value '.$value);
+    }
+
     private function actor(string $role = 'gm', int $businessId = 1): AdminUser
     {
         return AdminUser::create([
@@ -334,17 +344,18 @@ class SalesRegressionTest extends TestCase
         $this->assertSame(1, (int) $inventory['stock']->fresh()->currentStock);
     }
 
-    public function test_header_totals_remain_client_supplied_characterization(): void
+    public function test_save_recalculates_header_totals_from_authoritative_sale_lines(): void
     {
-        // Known risk, deliberately recorded rather than changing accounting policy here.
         $inventory = $this->inventory();
         $this->login();
         $payload = $this->payload($inventory);
         $payload['grandTotal'] = 999;
         $payload['dueAmount'] = 7;
         $this->post(route('saveSale'), $payload)->assertRedirect();
-        $this->assertEquals(999, SaleProduct::firstOrFail()->grandTotal);
-        $this->assertEquals(7, SaleProduct::firstOrFail()->invoiceDue);
+        $sale = SaleProduct::firstOrFail();
+        $this->assertEquals(295, $sale->grandTotal);
+        $this->assertEquals(100, $sale->paidAmount);
+        $this->assertEquals(195, $sale->invoiceDue);
         $this->assertEquals(300, InvoiceItem::firstOrFail()->totalSale);
     }
 
@@ -496,8 +507,8 @@ class SalesRegressionTest extends TestCase
 
         $products = $this->getJson(route('ajax.customer.products.public', [
             'id' => $walkIn->id, 'businessId' => 1,
-        ]))->assertOk();
-        $products->assertSee('purchase_'.$inventory['purchase']->id);
+        ]))->assertOk()->assertJsonStructure(['data', 'outOfStock']);
+        $this->assertHtmlOptionValue($products->json('data'), $inventory['purchase']->productName);
         $this->getJson(route('ajax.customer.previousDue.public', [
             'id' => $walkIn->id, 'businessId' => 1,
         ]))->assertOk()->assertJsonPath('prevDue', '12.50');
@@ -513,12 +524,22 @@ class SalesRegressionTest extends TestCase
         $inventory = $this->inventory();
         \App\Models\BusinessSetup::forceCreate(['id' => 2, 'businessName' => 'Other Business']);
         $walkIn = Customer::forceCreate(['name' => 'Walking Customer', 'businessId' => null]);
+        $category=\App\Models\Category::forceCreate(['name'=>'Platform Category']);
+        Product::findOrFail($inventory['purchase']->productName)->update(['category'=>(string)$category->id]);
         $this->actingAs($this->actor('superadmin'), 'admin');
 
-        $this->getJson(route('ajax.customer.products.public', [
+        $products = $this->getJson(route('ajax.customer.products.public', [
             'id' => $walkIn->id, 'businessId' => 1,
-        ]))->assertOk()->assertSee('purchase_'.$inventory['purchase']->id);
+        ]))->assertOk()->assertJsonStructure(['data', 'outOfStock']);
+        $this->assertHtmlOptionValue($products->json('data'), $inventory['purchase']->productName);
         $this->getJson(route('ajax.customer.products.public', $walkIn->id))
+            ->assertUnprocessable()->assertJsonValidationErrors('businessId');
+        $this->getJson(route('ajax.category.products.public', $category->id))
+            ->assertUnprocessable()->assertJsonValidationErrors('businessId');
+        $categoryProducts = $this->getJson(route('ajax.category.products.public', ['id'=>$category->id,'businessId'=>1]))
+            ->assertOk()->assertJsonStructure(['data', 'outOfStock']);
+        $this->assertHtmlOptionValue($categoryProducts->json('data'), $inventory['purchase']->productName);
+        $this->getJson(route('ajax.sale.product.purchaseDetails.public', ['id'=>$inventory['purchase']->productName]))
             ->assertUnprocessable()->assertJsonValidationErrors('businessId');
     }
 
@@ -564,10 +585,27 @@ class SalesRegressionTest extends TestCase
     public function test_new_sale_isolated_browser_fixtures_include_real_sales_handlers_and_policy_responses(): void
     {
         $inventory=$this->inventory();$plain=$this->inventory(1,false);$this->login();
-        $category=\App\Models\Category::forceCreate(['name'=>'Sprint03 QA Category']);
+        $brandA=\App\Models\Brand::forceCreate(['name'=>'Sprint03 QA Brand A']);
+        $brandB=\App\Models\Brand::forceCreate(['name'=>'Sprint03 QA Brand B']);
+        $categoryA=\App\Models\Category::forceCreate(['name'=>'Sprint03 QA Category A']);
+        $categoryB=\App\Models\Category::forceCreate(['name'=>'Sprint03 QA Category B']);
         foreach ([$inventory,$plain] as $i=>$stock) {
-            Product::find($stock['purchase']->productName)->update(['name'=>$i===0 ? 'Sprint03 QA Serialized' : 'Sprint03 QA Plain','barCode'=>$i===0 ? 'SPRINT03-QA-SCAN' : 'SPRINT03-QA-PLAIN','category'=>$category->id]);
+            Product::find($stock['purchase']->productName)->update([
+                'name'=>$i===0 ? 'Sprint03 QA Serialized' : 'Sprint03 QA Plain',
+                'barCode'=>$i===0 ? 'SPRINT03-QA-SCAN' : 'SPRINT03-QA-PLAIN',
+                'brand'=>(string)($i===0 ? $brandA->id : $brandB->id),
+                'category'=>(string)($i===0 ? $categoryA->id : $categoryB->id),
+            ]);
         }
+        // A second supplier and purchase lot for the same plain product exercises
+        // product-level aggregation while retaining purchase-lot sale rows.
+        $plainSupplier=Supplier::create(['name'=>'Sprint03 QA Second Supplier','businessId'=>1]);
+        $plainExtra=PurchaseProduct::create([
+            'productName'=>$plain['purchase']->productName,'supplier'=>$plainSupplier->id,'businessId'=>1,
+            'purchase_date'=>'2026-10-12','invoice'=>uniqid('PUR-'),'qty'=>3,'buyPrice'=>110,
+            'salePriceExVat'=>160,'totalAmount'=>330,'grandTotal'=>330,'paidAmount'=>330,'dueAmount'=>0,
+        ]);
+        ProductStock::create(['productId'=>$plain['purchase']->productName,'purchaseId'=>$plainExtra->id,'businessId'=>1,'currentStock'=>3]);
         $customer=Customer::create(['name'=>'Sprint03 QA Customer','businessId'=>1]);
         SaleProduct::forceCreate(['invoice'=>'SPRINT03-PRIOR-DUE','date'=>'2026-10-12','customerId'=>$customer->id,'businessId'=>1,'salespersonId'=>auth('admin')->id(),'totalSale'=>50,'grandTotal'=>50,'paidAmount'=>15,'invoiceDue'=>35,'curDue'=>35,'prevDue'=>0,'status'=>'Ordered']);
         foreach (['en','bn'] as $locale) {
@@ -581,8 +619,9 @@ class SalesRegressionTest extends TestCase
                         $url=route($route,['id'=>$c->id]);$responses[parse_url($url,PHP_URL_PATH)]=$this->getJson($url)->assertOk()->json();
                     }
                 }
+                $url=route('ajax.brands.public');$responses[parse_url($url,PHP_URL_PATH)]=$this->getJson($url)->assertOk()->json();
                 $url=route('ajax.categories.public');$responses[parse_url($url,PHP_URL_PATH)]=$this->getJson($url)->assertOk()->json();
-                $url=route('ajax.category.products.public',['id'=>$category->id]);$responses[parse_url($url,PHP_URL_PATH)]=$this->getJson($url)->assertOk()->json();
+                $url=route('ajax.category.products.public',['id'=>$categoryA->id]);$responses[parse_url($url,PHP_URL_PATH)]=$this->getJson($url)->assertOk()->json();
                 foreach ([$inventory,$plain] as $stock) {
                     foreach (['ajax.purchase.details.public','ajax.purchase.serials.public'] as $route) {
                         $url=route($route,['id'=>$stock['purchase']->id]);$responses[parse_url($url,PHP_URL_PATH)]=$this->getJson($url)->assertOk()->json();
@@ -593,11 +632,231 @@ class SalesRegressionTest extends TestCase
                 if(getenv('RN_EXPORT_SALE_FIXTURES')==='1') {
                     $stem=storage_path('logs/sprint03-sale-'.$locale.'-'.($required ? 'required' : 'optional'));
                     file_put_contents($stem.'.html',$page->getContent());
-                    file_put_contents($stem.'.json',json_encode(['responses'=>$responses,'customerId'=>$customer->id,'purchaseId'=>$inventory['purchase']->id,'plainPurchaseId'=>$plain['purchase']->id,'categoryId'=>$category->id]));
+                    file_put_contents($stem.'.json',json_encode(['responses'=>$responses,'customerId'=>$customer->id,'purchaseId'=>$inventory['purchase']->id,'productId'=>$inventory['purchase']->productName,'plainPurchaseId'=>$plain['purchase']->id,'plainProductId'=>$plain['purchase']->productName,'plainExtraPurchaseId'=>$plainExtra->id,'brandAId'=>$brandA->id,'brandBId'=>$brandB->id,'categoryAId'=>$categoryA->id,'categoryBId'=>$categoryB->id]));
                 }
             }
         }
         $this->assertDatabaseCount('sale_products',1);
-        $this->assertEquals(6,ProductStock::sum('currentStock'));
+        $this->assertEquals(9,ProductStock::sum('currentStock'));
+    }
+
+    public function test_sale_product_and_category_options_are_unique_with_aggregated_business_stock(): void
+    {
+        $first=$this->inventory(1,false);
+        $product=Product::findOrFail($first['purchase']->productName);
+        $category=\App\Models\Category::forceCreate(['name'=>'Aggregate Category']);
+        $product->update(['category'=>(string)$category->id]);
+        $lotIds=[$first['purchase']->id];
+        foreach ([2,4] as $index=>$stockQty) {
+            $supplier=Supplier::create(['name'=>'Aggregate Supplier '.$index,'businessId'=>1]);
+            $purchase=PurchaseProduct::create([
+                'productName'=>$product->id,'supplier'=>$supplier->id,'businessId'=>1,'purchase_date'=>'2026-10-12',
+                'invoice'=>uniqid('PUR-'),'qty'=>$stockQty,'buyPrice'=>100+$index,'salePriceExVat'=>150,
+                'totalAmount'=>$stockQty*(100+$index),'grandTotal'=>$stockQty*(100+$index),'paidAmount'=>0,'dueAmount'=>0,
+            ]);
+            ProductStock::create(['productId'=>$product->id,'purchaseId'=>$purchase->id,'businessId'=>1,'currentStock'=>$stockQty]);
+            $lotIds[]=$purchase->id;
+        }
+        $sameName=Product::create(['name'=>$product->name,'businessId'=>1,'category'=>(string)$category->id]);
+        $sameSupplier=Supplier::create(['name'=>'Same-name Supplier','businessId'=>1]);
+        $samePurchase=PurchaseProduct::create(['productName'=>$sameName->id,'supplier'=>$sameSupplier->id,'businessId'=>1,'qty'=>1,'buyPrice'=>50,'salePriceExVat'=>60]);
+        ProductStock::create(['productId'=>$sameName->id,'purchaseId'=>$samePurchase->id,'businessId'=>1,'currentStock'=>1]);
+        \App\Models\BusinessSetup::forceCreate(['id'=>2,'businessName'=>'Other Business']);
+        $foreignProduct=Product::create(['name'=>$product->name,'businessId'=>2,'category'=>(string)$category->id]);
+        $foreignSupplier=Supplier::create(['name'=>'Foreign Supplier','businessId'=>2]);
+        $foreignPurchase=PurchaseProduct::create(['productName'=>$foreignProduct->id,'supplier'=>$foreignSupplier->id,'businessId'=>2,'qty'=>50,'buyPrice'=>1,'salePriceExVat'=>2]);
+        ProductStock::create(['productId'=>$foreignProduct->id,'purchaseId'=>$foreignPurchase->id,'businessId'=>2,'currentStock'=>50]);
+        $customer=Customer::create(['name'=>'Aggregate Customer','businessId'=>1]);
+        $this->login();
+
+        $all=$this->getJson(route('ajax.customer.products.public',$customer->id))->assertOk()->json('data');
+        $this->assertSame(1,substr_count($all,'value="'.$product->id.'"'));
+        $this->assertStringContainsString('data-current-stock="9"',$all);
+        $this->assertSame(1,substr_count($all,'value="'.$sameName->id.'"'));
+        $this->assertStringNotContainsString('value="'.$foreignProduct->id.'"',$all);
+
+        $filtered=$this->getJson(route('ajax.category.products.public',$category->id))->assertOk()->json('data');
+        $this->assertSame(1,substr_count($filtered,'value="'.$product->id.'"'));
+        $this->assertSame(1,substr_count($filtered,'value="'.$sameName->id.'"'));
+        $this->assertStringNotContainsString('value="'.$foreignProduct->id.'"',$filtered);
+
+        $details=$this->getJson(route('ajax.sale.product.purchaseDetails.public',['id'=>$product->id]))
+            ->assertOk()->json('getData');
+        $this->assertCount(3,$details);
+        $this->assertSame($lotIds, collect($details)->pluck('purchaseId')->map(fn($id)=>(int)$id)->all());
+        $this->assertSame([3,2,4],collect($details)->pluck('currentStock')->map(fn($qty)=>(int)$qty)->all());
+    }
+
+    public function test_brand_category_product_filters_are_business_scoped_and_price_uses_latest_eligible_batch(): void
+    {
+        $brandA=\App\Models\Brand::forceCreate(['name'=>'Brand A']);
+        $brandB=\App\Models\Brand::forceCreate(['name'=>'Brand B']);
+        $categoryA=\App\Models\Category::forceCreate(['name'=>'Category A']);
+        $categoryB=\App\Models\Category::forceCreate(['name'=>'Category B']);
+        $base=$this->inventory(1,false);
+        $product=Product::findOrFail($base['purchase']->productName);
+        $product->update(['brand'=>(string)$brandA->id,'category'=>(string)$categoryA->id,'barCode'=>'LATEST-BATCH-BARCODE']);
+
+        $supplier=Supplier::create(['name'=>'Latest supplier','businessId'=>1]);
+        $latestSameDay=PurchaseProduct::create([
+            'productName'=>$product->id,'supplier'=>$supplier->id,'businessId'=>1,'purchase_date'=>'2026-10-15',
+            'invoice'=>uniqid('LATEST-'),'qty'=>2,'buyPrice'=>125,'salePriceExVat'=>175,'totalAmount'=>250,
+        ]);
+        ProductStock::create(['productId'=>$product->id,'purchaseId'=>$latestSameDay->id,'businessId'=>1,'currentStock'=>2]);
+        // Equal purchase dates are resolved by the higher purchase-row ID.
+        $latestTie=PurchaseProduct::create([
+            'productName'=>$product->id,'supplier'=>$supplier->id,'businessId'=>1,'purchase_date'=>'2026-10-15',
+            'invoice'=>uniqid('LATEST-TIE-'),'qty'=>1,'buyPrice'=>127,'salePriceExVat'=>185,'totalAmount'=>127,
+        ]);
+        ProductStock::create(['productId'=>$product->id,'purchaseId'=>$latestTie->id,'businessId'=>1,'currentStock'=>1]);
+        $outOfStock=PurchaseProduct::create([
+            'productName'=>$product->id,'supplier'=>$supplier->id,'businessId'=>1,'purchase_date'=>'2026-10-16',
+            'invoice'=>uniqid('EMPTY-'),'qty'=>1,'buyPrice'=>130,'salePriceExVat'=>999,'totalAmount'=>130,
+        ]);
+        ProductStock::create(['productId'=>$product->id,'purchaseId'=>$outOfStock->id,'businessId'=>1,'currentStock'=>0]);
+
+        $otherBrand=Product::create(['name'=>'Brand B product','businessId'=>1,'brand'=>(string)$brandB->id,'category'=>(string)$categoryB->id]);
+        $otherSupplier=Supplier::create(['name'=>'Brand B supplier','businessId'=>1]);
+        $otherPurchase=PurchaseProduct::create(['productName'=>$otherBrand->id,'supplier'=>$otherSupplier->id,'businessId'=>1,'purchase_date'=>'2026-10-14','qty'=>2,'buyPrice'=>20,'salePriceExVat'=>40]);
+        ProductStock::create(['productId'=>$otherBrand->id,'purchaseId'=>$otherPurchase->id,'businessId'=>1,'currentStock'=>2]);
+
+        \App\Models\BusinessSetup::forceCreate(['id'=>2,'businessName'=>'Other Business']);
+        $foreign=Product::create(['name'=>'Foreign Brand Product','businessId'=>2,'brand'=>(string)$brandA->id,'category'=>(string)$categoryA->id]);
+        $foreignSupplier=Supplier::create(['name'=>'Foreign Brand Supplier','businessId'=>2]);
+        $foreignPurchase=PurchaseProduct::create(['productName'=>$foreign->id,'supplier'=>$foreignSupplier->id,'businessId'=>2,'purchase_date'=>'2026-10-16','qty'=>50,'buyPrice'=>1,'salePriceExVat'=>2]);
+        ProductStock::create(['productId'=>$foreign->id,'purchaseId'=>$foreignPurchase->id,'businessId'=>2,'currentStock'=>50]);
+
+        $this->login();
+        $brands=$this->getJson(route('ajax.brands.public'))->assertOk()->json('data');
+        $this->getJson(route('ajax.brands.public',['businessId'=>2]))->assertForbidden();
+        $this->assertStringContainsString('value="'.$brandA->id.'"',$brands);
+        $this->assertStringContainsString('value="'.$brandB->id.'"',$brands);
+        $categories=$this->getJson(route('ajax.categories.public',['brandId'=>$brandA->id]))->assertOk()->json('data');
+        $this->getJson(route('ajax.categories.public',['brandId'=>$brandA->id,'businessId'=>2]))->assertForbidden();
+        $this->assertStringContainsString('value="'.$categoryA->id.'"',$categories);
+        $this->assertStringNotContainsString('value="'.$categoryB->id.'"',$categories);
+        $filtered=$this->getJson(route('ajax.customer.products.public',[
+            'id'=>Customer::create(['name'=>'Brand filter customer','businessId'=>1])->id,
+            'brandId'=>$brandA->id,'categoryId'=>$categoryA->id,
+        ]))->assertOk()->json('data');
+        $this->getJson(route('ajax.customer.products.public',[
+            'id'=>Customer::where('businessId',1)->latest('id')->value('id'),
+            'brandId'=>$brandA->id,'categoryId'=>$categoryA->id,'businessId'=>2,
+        ]))->assertForbidden();
+        $this->assertSame(1,substr_count($filtered,'value="'.$product->id.'"'));
+        $this->assertStringNotContainsString('value="'.$foreign->id.'"',$filtered);
+        $details=$this->getJson(route('ajax.sale.product.purchaseDetails.public',['id'=>$product->id]))
+            ->assertOk()->assertJsonPath('defaultSalePrice','185.00')->assertJsonPath('defaultPricePurchaseId',$latestTie->id);
+        $this->postJson(route('product.findByBarcode'),['barcode'=>'LATEST-BATCH-BARCODE'])
+            ->assertOk()->assertJsonPath('product.salePrice','185.00')->assertJsonPath('product.defaultPricePurchaseId',$latestTie->id);
+        $this->assertSame('150.00',(string)$base['purchase']->fresh()->salePriceExVat);
+        $this->assertSame('175.00',(string)$latestSameDay->fresh()->salePriceExVat);
+        $this->assertSame('185.00',(string)$latestTie->fresh()->salePriceExVat);
+        $this->assertCount(3,$details->json('getData'));
+    }
+
+    public function test_sale_can_allocate_one_product_across_fifo_purchase_lots_without_losing_lot_costs(): void
+    {
+        $first=$this->inventory(1,false);
+        $productId=(int)$first['purchase']->productName;
+        $supplier=Supplier::create(['name'=>'Second batch supplier','businessId'=>1]);
+        $second=PurchaseProduct::create([
+            'productName'=>$productId,'supplier'=>$supplier->id,'businessId'=>1,'purchase_date'=>'2026-10-12',
+            'invoice'=>uniqid('PUR-'),'qty'=>2,'buyPrice'=>120,'salePriceExVat'=>160,'totalAmount'=>240,
+            'grandTotal'=>240,'paidAmount'=>240,'dueAmount'=>0,
+        ]);
+        $secondStock=ProductStock::create(['productId'=>$productId,'purchaseId'=>$second->id,'businessId'=>1,'currentStock'=>2]);
+        $this->optional();
+        $customer=Customer::create(['name'=>'Multi-lot Customer','businessId'=>1]);
+        $this->login();
+        $this->postJson(route('saveSale'),[
+            'date'=>'2026-10-16','customerId'=>$customer->id,
+            // A client cannot skip the earlier FIFO lot and submit only a later lot.
+            'purchaseData'=>[$second->id],'qty'=>[1],'salePrice'=>[160],'buyPrice'=>[120],
+            'warranty_days'=>[''],'serialId'=>[[]],'totalSaleAmount'=>160,'discountAmount'=>0,
+            'additionalChargeName'=>'','additionalChargeAmount'=>0,'grandTotal'=>160,
+            'paidAmount'=>160,'dueAmount'=>0,'prevDue'=>0,'curDue'=>0,
+        ])->assertUnprocessable()->assertJsonValidationErrors('purchaseData');
+        $this->assertDatabaseCount('sale_products',0);
+        $this->assertSame(3,(int)$first['stock']->fresh()->currentStock);
+        $this->assertSame(2,(int)$secondStock->fresh()->currentStock);
+        $mismatchedPrices=$this->payload($first, 3);
+        $mismatchedPrices['purchaseData']=[$first['purchase']->id,$second->id];
+        $mismatchedPrices['qty']=[3,2];
+        $mismatchedPrices['salePrice']=[200,201];
+        $mismatchedPrices['buyPrice']=[100,120];
+        $this->postJson(route('saveSale'),$mismatchedPrices)->assertUnprocessable()->assertJsonValidationErrors('salePrice.1');
+        $this->assertDatabaseCount('sale_products',0);
+        $this->assertSame(3,(int)$first['stock']->fresh()->currentStock);
+        $this->assertSame(2,(int)$secondStock->fresh()->currentStock);
+        $response=$this->post(route('saveSale'),[
+            'date'=>'2026-10-16','customerId'=>$customer->id,
+            'purchaseData'=>[$first['purchase']->id,$second->id],'qty'=>[3,2],
+            'salePrice'=>[200,200],'buyPrice'=>[1,1],'warranty_days'=>['',''],
+            'serialId'=>[[],[]],'totalSaleAmount'=>1,'discountAmount'=>0,
+            'additionalChargeName'=>'','additionalChargeAmount'=>0,'grandTotal'=>1,
+            'paidAmount'=>1000,'dueAmount'=>0,'prevDue'=>0,'curDue'=>0,
+        ]);
+        $response->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertSame(0,(int)$first['stock']->fresh()->currentStock);
+        $this->assertSame(0,(int)$secondStock->fresh()->currentStock);
+        $items=InvoiceItem::orderBy('id')->get();
+        $this->assertSame([$first['purchase']->id,$second->id],$items->pluck('purchaseId')->map(fn($id)=>(int)$id)->all());
+        $this->assertSame(['200.00','200.00'],$items->pluck('salePrice')->map(fn($price)=>number_format((float)$price,2,'.',''))->all());
+        $this->assertSame(['100.00','120.00'],$items->pluck('buyPrice')->map(fn($price)=>number_format((float)$price,2,'.',''))->all());
+        $this->assertSame(['300.00','240.00'],$items->pluck('totalPurchase')->map(fn($price)=>number_format((float)$price,2,'.',''))->all());
+        $this->assertSame(['300.00','160.00'],$items->pluck('profitTotal')->map(fn($price)=>number_format((float)$price,2,'.',''))->all());
+        $this->assertSame('1000.00',number_format((float)SaleProduct::latest('id')->value('grandTotal'),2,'.',''));
+    }
+
+    public function test_serialized_sale_keeps_the_selected_serials_actual_purchase_batch(): void
+    {
+        $first=$this->inventory(1,true);
+        $productId=(int)$first['purchase']->productName;
+        $supplier=Supplier::create(['name'=>'Serialized second batch supplier','businessId'=>1]);
+        $second=PurchaseProduct::create([
+            'productName'=>$productId,'supplier'=>$supplier->id,'businessId'=>1,'purchase_date'=>'2026-10-12',
+            'invoice'=>uniqid('SERIAL-PUR-'),'qty'=>2,'buyPrice'=>120,'salePriceExVat'=>160,'totalAmount'=>240,
+        ]);
+        $secondStock=ProductStock::create(['productId'=>$productId,'purchaseId'=>$second->id,'businessId'=>1,'currentStock'=>2]);
+        $serial=ProductSerial::create([
+            'productId'=>$productId,'purchaseId'=>$second->id,'serialNumber'=>'SECOND-BATCH-SERIAL','status'=>'available',
+        ]);
+        $customer=Customer::create(['name'=>'Serialized batch customer','businessId'=>1]);
+        $this->login();
+        $response=$this->post(route('saveSale'),[
+            'date'=>'2026-10-16','customerId'=>$customer->id,
+            'purchaseData'=>[$second->id],'qty'=>[1],'salePrice'=>[160],'buyPrice'=>[120],
+            'warranty_days'=>[''],'serialId'=>[[$serial->id]],'totalSaleAmount'=>160,'discountAmount'=>0,
+            'additionalChargeName'=>'','additionalChargeAmount'=>0,'grandTotal'=>160,
+            'paidAmount'=>160,'dueAmount'=>0,'prevDue'=>0,'curDue'=>0,
+        ]);
+        $response->assertSessionHasNoErrors()->assertRedirect();
+        $sale=SaleProduct::firstOrFail();
+        $line=InvoiceItem::firstOrFail();
+        $this->assertSame((int)$second->id,(int)$line->purchaseId);
+        $this->assertSame((int)$sale->id,(int)$serial->fresh()->saleId);
+        $this->assertSame(3,(int)$first['stock']->fresh()->currentStock);
+        $this->assertSame(1,(int)$secondStock->fresh()->currentStock);
+    }
+
+    public function test_barcode_search_uses_the_selected_authorized_business(): void
+    {
+        $this->inventory();
+        \App\Models\BusinessSetup::forceCreate(['id'=>2,'businessName'=>'Other Business']);
+        $foreign=Product::create(['name'=>'Foreign Barcode Product','businessId'=>2,'barCode'=>'FOREIGN-LOOKUP']);
+        $supplier=Supplier::create(['name'=>'Foreign Barcode Supplier','businessId'=>2]);
+        $purchase=PurchaseProduct::create(['productName'=>$foreign->id,'supplier'=>$supplier->id,'businessId'=>2,'qty'=>1,'buyPrice'=>1,'salePriceExVat'=>2]);
+        ProductStock::create(['productId'=>$foreign->id,'purchaseId'=>$purchase->id,'businessId'=>2,'currentStock'=>1]);
+
+        $this->login();
+        $this->postJson(route('product.findByBarcode'),['barcode'=>'FOREIGN-LOOKUP'])->assertNotFound();
+        $this->postJson(route('product.findByBarcode'),['barcode'=>'FOREIGN-LOOKUP','businessId'=>2])->assertForbidden();
+
+        $this->actingAs($this->actor('superadmin'), 'admin');
+        $this->postJson(route('product.findByBarcode'),['barcode'=>'FOREIGN-LOOKUP'])
+            ->assertUnprocessable()->assertJsonValidationErrors('businessId');
+        $this->postJson(route('product.findByBarcode'),['barcode'=>'FOREIGN-LOOKUP','businessId'=>2])
+            ->assertOk()->assertJsonPath('product.id',$foreign->id);
     }
 }

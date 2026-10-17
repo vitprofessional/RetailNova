@@ -11,6 +11,7 @@
          data-products-template="{{ route('ajax.customer.products.public', ['id' => '__ID__']) }}"
          data-previous-due-template="{{ route('ajax.customer.previousDue.public', ['id' => '__ID__']) }}"
          data-categories-url="{{ route('ajax.categories.public') }}"
+         data-brands-url="{{ route('ajax.brands.public') }}"
          data-category-products-template="{{ route('ajax.category.products.public', ['id' => '__ID__']) }}"
          data-purchase-template="{{ route('ajax.sale.product.purchaseDetails.public', ['id' => '__ID__']) }}"
          data-purchase-by-id-template="{{ route('ajax.purchase.details.public', ['id' => '__ID__']) }}"

@@ -132,6 +132,13 @@ function updateOtherDetails(){
 // Central financial recalculation: sums buy-price totals, applies discount and paid, updates grand/due fields
 window.recalcFinancials = function(){
     try{
+        // New Sale has a product-centric cart whose authoritative amounts live in
+        // #saleAllocationRows. The generic purchase calculator cannot see those rows.
+        var saleForm = document.getElementById('saveSaleForm');
+        if(saleForm){
+            if(typeof window.recalcSaleTotals === 'function') window.recalcSaleTotals();
+            return;
+        }
         if(window.__RNDEBUG) console.debug('recalcFinancials start');
         // Determine appropriate per-row total inputs depending on page context.
         // Sale page rows use `.totalSale` inputs, purchase pages use inputs with id starting with totalAmount or class total-amount.
@@ -204,6 +211,10 @@ function discountType(){
 
 function discountAmountChange(){
     try{
+        if(document.getElementById('saveSaleForm')){
+            if(typeof window.recalcSaleTotals === 'function') window.recalcSaleTotals();
+            return;
+        }
         var discountAmountEl = document.getElementById('discountAmount');
         var discountPercentEl = document.getElementById('discountPercent');
         // Determine base using same logic as recalcFinancials (support sale page `.totalSale` inputs)
@@ -229,6 +240,10 @@ function discountAmountChange(){
 
 function discountPercentChange(){
     try{
+        if(document.getElementById('saveSaleForm')){
+            if(typeof window.recalcSaleTotals === 'function') window.recalcSaleTotals();
+            return;
+        }
         var discountAmountEl = document.getElementById('discountAmount');
         var discountPercentEl = document.getElementById('discountPercent');
         // Determine base using same logic as recalcFinancials (support sale page `.totalSale` inputs)
@@ -563,9 +578,12 @@ document.addEventListener('DOMContentLoaded', function(){
         var buy = document.getElementById('buyPrice'); if(buy) buy.addEventListener('input', recalcPurchaseRow);
         var sale = document.getElementById('salePriceExVat'); if(sale) sale.addEventListener('input', recalcPurchaseRow);
         var discountStatus = document.getElementById('discountStatus'); if(discountStatus) discountStatus.addEventListener('change', discountType);
-        var discountAmount = document.getElementById('discountAmount'); if(discountAmount) discountAmount.addEventListener('input', discountAmountChange);
-        var discountPercent = document.getElementById('discountPercent'); if(discountPercent) discountPercent.addEventListener('input', discountPercentChange);
-        var paidAmount = document.getElementById('paidAmount'); if(paidAmount) paidAmount.addEventListener('input', function(){ try{ if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else dueCalculate(); }catch(e){} });
+        var saleForm = document.getElementById('saveSaleForm');
+        if(!saleForm){
+            var discountAmount = document.getElementById('discountAmount'); if(discountAmount) discountAmount.addEventListener('input', discountAmountChange);
+            var discountPercent = document.getElementById('discountPercent'); if(discountPercent) discountPercent.addEventListener('input', discountPercentChange);
+            var paidAmount = document.getElementById('paidAmount'); if(paidAmount) paidAmount.addEventListener('input', function(){ try{ if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else dueCalculate(); }catch(e){} });
+        }
         // wire Add To List button for multi-row purchases
         try{
             var addBtn = document.getElementById('addProductRow');
@@ -642,7 +660,7 @@ try{
                     $(document).on('input change', '#salePriceExVat, [id^="salePriceExVat"], .sale-price', function(){ try{ recalcPurchaseRow(this); }catch(e){ console.warn('jq salePrice handler', e); } });
                     $(document).on('input change', '#quantity, .quantity', function(){ try{ recalcPurchaseRow(this); }catch(e){ console.warn('jq quantity handler', e); } });
                     // Ensure paid amount changes also trigger the central financial recalculation
-                    $(document).on('input change', '#paidAmount', function(){ try{ if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else if(typeof dueCalculate === 'function') dueCalculate(); }catch(e){ console.warn('jq paidAmount handler', e); } });
+                    $(document).on('input change', '#paidAmount', function(){ try{ if(document.getElementById('saveSaleForm')) return; if(typeof window.recalcFinancials === 'function') window.recalcFinancials(); else if(typeof dueCalculate === 'function') dueCalculate(); }catch(e){ console.warn('jq paidAmount handler', e); } });
                     // Keep legacy price/profit helpers callable
                     $(document).on('input change', '#salePriceExVat, #buyPrice, .sale-price, .buy-price', function(){ try{ if(typeof priceCalculation === 'function') priceCalculation(); }catch(e){} });
                 }catch(e){ console.warn('jQuery init handlers failed', e); }
