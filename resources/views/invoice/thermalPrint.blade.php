@@ -23,12 +23,14 @@
             width: 80mm;
             padding: 0;
             margin: 0 auto;
+            page: thermal80;
         }
 
         .thermal-58 {
             width: 58mm;
             padding: 0;
             margin: 0 auto;
+            page: thermal58;
         }
 
         .thermal-receipt {
@@ -42,6 +44,15 @@
             text-align: center;
             margin-bottom: 3mm;
             padding-bottom: 2mm;
+        }
+
+        .receipt-logo {
+            display: block;
+            width: auto;
+            max-width: 34mm;
+            max-height: 18mm;
+            margin: 0 auto 2mm;
+            object-fit: contain;
         }
 
         .business-name {
@@ -268,18 +279,30 @@
         @page {
             size: 80mm auto;
             margin: 0;
-            padding: 0;
         }
 
-        @page .thermal-58 {
+        @page thermal80 {
+            size: 80mm auto;
+            margin: 0;
+        }
+
+        @page thermal58 {
             size: 58mm auto;
+            margin: 0;
         }
     </style>
 @include('partials.localization')
 </head>
 <body>
     @php
-        $b = $business ?? \App\Models\BusinessSetup::orderBy('id','desc')->first();
+        $b = $business ?? $invoice->business ?? null;
+        $invoiceLogoUrl = $b ? $b->invoiceLogoUrl() : null;
+        $invoiceFallbackLogoUrl = asset('logo.png');
+        $thermalPrinter = strtolower((string) request()->query('printer', 'thermal80'));
+        if (!in_array($thermalPrinter, ['thermal80', 'thermal58'], true)) {
+            $thermalPrinter = 'thermal80';
+        }
+        $thermalWidthClass = $thermalPrinter === 'thermal58' ? 'thermal-58' : 'thermal-80';
         $paidAmount = (float)($invoice->paidAmount ?? 0);
         $grandTotal = (float)($invoice->grandTotal ?? 0);
         $currentDue = (float)($invoice->curDue ?? max($grandTotal - $paidAmount, 0));
@@ -305,15 +328,17 @@
         $thermalDiscount = (float)($invoice->discountAmount ?? 0);
     @endphp
 
-    <div class="thermal-80">
+    <div class="{{ $thermalWidthClass }}" data-printer-variant="{{ $thermalPrinter }}">
         <div class="thermal-receipt">
 
             <!-- Header -->
             <div class="receipt-header">
-                <div class="business-name">{{ $b && $b->businessName ? $b->businessName : 'Computer Care' }}</div>
+                <img class="receipt-logo" src="{{ $invoiceLogoUrl ?: $invoiceFallbackLogoUrl }}" alt="{{ $b->businessName ?? __('common.thermal_receipt') }}" onerror="this.onerror=null;this.src='{{ $invoiceFallbackLogoUrl }}'">
+                @if($b && $b->businessName)<div class="business-name">{{ $b->businessName }}</div>@endif
                 <div class="business-details">
-                    <div>{{ $b && $b->businessLocation ? $b->businessLocation : 'Office Road, Burichong Bazar, Cumilla' }}</div>
-                    <div>{{ __('common.phone') }}: {{ $b && $b->mobile ? $b->mobile : '0123456789' }}</div>
+                    @if($b && $b->businessLocation)<div>{{ $b->businessLocation }}</div>@endif
+                    @if($b && $b->mobile)<div>{{ __('common.phone') }}: {{ $b->mobile }}</div>@endif
+                    @if($b && $b->email)<div>{{ __('common.email') }}: {{ $b->email }}</div>@endif
                 </div>
             </div>
 

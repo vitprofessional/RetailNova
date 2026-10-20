@@ -1,445 +1,244 @@
 @extends('include')
 @section('backTitle'){{ __('common.heading_dashboard') }}@endsection
+
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/dashboard.css') }}?v={{ filemtime(public_path('css/dashboard.css')) }}">
+@endpush
+
 @section('container')
-<div class="row">
-            <div class="col-lg-12">
-                <div class="card card-transparent card-block card-stretch card-height border-none">
-                    <div class="card-body p-0 mt-lg-2 mt-0">
-                        <h3 class="mb-1">{{ __('dashboard.hello', ['name'=>optional($adminUser)->fullName ?? __('dashboard.guest')]) }},
-                            @php
-                                $hour = \Carbon\Carbon::now()->format('H');
-                                if ($hour >= 5 && $hour < 12) {
-                                    echo __('dashboard.good_morning').' 🌅';
-                                } elseif ($hour >= 12 && $hour < 17) {
-                                    echo __('dashboard.good_afternoon').' ☀️';
-                                } elseif ($hour >= 17 && $hour < 21) {
-                                    echo __('dashboard.good_evening').' 🌇';
-                                } else {
-                                    echo __('dashboard.good_night').' 🌙';
-                                }
-                            @endphp
-                        </h3>
-                        <p class="mb-3 mr-4">{{ __('dashboard.your_dashboard_highlights_sales_purchases_cash_flow_stock_and_more') }}</p>
-                        <div class="d-flex align-items-center flex-wrap">
-                            <div class="form-inline mr-2 mb-2">
-                                <label class="mr-2 mb-0">{{ __('dashboard.range') }}</label>
-                                <select id="rn-range" class="form-control form-control-sm">
-                                    <option value="today">{{ __('dashboard.today') }}</option>
-                                    <option value="week">{{ __('dashboard.this_week') }}</option>
-                                    <option value="month" selected>{{ __('dashboard.this_month') }}</option>
-                                    <option value="year">{{ __('dashboard.this_year') }}</option>
-                                    <option value="custom">{{ __('dashboard.custom') }}</option>
-                                </select>
-                            </div>
-                            <div id="rn-custom-range" class="form-inline mr-2 mb-2" style="display:none;">
-                                <label class="mr-2 mb-0">{{ __('dashboard.from') }}</label>
-                                <input type="date" id="rn-start" class="form-control form-control-sm mr-2">
-                                <label class="mr-2 mb-0">{{ __('dashboard.to') }}</label>
-                                <input type="date" id="rn-end" class="form-control form-control-sm mr-2">
-                            </div>
-                            <button id="rn-apply" class="btn btn-primary btn-sm mb-2">{{ __('dashboard.apply') }}</button>
-                        </div>
-                    </div>
-                </div>
+@php
+    $hour = (int) \Carbon\Carbon::now()->format('H');
+    $greeting = $hour >= 5 && $hour < 12 ? __('dashboard.good_morning')
+        : ($hour >= 12 && $hour < 17 ? __('dashboard.good_afternoon')
+        : ($hour >= 17 && $hour < 21 ? __('dashboard.good_evening') : __('dashboard.good_night')));
+    $formatDashboardMoney = static function ($amount) use ($dashboardCurrencySymbol, $dashboardCurrencyPosition, $dashboardCurrencyNegParentheses) {
+        $number = is_numeric($amount) ? (float) $amount : 0.0;
+        $formatted = number_format(abs($number), 2, '.', ',');
+        $value = $dashboardCurrencyPosition === 'right'
+            ? $formatted . "\u{00A0}" . $dashboardCurrencySymbol
+            : $dashboardCurrencySymbol . $formatted;
+        return $number < 0
+            ? ($dashboardCurrencyNegParentheses ? '(' . $value . ')' : '-' . $value)
+            : $value;
+    };
+@endphp
+<main class="rn-dashboard" data-currency-symbol="{{ $dashboardCurrencySymbol }}" data-currency-position="{{ $dashboardCurrencyPosition }}" data-currency-negative-parentheses="{{ $dashboardCurrencyNegParentheses ? 'true' : 'false' }}">
+    <section class="rn-dashboard-intro" aria-labelledby="rn-dashboard-title">
+        <div class="rn-dashboard-welcome">
+            <span class="rn-dashboard-welcome-icon" aria-hidden="true"><i class="ri-sun-line"></i></span>
+            <div class="rn-dashboard-welcome-copy">
+                <p class="rn-dashboard-eyebrow">{{ $greeting }}</p>
+                <h1 id="rn-dashboard-title">{{ __('dashboard.hello', ['name' => optional($adminUser)->fullName ?? __('dashboard.guest')]) }}</h1>
+                <p class="rn-dashboard-subtitle">{{ __('dashboard.your_dashboard_highlights_sales_purchases_cash_flow_stock_and_more') }}</p>
             </div>
-            <div class="col-lg-12">
-                <div class="row">
-                    <!-- Opening balances -->
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-primary" role="alert">
-                            <div class="iq-alert-text  card-body">
-                                <div class="d-flex align-items-center  card-total-sale">
-                                    <div>
-                                        <p class="mb-2">{{ __('dashboard.customer_opening_balance') }}</p>
-                                        <h4>@money($customerOpeningTotal ?? 0)</h4>
-                                    </div>
-                                </div>
-                                <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70">
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-warning" role="alert">
-                            <div class="iq-alert-text  card-body">
-                                <div class="d-flex align-items-center  card-total-sale">
-                                    <div>
-                                        <p class="mb-2">{{ __('dashboard.supplier_opening_balance') }}</p>
-                                        <h4>@money($supplierOpeningTotal ?? 0)</h4>
-                                    </div>
-                                </div>
-                                <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70">
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Dynamic metric cards -->
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-secondary" role="alert">
-                            <div class="iq-alert-text  card-body">
-                                <div class="d-flex align-items-center  card-total-sale">
-                                    <div>
-                                        <p class="mb-2">{{ __('dashboard.sales') }}</p>
-                                        <h4 id="rn-sales">0.00</h4>
-                                    </div>
-                                </div>
-                                <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-success" role="alert">
-                            <div class="iq-alert-text  card-body">
-                                <div class="d-flex align-items-center  card-total-sale">
-                                    <div>
-                                        <p class="mb-2">{{ __('dashboard.purchase') }}</p>
-                                        <h4 id="rn-purchases">0.00</h4>
-                                    </div>
-                                </div>
-                                <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-primary" role="alert">
-                            <div class="iq-alert-text  card-body">
-                                <div class="d-flex align-items-center  card-total-sale">
-                                    <div>
-                                        <p class="mb-2">{{ __('dashboard.received') }}</p>
-                                        <h4 id="rn-receipts">0.00</h4>
-                                    </div>
-                                </div>
-                                <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-danger" role="alert">
-                            <div class="iq-alert-text  card-body">
-                                <div class="d-flex align-items-center  card-total-sale">
-                                    <div>
-                                        <p class="mb-2">{{ __('dashboard.payment') }}</p>
-                                        <h4 id="rn-payments">0.00</h4>
-                                    </div>
-                                </div>
-                                <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert alert-dark">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center  card-total-sale">
-                                    <div>
-                                        <p class="mb-2">{{ __('dashboard.expense') }}</p>
-                                        <h4 id="rn-expenses">0.00</h4>
-                                    </div>
-                                </div>
-                                <div class="iq-progress-bar">
-                                    <span class="bg-primary iq-progress progress-1" data-percent="70"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-info" role="alert" style="background:#17a2b8 !important;">
-                            <div class="iq-alert-text  card-body">
-                                <div class="d-flex align-items-center  card-total-sale">
-                                    <div>
-                                        <p class="mb-2">{{ __('dashboard.cash_flow') }}</p>
-                                        <h4 id="rn-cashflow">0.00</h4>
-                                    </div>
-                                </div>
-                                <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-secondary" role="alert">
-                            <div class="iq-alert-text  card-body">
-                                <div class="d-flex align-items-center  card-total-sale">
-                                    <div>
-                                        <p class="mb-2">{{ __('dashboard.net_sale') }}</p>
-                                        <h4 id="rn-net">0.00</h4>
-                                    </div>
-                                </div>
-                                <div class="iq-progress-bar">
-                                    <span class="bg-dark iq-progress progress-1" data-percent="70"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-3 ">
-                        <div class="alert text-white bg-dark" role="alert">
-                            <div class="iq-alert-text  card-body">
-                                <div class="d-flex align-items-center card-total-sale">
-                                    <div>
-                                        <p class="mb-2">{{ __('dashboard.total_stock_qty') }}</p>
-                                        <h4 class="text-white" id="rn-stock-total">0</h4>
-                                    </div>
-                                </div>
-                                <div class="iq-progress-bar">
-                                    <span class="bg-primary iq-progress progress-1" data-percent="70"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-12">
-                <div class="card card-block card-stretch">
-                    <div class="card-header d-flex justify-content-between">
-                        <div class="header-title">
-                            <h4 class="card-title">{{ __('dashboard.financial_report') }}</h4>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div style="position:relative;height:280px;">
-                            <canvas id="rn-financial-chart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-12">
-                <div class="card card-block card-stretch card-height">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <div class="header-title">
-                            <h4 class="card-title">{{ __('dashboard.latest_invoices') }}</h4>
-                        </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>{{ __('dashboard.invoice') }}</th>
-                                        <th>{{ __('dashboard.customer') }}</th>
-                                        <th class="text-right">{{ __('dashboard.total') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="rn-latest-invoices">
-                                    <tr><td colspan="3" class="text-center">{{ __('dashboard.loading') }}</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-12">
-                <div class="card card-block card-stretch card-height">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <div class="header-title">
-                            <h4 class="card-title">{{ __('dashboard.low_stock_products') }}</h4>
-                        </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <ul class="list-group list-group-flush" id="rn-low-stock">
-                            <li class="list-group-item">{{ __('dashboard.loading') }}</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-12">
-                <div class="card card-block card-stretch card-height">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <div class="header-title">
-                            <h4 class="card-title">{{ __('dashboard.top_products') }}</h4>
-                        </div>
-                        <div class="card-header-toolbar d-flex align-items-center">
-                            <div class="dropdown">
-                                <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton006"
-                                    data-toggle="dropdown">
-                                    {{ __('dashboard.this_month') }}<i class="ri-arrow-down-s-line ml-1"></i>
-                                </span>
-                                <div class="dropdown-menu dropdown-menu-right shadow-none"
-                                    aria-labelledby="dropdownMenuButton006">
-                                    <a class="dropdown-item" href="#">{{ __('dashboard.year') }}</a>
-                                    <a class="dropdown-item" href="#">{{ __('dashboard.month') }}</a>
-                                    <a class="dropdown-item" href="#">{{ __('dashboard.week') }}</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled row top-product mb-0">
-                            <li class="col-lg-3">
-                                <div class="card card-block card-stretch card-height mb-0">
-                                    <div class="card-body">
-                                        <div class="bg-warning-light rounded">
-                                            <img src="{{ asset('eshop/assets/') }}/images/product/01.png" class="style-img img-fluid m-auto p-3" alt="image">
-                                        </div>
-                                        <div class="style-text text-left mt-3">
-                                            <h5 class="mb-1">Organic Cream</h5>
-                                            <p class="mb-0">789 Item</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                            <li class="col-lg-3">
-                                <div class="card card-block card-stretch card-height mb-0">
-                                    <div class="card-body">
-                                        <div class="bg-danger-light rounded">
-                                            <img src="{{ asset('eshop/assets/') }}/images/product/02.png" class="style-img img-fluid m-auto p-3" alt="image">
-                                        </div>
-                                        <div class="style-text text-left mt-3">
-                                            <h5 class="mb-1">Rain Umbrella</h5>
-                                            <p class="mb-0">657 Item</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                            <li class="col-lg-3">
-                                <div class="card card-block card-stretch card-height mb-0">
-                                    <div class="card-body">
-                                        <div class="bg-info-light rounded">
-                                            <img src="{{ asset('eshop/assets/') }}/images/product/03.png" class="style-img img-fluid m-auto p-3" alt="image">
-                                        </div>
-                                        <div class="style-text text-left mt-3">
-                                            <h5 class="mb-1">Serum Bottle</h5>
-                                            <p class="mb-0">489 Item</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                            <li class="col-lg-3">
-                                <div class="card card-block card-stretch card-height mb-0">
-                                    <div class="card-body">
-                                        <div class="bg-success-light rounded">
-                                            <img src="{{ asset('eshop/assets/') }}/images/product/02.png" class="style-img img-fluid m-auto p-3" alt="image">
-                                        </div>
-                                        <div class="style-text text-left mt-3">
-                                            <h5 class="mb-1">Organic Cream</h5>
-                                            <p class="mb-0">468 Item</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <!-- Removed placeholder last sale/purchase/transaction cards -->
-            </div>
-            <div class="row">
-            <!-- Removed placeholder income/expense charts -->
-            </div>
-            <!-- Removed placeholder order summary section -->
         </div>
+        <div class="rn-dashboard-filters" aria-label="{{ __('dashboard.range') }}">
+            <div class="rn-dashboard-filter-field">
+                <label for="rn-range">{{ __('dashboard.range') }}</label>
+                <select id="rn-range" class="form-control">
+                    <option value="today">{{ __('dashboard.today') }}</option>
+                    <option value="week">{{ __('dashboard.this_week') }}</option>
+                    <option value="month" selected>{{ __('dashboard.this_month') }}</option>
+                    <option value="year">{{ __('dashboard.this_year') }}</option>
+                    <option value="custom">{{ __('dashboard.custom') }}</option>
+                </select>
+            </div>
+            <div id="rn-custom-range" class="rn-dashboard-custom-range" hidden>
+                <div class="rn-dashboard-filter-field">
+                    <label for="rn-start">{{ __('dashboard.from') }}</label>
+                    <input type="date" id="rn-start" class="form-control">
+                </div>
+                <div class="rn-dashboard-filter-field">
+                    <label for="rn-end">{{ __('dashboard.to') }}</label>
+                    <input type="date" id="rn-end" class="form-control">
+                </div>
+            </div>
+            <button id="rn-apply" class="btn btn-primary" type="button"><i class="ri-refresh-line" aria-hidden="true"></i>{{ __('dashboard.apply') }}</button>
+        </div>
+    </section>
+
+    <section class="rn-dashboard-kpi-grid" aria-label="{{ __('dashboard.key_metrics') }}">
+        <article class="rn-dashboard-kpi rn-kpi-blue">
+            <span class="rn-kpi-icon" aria-hidden="true"><i class="ri-user-3-line"></i></span>
+            <div><p>{{ __('dashboard.customer_opening_balance') }}</p><h2 data-rn-money="{{ $customerOpeningTotal ?? 0 }}">{{ $formatDashboardMoney($customerOpeningTotal ?? 0) }}</h2></div>
+        </article>
+        <article class="rn-dashboard-kpi rn-kpi-violet">
+            <span class="rn-kpi-icon" aria-hidden="true"><i class="ri-truck-line"></i></span>
+            <div><p>{{ __('dashboard.supplier_opening_balance') }}</p><h2 data-rn-money="{{ $supplierOpeningTotal ?? 0 }}">{{ $formatDashboardMoney($supplierOpeningTotal ?? 0) }}</h2></div>
+        </article>
+        <article class="rn-dashboard-kpi rn-kpi-blue">
+            <span class="rn-kpi-icon" aria-hidden="true"><i class="ri-shopping-bag-3-line"></i></span>
+            <div><p>{{ __('dashboard.sales') }}</p><h2 id="rn-sales">0.00</h2></div>
+        </article>
+        <article class="rn-dashboard-kpi rn-kpi-green">
+            <span class="rn-kpi-icon" aria-hidden="true"><i class="ri-inbox-archive-line"></i></span>
+            <div><p>{{ __('dashboard.purchase') }}</p><h2 id="rn-purchases">0.00</h2></div>
+        </article>
+        <article class="rn-dashboard-kpi rn-kpi-teal">
+            <span class="rn-kpi-icon" aria-hidden="true"><i class="ri-hand-coin-line"></i></span>
+            <div><p>{{ __('dashboard.received') }}</p><h2 id="rn-receipts">0.00</h2></div>
+        </article>
+        <article class="rn-dashboard-kpi rn-kpi-amber">
+            <span class="rn-kpi-icon" aria-hidden="true"><i class="ri-bank-card-line"></i></span>
+            <div><p>{{ __('dashboard.payment') }}</p><h2 id="rn-payments">0.00</h2></div>
+        </article>
+        <article class="rn-dashboard-kpi rn-kpi-rose">
+            <span class="rn-kpi-icon" aria-hidden="true"><i class="ri-bill-line"></i></span>
+            <div><p>{{ __('dashboard.expense') }}</p><h2 id="rn-expenses">0.00</h2></div>
+        </article>
+        <article class="rn-dashboard-kpi rn-kpi-teal">
+            <span class="rn-kpi-icon" aria-hidden="true"><i class="ri-exchange-dollar-line"></i></span>
+            <div><p>{{ __('dashboard.cash_flow') }}</p><h2 id="rn-cashflow">0.00</h2></div>
+        </article>
+        <article class="rn-dashboard-kpi rn-kpi-violet">
+            <span class="rn-kpi-icon" aria-hidden="true"><i class="ri-line-chart-line"></i></span>
+            <div><p>{{ __('dashboard.net_sale') }}</p><h2 id="rn-net">0.00</h2></div>
+        </article>
+        <article class="rn-dashboard-kpi rn-kpi-slate">
+            <span class="rn-kpi-icon" aria-hidden="true"><i class="ri-stack-line"></i></span>
+            <div><p>{{ __('dashboard.total_stock_qty') }}</p><h2 id="rn-stock-total">0</h2></div>
+        </article>
+    </section>
+
+    <section class="rn-dashboard-panels rn-dashboard-panels-primary">
+        <article class="rn-dashboard-panel rn-dashboard-chart-panel">
+            <header class="rn-dashboard-panel-header">
+                <div><h2>{{ __('dashboard.financial_report') }}</h2><p>{{ __('dashboard.sales_purchases_expenses_over_time') }}</p></div>
+                <span class="rn-dashboard-period">{{ __('dashboard.this_month') }}</span>
+            </header>
+            <div class="rn-dashboard-chart"><canvas id="rn-financial-chart"></canvas></div>
+        </article>
+        <article class="rn-dashboard-panel rn-dashboard-invoices-panel">
+            <header class="rn-dashboard-panel-header">
+                <div><h2>{{ __('dashboard.latest_invoices') }}</h2><p>{{ __('dashboard.recent_sales_activity') }}</p></div>
+                <a href="{{ route('saleList') }}" class="rn-dashboard-panel-link">{{ __('dashboard.view_sales') }}<i class="ri-arrow-right-line" aria-hidden="true"></i></a>
+            </header>
+            <div class="table-responsive">
+                <table class="rn-dashboard-table">
+                    <thead><tr><th>{{ __('dashboard.invoice') }}</th><th>{{ __('dashboard.customer') }}</th><th class="text-right">{{ __('dashboard.total') }}</th></tr></thead>
+                    <tbody id="rn-latest-invoices"><tr><td colspan="3" class="rn-dashboard-loading">{{ __('dashboard.loading') }}</td></tr></tbody>
+                </table>
+            </div>
+        </article>
+    </section>
+
+    <section class="rn-dashboard-panels rn-dashboard-panels-secondary">
+        <article class="rn-dashboard-panel rn-dashboard-low-stock-panel">
+            <header class="rn-dashboard-panel-header">
+                <div><h2>{{ __('dashboard.low_stock_products') }}</h2><p>{{ __('dashboard.products_below_alert_quantity') }}</p></div>
+                <span class="rn-dashboard-section-icon rn-tone-rose" aria-hidden="true"><i class="ri-error-warning-line"></i></span>
+            </header>
+            <ul class="rn-dashboard-stock-list" id="rn-low-stock"><li class="rn-dashboard-loading">{{ __('dashboard.loading') }}</li></ul>
+        </article>
+        <article class="rn-dashboard-panel rn-dashboard-top-products-panel">
+            <header class="rn-dashboard-panel-header">
+                <div><h2>{{ __('dashboard.top_products') }}</h2><p>{{ __('dashboard.this_month') }}</p></div>
+                <span class="rn-dashboard-section-icon rn-tone-blue" aria-hidden="true"><i class="ri-bar-chart-grouped-line"></i></span>
+            </header>
+            <div class="rn-dashboard-empty-state">
+                <span aria-hidden="true"><i class="ri-bar-chart-box-line"></i></span>
+                <p>{{ __('dashboard.no_top_products_available') }}</p>
+            </div>
+        </article>
+    </section>
+</main>
 @endsection
 
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
     (function(){
+        var dashboard = document.querySelector('.rn-dashboard');
+        var currencySymbol = dashboard ? dashboard.dataset.currencySymbol : '';
+        var currencyPosition = dashboard ? dashboard.dataset.currencyPosition : 'left';
+        var useNegativeParentheses = dashboard ? dashboard.dataset.currencyNegativeParentheses === 'true' : true;
         var fmtMoney = function(n){
-            try{ return new Intl.NumberFormat(undefined, { style:'currency', currency: (window.APP_CURRENCY||'USD') }).format(n||0); }catch(e){ return (n||0).toFixed(2); }
+            var amount = Number(n) || 0;
+            var formatted = new Intl.NumberFormat(document.documentElement.lang || undefined, { minimumFractionDigits:2, maximumFractionDigits:2 }).format(Math.abs(amount));
+            var value = currencyPosition === 'right' ? formatted + '\u00a0' + currencySymbol : currencySymbol + formatted;
+            return amount < 0 ? (useNegativeParentheses ? '(' + value + ')' : '-' + value) : value;
         };
-
+        document.querySelectorAll('[data-rn-money]').forEach(function(el){el.textContent=fmtMoney(el.dataset.rnMoney);});
         var $range = document.getElementById('rn-range');
         var $custom = document.getElementById('rn-custom-range');
         var $start = document.getElementById('rn-start');
         var $end = document.getElementById('rn-end');
         var $apply = document.getElementById('rn-apply');
-
         if($range){
-            $range.addEventListener('change', function(){ $custom.style.display = this.value === 'custom' ? '' : 'none'; });
+            $range.addEventListener('change', function(){ $custom.hidden = this.value !== 'custom'; });
         }
 
         var chart, ctx = document.getElementById('rn-financial-chart');
         function renderChart(labels, sales, purchases, expenses){
-            if(!ctx) return;
+            if(!ctx || typeof Chart === 'undefined') return;
             if(chart){ chart.destroy(); }
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Sales', data: sales, borderColor: '#6c757d', backgroundColor: 'rgba(108,117,125,0.1)', tension:.3 },
-                        { label: 'Purchases', data: purchases, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.1)', tension:.3 },
-                        { label: 'Expenses', data: expenses, borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.1)', tension:.3 },
+                        { label: @json(__('dashboard.sales')), data: sales, borderColor: '#3478f6', backgroundColor: 'rgba(52,120,246,.1)', tension:.32, fill:true, pointRadius:2 },
+                        { label: @json(__('dashboard.purchase')), data: purchases, borderColor: '#16a579', backgroundColor: 'rgba(22,165,121,.08)', tension:.32, fill:true, pointRadius:2 },
+                        { label: @json(__('dashboard.expense')), data: expenses, borderColor: '#e35d6a', backgroundColor: 'rgba(227,93,106,.06)', tension:.32, fill:false, pointRadius:2 }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                options: { responsive:true, maintainAspectRatio:false, interaction:{intersect:false,mode:'index'}, plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,padding:18}},tooltip:{callbacks:{label:function(context){return context.dataset.label+': '+fmtMoney(context.parsed.y);}}}}, scales:{y:{beginAtZero:true,grid:{color:'#edf1f7'},ticks:{maxTicksLimit:5,callback:function(value){return fmtMoney(value);}}},x:{grid:{display:false},ticks:{maxTicksLimit:8}}} }
             });
         }
-
-        function setText(id, v){ var el = document.getElementById(id); if(el) el.textContent = v; }
-
+        function setText(id, value){ var el=document.getElementById(id); if(el) el.textContent=value; }
         function loadMetrics(){
             var params = new URLSearchParams();
-            var r = ($range && $range.value) || 'month';
-            params.set('range', r);
-            if(r === 'custom'){
+            var range = ($range && $range.value) || 'month';
+            params.set('range', range);
+            if(range === 'custom'){
                 if($start && $start.value) params.set('start', $start.value);
                 if($end && $end.value) params.set('end', $end.value);
             }
-            fetch("{{ route('dashboard.metrics') }}?"+params.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' }})
-              .then(function(res){ return res.json(); })
-              .then(function(json){
-                var t = json.totals || {};
-                setText('rn-sales', fmtMoney(t.sales||0));
-                setText('rn-purchases', fmtMoney(t.purchases||0));
-                setText('rn-receipts', fmtMoney(t.receipts||0));
-                setText('rn-payments', fmtMoney(t.payments||0));
-                setText('rn-expenses', fmtMoney(t.expenses||0));
-                setText('rn-cashflow', fmtMoney(t.cash_flow||0));
-                setText('rn-net', fmtMoney(t.net_sales||0));
+            fetch("{{ route('dashboard.metrics') }}?"+params.toString(), {headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'},credentials:'same-origin'})
+                .then(function(response){ if(!response.ok) throw new Error('Dashboard metrics unavailable'); return response.json(); })
+                .then(function(json){
+                    var totals=json.totals||{};
+                    setText('rn-sales',fmtMoney(totals.sales||0)); setText('rn-purchases',fmtMoney(totals.purchases||0));
+                    setText('rn-receipts',fmtMoney(totals.receipts||0)); setText('rn-payments',fmtMoney(totals.payments||0));
+                    setText('rn-expenses',fmtMoney(totals.expenses||0)); setText('rn-cashflow',fmtMoney(totals.cash_flow||0));
+                    setText('rn-net',fmtMoney(totals.net_sales||0));
+                    var stock=json.stock||{}; setText('rn-stock-total',(stock.total_quantity||0));
 
-                var stock = json.stock || {};
-                setText('rn-stock-total', (stock.total_quantity||0));
-
-                var list = document.getElementById('rn-latest-invoices');
-                if(list){
-                    list.innerHTML = '';
-                    (json.latest_invoices||[]).forEach(function(i){
-                        var tr = document.createElement('tr');
-                        tr.innerHTML = '<td>'+ (i.invoiceNo||'-') +'</td>'+
-                                       '<td>'+ (i.customer||'-') +'</td>'+
-                                       '<td class="text-right">'+ fmtMoney(i.total||0) +'</td>';
-                        list.appendChild(tr);
-                    });
-                    if(!list.children.length){
-                        var tr = document.createElement('tr');
-                        tr.innerHTML = '<td colspan="3" class="text-center">No invoices</td>';
-                        list.appendChild(tr);
+                    var invoiceList=document.getElementById('rn-latest-invoices');
+                    if(invoiceList){
+                        invoiceList.replaceChildren();
+                        (json.latest_invoices||[]).forEach(function(invoice){
+                            var row=document.createElement('tr');
+                            var number=document.createElement('td'); number.textContent=invoice.invoiceNo||'—';
+                            var customer=document.createElement('td'); customer.textContent=invoice.customer||'—';
+                            var amount=document.createElement('td'); amount.className='text-right'; amount.textContent=fmtMoney(invoice.total||0);
+                            row.append(number,customer,amount); invoiceList.appendChild(row);
+                        });
+                        if(!invoiceList.children.length){ var row=document.createElement('tr'); var cell=document.createElement('td'); cell.colSpan=3; cell.className='rn-dashboard-loading'; cell.textContent=@json(__('dashboard.no_invoices')); row.appendChild(cell); invoiceList.appendChild(row); }
                     }
-                }
 
-                var low = document.getElementById('rn-low-stock');
-                if(low){
-                    low.innerHTML = '';
-                    (stock.low_stock||[]).forEach(function(p){
-                        var li = document.createElement('li');
-                        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                        li.innerHTML = '<span>'+ p.name +'</span><span class="badge badge-danger badge-pill">'+ p.stock +'/'+ p.alert +'</span>';
-                        low.appendChild(li);
-                    });
-                    if(!low.children.length){
-                        var li = document.createElement('li'); li.className = 'list-group-item'; li.textContent = window.RNTranslate('common.client_no_low_stock_items'); low.appendChild(li);
+                    var lowStock=document.getElementById('rn-low-stock');
+                    if(lowStock){
+                        lowStock.replaceChildren();
+                        (stock.low_stock||[]).forEach(function(product){
+                            var item=document.createElement('li'); item.className='rn-dashboard-stock-item';
+                            var name=document.createElement('span'); name.className='rn-dashboard-stock-name'; name.textContent=product.name||'—';
+                            var quantity=document.createElement('span'); quantity.className='rn-dashboard-stock-quantity'; quantity.textContent=String(product.stock)+' / '+String(product.alert);
+                            item.append(name,quantity); lowStock.appendChild(item);
+                        });
+                        if(!lowStock.children.length){ var item=document.createElement('li'); item.className='rn-dashboard-loading'; item.textContent=@json(__('dashboard.no_low_stock_items')); lowStock.appendChild(item); }
                     }
-                }
-
-                var ch = json.chart || {}; renderChart(ch.labels||[], (ch.series||{}).sales||[], (ch.series||{}).purchases||[], (ch.series||{}).expenses||[]);
-              })
-              .catch(function(){ /* silently ignore */ });
+                    var chartData=json.chart||{}; var series=chartData.series||{};
+                    renderChart(chartData.labels||[],series.sales||[],series.purchases||[],series.expenses||[]);
+                })
+                .catch(function(){
+                    var invoiceList=document.getElementById('rn-latest-invoices');
+                    if(invoiceList){ var row=document.createElement('tr'); var cell=document.createElement('td'); cell.colSpan=3; cell.className='rn-dashboard-loading'; cell.textContent=@json(__('dashboard.metrics_unavailable')); row.appendChild(cell); invoiceList.replaceChildren(row); }
+                    var lowStock=document.getElementById('rn-low-stock');
+                    if(lowStock){ var item=document.createElement('li'); item.className='rn-dashboard-loading'; item.textContent=@json(__('dashboard.metrics_unavailable')); lowStock.replaceChildren(item); }
+                });
         }
-
-        if($apply){ $apply.addEventListener('click', loadMetrics); }
-        // Initial load
+        if($apply) $apply.addEventListener('click',loadMetrics);
         loadMetrics();
     })();
 </script>

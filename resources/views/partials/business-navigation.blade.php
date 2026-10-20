@@ -21,13 +21,3 @@
 </li>
 @endforeach
 </ul>
-<style>
-.rn-business-navigation a{display:flex!important;align-items:center;gap:10px;padding:11px 14px!important;white-space:normal!important;min-width:0}
-.rn-business-navigation a>i{flex:0 0 20px;font-size:20px;text-align:center;margin:0!important}
-.rn-business-navigation a>span{flex:1;min-width:0;line-height:1.45;overflow-wrap:anywhere;font-size:14px;margin:0!important}
-.rn-business-navigation .rn-nav-chevron{flex-basis:12px;font-size:14px;transition:transform .2s}
-.rn-business-navigation a[aria-expanded="true"]>.rn-nav-chevron{transform:rotate(180deg)}
-.rn-business-navigation .iq-submenu a{padding:9px 14px 9px 25px!important}
-.rn-business-navigation .active>a{font-weight:600}
-.rn-business-navigation>li{margin-bottom:3px}
-</style>

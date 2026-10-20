@@ -10,6 +10,27 @@ use App\Models\Customer;
 
 class invoiceController extends Controller
 {
+
+    private function authorizeInvoiceBusiness(SaleProduct $invoice): void
+    {
+        $actor = auth('admin')->user();
+        if (!$actor) {
+            abort(403, 'You are not authorized to view this invoice');
+        }
+
+        $canAccessAll = method_exists($actor, 'canAccessAllSalesBusinesses')
+            ? $actor->canAccessAllSalesBusinesses()
+            : in_array(strtolower((string) $actor->role), ['admin', 'superadmin'], true);
+
+        if (!$canAccessAll && ((int) $invoice->businessId <= 0 || (int) $invoice->businessId !== (int) $actor->businessId)) {
+            abort(403, 'This sale belongs to another business.');
+        }
+
+        if (!in_array(strtolower((string) $actor->role), ['admin', 'superadmin'], true)
+            && (int) $invoice->salespersonId !== (int) $actor->id) {
+            abort(403, 'You are not authorized to view this invoice');
+        }
+    }
     
     //add bamage product list
     public function invoicePage(Request $request){
@@ -20,19 +41,14 @@ class invoiceController extends Controller
         $invoice = SaleProduct::find($id);
         if(!$invoice){ abort(404, 'Invoice not found'); }
 
-        $actor = auth('admin')->user();
-        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin'])){
-            // restrict access to only invoices created by this user
-            if((int)$invoice->salespersonId !== (int)$actor->id){
-                abort(403, 'You are not authorized to view this invoice');
-            }
-        }
+        $this->authorizeInvoiceBusiness($invoice);
 
         $items = InvoiceItem::where('saleId', $invoice->id)->get();
         $customer = null;
         try{ if($invoice->customerId) $customer = Customer::find($invoice->customerId); }catch(\Throwable $_){ $customer = null; }
 
-        return view('invoice.invoicePage', compact('invoice','items','customer'));
+        $business = $invoice->business;
+        return view('invoice.invoicePage', compact('invoice','items','customer','business'));
    }
 
     /**
@@ -46,18 +62,13 @@ class invoiceController extends Controller
         $invoice = SaleProduct::find($id);
         if(!$invoice){ abort(404, 'Invoice not found'); }
 
-        $actor = auth('admin')->user();
-        if($actor && !in_array(strtolower($actor->role), ['admin','superadmin'])){
-            // restrict access to only invoices created by this user
-            if((int)$invoice->salespersonId !== (int)$actor->id){
-                abort(403, 'You are not authorized to view this invoice');
-            }
-        }
+        $this->authorizeInvoiceBusiness($invoice);
 
         $items = InvoiceItem::where('saleId', $invoice->id)->get();
         $customer = null;
         try{ if($invoice->customerId) $customer = Customer::find($invoice->customerId); }catch(\Throwable $_){ $customer = null; }
 
-        return view('invoice.thermalPrint', compact('invoice','items','customer'));
+        $business = $invoice->business;
+        return view('invoice.thermalPrint', compact('invoice','items','customer','business'));
    }
 }

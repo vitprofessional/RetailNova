@@ -38,4 +38,13 @@ return [
     'year' => 'বছর',
     'month' => 'মাস',
     'week' => 'সপ্তাহ',
+    'key_metrics' => 'মূল পরিমাপ',
+    'sales_purchases_expenses_over_time' => 'সময়ের সাথে বিক্রয়, ক্রয় ও ব্যয়',
+    'recent_sales_activity' => 'সাম্প্রতিক বিক্রয় কার্যক্রম',
+    'view_sales' => 'বিক্রয় দেখুন',
+    'no_top_products_available' => 'এই সময়ের পণ্য র‍্যাঙ্কিংয়ের তথ্য পাওয়া যায়নি।',
+    'no_invoices' => 'এই সময়ের কোনো চালান পাওয়া যায়নি।',
+    'no_low_stock_items' => 'কোনো পণ্যের মজুত সতর্কতা-সীমার নিচে নেই।',
+    'metrics_unavailable' => 'ড্যাশবোর্ডের তথ্য সাময়িকভাবে পাওয়া যাচ্ছে না।',
+    'products_below_alert_quantity' => 'সতর্কতা-সীমায় বা তার নিচে থাকা পণ্য',
 ];

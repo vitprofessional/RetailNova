@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/rn-custom.css">
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/rn-table-pro.css">
     <link rel="stylesheet" href="{{ asset('css/retailnova-shell.css') }}?v={{ filemtime(public_path('css/retailnova-shell.css')) }}">
+    @stack('styles')
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
     <link rel= "stylesheet" href= "https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css" >
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/remixicon/fonts/remixicon.css">
@@ -742,14 +743,20 @@
     <!-- Wrapper Start -->
     <div class="wrapper">
 
+      @php
+          $rnBusinessName = $config->count() > 0 && !empty($config[0]->businessName)
+              ? $config[0]->businessName
+              : 'Retail Nova';
+          $rnBusinessLogo = $config->count() > 0 && !empty($config[0]->businessLogo)
+              ? asset('uploads/business/' . $config[0]->businessLogo)
+              : asset('logo.png');
+      @endphp
       <div class="iq-sidebar sidebar-default rn-sidebar" id="rn-sidebar">
-          <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
-              <a href="{{ route('dashboard') }}" class="header-logo">
-                  <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('uploads/business/' . $config[0]->businessLogo) : asset('logo.png') }}" class="img-fluid rounded-normal light-logo" alt="logo"><h5 class="logo-title light-logo ml-3">{{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h5>
+          <div class="iq-sidebar-logo rn-sidebar-brand">
+              <a href="{{ route('dashboard') }}" class="header-logo rn-sidebar-brand-link" title="{{ $rnBusinessName }}" aria-label="{{ $rnBusinessName }} — {{ __('navigation.dashboard') }}">
+                  <span class="rn-sidebar-brand-mark"><img src="{{ $rnBusinessLogo }}" class="img-fluid rounded-normal light-logo" alt=""></span>
+                  <h5 class="logo-title light-logo rn-sidebar-brand-name">{{ $rnBusinessName }}</h5>
               </a>
-              <div class="iq-menu-bt-sidebar ml-0">
-                  <button type="button" class="rn-sidebar-toggle wrapper-menu" aria-label="{{ __('navigation.toggle_navigation') }}" aria-controls="rn-sidebar" aria-expanded="false"><i class="las la-bars" aria-hidden="true"></i></button>
-              </div>
           </div>
           <div class="data-scrollbar" data-scroll="1">
               <nav class="iq-sidebar-menu">
@@ -768,14 +775,15 @@
               </div>
               <div class="p-3"></div>
           </div>
-      </div>      <div class="iq-top-navbar rn-topbar">
+      </div>
+      <div class="iq-top-navbar rn-topbar">
           <div class="iq-navbar-custom">
-              <nav class="navbar navbar-expand-lg navbar-light p-0">
+              <nav class="navbar navbar-expand-lg navbar-light p-0 rn-topbar-nav">
                   <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
                       <button type="button" class="rn-top-sidebar-toggle wrapper-menu" aria-label="{{ __('navigation.toggle_navigation') }}" aria-controls="rn-sidebar" aria-expanded="false"><i class="ri-menu-line" aria-hidden="true"></i></button>
-                      <a href="{{route('dashboard')}}" class="header-logo">
-                          <img src="{{ $config->count() > 0 && !empty($config[0]->businessLogo) ? asset('uploads/business/' . $config[0]->businessLogo) : asset('logo.png') }}" class="img-fluid rounded-normal" alt="logo">
-                          <h5 class="logo-title ml-3">{{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h5>
+                      <a href="{{route('dashboard')}}" class="header-logo rn-topbar-brand-link" title="{{ $rnBusinessName }}" aria-label="{{ $rnBusinessName }} — {{ __('navigation.dashboard') }}">
+                          <img src="{{ $rnBusinessLogo }}" class="img-fluid rounded-normal" alt="">
+                          <h5 class="logo-title rn-topbar-brand-name">{{ $rnBusinessName }}</h5>
 
                       </a>
                   </div>
@@ -785,7 +793,7 @@
                           <input type="text" class="text search-input" aria-label="{{ __('navigation.search_here') }}" placeholder="{{ __('navigation.search_here') }}">
                       </form>
                   </div>
-                  <div class="d-flex align-items-center">
+                  <div class="d-flex align-items-center rn-topbar-actions">
                       <button class="navbar-toggler" type="button" data-toggle="collapse"
                           data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
                           aria-label="{{ __('navigation.toggle_navigation') }}">
@@ -797,10 +805,7 @@
                                   <button type="button" class="btn btn-sm btn-outline-primary" id="rn-pwa-install" hidden
                                       data-install-mode="" aria-haspopup="dialog">{{ __('pwa.install_app') }}</button>
                               </li>
-                              <li>@include('partials.language-selector')</li>
-                              <li>
-                                  <a href="#" class="btn border add-btn shadow-none mx-2 d-none d-md-block" data-toggle="modal" data-target="#new-order"><i class="las la-plus mr-2"></i>{{ __('navigation.new_order') }}</a>
-                              </li>
+                              <li class="rn-language-menu">@include('partials.language-selector')</li>
                               <li class="nav-item nav-icon search-content">
                                   <a href="#" class="search-toggle rounded" id="dropdownSearch" data-toggle="dropdown"
                                       aria-haspopup="true" aria-expanded="false">
@@ -1333,14 +1338,26 @@
         var backdrop=document.getElementById('rn-sidebar-backdrop');
         var toggles=document.querySelectorAll('.wrapper-menu');
         function syncSidebarState(){
-            var compactViewport=window.matchMedia('(max-width: 1299px)').matches;
+            var compactViewport=window.matchMedia('(max-width: 1365px)').matches;
             var hasSidebarState=document.body.classList.contains('sidebar-main');
-            var open=compactViewport ? hasSidebarState : !hasSidebarState;
+            if(!compactViewport){
+                document.body.classList.remove('sidebar-main');
+                hasSidebarState=false;
+            }
+            var open=compactViewport && hasSidebarState;
             toggles.forEach(function(toggle){toggle.setAttribute('aria-expanded',open?'true':'false');});
             if(backdrop) backdrop.setAttribute('aria-hidden',open?'false':'true');
         }
         document.addEventListener('click',function(event){
-            if(event.target.closest && event.target.closest('.wrapper-menu')){window.requestAnimationFrame(syncSidebarState);}
+            if(event.target.closest && event.target.closest('.rn-top-sidebar-toggle')){
+                window.requestAnimationFrame(function(){
+                    syncSidebarState();
+                    if(window.matchMedia('(max-width: 1365px)').matches && document.body.classList.contains('sidebar-main')){
+                        var firstLink=sidebar && sidebar.querySelector('.data-scrollbar a[href]');
+                        if(firstLink) firstLink.focus();
+                    }
+                });
+            }
         });
         if(backdrop) backdrop.addEventListener('click',function(){
             document.body.classList.remove('sidebar-main');
@@ -1349,7 +1366,15 @@
             var opener=document.querySelector('.rn-top-sidebar-toggle'); if(opener) opener.focus();
         });
         document.addEventListener('keydown',function(event){
-            if(event.key==='Escape' && document.body.classList.contains('sidebar-main') && window.matchMedia('(max-width: 1299px)').matches){
+            if(event.key==='Tab' && document.body.classList.contains('sidebar-main') && window.matchMedia('(max-width: 1365px)').matches && sidebar){
+                var focusable=Array.prototype.slice.call(sidebar.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(function(element){return element.offsetParent!==null;});
+                if(focusable.length){
+                    var first=focusable[0], last=focusable[focusable.length-1];
+                    if(event.shiftKey && (document.activeElement===first || !sidebar.contains(document.activeElement))){event.preventDefault();last.focus();}
+                    else if(!event.shiftKey && (document.activeElement===last || !sidebar.contains(document.activeElement))){event.preventDefault();first.focus();}
+                }
+            }
+            if(event.key==='Escape' && document.body.classList.contains('sidebar-main') && window.matchMedia('(max-width: 1365px)').matches){
                 document.body.classList.remove('sidebar-main');
                 toggles.forEach(function(toggle){toggle.classList.remove('open');});
                 syncSidebarState();
@@ -1358,7 +1383,7 @@
         });
         window.addEventListener('resize',syncSidebarState,{passive:true});
         if(sidebar) sidebar.addEventListener('click',function(event){
-            if(window.matchMedia('(max-width: 1299px)').matches && event.target.closest('a[href]:not([href^="#"])')){
+            if(window.matchMedia('(max-width: 1365px)').matches && event.target.closest('a[href]:not([href^="#"])')){
                 document.body.classList.remove('sidebar-main');
                 toggles.forEach(function(toggle){toggle.classList.remove('open');});
                 syncSidebarState();

@@ -46,8 +46,10 @@
 @endphp
 
 @php
-  // Ensure business context is available across the view
-  $b = $business ?? null;
+  // Branding is resolved from the sale's owning business by the controller.
+  $b = $business ?? $invoice->business ?? null;
+  $invoiceLogoUrl = $b ? $b->invoiceLogoUrl() : null;
+  $invoiceFallbackLogoUrl = asset('logo.png');
 @endphp
 
 @php
@@ -77,39 +79,14 @@
     <div class="invoice-header">
       <div class="row align-items-start justify-content-between">
         <div class="col-md-6">
-          <div class="d-flex align-items-start">
-            <div class="me-3">
-              @php
-                $logoUrl = null;
-                if($b && !empty($b->businessLogo)){
-                  $logoUrl = (strpos($b->businessLogo, 'http') === 0)
-                    ? $b->businessLogo
-                    : asset('uploads/business/' . ltrim($b->businessLogo, '/'));
-                }
-              @endphp
-              @if($logoUrl)
-                <img src="{{ $logoUrl }}" alt="Logo" class="invoice-logo" onerror="this.style.display='none'">
-              @else
-                <img src="{{ asset('images/logo.png') }}" alt="Logo" class="invoice-logo" onerror="this.style.display='none'">
-              @endif
-            </div>
+          <div class="invoice-branding">
+            <img src="{{ $invoiceLogoUrl ?: $invoiceFallbackLogoUrl }}" alt="{{ $b->businessName ?? __('invoices.invoice') }}" class="invoice-logo" onerror="this.onerror=null;this.src='{{ $invoiceFallbackLogoUrl }}'">
             <div class="company-info">
-              @php
-                $companyLogoUrl = null;
-                if($b && !empty($b->businessLogo)){
-                  $companyLogoUrl = (strpos($b->businessLogo, 'http') === 0)
-                    ? $b->businessLogo
-                    : asset('uploads/business/' . ltrim($b->businessLogo, '/'));
-                }
-              @endphp
-              @if($companyLogoUrl)
-                <img src="{{ $companyLogoUrl }}" alt="Logo" class="company-logo-small" onerror="this.style.display='none'">
-              @endif
-              <h4 class="company-name">{{ $b && $b->businessName ? $b->businessName : 'Computer Care' }}</h4>
+              @if($b && $b->businessName)<h4 class="company-name">{{ $b->businessName }}</h4>@endif
               <div class="company-details">
-                <div>{{ $b && $b->businessLocation ? $b->businessLocation : 'Office Road, Burichong Bazar, Cumilla' }}</div>
-                <div>{{ __('common.phone') }}: {{ $b && $b->mobile ? $b->mobile : '0123456789' }}</div>
-                @if($b && $b->email)<div>{{ __('common.email') }}: {{ $b->email }}</div>@else<div>{{ __('common.email') }}: info@computercare.com</div>@endif
+                @if($b && $b->businessLocation)<div>{{ $b->businessLocation }}</div>@endif
+                @if($b && $b->mobile)<div>{{ __('common.phone') }}: {{ $b->mobile }}</div>@endif
+                @if($b && $b->email)<div>{{ __('common.email') }}: {{ $b->email }}</div>@endif
                 @if($b && $b->website)<div>{{ __('common.web') }}: {{ $b->website }}</div>@endif
               </div>
             </div>
@@ -136,7 +113,7 @@
             </div>
             <div class="invoice-qr-section ms-3">
               @php
-                $companyName = $b && $b->businessName ? $b->businessName : 'Computer Care';
+                $companyName = $b && $b->businessName ? $b->businessName : '';
                 $invoiceNo = $invoice->invoice ?? '';
                 $dateIso = \Carbon\Carbon::parse($invoice->date)->format('Y-m-d');
                 $grandTotalVal = number_format((float)$grandTotal, 2);
@@ -363,26 +340,12 @@
         <div class="row ack-grid">
           <div class="col-md-4">
             <div class="ack-card">
-              @php
-                $ackLogoUrl = null;
-                if($b && !empty($b->businessLogo)){
-                  $ackLogoUrl = (strpos($b->businessLogo, 'http') === 0)
-                    ? $b->businessLogo
-                    : asset('uploads/business/' . ltrim($b->businessLogo, '/'));
-                }
-              @endphp
-              @if($ackLogoUrl)
-                <img src="{{ $ackLogoUrl }}" alt="Logo" class="ack-logo" onerror="this.style.display='none'">
-              @endif
-              <div class="ack-company">{{ $b && $b->businessName ? $b->businessName : 'Computer Care' }}</div>
-              <div class="ack-address">{{ $b && $b->businessLocation ? $b->businessLocation : 'Office Road, Burichong Bazar, Cumilla' }}</div>
+              <img src="{{ $invoiceLogoUrl ?: $invoiceFallbackLogoUrl }}" alt="{{ $b->businessName ?? __('invoices.invoice') }}" class="ack-logo" onerror="this.onerror=null;this.src='{{ $invoiceFallbackLogoUrl }}'">
+              @if($b && $b->businessName)<div class="ack-company">{{ $b->businessName }}</div>@endif
+              @if($b && $b->businessLocation)<div class="ack-address">{{ $b->businessLocation }}</div>@endif
               <div class="ack-details">
-                <div>{{ __('common.phone') }}: {{ $b && $b->mobile ? $b->mobile : '0123456789' }}</div>
-                @if($b && $b->email)
-                  <div>{{ __('common.email') }}: {{ $b->email }}</div>
-                @else
-                  <div>{{ __('common.email') }}: info@computercare.com</div>
-                @endif
+                @if($b && $b->mobile)<div>{{ __('common.phone') }}: {{ $b->mobile }}</div>@endif
+                @if($b && $b->email)<div>{{ __('common.email') }}: {{ $b->email }}</div>@endif
                 @if($b && $b->website)
                   <div>{{ __('common.web') }}: {{ $b->website }}</div>
                 @endif
@@ -452,9 +415,11 @@
 
     <div class="thermal-receipt-layout">
       <div class="thermal-center">
-        <div class="thermal-company">{{ $b && $b->businessName ? $b->businessName : 'Computer Care' }}</div>
-        <div class="thermal-line">{{ $b && $b->businessLocation ? $b->businessLocation : 'Office Road, Burichong Bazar, Cumilla' }}</div>
-        <div class="thermal-line">{{ __('common.phone') }}: {{ $b && $b->mobile ? $b->mobile : '0123456789' }}</div>
+        <img src="{{ $invoiceLogoUrl ?: $invoiceFallbackLogoUrl }}" alt="{{ $b->businessName ?? __('invoices.invoice') }}" class="thermal-business-logo" onerror="this.onerror=null;this.src='{{ $invoiceFallbackLogoUrl }}'">
+        @if($b && $b->businessName)<div class="thermal-company">{{ $b->businessName }}</div>@endif
+        @if($b && $b->businessLocation)<div class="thermal-line">{{ $b->businessLocation }}</div>@endif
+        @if($b && $b->mobile)<div class="thermal-line">{{ __('common.phone') }}: {{ $b->mobile }}</div>@endif
+        @if($b && $b->email)<div class="thermal-line">{{ __('common.email') }}: {{ $b->email }}</div>@endif
       </div>
 
       <div class="thermal-sep"></div>
@@ -648,8 +613,6 @@
   margin: 2px 0 4px;
 }
 
-#rn-invoice-root.printer-thermal .invoice-logo,
-#rn-invoice-root.printer-thermal .company-logo-small,
 #rn-invoice-root.printer-thermal .invoice-qr-section,
 #rn-invoice-root.printer-thermal .acknowledgement-section,
 #rn-invoice-root.printer-thermal .signature-boxes,
@@ -674,6 +637,26 @@
   font-size: 1rem;
   margin-bottom: 4px;
 }
+
+#rn-invoice-root.printer-thermal .invoice-branding {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  gap: 2mm;
+  margin-bottom: 2mm;
+  text-align: center;
+}
+
+#rn-invoice-root.printer-thermal .invoice-logo {
+  width: auto;
+  max-width: 30mm;
+  height: auto;
+  max-height: 16mm;
+  margin: 0;
+}
+
+#rn-invoice-root.printer-thermal .company-info { min-width: 0; max-width: 100%; }
+#rn-invoice-root.printer-thermal .company-name { white-space: normal; overflow-wrap: anywhere; }
 
 #rn-invoice-root.printer-thermal .company-details,
 #rn-invoice-root.printer-thermal .party-detail,
@@ -718,6 +701,15 @@
   font-size: 0.96rem;
   font-weight: 700;
   margin-bottom: 2px;
+}
+
+.thermal-business-logo {
+  display: block;
+  width: auto;
+  max-width: 30mm;
+  max-height: 16mm;
+  margin: 0 auto 2mm;
+  object-fit: contain;
 }
 
 .thermal-line,
@@ -882,10 +874,20 @@
   margin-bottom: 14px;
 }
 
+.invoice-branding {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
 .invoice-logo {
-  height: 70px;
+  display: block;
+  max-width: 120px;
+  max-height: 82px;
   width: auto;
-  margin-bottom: 15px;
+  height: auto;
+  margin: 0;
   object-fit: contain;
 }
 
@@ -901,12 +903,14 @@
   font-weight: 700;
   color: #000;
   margin-bottom: 8px;
+  overflow-wrap: anywhere;
 }
 
 .company-details {
   font-size: 0.875rem;
   color: #000;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .invoice-title {

@@ -34,6 +34,11 @@ class SaleProduct extends Model implements AuditableContract
         return $this->belongsTo(\App\Models\AdminUser::class, 'salespersonId');
     }
 
+    public function business()
+    {
+        return $this->belongsTo(\App\Models\BusinessSetup::class, 'businessId');
+    }
+
     public function items()
     {
         return $this->hasMany(InvoiceItem::class, 'saleId');

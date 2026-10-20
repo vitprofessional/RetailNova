@@ -14,6 +14,7 @@ use App\Models\ExpenseEntry;
 use App\Models\SaleReturn;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\BusinessSetup;
 
 class dashboardController extends Controller
 {
@@ -22,11 +23,21 @@ class dashboardController extends Controller
         $customerOpeningTotal = (int) Customer::sum('openingBalance');
         $supplierOpeningTotal = (int) Supplier::sum('openingBalance');
         $admin = Auth::guard('admin')->user();
+        // Prefer the authenticated user's assigned business currency. Platform
+        // dashboards without an assigned business retain the existing global
+        // configuration fallback used by the shared currency helper.
+        $currencySetup = $admin && $admin->businessId
+            ? BusinessSetup::query()->find($admin->businessId)
+            : BusinessSetup::query()->latest('id')->first();
 
         return view('dashboard', [
             'customerOpeningTotal' => $customerOpeningTotal,
             'supplierOpeningTotal' => $supplierOpeningTotal,
             'adminUser' => $admin,
+            'dashboardCurrencySymbol' => $currencySetup?->currencySymbol
+                ?: (!$admin?->businessId ? \App\Support\Currency::symbol() : ''),
+            'dashboardCurrencyPosition' => $currencySetup?->currencyPosition === 'right' ? 'right' : 'left',
+            'dashboardCurrencyNegParentheses' => (bool) ($currencySetup?->currencyNegParentheses ?? true),
         ]);
     }
 

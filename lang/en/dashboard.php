@@ -38,4 +38,13 @@ return [
     'year' => 'Year',
     'month' => 'Month',
     'week' => 'Week',
+    'key_metrics' => 'Key metrics',
+    'sales_purchases_expenses_over_time' => 'Sales, purchases and expenses over time',
+    'recent_sales_activity' => 'Recent sales activity',
+    'view_sales' => 'View sales',
+    'no_top_products_available' => 'Product ranking data is not available for this period.',
+    'no_invoices' => 'No invoices found for this period.',
+    'no_low_stock_items' => 'No products are below their alert quantity.',
+    'metrics_unavailable' => 'Dashboard data is temporarily unavailable.',
+    'products_below_alert_quantity' => 'Products at or below their alert quantity',
 ];

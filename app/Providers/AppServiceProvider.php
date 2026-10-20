@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Models\AdminUser;
 use App\Models\BusinessSetup;
+use App\Models\SaleProduct;
 use Illuminate\Support\Facades\Blade;
 use App\Support\Currency;
 
@@ -34,7 +35,9 @@ class AppServiceProvider extends ServiceProvider
             // Avoid querying the database during early bootstrap (migrations/tests)
             try {
                 if (\Illuminate\Support\Facades\Schema::hasTable('business_setups')) {
-                    $business = BusinessSetup::query()->latest('id')->first();
+                    $business = $this->isInvoiceRequest()
+                        ? $this->invoiceRequestBusiness()
+                        : BusinessSetup::query()->latest('id')->first();
                     $businessTable = $business ? collect([$business]) : collect();
                 } elseif (\Illuminate\Support\Facades\Schema::hasTable('admin_users')) {
                     // Backward compatibility fallback if business_setups is not present
@@ -109,9 +112,13 @@ class AppServiceProvider extends ServiceProvider
                     $brand = config('app.name', 'Retail Nova');
                     try {
                         if (\Illuminate\Support\Facades\Schema::hasTable('business_setups')) {
-                            $bn = BusinessSetup::query()->latest('id')->value('businessName');
-                            if (!empty($bn)) {
-                                $brand = $bn;
+                            // Invoice pages must use the sale owner's identity. In particular,
+                            // never leak the globally latest business into another tenant's invoice.
+                            $brandBusiness = $this->isInvoiceRequest()
+                                ? $this->invoiceRequestBusiness()
+                                : BusinessSetup::query()->latest('id')->first();
+                            if (!empty($brandBusiness?->businessName)) {
+                                $brand = $brandBusiness->businessName;
                             }
                         }
                     } catch (\Throwable $e) {
@@ -138,5 +145,32 @@ class AppServiceProvider extends ServiceProvider
             // Other roles can edit
             return true;
         });
+    }
+
+    private function isInvoiceRequest(): bool
+    {
+        try {
+            return in_array(\Illuminate\Support\Facades\Route::currentRouteName(), [
+                'invoiceGenerate',
+                'invoicePage',
+                'invoiceThermalPrint',
+            ], true);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    private function invoiceRequestBusiness(): ?BusinessSetup
+    {
+        try {
+            $id = request()->route('id') ?? request()->query('id');
+            if (!is_numeric($id) || (int) $id < 1) {
+                return null;
+            }
+
+            return SaleProduct::query()->with('business')->find((int) $id)?->business;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

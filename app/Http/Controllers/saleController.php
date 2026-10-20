@@ -392,7 +392,7 @@ class saleController extends Controller
             // Ownership check for viewing invoices
             $actor = auth('admin')->user();
             if ($actor && !$actor->canAccessAllSalesBusinesses()
-                && (int)$invoice->businessId > 0 && (int)$invoice->businessId !== (int)$actor->businessId) {
+                && ((int)$invoice->businessId <= 0 || (int)$invoice->businessId !== (int)$actor->businessId)) {
                 abort(403, 'This sale belongs to another business.');
             }
             if($actor && !$this->hasAdminPrivileges($actor) && (int)$invoice->salespersonId !== (int)$actor->id){
@@ -426,8 +426,9 @@ class saleController extends Controller
                 ->orderBy('id')
                 ->get()
                 ->groupBy('purchaseId');
-            // Load business settings if available
-            try{ $business = \App\Models\BusinessSetup::first(); }catch(\Exception $e){ $business = null; }
+            // Invoice branding always follows the owning sale, never session order or
+            // the first configured business. A NULL-owned legacy sale has no safe brand.
+            $business = $invoice->business;
             return view('invoice.invoicePage',[ 'invoice'=>$invoice, 'items'=>$items, 'customer'=>$customer, 'business' => $business, 'serialsByPurchase' => $serialsByPurchase ]);
         else:
             $message = Alert::error(__('common.notification_sorry'),__('common.no_invoice_items'));
