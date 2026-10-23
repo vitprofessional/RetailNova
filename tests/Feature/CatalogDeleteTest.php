@@ -8,6 +8,10 @@ use App\Models\DamageProduct;
 use App\Models\Product;
 use App\Models\ProductUnit;
 use App\Models\ProvideService;
+use App\Models\Quotation;
+use App\Models\QuotationItem;
+use App\Models\Customer;
+use App\Models\ServiceInvoice;
 use App\Models\ReturnPurchaseItem;
 use App\Models\ReturnSaleItem;
 use Illuminate\Database\Eloquent\Model;
@@ -65,6 +69,7 @@ class CatalogDeleteTest extends TestCase
             'sale return' => ['sale return'],
             'purchase return' => ['purchase return'],
             'damage' => ['damage'],
+            'quotation' => ['quotation'],
         ];
     }
 
@@ -78,6 +83,10 @@ class CatalogDeleteTest extends TestCase
             'sale return' => ReturnSaleItem::forceCreate(['productId' => $product->id, 'qty' => 1, 'businessId' => 1]),
             'purchase return' => ReturnPurchaseItem::forceCreate(['productId' => $product->id, 'qty' => 1, 'businessId' => 1]),
             'damage' => DamageProduct::forceCreate(['product_id' => $product->id, 'qty' => 1, 'businessId' => 1]),
+            'quotation' => QuotationItem::forceCreate([
+                'quotation_id' => Quotation::forceCreate(['quote_number' => uniqid('Q-'), 'date' => '2026-10-23', 'businessId' => 1])->id,
+                'product_id' => $product->id, 'qty' => 1, 'businessId' => 1,
+            ]),
         };
         return $product;
     }
@@ -221,6 +230,55 @@ class CatalogDeleteTest extends TestCase
 
         $this->assertNull($damage->fresh());
         $this->assertNull($service->fresh());
+    }
+
+    public static function serviceCustomers(): array
+    {
+        return ['registered customer' => [false], 'walk-in' => [true]];
+    }
+
+    /** Bills one service through the real service sale form and returns its provided-service row. */
+    private function billedService(bool $walkIn, string $name = 'Screen Repair'): ProvideService
+    {
+        $payload = ['serviceName' => [$name], 'rate' => [250], 'qty' => [1], 'note' => 'Billed'];
+        $payload += $walkIn
+            ? ['is_walkin' => '1']
+            : ['customerName' => Customer::create(['name' => 'Service Customer', 'businessId' => 1])->id];
+        $this->post(route('saveProvideService'), $payload)->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertSame(1, ServiceInvoice::query()->count());
+
+        return ProvideService::query()->where('serviceName', $name)->firstOrFail();
+    }
+
+    #[DataProvider('serviceCustomers')]
+    public function test_provided_service_billed_on_a_service_invoice_cannot_be_deleted(bool $walkIn): void
+    {
+        $this->inventory();
+        $this->actingAs($this->actor('admin'), 'admin');
+        $billed = $this->billedService($walkIn);
+        $legacy = ProvideService::forceCreate(['customerName' => null, 'serviceName' => 'Old Cleaning', 'amount' => '50', 'businessId' => 1]);
+
+        $this->delete(route('delProvideService', $billed->id))->assertRedirect();
+        $this->assertNotNull($billed->fresh(), 'A service billed on an invoice must stay.');
+        $this->assertSame(__('common.in_use_cannot_be_deleted'), $this->alert()['text'] ?? null);
+
+        $this->delete(route('delProvideService', $legacy->id))->assertRedirect();
+        $this->assertNull($legacy->fresh(), 'A service on no invoice can be deleted.');
+    }
+
+    public function test_bulk_delete_of_provided_services_keeps_billed_ones(): void
+    {
+        $this->inventory();
+        $this->actingAs($this->actor('admin'), 'admin');
+        $billed = $this->billedService(false);
+        $legacy = ProvideService::forceCreate(['customerName' => $billed->customerName, 'serviceName' => 'Unbilled Setup', 'amount' => '50', 'businessId' => 1]);
+
+        $this->post(route('providedServices.bulkDelete'), ['selected' => [$billed->id, $legacy->id]])->assertRedirect();
+
+        $this->assertNotNull($billed->fresh());
+        $this->assertNull($legacy->fresh());
+        $this->assertSame('warning', $this->alert()['icon'] ?? null);
+        $this->assertSame(__('common.bulk_delete_skipped_in_use', ['deleted' => 1, 'count' => 1, 'names' => 'Screen Repair']), $this->alert()['text'] ?? null);
     }
 
     public function test_purchase_bulk_delete_route_is_gone(): void

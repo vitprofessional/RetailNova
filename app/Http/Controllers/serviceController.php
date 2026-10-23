@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Service;
 use App\Models\ProvideService;
 use App\Models\Customer;
+use App\Services\CatalogUsage;
 use Alert;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 
 class serviceController extends Controller
 {
+    use Concerns\DeletesUnusedRecords;
 
     // List service profiles and show create form
     public function addServiceName()
@@ -79,8 +81,10 @@ class serviceController extends Controller
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if(empty($ids)){ return back()->with('error',__('common.notification_no_provided_services_selected')); }
         try{
-            ProvideService::whereIn('id',$ids)->delete();
-            Alert::success(__('common.notification_deleted'),__('common.notification_selected_provided_services_deleted'));
+            $this->bulkDeleteUnused(CatalogUsage::PROVIDED_SERVICE, ProvideService::whereIn('id',$ids)->get(),
+                fn (array $deletable) => ProvideService::whereIn('id',$deletable)->delete(),
+                'common.notification_selected_provided_services_deleted',
+                fn ($service) => (string) $service->serviceName);
         }catch(\Exception $e){
             \Log::error('bulkDeleteProvidedServices failed: '.$e->getMessage());
             Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_selected_provided_services'));
@@ -482,6 +486,10 @@ class serviceController extends Controller
         $row = ProvideService::find($id);
         if(!$row){
             Alert::error(__('common.notification_failed'),__('common.notification_provided_service_not_found'));
+            return back();
+        }
+        if (app(CatalogUsage::class)->isInUse(CatalogUsage::PROVIDED_SERVICE, $row)) {
+            Alert::error(__('common.notification_failed'), __('common.in_use_cannot_be_deleted'));
             return back();
         }
         try {
