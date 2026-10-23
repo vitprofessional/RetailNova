@@ -5,6 +5,17 @@
 
     RewriteEngine On
 
+    # Never serve project internals when the project root is the web root.
+    # Dot files and folders (.env, .git, .github, .htaccess, ...), except .well-known
+    RewriteRule (^|/)\.(?!well-known(/|$)) - [F,L]
+
+    # Application folders that only PHP may read
+    RewriteRule ^(app|bootstrap|config|database|lang|resources|routes|storage|tests|tests-output|vendor|scripts|tools|docs|design-assets|playwright|node_modules)(/|$) - [F,L,NC]
+
+    # Build and tooling files, plus database dumps, logs and archives at the root
+    RewriteRule ^(artisan|composer\.json|composer\.lock|package\.json|package-lock\.json|phpunit\.xml|vite\.config\.js|README\.md)$ - [F,L,NC]
+    RewriteRule ^[^/]+\.(sql|log|rar|zip)$ - [F,L,NC]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -23,3 +34,14 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Fallback when mod_rewrite is unavailable: still refuse env files, dumps, logs and archives.
+<FilesMatch "(?i)^\.env|\.(sql|log|rar)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

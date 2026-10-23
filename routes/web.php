@@ -521,7 +521,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
     Route::get('/new/sale',[
         saleController::class,
         'newsale'
-    ])->name('newsale')->middleware([\App\Http\Middleware\DebugSession::class]);
+    ])->name('newsale');
 
     
     Route::get('Sale/list',[
