@@ -1004,7 +1004,7 @@
                                                   @endphp
                                                   <h5 class="mb-1">{{ $displayName ?: ($adminUser->mail ?? 'Admin User') }}</h5>
                                                   <p class="mb-0">{{ $adminUser->mail ?? '' }}</p>
-                                                  <p class="mb-0">{{ __('common.since') }} {{ optional($adminUser->created_at)->format('j M, Y') ?? '' }}</p>
+                                                  <p class="mb-0">{{ __('common.since') }} {{ optional($adminUser?->created_at)->format('j M, Y') ?? '' }}</p>
                                                   <div class="d-flex align-items-center justify-content-center mt-3">
                                                       <a href="{{ route('admin.profile.show') }}" class="btn border mr-2">{{ __('navigation.my_profile') }}</a>
                                                       <a href="{{ route('logout') }}" class="btn border">{{ __('navigation.sign_out') }}</a>
@@ -1058,7 +1058,7 @@
                 <div class="rn-footer-identity">
                     <strong>{{ $config->count() > 0 ? ($config[0]->businessName ?? config('app.name', 'Retail Nova')) : config('app.name', 'Retail Nova') }}</strong>
                     <span>{{ $adminUser->mail ?? 'user@domain' }}</span>
-                    <span>{{ __('common.since') }} {{ optional($adminUser->created_at)->format('j M, Y') ?? '26 Mar, 2020' }}</span>
+                    <span>{{ __('common.since') }} {{ optional($adminUser?->created_at)->format('j M, Y') ?? '' }}</span>
                     @if(config('app.version'))<span class="rn-footer-version">v{{ config('app.version') }}</span>@endif
                 </div>
                 <div class="rn-footer-links">

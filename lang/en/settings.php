@@ -111,4 +111,5 @@ return [
     'no_business_locations_found' => 'No Business Locations Found',
     'start_by_creating_your_first_business_location' => 'Start by creating your first business location.',
     'create_first_location' => 'Create First Location',
+    'select_business_before_changing_settings' => 'Select a business before changing its settings.',
 ];

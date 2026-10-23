@@ -3,27 +3,27 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\AdminUser;
-use App\Models\BusinessSetup;
-use Hash;
 use Session;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Artisan;
+use App\Services\FirstAdminBootstrap;
+use App\Services\LocaleResolver;
 
 
 class userInfo extends Controller
 {
     //user login & rge form str
     public function userLogin(){
-        $business = \App\Models\BusinessSetup::orderBy('id','DESC')->limit(1)->get();
-        $hasAdminUsers = \App\Models\AdminUser::exists();
-        return view('userInfo.userLogin',['business'=>$business, 'hasAdminUsers' => $hasAdminUsers]);
+        return view('userInfo.userLogin', ['firstRunOpen' => FirstAdminBootstrap::firstRunOpen()]);
     }
 
     public function adminLogin(Request $req){
+        $input = $req->validate([
+            'userMail' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
+        ]);
         $credentials = [
-            'mail' => $req->userMail,
-            'password' => $req->password,
+            'mail' => $input['userMail'],
+            'password' => $input['password'],
         ];
 
         if (Auth::guard('admin')->attempt($credentials)) {
@@ -38,42 +38,25 @@ class userInfo extends Controller
             return redirect()->route('dashboard');
         }
 
-        return back()->with('error', __('common.notification_invalid_credentials'));
+        return back()->with('login_notice', ['type' => 'error', 'key' => 'invalid_credentials']);
         
     }
 
-    public function creatAdmin(Request $req){
-        $server = new AdminUser();
-        
-        $hashPass = Hash::make($req->password);
-        if($req->password != $req->confirmPass):
-            return back()->with('error',__('common.notification_password_not_match_confirm_password'));
-        endif;
+    public function logout(Request $request){
+        $guestLocale = app()->getLocale();
+        if (!in_array($guestLocale, LocaleResolver::SUPPORTED, true)) {
+            $guestLocale = 'en';
+        }
 
-        $server->fullName       = $req->fullName;
-        $server->sureName       = $req->sureName;
-        $server->storeName      = $req->storeName;
-        $server->mail           = $req->mail;
-        $server->contactNumber  = $req->contactNumber;
-        $server->password       = $hashPass;
-        $server->businessId     = $req->businessId;
-        
-            if($server->save()):
-                return back()->with('success',__('common.notification_success_admin_profile_created_successfully'));
-            else:
-                return back()->with('success','error! There was an error. Please try later');
-            endif;
-         
-    }
-
-    public function logout(){
         // logout admin guard if used
         Auth::guard('admin')->logout();
         Session::forget('pos');
         Session::forget('pos_user_id');
         Session::invalidate();
         Session::regenerateToken();
-        return redirect(route('userLogin'))->with('success',__('authentication.logout_successful'));
+        $request->session()->put('locale', $guestLocale);
+
+        return redirect(route('userLogin'))->with('login_notice', ['type' => 'success', 'key' => 'logout_successful']);
     }
     
 
@@ -99,73 +82,5 @@ class userInfo extends Controller
     
     public function userConfirmMail(){
         return view('userInfo.userConfirmMail');
-    }
-
-    
-    
-    public function storeCreat(){
-        return view('userInfo.storeCreat');
-    }
-
-    public function saveStoreSetup(Request $request)
-    {
-        $request->validate([
-            'businessName' => 'required|string|max:255',
-            'businessType' => 'nullable|in:mobile_shop,vehicle_shop,computer_shop,electronics_parts_shop,hardware_shop,dealership_shop,dellership_shop,general_shop,stationary_shop,stationery_shop,garments_shop,pharmacy_shop,toy_shop',
-            'mobile'       => 'nullable|string|max:30',
-            'mail'         => 'nullable|email|max:255',
-            'businessLocation' => 'nullable|string|max:500',
-            'website'      => 'nullable|url|max:255',
-        ]);
-
-        // Create or update the first (and usually only) business record
-        $business = BusinessSetup::first() ?? new BusinessSetup();
-        $business->businessName     = $request->businessName;
-        $business->mobile           = $request->mobile;
-        $business->email            = $request->mail;
-        $business->businessLocation = $request->businessLocation;
-        $business->website          = $request->website;
-        if (!empty($request->businessType)) {
-            $business->businessType = $request->businessType;
-        }
-        $business->save();
-
-        // Optionally seed demo data (only on fresh install – no existing products/customers)
-        if ($request->boolean('seedDemoData') && !empty($request->businessType)) {
-            $hasData = \Illuminate\Support\Facades\DB::table('products')
-                ->where('businessId', $business->id ?? 1)
-                ->exists();
-
-            if (!$hasData) {
-                $seederMap = [
-                    'mobile_shop'            => \Database\Seeders\MobileShopSeeder::class,
-                    'vehicle_shop'           => \Database\Seeders\VehicleShopSeeder::class,
-                    'computer_shop'          => \Database\Seeders\ComputerShopSeeder::class,
-                    'electronics_parts_shop' => \Database\Seeders\ElectronicsPartsSeeder::class,
-                    'hardware_shop'          => \Database\Seeders\HardwareShopSeeder::class,
-                    'dealership_shop'        => \Database\Seeders\DealershipShopSeeder::class,
-                    'dellership_shop'        => \Database\Seeders\DellershipShopSeeder::class,
-                    'general_shop'           => \Database\Seeders\GeneralShopSeeder::class,
-                    'stationary_shop'        => \Database\Seeders\StationaryShopSeeder::class,
-                    'stationery_shop'        => \Database\Seeders\StationeryShopSeeder::class,
-                    'garments_shop'          => \Database\Seeders\GarmentsShopSeeder::class,
-                    'pharmacy_shop'          => \Database\Seeders\PharmacyShopSeeder::class,
-                    'toy_shop'               => \Database\Seeders\ToyShopSeeder::class,
-                ];
-                $seederClass = $seederMap[$request->businessType] ?? null;
-                if ($seederClass) {
-                    try {
-                        $seeder = app()->make($seederClass);
-                        $seeder->businessId = (int) ($business->id ?? 1);
-                        app()->call([$seeder, 'run']);
-                    } catch (\Throwable $e) {
-                        \Log::error('First-run demo seeding failed', ['error' => $e->getMessage()]);
-                    }
-                }
-            }
-        }
-
-        return redirect()->route('userLogin')
-            ->with('success', __('common.notification_business_setup_saved_successfully_you_can_now_log_in'));
     }
 }

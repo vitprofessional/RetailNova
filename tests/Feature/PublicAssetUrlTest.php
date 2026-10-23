@@ -17,11 +17,12 @@ class PublicAssetUrlTest extends TestCase
 
         $this->get('/login')
             ->assertOk()
-            ->assertSee('https://jamalmotors.virtualitprofessional.com/eshop/assets/css/backend-plugin.min.css', false)
-            ->assertSee('https://jamalmotors.virtualitprofessional.com/eshop/assets/js/backend-bundle.min.js', false)
+            ->assertSee('https://jamalmotors.virtualitprofessional.com/css/login.css', false)
+            ->assertSee('https://jamalmotors.virtualitprofessional.com/js/login.js', false)
+            ->assertSee('https://jamalmotors.virtualitprofessional.com/logo.png', false)
             ->assertSee('https://jamalmotors.virtualitprofessional.com/manifest.webmanifest', false)
             ->assertSee('https://jamalmotors.virtualitprofessional.com/js/pwa.js', false)
-            ->assertDontSee('/public/eshop/');
+            ->assertDontSee('/public/');
     }
 
     public function test_login_assets_keep_the_local_retailnova_subdirectory(): void
@@ -29,8 +30,8 @@ class PublicAssetUrlTest extends TestCase
         URL::forceRootUrl('http://localhost/RetailNova');
 
         $this->assertSame(
-            'http://localhost/RetailNova/eshop/assets/css/backend-plugin.min.css',
-            asset('eshop/assets/css/backend-plugin.min.css')
+            'http://localhost/RetailNova/css/login.css',
+            asset('css/login.css')
         );
         $this->assertSame(
             'http://localhost/RetailNova/manifest.webmanifest',

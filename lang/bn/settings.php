@@ -111,4 +111,5 @@ return [
     'no_business_locations_found' => 'ব্যবসার অবস্থান পাওয়া যায়নি',
     'start_by_creating_your_first_business_location' => 'ব্যবসার প্রথম অবস্থান তৈরি করে শুরু করুন।',
     'create_first_location' => 'প্রথম অবস্থান তৈরি করুন',
+    'select_business_before_changing_settings' => 'সেটিংস পরিবর্তনের আগে একটি ব্যবসা নির্বাচন করুন।',
 ];

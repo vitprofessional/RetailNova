@@ -47,5 +47,6 @@ return Application::configure(basePath: dirname(__DIR__))
         }
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Never echo the first-run setup secret back through flashed old input.
+        $exceptions->dontFlash('setup_token');
     })->create();

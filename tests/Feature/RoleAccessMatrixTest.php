@@ -40,7 +40,7 @@ class RoleAccessMatrixTest extends TestCase
 
     public function test_admin_cannot_access_super_admin_panel_but_can_view_audits()
     {
-        // The first-created admin is intentionally treated as the platform owner.
+        // Platform authority is explicit; this account's role is not inferred from insertion order.
         $this->createAdmin('superadmin');
         $user = $this->createAdmin('admin');
         $this->actingAs($user, 'admin');

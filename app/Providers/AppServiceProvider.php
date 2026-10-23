@@ -6,7 +6,10 @@ use Illuminate\Support\ServiceProvider;
 use App\Models\AdminUser;
 use App\Models\BusinessSetup;
 use App\Models\SaleProduct;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\RateLimiter;
 use App\Support\Currency;
 
 class AppServiceProvider extends ServiceProvider
@@ -28,8 +31,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // A named limiter keeps first-run attempts in their own bucket; plain throttle:5,1
+        // keys by IP only, so it would share a counter with the sign-in throttle.
+        RateLimiter::for('first-run-setup', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
+
         //global variable
-       
+
         
         view()->composer('*',function($view){
             // Avoid querying the database during early bootstrap (migrations/tests)

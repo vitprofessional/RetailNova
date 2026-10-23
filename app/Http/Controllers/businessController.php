@@ -5,24 +5,15 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\BusinessSetup;
 use App\Models\BusinessLocation;
-use Database\Seeders\ComputerShopSeeder;
-use Database\Seeders\DealershipShopSeeder;
-use Database\Seeders\DellershipShopSeeder;
-use Database\Seeders\ElectronicsPartsSeeder;
-use Database\Seeders\GeneralShopSeeder;
-use Database\Seeders\GarmentsShopSeeder;
-use Database\Seeders\HardwareShopSeeder;
-use Database\Seeders\MobileShopSeeder;
-use Database\Seeders\PharmacyShopSeeder;
-use Database\Seeders\StationaryShopSeeder;
-use Database\Seeders\StationeryShopSeeder;
-use Database\Seeders\ToyShopSeeder;
-use Database\Seeders\VehicleShopSeeder;
+use App\Models\AdminUser;
+use App\Support\BusinessTypes;
 use Alert;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\Rule;
 
 class businessController extends Controller
 {
@@ -31,40 +22,54 @@ class businessController extends Controller
         $this->middleware(function ($request, $next) {
             $actor = Auth::guard('admin')->user();
             if ($actor && in_array(strtolower($actor->role), ['storemanager'])) {
-                abort(403, 'Unauthorized');
+                abort(403, __('common.api_forbidden'));
             }
             return $next($request);
         });
     }
-    //business setup page 
+    //business setup page
     public function addBusinessSetupPage(){
-        $business = BusinessSetup::orderBy("id","desc")->first();
-        if(!$business) {
-            $business = new BusinessSetup();
-        }
+        $actor = $this->settingsActor(false);
+        $business = $this->authorizedBusinessTarget($actor, request()->query('businessId'), true);
 
         return view('business.businessSetup',[
             'business' => $business,
-            'businessTypes' => $this->businessTypeOptions(),
-            'canSeedDemoData' => $this->canSeedDemoDataForBusiness((int) ($business->id ?? 1)),
-        ]);        
+            'businessTypes' => BusinessTypes::options(),
+            'canSeedDemoData' => $this->canSeedDemoDataForBusiness((int) ($business->id ?? 0)),
+        ]);
     }
 
     public function saveBusiness(Request $requ){
-        $selectedBusinessType = $requ->input('businessType');
-        $businessTypes = $this->businessTypeOptions();
-        $isValidBusinessType = empty($selectedBusinessType) || array_key_exists($selectedBusinessType, $businessTypes);
-
-        if (!$isValidBusinessType) {
-            Alert::error(__('common.notification_error'), __('common.notification_invalid_business_type_selected'));
-            return back()->withInput();
+        $actor = $this->settingsActor();
+        $requ->validate([
+            'businessId' => ['nullable', 'integer'],
+            'businessName' => ['required', 'string', 'max:255'],
+            'businessType' => ['nullable', Rule::in(BusinessTypes::values())],
+            // businessLocation and invoiceFooter are TEXT columns (2026_10_21 migration).
+            'businessLocation' => ['nullable', 'string', 'max:500'],
+            'mobile' => ['nullable', 'string', 'max:50'],
+            'mail' => ['nullable', 'email', 'max:255'],
+            'tinCert' => ['nullable', 'string', 'max:100'],
+            'invoiceFooter' => ['nullable', 'string', 'max:2000'],
+            'website' => ['nullable', 'url', 'max:255'],
+            'currencySymbol' => ['nullable', 'string', 'max:16'],
+            'currencyPosition' => ['nullable', 'in:left,right'],
+            'fbPage' => ['nullable', 'url', 'max:255'],
+            'twitter' => ['nullable', 'url', 'max:255'],
+            'youtubeChannel' => ['nullable', 'url', 'max:255'],
+            'linkedin' => ['nullable', 'url', 'max:255'],
+            'invoiceTermsText' => ['nullable', 'string', 'max:5000'],
+            'seedBusinessDemoData' => ['nullable', 'boolean'],
+            'hideInvoiceAcknowledgement' => ['nullable', 'boolean'],
+            'invoiceTermsEnabled' => ['nullable', 'boolean'],
+            'currencyNegParentheses' => ['nullable', 'boolean'],
+        ]);
+        if (!$actor->hasSuperAdminPrivileges()
+            && ($requ->exists('hideAckWalkin') || $requ->exists('hideSignaturesWalkin'))) {
+            abort(403);
         }
-
-        if($requ->businessId):
-            $business = BusinessSetup::find($requ->businessId);
-        else:
-            $business = new BusinessSetup();
-        endif;
+        $business = $this->authorizedBusinessTarget($actor, $requ->input('businessId'), true);
+        $selectedBusinessType = $requ->input('businessType');
 
         $previousBusinessType = $business->businessType;
         $shouldAttemptDemoSeed = (bool) $requ->boolean('seedBusinessDemoData') && !empty($selectedBusinessType);
@@ -81,18 +86,26 @@ class businessController extends Controller
         $business->youtube          = $requ->youtubeChannel;
         $business->linkedin         = $requ->linkedin;
         $business->businessType     = $selectedBusinessType;
-        $business->currencySymbol   = $requ->currencySymbol ?? $business->currencySymbol;
+        // Submitted-but-empty clears the symbol (display falls back to the default symbol);
+        // a request that omits the field keeps the saved value.
+        if ($requ->exists('currencySymbol')) {
+            $business->currencySymbol = $requ->filled('currencySymbol') ? $requ->input('currencySymbol') : null;
+        }
         $business->currencyPosition = $requ->currencyPosition ?? $business->currencyPosition ?? 'left';
-        $business->currencyNegParentheses = isset($requ->currencyNegParentheses) ? (bool)$requ->currencyNegParentheses : ($business->currencyNegParentheses ?? true);
+        // Checkbox contract (same as the other toggles here): absent means off.
+        $business->currencyNegParentheses = $requ->boolean('currencyNegParentheses');
         $business->hide_invoice_acknowledgement = (bool) $requ->input('hideInvoiceAcknowledgement', 0);
         // Show/hide Terms & Conditions: checkbox sends value only when checked
         // Use explicit default to 0 so unchecking correctly disables it
         $business->invoice_terms_enabled = (bool)$requ->input('invoiceTermsEnabled', 0);
-        // Editable Terms & Conditions text
-        $business->invoice_terms_text = $requ->invoiceTermsText ?? $business->invoice_terms_text;
+        // Editable Terms & Conditions text; clearing it restores the default invoice terms.
+        if ($requ->exists('invoiceTermsText')) {
+            $business->invoice_terms_text = $requ->filled('invoiceTermsText') ? $requ->input('invoiceTermsText') : null;
+        }
         if($business->save()):
             $seedMessage = null;
-            $savedBusinessId = (int) ($business->id ?? 1);
+            $seedFailed = false;
+            $savedBusinessId = (int) ($business->id ?? 0);
 
             if ($shouldAttemptDemoSeed) {
                 if (app()->environment('production')) {
@@ -101,25 +114,33 @@ class businessController extends Controller
                     $seedMessage = __('common.demo_existing');
                 } elseif (!empty($previousBusinessType) && $previousBusinessType !== $selectedBusinessType) {
                     $seedMessage = __('common.demo_type');
+                } elseif ($this->seedDemoDataForBusinessType($selectedBusinessType, $savedBusinessId)) {
+                    $seedMessage = __('common.demo_seeded', ['type' => BusinessTypes::label($selectedBusinessType)]);
                 } else {
-                    $seedMessage = $this->seedDemoDataForBusinessType($selectedBusinessType, $savedBusinessId);
+                    $seedFailed = true;
+                    $seedMessage = __('common.demo_seed_failed');
                 }
             }
 
-            // Persist walk-in invoice UI toggles to .env so config picks them up
-            try {
-                $hideAck = (bool)$requ->input('hideAckWalkin', 0);
-                $hideSig = (bool)$requ->input('hideSignaturesWalkin', 0);
-                $this->updateEnv([
-                    'POS_HIDE_ACK_WALKIN' => $hideAck ? 'true' : 'false',
-                    'POS_HIDE_SIGNATURES_WALKIN' => $hideSig ? 'true' : 'false',
-                ]);
-                // Refresh config cache so changes take effect immediately
-                try { Artisan::call('config:clear'); Artisan::call('config:cache'); } catch(\Throwable $e) {}
-            } catch(\Throwable $e) {
-                \Log::warning('Failed to update walk-in toggles in .env', ['error' => $e->getMessage()]);
+            // These switches are deployment-wide .env settings, so only the explicit platform role may change them.
+            if ($actor->hasSuperAdminPrivileges() && !app()->environment('testing')) {
+                try {
+                    $hideAck = (bool)$requ->input('hideAckWalkin', 0);
+                    $hideSig = (bool)$requ->input('hideSignaturesWalkin', 0);
+                    $this->updateEnv([
+                        'POS_HIDE_ACK_WALKIN' => $hideAck ? 'true' : 'false',
+                        'POS_HIDE_SIGNATURES_WALKIN' => $hideSig ? 'true' : 'false',
+                    ]);
+                    try { Artisan::call('config:clear'); Artisan::call('config:cache'); } catch(\Throwable $e) {}
+                } catch(\Throwable $e) {
+                    \Log::warning('Failed to update walk-in toggles in .env', ['error' => $e->getMessage()]);
+                }
             }
-            Alert::success(__('common.notification_success'), $seedMessage ?? __('common.notification_business_data_saved_successfully'));
+            if ($seedFailed) {
+                Alert::warning(__('common.notification_warning'), $seedMessage);
+            } else {
+                Alert::success(__('common.notification_success'), $seedMessage ?? __('common.notification_business_data_saved_successfully'));
+            }
             return back();
         else:
             Alert::error(__('common.notification_sorry'),__('common.notification_business_data_failed_to_save'));
@@ -145,43 +166,6 @@ class businessController extends Controller
             }
         }
         file_put_contents($envPath, $env);
-    }
-
-    protected function businessTypeOptions(): array
-    {
-        return [
-            'mobile_shop' => 'Mobile Shop',
-            'vehicle_shop' => 'Vehicle Shop',
-            'computer_shop' => 'Computer Shop',
-            'electronics_parts_shop' => 'Electronics Parts Shop',
-            'hardware_shop' => 'Hardware Shop',
-            'dealership_shop' => 'Dealership Shop',
-            'dellership_shop' => 'Dellership Shop',
-            'general_shop' => 'General Shop',
-            'stationary_shop' => 'Stationary Shop',
-            'garments_shop' => 'Garments Shop',
-            'pharmacy_shop' => 'Pharmacy Shop',
-            'toy_shop' => 'Toy Shop',
-        ];
-    }
-
-    protected function businessTypeSeederMap(): array
-    {
-        return [
-            'mobile_shop' => MobileShopSeeder::class,
-            'vehicle_shop' => VehicleShopSeeder::class,
-            'computer_shop' => ComputerShopSeeder::class,
-            'electronics_parts_shop' => ElectronicsPartsSeeder::class,
-            'hardware_shop' => HardwareShopSeeder::class,
-            'dealership_shop' => DealershipShopSeeder::class,
-            'dellership_shop' => DellershipShopSeeder::class,
-            'general_shop' => GeneralShopSeeder::class,
-            'stationary_shop' => StationaryShopSeeder::class,
-            'stationery_shop' => StationeryShopSeeder::class,
-            'garments_shop' => GarmentsShopSeeder::class,
-            'pharmacy_shop' => PharmacyShopSeeder::class,
-            'toy_shop' => ToyShopSeeder::class,
-        ];
     }
 
     protected function canSeedDemoDataForBusiness(int $businessId): bool
@@ -297,44 +281,38 @@ class businessController extends Controller
         }
     }
 
-    protected function seedDemoDataForBusinessType(string $businessType, int $targetBusinessId = 1): string
+    /** Seed demo data atomically: a failure rolls back every demo write. Returns whether it succeeded. */
+    protected function seedDemoDataForBusinessType(string $businessType, int $targetBusinessId): bool
     {
-        $seeders = $this->businessTypeSeederMap();
-        $businessTypes = $this->businessTypeOptions();
-        $seederClass = $seeders[$businessType] ?? null;
-
-        if (!$seederClass) {
-            return 'Business details saved, but no demo seeder is mapped for the selected business type.';
-        }
-
         try {
-            $seeder = app()->make($seederClass);
-            $seeder->businessId = $targetBusinessId;
-            app()->call([$seeder, 'run']);
-
-            return 'Business data saved and ' . ($businessTypes[$businessType] ?? 'selected') . ' demo data seeded successfully.';
+            DB::transaction(fn () => $this->runDemoSeeder($businessType, $targetBusinessId));
+            return true;
         } catch (\Throwable $e) {
-            \Log::error('Business demo seeding failed', [
+            Log::error('Business demo seeding failed', [
                 'business_type' => $businessType,
                 'target_business_id' => $targetBusinessId,
-                'error' => $e->getMessage(),
+                'exception' => $e,
             ]);
-
-            return 'Business data saved, but demo data seeding failed: ' . $e->getMessage();
+            return false;
         }
     }
 
-    public function saveBusinessLogo(Request $requ){
-        $requ->validate([
-            'businessId' => 'required|integer|exists:business_setups,id',
-            'businessLogo' => 'required|image|mimes:jpeg,jpg,png,gif,webp,svg|max:2048',
-        ]);
+    /** Callers own the transaction so seeding can be combined with other writes. */
+    private function runDemoSeeder(string $businessType, int $targetBusinessId): void
+    {
+        $seederClass = BusinessTypes::seeder($businessType)
+            ?? throw new \InvalidArgumentException('No demo seeder is mapped for business type: ' . $businessType);
 
-        $business = BusinessSetup::find($requ->businessId);
-        if(!$business):
-            Alert::error(__('common.notification_error'),__('common.notification_business_setup_not_found'));
-            return back();
-        endif;
+        $seeder = app()->make($seederClass);
+        $seeder->businessId = $targetBusinessId;
+        app()->call([$seeder, 'run']);
+    }
+
+    public function saveBusinessLogo(Request $requ){
+        $actor = $this->settingsActor();
+        $requ->validate(['businessId' => ['required', 'integer']]);
+        $business = $this->authorizedBusinessTarget($actor, $requ->input('businessId'), false);
+        $requ->validate(['businessLogo' => 'required|image|mimes:jpeg,jpg,png,gif,webp,svg|max:2048']);
 
         if(!$requ->hasFile('businessLogo')):
             Alert::error(__('common.notification_error'),__('common.notification_please_choose_a_valid_logo_file_to_upload'));
@@ -369,18 +347,19 @@ class businessController extends Controller
             Alert::error(__('common.notification_sorry'),__('common.notification_business_logo_failed_to_update'));
             return back();
         } catch (\Throwable $e) {
-            \Log::error('Business logo upload failed', [
+            Log::error('Business logo upload failed', [
                 'business_id' => $requ->businessId,
-                'error' => $e->getMessage(),
+                'exception' => $e,
             ]);
-            Alert::error(__('common.notification_error'),__('common.notification_business_logo_upload_failed') . $e->getMessage());
+            Alert::error(__('common.notification_error'),__('common.notification_business_logo_upload_failed_try_again'));
             return back();
         }
     }
 
     public function delBusinessLogo($id){
+        $actor = $this->settingsActor();
+        $business = $this->authorizedBusinessTarget($actor, $id, false);
         try {
-            $business = BusinessSetup::find($id);
             if($business && $business->businessLogo):
                 $logoPath = public_path('uploads/business/' . $business->businessLogo);
                 if (file_exists($logoPath)) {
@@ -523,11 +502,13 @@ class businessController extends Controller
     }
 
     /**
-     * Wipe all demo/operational data for business ID 1 and re-seed with a
-     * new business type.  Restricted to SuperAdmin only.
+     * Wipe the selected business's operational data and re-seed it with a new
+     * business type. Restricted to SuperAdmin only.
      */
     public function resetDemoData(Request $request)
     {
+        $actor = $this->settingsActor();
+        abort_unless($actor->hasSuperAdminPrivileges(), 403);
         if (app()->environment('production')) {
             Alert::error(__('common.notification_forbidden'), __('common.notification_demo_data_reset_is_disabled_in_production'));
             return back();
@@ -535,50 +516,69 @@ class businessController extends Controller
 
         $request->validate([
             'businessId' => 'required|integer|exists:business_setups,id',
-            'newBusinessType' => 'required|string',
+            'newBusinessType' => ['required', Rule::in(BusinessTypes::values())],
         ]);
-
-        $actor = Auth::guard('admin')->user();
-        if (!$actor || !method_exists($actor, 'hasSuperAdminPrivileges') || !$actor->hasSuperAdminPrivileges()) {
-            Alert::error(__('common.notification_forbidden'), __('common.notification_only_super_admin_can_reset_demo_data'));
-            return back();
-        }
 
         $newType = $request->input('newBusinessType');
         $targetBusinessId = (int)$request->input('businessId');
-        $businessTypes = $this->businessTypeOptions();
+        $business = $this->authorizedBusinessTarget($actor, $targetBusinessId, false);
 
-        if (empty($newType) || !array_key_exists($newType, $businessTypes)) {
-            Alert::error(__('common.notification_error'), __('common.notification_please_select_a_valid_business_type_to_re_seed'));
-            return back();
-        }
-
-        $business = BusinessSetup::find($targetBusinessId);
-        if (!$business) {
-            Alert::error(__('common.notification_error'), __('common.notification_selected_business_record_not_found'));
-            return back();
-        }
-
-        DB::beginTransaction();
         try {
-            // Wipe only the selected business data (safe scoped deletion order).
-            $this->wipeBusinessOperationalData($targetBusinessId);
-
-            // Update business type
-            $business->businessType = $newType;
-            $business->save();
-
-            DB::commit();
+            // One transaction: a failed re-seed restores the wiped data and the previous type.
+            DB::transaction(function () use ($business, $newType, $targetBusinessId): void {
+                $this->wipeBusinessOperationalData($targetBusinessId);
+                $business->businessType = $newType;
+                $business->save();
+                $this->runDemoSeeder($newType, $targetBusinessId);
+            });
         } catch (\Throwable $e) {
-            DB::rollBack();
-            \Log::error('Reset demo data failed during wipe', ['error' => $e->getMessage()]);
-            Alert::error(__('common.notification_error'), __('common.clear_failed') . $e->getMessage());
+            Log::error('Demo data reset failed', [
+                'business_type' => $newType,
+                'target_business_id' => $targetBusinessId,
+                'exception' => $e,
+            ]);
+            Alert::error(__('common.notification_error'), __('common.demo_reset_failed'));
             return back();
         }
 
-        // Seed fresh demo data for the new type
-        $seedMessage = $this->seedDemoDataForBusinessType($newType, $targetBusinessId);
-        Alert::success(__('common.notification_success'), $seedMessage);
+        Alert::success(__('common.notification_success'), __('common.demo_reset_completed', ['type' => BusinessTypes::label($newType)]));
         return back();
+    }
+
+    private function settingsActor(bool $write = true): AdminUser
+    {
+        $actor = Auth::guard('admin')->user();
+        $allowedRoles = $write ? ['admin', 'superadmin'] : ['admin', 'superadmin', 'gm', 'salesmanager'];
+        abort_unless($actor && in_array($actor->normalizedRole(), $allowedRoles, true), 403);
+        return $actor;
+    }
+
+    private function authorizedBusinessTarget(AdminUser $actor, mixed $requestedId, bool $allowCreate): BusinessSetup
+    {
+        $hasRequestedId = $requestedId !== null && $requestedId !== '';
+        $role = $actor->normalizedRole();
+
+        if ($role === 'superadmin') {
+            if ($hasRequestedId) {
+                return BusinessSetup::query()->findOrFail($requestedId);
+            }
+            if ($allowCreate) {
+                if ($actor->businessId && BusinessSetup::query()->whereKey($actor->businessId)->exists()) {
+                    return BusinessSetup::query()->findOrFail($actor->businessId);
+                }
+                $businesses = BusinessSetup::query()->orderBy('id')->limit(2)->get();
+                abort_if($businesses->count() > 1, 409, __('settings.select_business_before_changing_settings'));
+                return $businesses->first() ?? new BusinessSetup();
+            }
+            abort(404);
+        }
+
+        $businessId = filter_var($actor->businessId, FILTER_VALIDATE_INT);
+        abort_unless($businessId !== false && (int) $businessId > 0, 403);
+        if ($hasRequestedId && (!is_numeric($requestedId) || (int) $requestedId !== (int) $businessId)) {
+            abort(403);
+        }
+
+        return BusinessSetup::query()->findOrFail((int) $businessId);
     }
 }

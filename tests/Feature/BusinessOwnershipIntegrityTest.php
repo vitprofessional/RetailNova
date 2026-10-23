@@ -134,7 +134,7 @@ class BusinessOwnershipIntegrityTest extends TestCase
 
     public function test_platform_owner_can_target_an_existing_business_but_missing_target_fails_closed(): void
     {
-        $owner = $this->operator(1, 'admin');
+        $owner = $this->operator(1, 'superadmin');
         BusinessSetup::forceCreate(['id' => 2, 'businessName' => 'Authorized Tenant']);
         $owner->update(['businessId' => null]);
 
@@ -155,7 +155,7 @@ class BusinessOwnershipIntegrityTest extends TestCase
 
     public function test_product_creation_pages_expose_authorized_platform_business_target_and_purchase_ajax_requires_it(): void
     {
-        $owner = $this->operator(1, 'admin');
+        $owner = $this->operator(1, 'superadmin');
         BusinessSetup::forceCreate(['id' => 2, 'businessName' => 'Second Authorized Tenant']);
         $owner->update(['businessId' => null]);
 
@@ -217,7 +217,7 @@ class BusinessOwnershipIntegrityTest extends TestCase
 
     public function test_platform_edit_preserves_existing_owner_and_rejects_implicit_tenant_transfer(): void
     {
-        $this->operator(1, 'admin');
+        $this->operator(1, 'superadmin');
         BusinessSetup::forceCreate(['id' => 2, 'businessName' => 'Second Tenant']);
         $product = Product::forceCreate(['name' => 'Existing Product', 'businessId' => 2]);
         $supplier = Supplier::forceCreate(['name' => 'Existing Supplier', 'businessId' => 2]);

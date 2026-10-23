@@ -70,9 +70,13 @@
                                 <button type="button" class="btn btn-sm btn-info mt-2" data-toggle="modal" data-target="#logoModal">
                                     <i class="las la-upload mr-1"></i>{{ __('settings.change_logo') }}
                                 </button>
-                                <a href="{{ route('delBusinessLogo',['id'=>$businessId]) }}" class="btn btn-danger btn-sm mt-2">
-                                    <i class="las la-trash mr-1"></i>{{ __('settings.remove_logo') }}
-                                </a>
+                                <form action="{{ route('delBusinessLogo',['id'=>$businessId]) }}" method="POST" class="d-inline-block">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm mt-2">
+                                        <i class="las la-trash mr-1"></i>{{ __('settings.remove_logo') }}
+                                    </button>
+                                </form>
                                 @else
                                 <div class="text-muted mb-3">
                                     <i class="las la-image" style="font-size: 60px; color: #ddd;"></i>
@@ -204,26 +208,28 @@
 
                                     @endif
 
-                                    <h6 class="font-weight-700 mb-3"><i class="las la-receipt mr-2"></i>{{ __('settings.walk_in_invoice_options') }}</h6>
-                                    @php
-                                        $hideAckWalkin = config('pos.hide_ack_walkin', true);
-                                        $hideSigWalkin = config('pos.hide_signatures_walkin', true);
-                                    @endphp
-                                    <div class="form-group form-check mb-3 p-3 bg-light rounded">
-                                        <input type="checkbox" class="form-check-input" id="hideAckWalkin" name="hideAckWalkin" value="1" {{ $hideAckWalkin ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="hideAckWalkin">
-                                            <span class="font-weight-600">{{ __('settings.hide_acknowledgement_on_walk_in_invoices') }}</span>
-                                            <small class="d-block text-muted">When enabled, the acknowledgement section is hidden for invoices with customer name "Walking Customer".</small>
-                                        </label>
-                                    </div>
+                                    @if(auth('admin')->user()?->hasSuperAdminPrivileges())
+                                        <h6 class="font-weight-700 mb-3"><i class="las la-receipt mr-2"></i>{{ __('settings.walk_in_invoice_options') }}</h6>
+                                        @php
+                                            $hideAckWalkin = config('pos.hide_ack_walkin', true);
+                                            $hideSigWalkin = config('pos.hide_signatures_walkin', true);
+                                        @endphp
+                                        <div class="form-group form-check mb-3 p-3 bg-light rounded">
+                                            <input type="checkbox" class="form-check-input" id="hideAckWalkin" name="hideAckWalkin" value="1" {{ $hideAckWalkin ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="hideAckWalkin">
+                                                <span class="font-weight-600">{{ __('settings.hide_acknowledgement_on_walk_in_invoices') }}</span>
+                                                <small class="d-block text-muted">When enabled, the acknowledgement section is hidden for invoices with customer name "Walking Customer".</small>
+                                            </label>
+                                        </div>
 
-                                    <div class="form-group form-check mb-4 p-3 bg-light rounded">
-                                        <input type="checkbox" class="form-check-input" id="hideSignaturesWalkin" name="hideSignaturesWalkin" value="1" {{ $hideSigWalkin ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="hideSignaturesWalkin">
-                                            <span class="font-weight-600">{{ __('settings.hide_signature_boxes_on_walk_in_invoices') }}</span>
-                                            <small class="d-block text-muted">When enabled, signature areas are hidden for invoices with customer name "Walking Customer".</small>
-                                        </label>
-                                    </div>
+                                        <div class="form-group form-check mb-4 p-3 bg-light rounded">
+                                            <input type="checkbox" class="form-check-input" id="hideSignaturesWalkin" name="hideSignaturesWalkin" value="1" {{ $hideSigWalkin ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="hideSignaturesWalkin">
+                                                <span class="font-weight-600">{{ __('settings.hide_signature_boxes_on_walk_in_invoices') }}</span>
+                                                <small class="d-block text-muted">When enabled, signature areas are hidden for invoices with customer name "Walking Customer".</small>
+                                            </label>
+                                        </div>
+                                    @endif
 
                                     <div class="form-group mb-4">
                                         <label for="invoiceFooter" class="form-label font-weight-600">

@@ -12,7 +12,7 @@ class LanguageSettingsController extends Controller
     private function businesses()
     {
         $actor = auth('admin')->user();
-        abort_unless($actor && in_array(strtolower(trim($actor->role)), ['admin', 'superadmin'], true), 403);
+        abort_unless($actor && in_array($actor->normalizedRole(), ['admin', 'superadmin'], true), 403);
         $query = BusinessSetup::query();
         if (!$actor->hasSuperAdminPrivileges()) { $query->whereKey((int) $actor->businessId); }
         return $query;
@@ -46,5 +46,19 @@ class LanguageSettingsController extends Controller
         $user->save();
         $request->session()->put('locale', app(LocaleResolver::class)->resolve($user));
         return back();
+    }
+
+    /** Set a language preference only for this unauthenticated browser session. */
+    public function guestPreference(Request $request)
+    {
+        abort_if(auth('admin')->check(), 403);
+
+        $data = $request->validate([
+            'locale' => ['required', Rule::in(LocaleResolver::SUPPORTED)],
+        ]);
+
+        $request->session()->put('locale', $data['locale']);
+
+        return redirect()->route('userLogin');
     }
 }

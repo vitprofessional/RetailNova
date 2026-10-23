@@ -11,8 +11,7 @@ class PurchaseWorkflow
     public function platform(): bool
     {
         $actor=auth('admin')->user();
-        return $actor && (($actor->isSuperAdminRole() || ($actor->normalizedRole()==='admin' && $actor->hasSuperAdminPrivileges()))
-            || ($actor->normalizedRole()==='' && $actor->hasSuperAdminPrivileges()));
+        return $actor && $actor->hasSuperAdminPrivileges();
     }
 
     public function scoped($query)

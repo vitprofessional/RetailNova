@@ -12,8 +12,11 @@ class LocaleResolver
     {
         $business = $user && $user->businessId
             ? BusinessSetup::query()->find($user->businessId) : null;
-        foreach ([$user?->preferred_locale, $business?->default_locale,
-            $user ? null : $guestPreference, config('app.locale'), 'en'] as $locale) {
+        $candidates = $user
+            ? [$user->preferred_locale, $business?->default_locale, config('app.locale'), 'en']
+            : [$guestPreference, $business?->default_locale, config('app.locale'), 'en'];
+
+        foreach ($candidates as $locale) {
             if (in_array($locale, self::SUPPORTED, true)) { return $locale; }
         }
         return 'en';

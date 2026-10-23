@@ -99,25 +99,16 @@ class SalesSettingsAuthorizationTest extends TestCase
         $this->assertSame($required, $checkbox->hasAttribute('checked'));
     }
 
-    public function test_legacy_first_owner_with_null_role_and_business_can_configure_existing_business(): void
+    public function test_first_account_with_null_role_does_not_receive_platform_privileges(): void
     {
         $this->businesses();
-        $owner = $this->actor(null, null, 17); // The convention is earliest account, not a hardcoded ID 1.
+        $owner = $this->actor(null, null, 17);
         $this->actingAs($owner, 'admin');
-        $this->assertTrue($owner->hasSuperAdminPrivileges());
-        $this->assertTrue($owner->canManageSalesSettings());
-        foreach (['en', 'bn'] as $locale) {
-            $owner->update(['preferred_locale' => $locale]);
-            $page = $this->get(route('sales.settings.edit'))->assertOk()->assertSee('lang="'.$locale.'"', false);
-            $this->assertSidebar($page->getContent(), true);
-            foreach ([false, true] as $required) {
-                $this->post(route('sales.settings.update'), ['businessId' => 1,
-                    'sales_serial_selection_required' => (int) $required])->assertRedirect();
-                $page = $this->get(route('sales.settings.edit'))->assertOk();
-                $this->assertCheckbox($page->getContent(), $required);
-                $this->assertSame($required, BusinessSetup::find(1)->sales_serial_selection_required);
-            }
-        }
+        $this->assertFalse($owner->hasSuperAdminPrivileges());
+        $this->assertFalse($owner->canManageSalesSettings());
+        $this->getJson(route('sales.settings.edit'))->assertForbidden();
+        $this->postJson(route('sales.settings.update'), ['businessId' => 1,
+            'sales_serial_selection_required' => false])->assertForbidden();
         $this->assertNull($owner->fresh()->role);
         $this->assertNull($owner->fresh()->businessId);
     }
@@ -134,12 +125,13 @@ class SalesSettingsAuthorizationTest extends TestCase
             'sales_serial_selection_required' => false])->assertForbidden();
     }
 
-    public function test_first_created_gm_preserves_explicit_existing_owner_convention(): void
+    public function test_first_created_gm_does_not_receive_superadmin_privileges(): void
     {
         $this->businesses();
         $owner = $this->actor('GM', 1, 23);
         $this->actingAs($owner, 'admin');
-        $this->assertTrue($owner->hasSuperAdminPrivileges());
-        $this->get(route('sales.settings.edit', ['businessId' => 2]))->assertOk();
+        $this->assertFalse($owner->hasSuperAdminPrivileges());
+        $this->assertFalse($owner->canAccessAllSalesBusinesses());
+        $this->getJson(route('sales.settings.edit', ['businessId' => 2]))->assertForbidden();
     }
 }

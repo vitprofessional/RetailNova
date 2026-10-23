@@ -19,6 +19,14 @@
     RewriteRule ^ %1 [L,R=301]
 
     # Send Requests To Front Controller...
+    # Keep the local Alias mount when /public/ is also aliased for legacy assets.
+    # Apache otherwise derives SCRIPT_NAME from that second Alias and Laravel
+    # cannot strip the correct base URL. Other deployment paths use the fallback.
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_URI} ^/RetailNova(?:/|$)
+    RewriteRule ^ /RetailNova/index.php [L]
+
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]

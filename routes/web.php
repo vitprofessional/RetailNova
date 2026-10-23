@@ -30,6 +30,11 @@ Route::get('/login',[
     'userLogin'
 ])->name('userLogin');
 
+Route::post('/guest/language', [
+    \App\Http\Controllers\LanguageSettingsController::class,
+    'guestPreference',
+])->name('locale.guest');
+
 // Backward-compatible named route expected by Laravel auth middleware
 // Some middleware or packages expect a route named `login`. Provide a
 // lightweight redirect so `route('login')` resolves and forwards to the
@@ -38,15 +43,13 @@ Route::get('/login-redirect', function(){
     return redirect()->route('userLogin');
 })->name('login');
 
-Route::post('creat/admin',[
-    userInfo::class,
-    'creatAdmin'
-])->name('creatAdmin');
+// Retired: first-run provisioning happens only through /setup/superadmin.
+Route::post('creat/admin', fn () => abort(410, __('authentication.setup_endpoint_retired')))->name('creatAdmin');
 
 Route::post('admin/login',[
     userInfo::class,
     'adminLogin'
-])->name('adminLogin');
+])->name('adminLogin')->middleware('throttle:5,1');
 
 Route::get('/user/lock/screen',[
     userInfo::class,
@@ -71,15 +74,9 @@ Route::get('/user/recover/password',[
 ])->name('userRecoverPassword');
 
 
-Route::get('/business/setup',[
-    userInfo::class,
-    'storeCreat'
-])->name('storeCreat');
-
-Route::post('/business/setup',[
-    userInfo::class,
-    'saveStoreSetup'
-])->name('saveStoreSetup');
+// Retired public business-first setup. The authenticated settings page is /Business/setup below.
+Route::get('/business/setup', fn () => redirect()->route('superadmin.setup.show'))->name('storeCreat');
+Route::post('/business/setup', fn () => abort(410, __('authentication.setup_endpoint_retired')))->name('saveStoreSetup');
 
 // Moved to authenticated admin group below to ensure only Admin/Super Admin can create/update business
 
@@ -104,11 +101,13 @@ Route::get('/',[
 Route::view('/brochure', 'brochure.marketing')->name('brochure.marketing');
 
 // Public AJAX endpoint for product list (no auth) — used by sale page to populate product select when
-// First-time Super Admin setup (blocked if one exists)
-Route::middleware([\App\Http\Middleware\EnsureNoSuperAdminExists::class])
+// Single public first-run entry (closed once any administrator or business exists)
+Route::middleware([\App\Http\Middleware\EnsureFirstRunOpen::class])
     ->group(function(){
         Route::get('/setup/superadmin', [SuperAdminSetupController::class, 'show'])->name('superadmin.setup.show');
-        Route::post('/setup/superadmin', [SuperAdminSetupController::class, 'store'])->name('superadmin.setup.store');
+        Route::post('/setup/superadmin', [SuperAdminSetupController::class, 'store'])
+            ->middleware('throttle:first-run-setup')
+            ->name('superadmin.setup.store');
     });
 // admin session/cookies are not available to AJAX (keeps UI responsive). This returns option HTML.
 Route::get('/ajax/public/customer/{id}/products', [
@@ -861,7 +860,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
         'resetDemoData'
     ])->name('business.demo.reset');
 
-    Route::match(['get','post','delete'],'/business/logo/delete/{id}', [
+    Route::delete('/business/logo/delete/{id}', [
         businessController::class,
         'delBusinessLogo'
     ])->name('delBusinessLogo');

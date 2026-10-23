@@ -7,33 +7,52 @@
         <div class="card-header"><h5 class="mb-0">{{ __('authentication.first_time_super_admin_setup') }}</h5></div>
         <div class="card-body">
             <p class="text-muted">{{ __('authentication.create_the_first_super_admin_account_once_created_this_form_is_disabled') }}</p>
+            @if ($errors->any())
+                <div class="alert alert-danger" role="alert">
+                    <ul class="mb-0">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+                </div>
+            @endif
             <form action="{{ route('superadmin.setup.store') }}" method="POST">
                 @csrf
                 <div class="row">
                     <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ __('authentication.business_name') }}</label>
+                        <input name="businessName" class="form-control" value="{{ old('businessName') }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
                         <label class="form-label">{{ __('authentication.full_name') }}</label>
-                        <input name="fullName" class="form-control" required>
+                        <input name="fullName" class="form-control" value="{{ old('fullName') }}" required>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">{{ __('authentication.sure_name') }}</label>
-                        <input name="sureName" class="form-control">
+                        <input name="sureName" class="form-control" value="{{ old('sureName') }}">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">{{ __('authentication.email') }}</label>
-                        <input name="mail" type="email" class="form-control" required>
+                        <input name="mail" type="email" class="form-control" value="{{ old('mail') }}" required>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">{{ __('authentication.password') }}</label>
-                        <input name="password" type="password" class="form-control" required>
+                        <input name="password" type="password" class="form-control" autocomplete="new-password" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ __('authentication.confirm_password') }}</label>
+                        <input name="password_confirmation" type="password" class="form-control" autocomplete="new-password" required>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">{{ __('authentication.store_name') }}</label>
-                        <input name="storeName" class="form-control">
+                        <input name="storeName" class="form-control" value="{{ old('storeName') }}">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">{{ __('authentication.contact_number') }}</label>
-                        <input name="contactNumber" class="form-control">
+                        <input name="contactNumber" class="form-control" value="{{ old('contactNumber') }}">
                     </div>
+                    @if ($requiresSetupToken)
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ __('authentication.setup_token') }}</label>
+                            <input name="setup_token" type="password" class="form-control" autocomplete="off" required>
+                        </div>
+                    @endif
                 </div>
                 <button class="btn btn-primary">{{ __('authentication.create_super_admin') }}</button>
                 <a href="{{ route('userLogin') }}" class="btn btn-secondary ml-2">{{ __('authentication.back_to_login') }}</a>

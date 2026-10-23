@@ -127,12 +127,12 @@ class SalesRegressionTest extends TestCase
         $this->actingAs($this->actor(), 'admin');
     }
 
-    public function test_existing_owner_and_spaced_superadmin_can_save_optional_sales_with_both_actions(): void
+    public function test_explicit_and_spaced_superadmins_can_save_optional_sales_with_both_actions(): void
     {
         $inventory = $this->inventory();
         $this->optional();
         $owner = $this->actor();
-        $owner->update(['role' => null, 'businessId' => null]);
+        $owner->update(['role' => 'superadmin', 'businessId' => null]);
         $spaced = $this->actor('super admin', 0);
         foreach ([$owner, $spaced] as $index => $actor) {
             $this->actingAs($actor, 'admin');
@@ -168,11 +168,11 @@ class SalesRegressionTest extends TestCase
         $this->assertRolledBack($inventory);
     }
 
-    public function test_unassigned_legacy_owner_still_requires_selection_when_mandatory(): void
+    public function test_unassigned_explicit_superadmin_still_requires_selection_when_mandatory(): void
     {
         $inventory = $this->inventory();
         $owner = $this->actor();
-        $owner->update(['role' => null, 'businessId' => null]);
+        $owner->update(['role' => 'superadmin', 'businessId' => null]);
         $this->actingAs($owner, 'admin');
         $payload = $this->payload($inventory);
         unset($payload['serialId']);
@@ -377,12 +377,10 @@ class SalesRegressionTest extends TestCase
     {
         $inventory = $this->inventory(2);
         $inventory['serials'][0]->update(['saleId' => 123, 'status' => 'sold']);
-        foreach (['admin', 'superadmin'] as $role) {
-            $this->actingAs($this->actor($role), 'admin');
-            $this->getJson(route('ajax.purchase.serials.public', $inventory['purchase']->id))
-                ->assertOk()->assertJsonCount(2, 'serials')
-                ->assertJsonMissing(['id' => $inventory['serials'][0]->id]);
-        }
+        $this->actingAs($this->actor('superadmin'), 'admin');
+        $this->getJson(route('ajax.purchase.serials.public', $inventory['purchase']->id))
+            ->assertOk()->assertJsonCount(2, 'serials')
+            ->assertJsonMissing(['id' => $inventory['serials'][0]->id]);
     }
 
     public function test_gm_cannot_deduct_another_business_stock_through_sale_creation(): void

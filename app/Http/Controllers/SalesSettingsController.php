@@ -13,7 +13,7 @@ class SalesSettingsController extends Controller
         $actor = auth('admin')->user();
         abort_unless($actor && $actor->canManageSalesSettings(), 403);
         $query = BusinessSetup::query();
-        // Preserve the repository's first-admin/platform-superadmin privilege convention.
+        // Only an explicitly assigned platform role can cross business boundaries.
         if (!$actor->hasSuperAdminPrivileges()) { $query->whereKey((int) $actor->businessId); }
         return $query;
     }

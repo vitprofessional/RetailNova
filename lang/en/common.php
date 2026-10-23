@@ -1471,4 +1471,9 @@ return [
     'accounting_integration_explanation' => 'If you select both Expense Account and Payment Account, a double-entry transaction will be automatically created.',
     'client_please_select_at_least_one_item_to_delete' => 'Please select at least one item to delete.',
     'purchase_serial_capacity' => 'Serial count cannot exceed quantity.',
+    'demo_seeded' => 'Business details saved and :type demo data loaded.',
+    'demo_seed_failed' => 'Business details were saved, but the demo data could not be loaded. No demo records were kept.',
+    'demo_reset_completed' => 'Demo data was replaced with :type demo data.',
+    'demo_reset_failed' => 'Demo data could not be replaced. Your existing data was left unchanged.',
+    'notification_business_logo_upload_failed_try_again' => 'Business logo upload failed. Please try again.',
 ];

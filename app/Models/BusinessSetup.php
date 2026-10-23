@@ -45,7 +45,11 @@ class BusinessSetup extends Model
         }
 
         $path = public_path('uploads/business/' . $filename);
-        if (!is_file($path) || !is_readable($path)) {
+        // On Windows/XAMPP, PHP may report is_readable() as false for files the
+        // web server can serve (notably under ACL-managed public directories).
+        // Confirm the configured asset exists; the rendered image retains an
+        // onerror fallback in case the web server cannot serve it.
+        if (!is_file($path)) {
             return null;
         }
 

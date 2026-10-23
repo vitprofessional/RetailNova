@@ -277,10 +277,10 @@ trait TestsSalesSerialPolicy
         $this->assertFalse(BusinessSetup::find(2)->sales_serial_selection_required);
     }
 
-    public function test_first_admin_retains_platform_settings_access(): void
+    public function test_explicit_superadmin_retains_platform_settings_access(): void
     {
         $this->inventory(2);
-        $this->actingAs($this->actor('admin', 1), 'admin');
+        $this->actingAs($this->actor('superadmin', 1), 'admin');
         $this->post(route('sales.settings.update'), ['businessId' => 2, 'sales_serial_selection_required' => false])->assertRedirect();
         $this->assertFalse(BusinessSetup::find(2)->sales_serial_selection_required);
     }

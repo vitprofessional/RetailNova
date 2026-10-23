@@ -1,278 +1,174 @@
-
-
-
 <!doctype html>
 <html lang="{{ app()->getLocale() }}">
-
-<!-- Mirrored from templates.iqonic.design/posdash/html/backend/auth-sign-in.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 12 Mar 2025 08:08:13 GMT -->
 <head>
     <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-      <title>@if($config->count()>0){{ $config[0]->businessName ?? 'Retail Nova' }}@else Retail Nova @endif | User Login</title>
-      @include('partials.pwa-head')
-
-      <!-- Favicon -->
-      <link rel="shortcut icon" href="{{asset('eshop')}}/assets/images/favicon.ico" />
-      <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/backend-plugin.min.css">
-      <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/backende209.css?v=1.0.0">
-      <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
-      <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/line-awesome/dist/line-awesome/css/line-awesome.min.css">
-      <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/remixicon/fonts/remixicon.css">
-   <head>
-      <style>
-         .bg-login {
-            background: linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%) !important;
-         }
-         .login-content {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-         }
-         .auth-card {
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(60,72,120,0.15);
-            padding: 2rem 2.5rem;
-         }
-         .auth-content h2 {
-            font-weight: 700;
-            color: #3b82f6;
-         }
-         .auth-content p {
-            color: #64748b;
-            font-size: 1.1rem;
-         }
-         .floating-label {
-            position: relative;
-         }
-         .floating-label label {
-            position: absolute;
-            left: 12px;
-            top: 10px;
-            color: #94a3b8;
-            font-size: 0.95rem;
-            pointer-events: none;
-            transition: 0.2s;
-         }
-         .floating-input:focus + label,
-         .floating-input:not(:placeholder-shown) + label {
-            top: -12px;
-            left: 8px;
-            font-size: 0.8rem;
-            color: #3b82f6;
-         }
-         .form-control {
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
-            padding-left: 2.5rem;
-         }
-         .input-icon {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #94a3b8;
-            font-size: 1.1rem;
-         }
-         .btn-primary {
-            background: #3b82f6;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            padding: 0.6rem 2rem;
-         }
-         .image-right {
-            max-width: 120px;
-         }
-         /* ── Mobile responsiveness ── */
-         @media (max-width: 576px) {
-            .auth-card {
-               padding: 1.25rem 1rem;
-               border-radius: 10px;
-            }
-            .auth-content h2 {
-               font-size: 1.35rem;
-            }
-            .auth-content p {
-               font-size: 0.9rem;
-            }
-            .login-content {
-               padding: 1rem 0.5rem;
-               align-items: flex-start;
-               padding-top: 2rem;
-            }
-            .form-control {
-               font-size: 0.95rem;
-               padding: 0.5rem 0.5rem 0.5rem 2.2rem;
-            }
-            .btn-primary {
-               font-size: 1rem;
-               padding: 0.6rem 1rem;
-            }
-            .shop-info-card {
-               min-width: 0 !important;
-               width: 100%;
-            }
-         }
-         @media (max-width: 768px) {
-            .auth-card {
-               padding: 1.5rem 1.25rem;
-            }
-         }
-      </style>
-   @include('partials.localization')
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fff8fb">
+    <title>{{ __('authentication.login_title') }} | RetailNova</title>
+    <link rel="icon" href="{{ asset('logo.png') }}" type="image/png">
+    @include('partials.pwa-head')
+    <link rel="stylesheet" href="{{ asset('css/login.css') }}?v={{ filemtime(public_path('css/login.css')) }}">
+    <meta name="theme-color" content="#fff8fb">
 </head>
-  <body class="bg-login">
-    <!-- loader Start -->
-    <div id="loading">
-          <div id="loading-center">
-          </div>
-    </div>
-    <!-- loader END -->
+<body class="rn-login-page">
+    <header class="rn-login-topbar">
+        <a class="rn-login-mobile-brand" href="{{ route('userLogin') }}" aria-label="RetailNova">
+            <img src="{{ asset('logo.png') }}" alt="RetailNova">
+        </a>
+        @guest('admin')
+            <details class="rn-language-picker" data-language-picker>
+                <summary class="rn-language-trigger" aria-label="{{ __('authentication.language') }}" aria-controls="rn-language-options" aria-expanded="false">
+                    <span class="rn-language-globe" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18M5.6 6.5h12.8M5.6 17.5h12.8"/></svg>
+                    </span>
+                    <span class="rn-language-current" lang="{{ app()->getLocale() }}">{{ app()->getLocale() === 'bn' ? __('authentication.bangla') : __('authentication.english') }}</span>
+                    <svg class="rn-language-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 6 4.5 4 4.5-4"/></svg>
+                </summary>
+                <div class="rn-language-menu" id="rn-language-options" aria-label="{{ __('authentication.language') }}">
+                    <form action="{{ route('locale.guest') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="locale" value="en">
+                        <button type="submit" lang="en" @if(app()->getLocale() === 'en') aria-current="true" class="is-selected" @endif>{{ __('authentication.english') }}</button>
+                    </form>
+                    <form action="{{ route('locale.guest') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="locale" value="bn">
+                        <button type="submit" lang="bn" @if(app()->getLocale() === 'bn') aria-current="true" class="is-selected" @endif>{{ __('authentication.bangla') }}</button>
+                    </form>
+                </div>
+            </details>
+        @endguest
+    </header>
 
-      <div class="wrapper">
-      <section class="login-content">
-         <div class="container">
-            <div class="row align-items-center justify-content-center height-self-center">
-               <div class="@if($config->count()>0) col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 @else col-12 col-sm-10 col-md-8 col-lg-7 @endif">
-                  <div class="card auth-card shadow">
-                     <div class="card-body">
-                        <div class="d-flex align-items-center auth-content">
-                           <div class="col-12 align-self-center">
-                              <div class="row">
-                                 <div class="col-12 text-center mb-3">
-                                          @php
-                                             $shop = $business[0] ?? null;
-                                             $displayShop = $shop ?? ($config[0] ?? null);
-                                          @endphp
-                                          @if($displayShop)
-                                             <div class="mb-3 px-3 py-3 shop-info-card" style="background:#f3f6fb;border-radius:12px;box-shadow:0 2px 8px rgba(60,72,120,0.07);display:block;width:100%;max-width:400px;margin:0 auto;">
-                                                   <div class="d-flex flex-column align-items-start">
-                                                   <img src="{{ !empty($displayShop->businessLogo) ? asset('uploads/business/' . $displayShop->businessLogo) : asset('logo.png') }}" alt="Logo" style="max-width:70px;max-height:70px;border-radius:8px;margin-bottom:8px;">
-                                                      <h4 class="mb-1" style="color:#3b82f6;margin-bottom:0.25rem;text-align:left;width:100%;word-break:break-word;">{{ $displayShop->businessName ?? '' }}, <small style="font-size:12px">{{ $displayShop->businessLocation }}</small></h4>
-                                                   <div style="color:#64748b;font-size:1rem;width:100%;">
-                                                      <div style="display:flex;flex-wrap:wrap;justify-content:flex-start;gap:12px;">
-                                                         @if(!empty($displayShop->mobile))
-                                                            <span style="display:flex;align-items:center;gap:6px;"><i class="ri-phone-line" style="font-size:1.15em;"></i> <span>{{ $displayShop->mobile }}</span></span>
-                                                         @endif
-                                                         @if(!empty($displayShop->email))
-                                                            <span style="display:flex;align-items:center;gap:6px;word-break:break-all;"><i class="ri-mail-line" style="font-size:1.15em;flex-shrink:0;"></i> <span>{{ $displayShop->email }}</span></span>
-                                                         @endif
-                                                      </div>
-                                                   </div>
-                                                </div>
-                                             </div>
-                                          @endif
-                                 </div>
-                                 <div class="col-12">
-                                       @if(session()->has('success'))
-                                          <div class="alert alert-success w-100">
-                                             {{ session()->get('success') }}
-                                          </div>
-                                       @endif
-                                       @if(session()->has('error'))
-                                          <div class="alert alert-danger w-100">
-                                             {{ session()->get('error') }}
-                                          </div>
-                                       @endif
-                                 </div>
-                              </div>
-                              <h2 class="mb-2 text-center">{{ __('common.welcome_to') }} {{ $config->count() > 0 ? ($config[0]->businessName ?? 'Retail Nova') : 'Retail Nova' }}</h2>
-                              <p class="text-center">{{ __('authentication.sign_in_to_your_account_to_continue') }}</p>
-                                 @if($hasAdminUsers || $config->count()>0)
-                              <form action="{{ route('adminLogin') }}" class="login-form" method="POST">
-                                    @csrf
-                                 <div class="row">
-                                    <div class="col-lg-12">
-                                       <div class="floating-label form-group position-relative">
-                                          <span class="input-icon"><i class="ri-mail-line"></i></span>
-                                          <input class="form-control" type="email" id="userMail" name="userMail" autocomplete="username" placeholder="{{ __('authentication.email') }}">
-                                       </div>
-                                    </div>
-                                    <div class="col-lg-12">
-                                       <div class="floating-label form-group position-relative">
-                                          <span class="input-icon"><i class="ri-lock-line"></i></span>
-                                          <input class="form-control" type="password" id="password" name="password" autocomplete="current-password" placeholder="{{ __('authentication.password') }}">
-                                       </div>
-                                    </div>
-                                 </div>
-                                 <button type="submit" class="btn btn-primary w-100 mt-2">{{ __('authentication.sign_in') }}</button>
-                              </form>
-                              @else
-                                 <form action="{{ route('creatAdmin') }}" class="login-form" method="POST">
-                                    @csrf
-                                    <div class="row">
-                                       <div class="col-lg-6">
-                                          <div class="floating-label form-group">
-                                             <input class="floating-input form-control" type="text" id="fullName" name="fullName" placeholder=" ">
-                                             <label>{{ __('authentication.full_name') }}</label>
-                                          </div>
-                                       </div>
-                                       <div class="col-lg-6">
-                                          <div class="floating-label form-group">
-                                             <input class="floating-input form-control" type="text" id="sureName" name="sureName" placeholder=" ">
-                                             <label>{{ __('authentication.last_name') }}</label>
-                                          </div>
-                                       </div>
-                                       <div class="col-lg-6">
-                                          <div class="floating-label form-group">
-                                             <input class="floating-input form-control" type="email" id="mail" name="mail" placeholder=" ">
-                                             <label>{{ __('authentication.email') }}</label>
-                                          </div>
-                                       </div>
-                                       <div class="col-lg-6">
-                                          <div class="floating-label form-group">
-                                             <input class="floating-input form-control" type="number" id="contactNumber" name="contactNumber" placeholder=" ">
-                                             <label>{{ __('authentication.phone_no') }}</label>
-                                          </div>
-                                       </div>
-                                       <div class="col-lg-6">
-                                          <div class="floating-label form-group">
-                                             <input class="floating-input form-control" type="text" id="storeName" name="storeName" placeholder=" ">
-                                             <label>{{ __('authentication.store_name') }}</label>
-                                          </div>
-                                       </div>
-                                       <div class="col-lg-6">
-                                          <div class="floating-label form-group">
-                                             <input class="floating-input form-control" type="password" id="password" name="password" placeholder=" ">
-                                             <label>{{ __('authentication.password') }}</label>
-                                          </div>
-                                       </div>
-                                       <div class="col-lg-6">
-                                          <div class="floating-label form-group">
-                                             <input class="floating-input form-control" type="password" id="confirmPass" name="confirmPass" placeholder=" ">
-                                             <label>{{ __('authentication.confirm_password') }}</label>
-                                          </div>
-                                       </div>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary w-100 mt-2">{{ __('authentication.pos_register') }}</button>
-                                 </form>
-                              @endif
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-               </div>
+    <main class="rn-login-layout">
+        <section class="rn-login-hero" aria-labelledby="rn-login-brand-heading">
+            <div class="rn-pos-scene" aria-hidden="true">
+                <img class="rn-pos-art" src="{{ asset('images/login/retailnova-desktop-scene.svg') }}" alt="" loading="eager" decoding="async">
             </div>
-         </div>
-      </section>
-      </div>
+            <div class="rn-hero-content">
+                <img class="rn-hero-logo" src="{{ asset('logo.png') }}" alt="RetailNova">
+                <h1 id="rn-login-brand-heading">{{ __('authentication.hero_title') }}</h1>
+                <p class="rn-hero-description">{{ __('authentication.hero_description') }}</p>
 
-    <!-- Backend Bundle JavaScript -->
-    <script src="{{asset('eshop')}}/assets/js/backend-bundle.min.js"></script>
+                <ul class="rn-capabilities" aria-label="{{ __('authentication.capabilities') }}">
+                    <li>
+                        <span class="rn-capability-icon rn-capability-pink" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.1 11.2a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 1.9-1.4L22 8H6M10 21h.01M18 21h.01"/></svg></span>
+                        <span>{{ __('authentication.feature_sales') }}</span>
+                    </li>
+                    <li>
+                        <span class="rn-capability-icon rn-capability-teal" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 5v9l9 5 9-5V8M12 13v9"/></svg></span>
+                        <span>{{ __('authentication.feature_inventory') }}</span>
+                    </li>
+                    <li>
+                        <span class="rn-capability-icon rn-capability-orange" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20v-1a6 6 0 0 1 12 0v1H3Zm13-5a4.5 4.5 0 0 1 5 4.5V20h-4"/></svg></span>
+                        <span>{{ __('authentication.feature_customers') }}</span>
+                    </li>
+                    <li>
+                        <span class="rn-capability-icon rn-capability-purple" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V11h4v9H4Zm6 0V5h4v15h-4Zm6 0v-7h4v7h-4Z"/></svg></span>
+                        <span>{{ __('authentication.feature_reports') }}</span>
+                    </li>
+                </ul>
 
-    <!-- Table Treeview JavaScript -->
-    <script src="{{asset('eshop')}}/assets/js/table-treeview.js"></script>
+            </div>
+        </section>
 
-    <!-- Chart Custom JavaScript -->
-    <script src="{{asset('eshop')}}/assets/js/customizer.js"></script>
+        <section class="rn-login-panel" aria-labelledby="rn-login-title">
+            <article class="rn-login-card">
+                <div class="rn-card-brand">
+                    <img src="{{ asset('logo.png') }}" alt="RetailNova">
+                </div>
+                <div class="rn-card-heading">
+                    <span class="rn-welcome-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4m0-12.8L17 7M7 17l-1.4 1.4"/><circle cx="12" cy="12" r="5"/></svg></span>
+                    <h2 id="rn-login-title">{{ __('authentication.welcome_back') }}</h2>
+                    <p>{{ __('authentication.login_subtitle') }}</p>
+                </div>
 
-    <!-- Chart Custom JavaScript -->
-    <script async src="{{asset('eshop')}}/assets/js/chart-custom.js"></script>
+                @php
+                    $loginNotice = session('login_notice');
+                    $loginNoticeText = is_array($loginNotice) ? match (($loginNotice['key'] ?? null)) {
+                        'logout_successful' => __('authentication.logout_successful'),
+                        'invalid_credentials' => __('common.notification_invalid_credentials'),
+                        default => null,
+                    } : null;
+                    $successMessage = is_array($loginNotice) && ($loginNotice['type'] ?? null) === 'success'
+                        ? $loginNoticeText
+                        : session('success');
+                    $errorMessage = is_array($loginNotice) && ($loginNotice['type'] ?? null) === 'error'
+                        ? $loginNoticeText
+                        : session('error');
+                @endphp
+                @if ($successMessage)
+                    <div class="rn-alert rn-alert-success" role="status">{{ $successMessage }}</div>
+                @endif
+                @if ($errorMessage)
+                    <div class="rn-alert rn-alert-error" role="alert">{{ $errorMessage }}</div>
+                @endif
+                @if ($errors->any())
+                    <div class="rn-alert rn-alert-error" role="alert">
+                        <p>{{ __('authentication.form_error_heading') }}</p>
+                        <ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+                    </div>
+                @endif
 
-    <!-- app JavaScript -->
-    <script src="{{asset('eshop')}}/assets/js/app.js"></script>
-  </body>
+                <form action="{{ route('adminLogin') }}" class="rn-login-form" method="POST">
+                    @csrf
+                    <div class="rn-field-group">
+                        <label for="userMail">{{ __('authentication.email_or_username') }}</label>
+                        <div class="rn-input-wrap @error('userMail') rn-input-invalid @enderror">
+                            <svg class="rn-field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+                            <input type="email" id="userMail" name="userMail" value="{{ old('userMail') }}" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="{{ __('authentication.email_placeholder') }}" aria-describedby="email-help" required>
+                        </div>
+                        <span id="email-help" class="rn-sr-only">{{ __('authentication.email_help') }}</span>
+                        @error('userMail')<span class="rn-field-error">{{ $message }}</span>@enderror
+                    </div>
 
-<!-- Mirrored from templates.iqonic.design/posdash/html/backend/auth-sign-in.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 12 Mar 2025 08:08:13 GMT -->
+                    <div class="rn-field-group">
+                        <label for="password">{{ __('authentication.password') }}</label>
+                        <div class="rn-input-wrap @error('password') rn-input-invalid @enderror">
+                            <svg class="rn-field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3m-4 4v3"/></svg>
+                            <input type="password" id="password" name="password" autocomplete="current-password" placeholder="{{ __('authentication.password_placeholder') }}" required>
+                            <button class="rn-password-toggle" type="button" aria-label="{{ __('authentication.show_password') }}" aria-pressed="false" data-show-label="{{ __('authentication.show_password') }}" data-hide-label="{{ __('authentication.hide_password') }}">
+                                <svg class="rn-eye-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.7"/></svg>
+                            </button>
+                        </div>
+                        @error('password')<span class="rn-field-error">{{ $message }}</span>@enderror
+                    </div>
+
+                    <button class="rn-sign-in-button" type="submit">
+                        <span>{{ __('authentication.sign_in') }}</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-7 7 7-7 7"/></svg>
+                    </button>
+                </form>
+
+                <div class="rn-card-footer">
+                    <span class="rn-footer-dot" aria-hidden="true"></span>
+                    <span>{{ __('authentication.secure_login_note') }}</span>
+                </div>
+                @if ($firstRunOpen)
+                    <p class="rn-first-setup">{{ __('authentication.first_setup_prompt') }} <a href="{{ route('superadmin.setup.show') }}">{{ __('authentication.first_setup_link') }}</a></p>
+                @endif
+            </article>
+            <ul class="rn-login-benefits" aria-label="{{ __('authentication.login_benefits') }}">
+                <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v5c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6l8-3Z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></svg>
+                    <span>{{ __('authentication.benefit_secure') }}</span>
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 9h8M8 13h8M8 17h4"/></svg>
+                    <span>{{ __('authentication.benefit_sales') }}</span>
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 5v9l9 5 9-5V8M12 13v9"/></svg>
+                    <span>{{ __('authentication.benefit_inventory') }}</span>
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m0 14h16M8 15v-4h3v4m2 0V7h3v8m2 0V9h2v6"/></svg>
+                    <span>{{ __('authentication.benefit_reports') }}</span>
+                </li>
+            </ul>
+            <footer class="rn-login-copyright">{{ __('authentication.product_footer') }}</footer>
+        </section>
+    </main>
+    <script src="{{ asset('js/login.js') }}?v={{ filemtime(public_path('js/login.js')) }}" defer></script>
+</body>
 </html>

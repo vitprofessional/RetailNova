@@ -60,7 +60,7 @@ class Kernel extends HttpKernel
         'posAdmin' => \App\Http\Middleware\SuperAdmin::class,
         'generalAdmin' => \App\Http\Middleware\GeneralAdmin::class,
         'superadmin' => \App\Http\Middleware\EnsureSuperAdminRole::class,
-        'noSuperadmin' => \App\Http\Middleware\EnsureNoSuperAdminExists::class,
+        'firstRunOpen' => \App\Http\Middleware\EnsureFirstRunOpen::class,
         'salesOnly' => \App\Http\Middleware\SalesOnly::class,
 
         // Lightweight test logger used during `testing` environment

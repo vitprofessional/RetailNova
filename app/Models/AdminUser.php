@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\DB;
 
 class AdminUser extends Authenticatable
 {
@@ -33,16 +32,10 @@ class AdminUser extends Authenticatable
         return $this->normalizedRole() === 'superadmin';
     }
 
-    public function isFirstCreatedAdmin(): bool
-    {
-        $firstId = (int) static::query()->min('id');
-        return $firstId > 0 && (int)$this->id === $firstId;
-    }
-
     public function hasSuperAdminPrivileges(): bool
     {
-        // Backward-compatible: treat the first created admin as platform owner.
-        return $this->isSuperAdminRole() || $this->isFirstCreatedAdmin();
+        // Platform privileges are granted only by an explicit, normalized role.
+        return $this->isSuperAdminRole();
     }
 
     public function canManageSalesSettings(): bool
@@ -52,15 +45,11 @@ class AdminUser extends Authenticatable
 
     public function canAccessAllSalesBusinesses(): bool
     {
-        // Honor legacy unassigned platform owners without lifting explicit operator business scope.
-        return in_array($this->normalizedRole(), ['admin', 'superadmin'], true)
-            || ($this->normalizedRole() === '' && $this->hasSuperAdminPrivileges());
+        return $this->hasSuperAdminPrivileges();
     }
 
-    public static function superAdminExists(): bool
+    public static function anyAdminExists(): bool
     {
-        return static::query()
-            ->whereRaw("LOWER(REPLACE(role, ' ', '')) = ?", ['superadmin'])
-            ->exists();
+        return static::query()->exists();
     }
 }
