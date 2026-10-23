@@ -7,6 +7,8 @@ use App\Models\Account;
 
 class AccountSeeder extends Seeder
 {
+    use Concerns\BusinessTypeSeedable;
+
     /**
      * Run the database seeds.
      */
@@ -286,7 +288,10 @@ class AccountSeeder extends Seeder
         ];
 
         foreach ($accounts as $account) {
-            Account::updateOrCreate(['account_code' => $account['account_code']], $account);
+            Account::withoutGlobalScopes()->updateOrCreate(
+                ['businessId' => $this->businessId, 'account_code' => $account['account_code']],
+                $account + ['businessId' => $this->businessId]
+            );
         }
     }
 }

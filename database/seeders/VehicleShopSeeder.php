@@ -24,20 +24,20 @@ class VehicleShopSeeder extends Seeder
 
         // ── Brands ──────────────────────────────────────────────────────────
         foreach (['Toyota', 'Honda', 'Yamaha', 'Bajaj', 'TVS', 'Bosch', 'NGK', 'Castrol'] as $b) {
-            DB::table('brands')->insertOrIgnore(['name' => $b, 'created_at' => now(), 'updated_at' => now()]);
+            $this->masterId('brands', $b);
         }
 
         // ── Categories ──────────────────────────────────────────────────────
         $cats = ['Engine Parts', 'Suspension & Brakes', 'Electrical Parts',
                  'Body & Exterior', 'Lubricants & Fluids', 'Tyres & Tubes', 'Batteries', 'Filters'];
         foreach ($cats as $c) {
-            DB::table('categories')->insertOrIgnore(['name' => $c, 'created_at' => now(), 'updated_at' => now()]);
+            $this->masterId('categories', $c);
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────
-        $brand   = fn(string $n) => (string)(DB::table('brands')->where('name', $n)->value('id') ?? 1);
-        $cat     = fn(string $n) => (string)(DB::table('categories')->where('name', $n)->value('id') ?? 1);
-        $unit    = fn(string $n) => (string)(DB::table('product_units')->where('name', $n)->value('id') ?? 1);
+        $brand   = fn(string $n) => (string)$this->masterId('brands', $n);
+        $cat     = fn(string $n) => (string)$this->masterId('categories', $n);
+        $unit    = fn(string $n) => (string)$this->masterId('product_units', $n);
         $supId   = fn(string $mail) => DB::table('suppliers')->where('businessId', $bid)->where('mail', $mail)->value('id');
         $custId  = fn(string $mail) => DB::table('customers')->where('businessId', $bid)->where('mail', $mail)->value('id');
         $purId   = fn(string $inv)  => DB::table('purchase_products')->where('businessId', $bid)->where('invoice', $inv)->value('id');

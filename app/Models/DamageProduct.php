@@ -2,16 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class DamageProduct extends Model
 {
-    use HasFactory;
+    use HasFactory, ScopesByBusiness;
 
     protected $table = 'damage_products';
 
-    protected $fillable = [
+    protected $fillable = ['businessId', 
         'reference', 'date', 'product_id', 'qty', 'buy_price', 'sale_price', 'total', 'admin_id'
     ];
 

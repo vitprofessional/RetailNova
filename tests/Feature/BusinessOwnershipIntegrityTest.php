@@ -105,9 +105,9 @@ class BusinessOwnershipIntegrityTest extends TestCase
         $this->get(route('editProduct', $foreignProduct->id))->assertNotFound();
         $this->get(route('editSupplier', $foreignSupplier->id))->assertNotFound();
         $this->get(route('editCustomer', $foreignCustomer->id))->assertNotFound();
-        $this->postJson(route('saveProduct'), ['profileId' => $foreignProduct->id, 'name' => 'Hijacked'])->assertNotFound();
-        $this->postJson(route('saveSupplier'), ['profileId' => $foreignSupplier->id, 'fullName' => 'Hijacked'])->assertNotFound();
-        $this->postJson(route('saveCustomer'), ['profileId' => $foreignCustomer->id, 'fullName' => 'Hijacked'])->assertNotFound();
+        $this->assertDenied($this->postJson(route('saveProduct'), ['profileId' => $foreignProduct->id, 'name' => 'Hijacked']));
+        $this->assertDenied($this->postJson(route('saveSupplier'), ['profileId' => $foreignSupplier->id, 'fullName' => 'Hijacked']));
+        $this->assertDenied($this->postJson(route('saveCustomer'), ['profileId' => $foreignCustomer->id, 'fullName' => 'Hijacked']));
         $this->assertSame('Foreign Product', $foreignProduct->fresh()->name);
         $this->assertSame('Foreign Supplier', $foreignSupplier->fresh()->name);
         $this->assertSame('Foreign Customer', $foreignCustomer->fresh()->name);

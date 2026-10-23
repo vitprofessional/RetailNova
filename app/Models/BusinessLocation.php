@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 use Illuminate\Database\Eloquent\Model;
 
 class BusinessLocation extends Model
 {
-    protected $fillable = [
+    use ScopesByBusiness;
+    protected $fillable = ['businessId', 
         'name',
         'address',
         'city',

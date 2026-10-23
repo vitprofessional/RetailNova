@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 use Illuminate\Database\Eloquent\Model;
 
 class QuotationItem extends Model
 {
-    protected $fillable = [
+    use ScopesByBusiness;
+    protected $fillable = ['businessId', 
         'quotation_id','product_id','description','qty','unit_price','discount_percent','discount_amount','line_total'
     ];
 

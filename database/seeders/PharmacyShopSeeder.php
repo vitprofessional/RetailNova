@@ -23,11 +23,7 @@ class PharmacyShopSeeder extends Seeder
         $bid = $this->businessId;
 
         foreach (['Square', 'Beximco', 'Incepta', 'Renata', 'ACME', 'Healthcare', 'Generic'] as $brandName) {
-            DB::table('brands')->insertOrIgnore([
-                'name' => $brandName,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $this->masterId('brands', $brandName);
         }
 
         $categories = [
@@ -42,16 +38,12 @@ class PharmacyShopSeeder extends Seeder
         ];
 
         foreach ($categories as $categoryName) {
-            DB::table('categories')->insertOrIgnore([
-                'name' => $categoryName,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $this->masterId('categories', $categoryName);
         }
 
-        $brand = fn(string $name) => (string) (DB::table('brands')->where('name', $name)->value('id') ?? 1);
-        $category = fn(string $name) => (string) (DB::table('categories')->where('name', $name)->value('id') ?? 1);
-        $unit = fn(string $name) => (string) (DB::table('product_units')->where('name', $name)->value('id') ?? 1);
+        $brand = fn(string $name) => (string) $this->masterId('brands', $name);
+        $category = fn(string $name) => (string) $this->masterId('categories', $name);
+        $unit = fn(string $name) => (string) $this->masterId('product_units', $name);
         $supplierId = fn(string $mail) => DB::table('suppliers')->where('businessId', $bid)->where('mail', $mail)->value('id');
         $customerId = fn(string $mail) => DB::table('customers')->where('businessId', $bid)->where('mail', $mail)->value('id');
         $purchaseId = fn(string $invoice) => DB::table('purchase_products')->where('businessId', $bid)->where('invoice', $invoice)->value('id');

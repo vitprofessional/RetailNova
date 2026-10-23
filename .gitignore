@@ -28,3 +28,7 @@ yarn-error.log
 
 /storage/framework/sprint02-*.html
 /storage/framework/sprint02-*.png
+/RetailNova.rar
+/exit
+/tests-output/
+*.sql

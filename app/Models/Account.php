@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,9 +12,9 @@ use OwenIt\Auditing\Auditable as AuditableTrait;
 
 class Account extends Model implements Auditable
 {
-    use AuditableTrait;
+    use AuditableTrait, ScopesByBusiness;
 
-    protected $fillable = [
+    protected $fillable = ['businessId', 
         'account_code',
         'account_name',
         'account_type',

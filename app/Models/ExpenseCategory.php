@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -9,9 +11,9 @@ use OwenIt\Auditing\Auditable as AuditableTrait;
 
 class ExpenseCategory extends Model implements Auditable
 {
-    use AuditableTrait;
+    use AuditableTrait, ScopesByBusiness;
 
-    protected $fillable = [
+    protected $fillable = ['businessId', 
         'name',
         'description',
         'is_active'

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 use Illuminate\Database\Eloquent\Model;
 
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -9,8 +11,8 @@ use OwenIt\Auditing\Auditable;
 
 class SaleReturn extends Model implements AuditableContract
 {
-    use Auditable;
-    protected $fillable = [
+    use Auditable, ScopesByBusiness;
+    protected $fillable = ['businessId', 
         'saleId','totalReturnAmount','adjustAmount','returnNote'
     ];
 

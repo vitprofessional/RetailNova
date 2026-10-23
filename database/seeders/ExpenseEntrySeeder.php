@@ -8,10 +8,12 @@ use Carbon\Carbon;
 
 class ExpenseEntrySeeder extends Seeder
 {
+    use Concerns\BusinessTypeSeedable;
+
     public function run(): void
     {
         // Fetch category IDs by name
-        $cat = fn(string $n) => DB::table('expense_categories')->where('name', $n)->value('id');
+        $cat = fn(string $n) => DB::table('expense_categories')->where('businessId', $this->businessId)->where('name', $n)->value('id');
 
         // Use admin user ID 1 (created_by is now nullable with no FK)
         $adminId = DB::table('admin_users')->value('id');
@@ -149,7 +151,9 @@ class ExpenseEntrySeeder extends Seeder
             ]);
 
             $referenceNo = $entry['reference_no'];
+            $payload['businessId'] = $this->businessId;
             $existingEntry = DB::table('expense_entries')
+                ->where('businessId', $this->businessId)
                 ->where('reference_no', $referenceNo)
                 ->select('id')
                 ->first();

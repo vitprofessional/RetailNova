@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 
 class CatalogSeeder extends Seeder
 {
+    use Concerns\BusinessTypeSeedable;
+
     public function run(): void
     {
         // Brands
@@ -15,7 +17,7 @@ class CatalogSeeder extends Seeder
             'Dell', 'Lenovo', 'Canon', 'Panasonic', 'Generic',
         ];
         foreach ($brands as $name) {
-            DB::table('brands')->insertOrIgnore(['name' => $name, 'created_at' => now(), 'updated_at' => now()]);
+            $this->masterId('brands', $name);
         }
 
         // Categories
@@ -32,13 +34,13 @@ class CatalogSeeder extends Seeder
             'Networking',
         ];
         foreach ($categories as $name) {
-            DB::table('categories')->insertOrIgnore(['name' => $name, 'created_at' => now(), 'updated_at' => now()]);
+            $this->masterId('categories', $name);
         }
 
         // Product Units
         $units = ['Piece', 'Box', 'Pair', 'Set', 'Dozen', 'Kg', 'Litre'];
         foreach ($units as $name) {
-            DB::table('product_units')->insertOrIgnore(['name' => $name, 'created_at' => now(), 'updated_at' => now()]);
+            $this->masterId('product_units', $name);
         }
     }
 }

@@ -9,12 +9,14 @@ use App\Models\ProductStock;
 
 class ProductSeeder extends Seeder
 {
+    use Concerns\BusinessTypeSeedable;
+
     public function run(): void
     {
         // Fetch lookup IDs dynamically so the seeder is order-independent
-        $brand  = fn(string $n) => (string) (DB::table('brands')->where('name', $n)->value('id') ?? 1);
-        $cat    = fn(string $n) => (string) (DB::table('categories')->where('name', $n)->value('id') ?? 1);
-        $unit   = fn(string $n) => (string) (DB::table('product_units')->where('name', $n)->value('id') ?? 1);
+        $brand  = fn(string $n) => (string) $this->masterId('brands', $n);
+        $cat    = fn(string $n) => (string) $this->masterId('categories', $n);
+        $unit   = fn(string $n) => (string) $this->masterId('product_units', $n);
 
         $products = [
             [

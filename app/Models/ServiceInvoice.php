@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 use Illuminate\Database\Eloquent\Model;
 
 class ServiceInvoice extends Model
 {
-    protected $fillable = [
+    use ScopesByBusiness;
+    protected $fillable = ['businessId', 
         'invoice_number',
         'customer_id',
         'is_walkin',

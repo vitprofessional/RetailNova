@@ -72,10 +72,10 @@ class InvoiceBusinessBrandingTest extends TestCase
         $unownedSale = $this->sale(null, (int) $actor->id, 'LEGACY-NULL-1');
 
         $this->actingAs($actor, 'admin');
-        $this->getJson(route('invoiceGenerate', ['id' => $foreignSale->id]))->assertForbidden();
-        $this->getJson(route('invoicePage', ['id' => $foreignSale->id]))->assertForbidden();
-        $this->getJson(route('invoiceThermalPrint', ['id' => $foreignSale->id]))->assertForbidden();
-        $this->getJson(route('invoiceGenerate', ['id' => $unownedSale->id]))->assertForbidden();
+        $this->assertDenied($this->getJson(route('invoiceGenerate', ['id' => $foreignSale->id])))->assertDontSee('FOREIGN-1');
+        $this->assertDenied($this->getJson(route('invoicePage', ['id' => $foreignSale->id])))->assertDontSee('FOREIGN-1');
+        $this->assertDenied($this->getJson(route('invoiceThermalPrint', ['id' => $foreignSale->id])))->assertDontSee('FOREIGN-1');
+        $this->assertDenied($this->getJson(route('invoiceGenerate', ['id' => $unownedSale->id])))->assertDontSee('LEGACY-NULL-1');
     }
 
     public function test_configured_logo_falls_back_safely_when_its_file_is_missing(): void

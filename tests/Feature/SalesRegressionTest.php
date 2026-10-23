@@ -495,6 +495,8 @@ class SalesRegressionTest extends TestCase
     {
         $inventory = $this->inventory();
         $walkIn = Customer::forceCreate(['name' => 'Walking Customer', 'businessId' => null]);
+        // New rows are stamped with a business automatically; make it the legacy shared record again.
+        Customer::withoutGlobalScopes()->whereKey($walkIn->id)->update(['businessId' => null]);
         SaleProduct::forceCreate([
             'invoice' => 'WALKIN-DUE-TEST', 'date' => '2026-10-15', 'customerId' => $walkIn->id,
             'businessId' => 1, 'grandTotal' => 50, 'paidAmount' => 37.5, 'invoiceDue' => 12.5,
@@ -522,6 +524,8 @@ class SalesRegressionTest extends TestCase
         $inventory = $this->inventory();
         \App\Models\BusinessSetup::forceCreate(['id' => 2, 'businessName' => 'Other Business']);
         $walkIn = Customer::forceCreate(['name' => 'Walking Customer', 'businessId' => null]);
+        // New rows are stamped with a business automatically; make it the legacy shared record again.
+        Customer::withoutGlobalScopes()->whereKey($walkIn->id)->update(['businessId' => null]);
         $category=\App\Models\Category::forceCreate(['name'=>'Platform Category']);
         Product::findOrFail($inventory['purchase']->productName)->update(['category'=>(string)$category->id]);
         $this->actingAs($this->actor('superadmin'), 'admin');
@@ -687,10 +691,10 @@ class SalesRegressionTest extends TestCase
 
     public function test_brand_category_product_filters_are_business_scoped_and_price_uses_latest_eligible_batch(): void
     {
-        $brandA=\App\Models\Brand::forceCreate(['name'=>'Brand A']);
-        $brandB=\App\Models\Brand::forceCreate(['name'=>'Brand B']);
-        $categoryA=\App\Models\Category::forceCreate(['name'=>'Category A']);
-        $categoryB=\App\Models\Category::forceCreate(['name'=>'Category B']);
+        $brandA=\App\Models\Brand::forceCreate(['name'=>'Brand A','businessId'=>1]);
+        $brandB=\App\Models\Brand::forceCreate(['name'=>'Brand B','businessId'=>1]);
+        $categoryA=\App\Models\Category::forceCreate(['name'=>'Category A','businessId'=>1]);
+        $categoryB=\App\Models\Category::forceCreate(['name'=>'Category B','businessId'=>1]);
         $base=$this->inventory(1,false);
         $product=Product::findOrFail($base['purchase']->productName);
         $product->update(['brand'=>(string)$brandA->id,'category'=>(string)$categoryA->id,'barCode'=>'LATEST-BATCH-BARCODE']);

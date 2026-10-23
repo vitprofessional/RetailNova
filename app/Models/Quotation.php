@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 use Illuminate\Database\Eloquent\Model;
 
 class Quotation extends Model
 {
-    protected $fillable = [
+    use ScopesByBusiness;
+    protected $fillable = ['businessId', 
         'quote_number', 'customer_id', 'date', 'validity_days', 'status',
         'notes', 'terms_text', 'subtotal', 'discount_total', 'grand_total'
     ];

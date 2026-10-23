@@ -24,6 +24,11 @@ class AppServiceProvider extends ServiceProvider
         if (file_exists($helpers)) {
             require_once $helpers;
         }
+
+        // exists:/unique: rules on business-owned tables only see the current business.
+        $this->app->extend('validation.presence', function ($verifier, $app) {
+            return new \App\Validation\TenantPresenceVerifier($app['db']);
+        });
     }
 
     /**

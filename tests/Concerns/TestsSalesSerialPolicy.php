@@ -541,8 +541,8 @@ trait TestsSalesSerialPolicy
         $actor = $this->actor('salesmanager', 1);
         $this->actingAs($actor, 'admin');
         $sale = SaleProduct::forceCreate(['businessId' => 2, 'salespersonId' => $actor->id]);
-        $this->getJson(route('sale.items.edit', $sale->id))->assertForbidden();
-        $this->getJson(route('invoiceGenerate', $sale->id))->assertForbidden();
+        $this->assertDenied($this->getJson(route('sale.items.edit', $sale->id)));
+        $this->assertDenied($this->getJson(route('invoiceGenerate', $sale->id)));
         $this->getJson(route('ajax.purchase.serials.public', $inventory['purchase']->id))->assertNotFound();
         $this->assertSame(3, (int)$inventory['stock']->fresh()->currentStock);
     }

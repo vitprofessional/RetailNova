@@ -7,6 +7,8 @@ use App\Models\ExpenseCategory;
 
 class ExpenseCategorySeeder extends Seeder
 {
+    use Concerns\BusinessTypeSeedable;
+
     /**
      * Run the database seeds.
      */
@@ -91,7 +93,10 @@ class ExpenseCategorySeeder extends Seeder
         ];
 
         foreach ($categories as $category) {
-            ExpenseCategory::updateOrCreate(['name' => $category['name']], $category);
+            ExpenseCategory::withoutGlobalScopes()->updateOrCreate(
+                ['businessId' => $this->businessId, 'name' => $category['name']],
+                $category + ['businessId' => $this->businessId]
+            );
         }
     }
 }

@@ -155,16 +155,16 @@ class Sprint02PurchaseCustomerTest extends TestCase
         $user=AdminUser::create(['fullName'=>'Scoped','mail'=>'scoped@example.test','password'=>'unused','role'=>'salesmanager','businessId'=>2]);
         $this->actingAs($user,'admin');
         $this->getJson(route('purchase.invoice.show',$invoice->id))->assertNotFound();
-        $this->postJson(route('purchase.invoice.update',$invoice->id),$this->editPayload($invoice))->assertNotFound();
-        $this->postJson(route('purchase.invoice.bulkDelete'),['ids'=>[$invoice->id]])->assertNotFound();
+        $this->assertDenied($this->postJson(route('purchase.invoice.update',$invoice->id),$this->editPayload($invoice)));
+        $this->assertDenied($this->postJson(route('purchase.invoice.bulkDelete'),['ids'=>[$invoice->id]]));
         $this->get(route('purchaseList'))->assertOk()->assertDontSee('data-purchase-invoice="'.$invoice->id.'"',false);
         $user->update(['businessId'=>1]);
-        $this->postJson(route('saveCustomer'),['profileId'=>$foreignCustomer->id,'fullName'=>'Hijack'])->assertNotFound();
+        $this->assertDenied($this->postJson(route('saveCustomer'),['profileId'=>$foreignCustomer->id,'fullName'=>'Hijack']));
         $this->getJson(route('editCustomer',$foreignCustomer->id))->assertNotFound();
         $payload=['supplierName'=>$foreignSupplier->id,'businessId'=>2,'purchaseDate'=>'2026-10-12','productName'=>[$foreignProduct->id],'quantity'=>[1],'buyPrice'=>[10]];
-        $this->postJson(route('savePurchase'),$payload)->assertForbidden();
+        $this->assertDenied($this->postJson(route('savePurchase'),$payload));
         $payload['supplierName']=$invoice->supplier_id;
-        $this->postJson(route('savePurchase'),$payload)->assertForbidden();
+        $this->assertDenied($this->postJson(route('savePurchase'),$payload));
         $this->assertDatabaseCount('purchase_invoices',1);
     }
 

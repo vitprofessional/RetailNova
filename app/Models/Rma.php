@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopesByBusiness;
+
 use Illuminate\Database\Eloquent\Model;
 
 class Rma extends Model
 {
+    use ScopesByBusiness;
     protected $table = 'rmas';
 
-    protected $fillable = [
+    protected $fillable = ['businessId', 
         'customer_id',
         'product_serial_id',
         'rma_no',

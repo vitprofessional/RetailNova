@@ -69,6 +69,8 @@ class FirstAdminBootstrap
             $user->businessId = (string) $business->id;
             $user->save();
 
+            app(BusinessProvisioner::class)->provision((int) $business->id);
+
             return $user;
         }));
     }
