@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable;
@@ -11,7 +12,7 @@ use App\Models\Concerns\ScopesByBusiness;
 
 class InvoiceItem extends Model implements AuditableContract
 {
-    use Auditable, ScopesByBusiness;
+    use Auditable, ScopesByBusiness, SoftDeletes;
     protected $fillable = [
         'saleId', 'purchaseId', 'qty', 'warranty_days', 'salePrice', 'buyPrice', 
         'totalSale', 'totalPurchase', 'profitTotal', 'profitMargin', 'isBackorder', 

@@ -559,8 +559,8 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
         'updateSale'
     ])->name('sale.update');
 
-    // Delete sale (revert stock and remove records)
-    Route::match(['get','post','delete'],'/sale/delete/{id}',[
+    // Cancel sale (admins only; DELETE or a form spoofing _method=DELETE)
+    Route::delete('/sale/delete/{id}',[
         saleController::class,
         'delSale'
     ])->name('delSale');

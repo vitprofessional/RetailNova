@@ -235,7 +235,11 @@ class ReportController extends Controller
             ->selectRaw('COUNT(sale_products.id) as total_orders')
             ->selectRaw('SUM(sale_products.totalSale) as total_spent')
             ->selectRaw('MAX(sale_products.created_at) as last_purchase_date')
-            ->leftJoin('sale_products', 'customers.id', '=', 'sale_products.customerId')
+            // Joined rows bypass model scopes: exclude cancelled (soft-deleted) sales explicitly.
+            ->leftJoin('sale_products', function ($join) {
+                $join->on('customers.id', '=', 'sale_products.customerId')
+                    ->whereNull('sale_products.deleted_at');
+            })
             ->where('customers.deleted_at', null)
             ->where(function($q) use ($startDate, $endDate) {
                 $q->whereBetween('sale_products.created_at', [$startDate, $endDate])

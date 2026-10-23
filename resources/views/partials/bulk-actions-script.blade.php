@@ -130,8 +130,17 @@
 
             // Specific confirmation for delete action
             if (form.id === 'bulkDeleteForm') {
-                console.log("Delete form detected, showing bulk delete modal");
                 event.preventDefault();
+                // Cancelling sales needs a reason instead of the profile/full-delete choice.
+                if (form.hasAttribute('data-bulk-reason') && typeof window.rnAskSaleCancelReason === 'function') {
+                    window.rnAskSaleCancelReason(true).then(function (reason) {
+                        if (!reason) { return; }
+                        form.querySelector('input[name="reason"]').value = reason;
+                        submitBulkDelete(selectedIds, form, 'cancel');
+                    });
+                    return;
+                }
+                console.log("Delete form detected, showing bulk delete modal");
                 showBulkDeleteModal(selectedIds, entity, form);
                 return;
             }

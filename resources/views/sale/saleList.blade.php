@@ -176,7 +176,12 @@
     </section>
 
     <section class="rn-sales-history-card rn-sales-history-table-card" aria-label="{{ __('sales.sales_history_records') }}">
-        @include('partials.bulk-actions', ['deleteRoute' => 'sales.bulkDelete', 'entity' => __('sales.sales')])
+        @include('partials.bulk-actions', [
+            'deleteRoute' => !empty($canCancelSales) ? 'sales.bulkDelete' : null,
+            'entity' => __('sales.sales'),
+            'deleteLabel' => __('sales.cancel_selected_sales'),
+            'reasonRequired' => true,
+        ])
         <div class="rn-sales-history-table-wrap" tabindex="0" role="region" aria-label="{{ __('sales.sales_history_table_scroll') }}">
             @php use Carbon\Carbon; @endphp
             <table id="salesTable" class="table rn-sales-history-table">
@@ -242,12 +247,15 @@
                                     <a class="rn-action-btn rn-action-return" href="{{ route('returnSale', ['id' => $sl->id]) }}" title="{{ __('common.return') }}" aria-label="{{ __('common.return') }}"><i class="las la-undo" aria-hidden="true"></i></a>
                                     @canEdit(true)
                                         <a class="rn-action-btn" href="{{ route('sale.edit', ['id' => $sl->id]) }}" title="{{ __('sales.edit') }}" aria-label="{{ __('sales.edit') }}"><i class="las la-edit" aria-hidden="true"></i></a>
-                                        <form method="POST" action="{{ route('delSale', ['id' => $sl->id]) }}" class="d-inline">
+                                    @endcanEdit
+                                    @if(!empty($canCancelSales))
+                                        <form method="POST" action="{{ route('delSale', ['id' => $sl->id]) }}" class="d-inline" data-cancel-sale-form>
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="rn-action-btn rn-action-delete" data-confirm="delete" title="{{ __('sales.delete') }}" aria-label="{{ __('sales.delete') }}"><i class="las la-trash-alt" aria-hidden="true"></i></button>
+                                            <input type="hidden" name="reason" value="">
+                                            <button type="submit" class="rn-action-btn rn-action-delete" title="{{ __('sales.cancel_sale') }}" aria-label="{{ __('sales.cancel_sale') }}"><i class="las la-ban" aria-hidden="true"></i></button>
                                         </form>
-                                    @endcanEdit
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -260,6 +268,9 @@
 @endsection
 
 @section('scripts')
+@if(!empty($canCancelSales))
+@include('partials.sale-cancel-script')
+@endif
 @include('partials.bulk-actions-script')
 <script>
 (function () {

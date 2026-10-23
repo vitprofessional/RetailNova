@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\AdminUser;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\SaleProduct;
@@ -13,6 +14,8 @@ use App\Models\SaleReturn;
 use App\Models\ProductStock;
 use App\Models\ReturnSaleItem;
 use App\Services\StockService;
+use App\Services\SaleCancellation;
+use App\Services\SaleCancellationException;
 
 
 use Illuminate\Http\Request;
@@ -73,7 +76,10 @@ class saleController extends Controller
             $query->where('salespersonId', $actor->id);
         }
         $saleList = $query->get();
-        return view('sale.saleList',['saleList'=>$saleList]);
+        return view('sale.saleList',[
+            'saleList' => $saleList,
+            'canCancelSales' => $actor instanceof AdminUser && $actor->canCancelSales(),
+        ]);
     }
 
     /**
@@ -249,7 +255,8 @@ class saleController extends Controller
 
         DB::beginTransaction();
         try {
-            $sale = SaleProduct::withoutGlobalScopes()->lockForUpdate()->findOrFail($sale->id);
+            // Keep the soft-delete scope: a sale cancelled meanwhile must not be edited.
+            $sale = SaleProduct::withoutGlobalScope('business')->lockForUpdate()->findOrFail($sale->id);
             // Allocation is sale + purchase based. Do not corrupt ambiguous legacy duplicate lines.
             $duplicates = InvoiceItem::where('saleId', $sale->id)->select('purchaseId')
                 ->groupBy('purchaseId')->havingRaw('COUNT(*) > 1')->pluck('purchaseId');
@@ -313,8 +320,9 @@ class saleController extends Controller
                 $invItem->profitMargin  = $invItem->totalSale > 0 ? round(($invItem->profitTotal / $invItem->totalSale) * 100, 2) : 0;
 
                 // If quantity became 0, delete the line to keep invoice clean
+                // (permanently, as before; soft delete is reserved for cancelled sales)
                 if((int)$invItem->qty === 0){
-                    $invItem->delete();
+                    $invItem->forceDelete();
                 } else {
                     $invItem->save();
                 }
@@ -510,7 +518,9 @@ class saleController extends Controller
 
     public function saleReturnDetails($id)
     {
+        // Returns of a cancelled sale are part of its history, not an open record.
         $return = SaleReturn::with(['sale.salesperson', 'items.product', 'items.purchase', 'items.customer'])
+            ->whereDoesntHave('sale', fn ($q) => $q->onlyTrashed())
             ->find($id);
 
         if(!$return){
@@ -735,7 +745,9 @@ class saleController extends Controller
 
     public function returnSaleList(){
         $actor = auth('admin')->user();
+        // Hide returns of cancelled sales; returns whose sale no longer exists stay listed as before.
         $returns = SaleReturn::with(['sale', 'items'])
+            ->whereDoesntHave('sale', fn ($q) => $q->onlyTrashed())
             ->orderBy('created_at', 'desc')
             ->get();
         
@@ -747,70 +759,71 @@ class saleController extends Controller
             });
         }
         
-        return view('sale.returnSaleList', ['returns' => $returns]);
+        return view('sale.returnSaleList', [
+            'returns' => $returns,
+            'canCancelSales' => $actor instanceof AdminUser && $actor->canCancelSales(),
+        ]);
+    }
+
+    /** Only admins and superadmins may cancel sales. */
+    private function authorizeSaleCancellation(): AdminUser
+    {
+        $actor = auth('admin')->user();
+        abort_unless($actor instanceof AdminUser && $actor->canCancelSales(), 403, __('sales.not_allowed_to_cancel_sales'));
+
+        return $actor;
+    }
+
+    private function validatedCancelReason(Request $request): string
+    {
+        $data = $request->validate(
+            ['reason' => 'required|string|min:3|max:500'],
+            [],
+            ['reason' => __('sales.cancel_reason')]
+        );
+
+        return trim($data['reason']);
     }
 
     /**
-     * Delete a sale and its invoice items, reverting stock quantities.
+     * Cancel a sale (DELETE only): stock and serials are returned and the sale is
+     * kept as a soft-deleted, audited record. See App\Services\SaleCancellation.
      */
-    public function delSale($id)
+    public function delSale(Request $request, $id, SaleCancellation $cancellation)
     {
-        $sale = SaleProduct::find($id);
-        if (!$sale) {
-            Alert::error(__('common.notification_error'), __('common.notification_sale_not_found'));
-            return back();
-        }
+        $actor = $this->authorizeSaleCancellation();
+        $reason = $this->validatedCancelReason($request);
 
-        $service = new StockService();
-
-        DB::beginTransaction();
         try {
-            $items = InvoiceItem::where('saleId', $sale->id)->get();
-            foreach ($items as $it) {
-                // revert stock for each purchase row
-                $service->increaseStockForSaleReturn((int)$it->purchaseId, (int)$it->qty);
-            }
-
-            // delete invoice items
-            InvoiceItem::where('saleId', $sale->id)->delete();
-
-            // delete sale
-            $sale->delete();
-
-            DB::commit();
-            Alert::success(__('common.notification_deleted'), __('common.notification_sale_deleted_and_stock_reverted'));
-            return redirect()->route('saleList');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('delSale failed: ' . $e->getMessage());
-            Alert::error(__('common.notification_error'), __('common.notification_failed_to_delete_sale'));
+            $sale = $cancellation->cancel((int)$id, $reason, $actor);
+        } catch (SaleCancellationException $e) {
+            Alert::error(__('common.notification_error'), $e->getMessage());
+            return back();
+        } catch (\Throwable $e) {
+            \Log::error('delSale failed: ' . $e->getMessage(), ['saleId' => $id]);
+            Alert::error(__('common.notification_error'), __('sales.sale_cancel_failed'));
             return back();
         }
+
+        Alert::success(__('sales.sale_cancelled_title'), __('sales.sale_cancelled', ['invoice' => $sale->invoice]));
+        return redirect()->route('saleList');
     }
 
-    /** Bulk delete sales (reverting stock for each sale similar to single delete) */
-    public function bulkDeleteSales(Request $req){
-        $ids = (array)$req->input('ids', $req->input('selected', []));
+    /** Cancel several sales at once; if one fails, none is cancelled. */
+    public function bulkDeleteSales(Request $req, SaleCancellation $cancellation){
+        $actor = $this->authorizeSaleCancellation();
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array)$req->input('ids', $req->input('selected', []))))));
         if(empty($ids)){ return back()->with('error',__('common.notification_no_sales_selected')); }
-        $service = new StockService();
-        DB::beginTransaction();
+        $reason = $this->validatedCancelReason($req);
+
         try {
-            foreach($ids as $id){
-                $sale = SaleProduct::find($id);
-                if(!$sale) continue;
-                $items = InvoiceItem::where('saleId', $sale->id)->get();
-                foreach ($items as $it) {
-                    $service->increaseStockForSaleReturn((int)$it->purchaseId, (int)$it->qty);
-                }
-                InvoiceItem::where('saleId', $sale->id)->delete();
-                $sale->delete();
-            }
-            DB::commit();
-            Alert::success(__('common.notification_deleted'),__('common.notification_selected_sales_deleted_and_stock_reverted'));
-        } catch(\Exception $e){
-            DB::rollBack();
+            $count = $cancellation->cancelMany($ids, $reason, $actor);
+            Alert::success(__('sales.sale_cancelled_title'), __('sales.selected_sales_cancelled', ['count' => $count]));
+        } catch (SaleCancellationException $e) {
+            Alert::error(__('common.notification_error'), __('sales.bulk_cancel_rolled_back', ['reason' => $e->getMessage()]));
+        } catch (\Throwable $e) {
             \Log::error('bulkDeleteSales failed: '.$e->getMessage());
-            Alert::error(__('common.notification_error'),__('common.bulk_sales_failed'));
+            Alert::error(__('common.notification_error'), __('common.bulk_sales_failed'));
         }
         return back();
     }

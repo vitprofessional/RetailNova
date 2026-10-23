@@ -397,18 +397,18 @@ class coustomerSupplier extends Controller
      * This performs permanent deletes across related tables.
      */
     private function cascadeDeleteCustomer(int $id){
-        // Sales belonging to this customer
-        $saleIds = SaleProduct::where('customerId', (string)$id)->pluck('id')->toArray();
+        // Sales belonging to this customer, including cancelled (soft-deleted) ones
+        $saleIds = SaleProduct::withTrashed()->where('customerId', (string)$id)->pluck('id')->toArray();
 
         if(!empty($saleIds)){
             // invoice items referencing those sales
-            InvoiceItem::whereIn('saleId', $saleIds)->delete();
+            InvoiceItem::withTrashed()->whereIn('saleId', $saleIds)->forceDelete();
             // return sale items referencing those sales
             ReturnSaleItem::whereIn('saleId', $saleIds)->delete();
             // sale returns (saleId column is text) - match as string
             SaleReturn::whereIn('saleId', array_map('strval',$saleIds))->delete();
             // delete the sales themselves
-            SaleProduct::whereIn('id', $saleIds)->delete();
+            SaleProduct::withTrashed()->whereIn('id', $saleIds)->forceDelete();
         }
 
         // Also delete any return_sale_items that reference this customer directly
@@ -425,7 +425,7 @@ class coustomerSupplier extends Controller
 
         if(!empty($purchaseIds)){
             // invoice items referencing those purchases
-            InvoiceItem::whereIn('purchaseId', $purchaseIds)->delete();
+            InvoiceItem::withTrashed()->whereIn('purchaseId', $purchaseIds)->forceDelete();
             // purchase returns that belong to those purchases
             PurchaseReturn::whereIn('purchaseId', $purchaseIds)->delete();
             // return purchase items linked to those purchases

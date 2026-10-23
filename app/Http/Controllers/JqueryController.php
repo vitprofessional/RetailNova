@@ -543,17 +543,19 @@ class JqueryController extends Controller
             $hasGrand = Schema::hasColumn($table, 'grandTotal');
             $hasTotal = Schema::hasColumn($table, 'totalAmount');
 
+            // Only the tenant scope is replaced (businessId is filtered explicitly);
+            // the soft-delete scope stays so cancelled sales never count as due.
             if ($hasDue) {
-                $prevDue = SaleProduct::withoutGlobalScopes()->where('customerId', $customerId)->where('businessId', $businessId)->sum('dueAmount');
+                $prevDue = SaleProduct::withoutGlobalScope('business')->where('customerId', $customerId)->where('businessId', $businessId)->sum('dueAmount');
             } else if ($hasGrand) {
-                $prevDue = SaleProduct::withoutGlobalScopes()->where('customerId', $customerId)->where('businessId', $businessId)
+                $prevDue = SaleProduct::withoutGlobalScope('business')->where('customerId', $customerId)->where('businessId', $businessId)
                     ->selectRaw('COALESCE(SUM(COALESCE(grandTotal,0) - COALESCE(paidAmount,0)),0) as s')->value('s');
             } else if ($hasTotal) {
-                $prevDue = SaleProduct::withoutGlobalScopes()->where('customerId', $customerId)->where('businessId', $businessId)
+                $prevDue = SaleProduct::withoutGlobalScope('business')->where('customerId', $customerId)->where('businessId', $businessId)
                     ->selectRaw('COALESCE(SUM(COALESCE(totalAmount,0) - COALESCE(paidAmount,0)),0) as s')->value('s');
             } else {
                 // Fallback: try to compute from known fields if present
-                $prevDue = SaleProduct::withoutGlobalScopes()->where('customerId', $customerId)->where('businessId', $businessId)
+                $prevDue = SaleProduct::withoutGlobalScope('business')->where('customerId', $customerId)->where('businessId', $businessId)
                     ->selectRaw('COALESCE(SUM(COALESCE(grandTotal, totalAmount, 0) - COALESCE(paidAmount,0)),0) as s')->value('s');
             }
 
@@ -842,7 +844,7 @@ class JqueryController extends Controller
                 $dueCents = max(0, $grandCents - $paidCents);
                 $dueColumn = Schema::hasColumn('sale_products', 'dueAmount') ? 'dueAmount'
                     : (Schema::hasColumn('sale_products', 'invoiceDue') ? 'invoiceDue' : 'curDue');
-                $previousDueCents = $this->saleMoneyCents(SaleProduct::withoutGlobalScopes()
+                $previousDueCents = $this->saleMoneyCents(SaleProduct::withoutGlobalScope('business')
                     ->where('businessId', (int)$sales->businessId)
                     ->where('customerId', (int)$sales->customerId)
                     ->sum($dueColumn));

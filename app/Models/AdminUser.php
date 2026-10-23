@@ -32,6 +32,12 @@ class AdminUser extends Authenticatable
         return $this->normalizedRole() === 'superadmin';
     }
 
+    /** Cancelling a sale reverses stock and serials, so it is limited to admins. */
+    public function canCancelSales(): bool
+    {
+        return in_array($this->normalizedRole(), ['admin', 'superadmin'], true);
+    }
+
     public function hasSuperAdminPrivileges(): bool
     {
         // Platform privileges are granted only by an explicit, normalized role.

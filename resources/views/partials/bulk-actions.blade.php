@@ -1,12 +1,15 @@
-@props(['deleteRoute' => null, 'printRoute' => null, 'pdfRoute' => null, 'entity' => 'Items'])
+@props(['deleteRoute' => null, 'printRoute' => null, 'pdfRoute' => null, 'entity' => 'Items', 'deleteLabel' => null, 'reasonRequired' => false])
 <div id="bulkActionsWrapper" class="bulk-actions align-items-center mb-3 d-none" style="gap: 0.5rem;">
     <div class="me-3"><strong id="bulkSelectedCount">0</strong> {{ __('common.selected') }} {{ $entity }}</div>
     <div id="bulkGroupHint" class="alert alert-warning mb-0 py-1 px-2 d-none" style="font-size:12px;">{{ __('common.selection_must_be_from_the_same_customer_and_date_to_print') }}</div>
     @if($deleteRoute)
-    <form id="bulkDeleteForm" data-entity="{{ $entity }}" method="POST" action="{{ route($deleteRoute) }}" class="d-inline">
+    <form id="bulkDeleteForm" data-entity="{{ $entity }}" method="POST" action="{{ route($deleteRoute) }}" class="d-inline" @if(!empty($reasonRequired)) data-bulk-reason @endif>
         @csrf
         <input type="hidden" id="bulkDeleteType" name="deleteType" value="profileOnly">
-        <button type="submit" class="btn btn-sm btn-danger" id="bulkDeleteBtn" disabled>{{ __('common.delete_selected') }}</button>
+        @if(!empty($reasonRequired))
+        <input type="hidden" name="reason" value="">
+        @endif
+        <button type="submit" class="btn btn-sm btn-danger" id="bulkDeleteBtn" disabled>{{ $deleteLabel ?? __('common.delete_selected') }}</button>
     </form>
     @endif
     @if($printRoute)
