@@ -1,8 +1,11 @@
 @props(['deleteRoute' => null, 'printRoute' => null, 'pdfRoute' => null, 'entity' => 'Items', 'deleteLabel' => null, 'reasonRequired' => false,
-    'fullDeleteAllowed' => null, 'fullDeleteWarning' => null, 'fullDeleteConfirm' => null])
+    'deleteChoice' => false, 'fullDeleteAllowed' => null, 'fullDeleteWarning' => null, 'fullDeleteConfirm' => null])
 @php
+    // Default: one "Delete" confirmation. Only pages that really have two delete kinds (customers,
+    // suppliers) pass deleteChoice and get "Profile Only" / "Delete All Data".
+    $deleteChoice = !empty($deleteChoice);
     // "Delete All Data" is permanent: only admins/superadmins get it (the server enforces the same rule).
-    $fullDeleteAllowed = $fullDeleteAllowed ?? (auth('admin')->user()?->canDeleteAllRelatedData() ?? false);
+    $fullDeleteAllowed = $deleteChoice && ($fullDeleteAllowed ?? (auth('admin')->user()?->canDeleteAllRelatedData() ?? false));
     $fullDeleteWarning = $fullDeleteWarning ?: __('common.bulk_delete_all_data_warning');
     $fullDeleteConfirm = $fullDeleteConfirm ?: __('common.bulk_delete_all_data_confirm');
 @endphp
@@ -11,10 +14,18 @@
     <div id="bulkGroupHint" class="alert alert-warning mb-0 py-1 px-2 d-none" style="font-size:12px;">{{ __('common.selection_must_be_from_the_same_customer_and_date_to_print') }}</div>
     @if($deleteRoute)
     <form id="bulkDeleteForm" data-entity="{{ $entity }}" method="POST" action="{{ route($deleteRoute) }}" class="d-inline" @if(!empty($reasonRequired)) data-bulk-reason @endif
+        data-delete-mode="{{ $deleteChoice ? 'choice' : 'single' }}"
+        @if($deleteChoice)
         data-full-delete="{{ $fullDeleteAllowed ? 'allowed' : 'denied' }}"
-        @if($fullDeleteAllowed) data-full-delete-warning="{{ $fullDeleteWarning }}" data-full-delete-confirm="{{ $fullDeleteConfirm }}" @endif>
+        @if($fullDeleteAllowed) data-full-delete-warning="{{ $fullDeleteWarning }}" data-full-delete-confirm="{{ $fullDeleteConfirm }}" @endif
+        @else
+        data-delete-title="{{ __('common.bulk_delete_confirm_title') }}" data-delete-text="{{ __('common.bulk_delete_confirm_text') }}"
+        data-delete-label="{{ __('common.delete') }}" data-cancel-label="{{ __('common.cancel') }}"
+        @endif>
         @csrf
+        @if($deleteChoice)
         <input type="hidden" id="bulkDeleteType" name="deleteType" value="profileOnly">
+        @endif
         @if(!empty($reasonRequired))
         <input type="hidden" name="reason" value="">
         @endif

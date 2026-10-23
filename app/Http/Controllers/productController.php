@@ -16,11 +16,10 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Requests\BrandSaveRequest;
 use App\Http\Requests\CategorySaveRequest;
 use App\Http\Requests\ProductUnitSaveRequest;
+use App\Services\CatalogUsage;
 
 class productController extends Controller
 {
-    use \App\Http\Controllers\Concerns\AuthorizesFullDelete;
-
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
@@ -92,6 +91,10 @@ class productController extends Controller
         if(!empty($data)):
             // Authorization hook
             $this->authorize('delete', $data);
+            if (app(CatalogUsage::class)->isInUse(CatalogUsage::PRODUCT, $data)) {
+                Alert::error(__('common.notification_failed'), __('common.in_use_cannot_be_deleted'));
+                return back();
+            }
             $data->delete();
                 Alert::success(__('common.notification_success'),__('common.notification_product_delete_successfully'));
                 return back();
@@ -188,15 +191,13 @@ class productController extends Controller
      * Bulk delete products (simple hard delete, no stock reversion beyond deleting related ProductStock rows).
      */
     public function bulkDeleteProducts(Request $req){
-        $this->authorizeFullDelete($req);
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if(empty($ids)){ return back()->with('error',__('common.notification_no_products_selected')); }
         try{
-            DB::transaction(function() use ($ids){
-                ProductStock::whereIn('productId',$ids)->delete();
-                Product::whereIn('id',$ids)->delete();
-            });
-            Alert::success(__('common.notification_deleted'),__('common.notification_selected_products_deleted'));
+            $this->bulkDeleteUnused(CatalogUsage::PRODUCT, Product::whereIn('id',$ids)->get(), function (array $deletable) {
+                ProductStock::whereIn('productId',$deletable)->delete();
+                Product::whereIn('id',$deletable)->delete();
+            }, 'common.notification_selected_products_deleted');
         }catch(\Exception $e){
             \Log::error('bulkDeleteProducts failed: '.$e->getMessage());
             Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_selected_products'));
@@ -205,12 +206,11 @@ class productController extends Controller
     }
 
     public function bulkDeleteBrands(Request $req){
-        $this->authorizeFullDelete($req);
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if(empty($ids)){ return back()->with('error',__('common.notification_no_brands_selected')); }
         try{
-            Brand::whereIn('id',$ids)->delete();
-            Alert::success(__('common.notification_deleted'),__('common.notification_selected_brands_deleted'));
+            $this->bulkDeleteUnused(CatalogUsage::BRAND, Brand::whereIn('id',$ids)->get(),
+                fn (array $deletable) => Brand::whereIn('id',$deletable)->delete(), 'common.notification_selected_brands_deleted');
         }catch(\Exception $e){
             \Log::error('bulkDeleteBrands failed: '.$e->getMessage());
             Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_selected_brands'));
@@ -219,12 +219,11 @@ class productController extends Controller
     }
 
     public function bulkDeleteCategories(Request $req){
-        $this->authorizeFullDelete($req);
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if(empty($ids)){ return back()->with('error',__('common.notification_no_categories_selected')); }
         try{
-            Category::whereIn('id',$ids)->delete();
-            Alert::success(__('common.notification_deleted'),__('common.notification_selected_categories_deleted'));
+            $this->bulkDeleteUnused(CatalogUsage::CATEGORY, Category::whereIn('id',$ids)->get(),
+                fn (array $deletable) => Category::whereIn('id',$deletable)->delete(), 'common.notification_selected_categories_deleted');
         }catch(\Exception $e){
             \Log::error('bulkDeleteCategories failed: '.$e->getMessage());
             Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_selected_categories'));
@@ -233,12 +232,11 @@ class productController extends Controller
     }
 
     public function bulkDeleteUnits(Request $req){
-        $this->authorizeFullDelete($req);
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if(empty($ids)){ return back()->with('error',__('common.notification_no_units_selected')); }
         try{
-            ProductUnit::whereIn('id',$ids)->delete();
-            Alert::success(__('common.notification_deleted'),__('common.notification_selected_units_deleted'));
+            $this->bulkDeleteUnused(CatalogUsage::UNIT, ProductUnit::whereIn('id',$ids)->get(),
+                fn (array $deletable) => ProductUnit::whereIn('id',$deletable)->delete(), 'common.notification_selected_units_deleted');
         }catch(\Exception $e){
             \Log::error('bulkDeleteUnits failed: '.$e->getMessage());
             Alert::error(__('common.notification_error'),__('common.notification_failed_to_delete_selected_units'));
@@ -246,8 +244,37 @@ class productController extends Controller
         return back();
     }
 
+    /**
+     * Deletes the selected records that are not in use and names the ones that were kept.
+     *
+     * @param \Illuminate\Support\Collection<int, \Illuminate\Database\Eloquent\Model> $records
+     * @param callable(int[]): mixed $delete
+     */
+    private function bulkDeleteUnused(string $type, $records, callable $delete, string $successKey): void
+    {
+        $inUse = app(CatalogUsage::class)->inUseIds($type, $records);
+        [$kept, $deletable] = $records->partition(fn ($record) => in_array((int) $record->getKey(), $inUse, true));
+
+        if ($deletable->isNotEmpty()) {
+            DB::transaction(fn () => $delete($deletable->map(fn ($record) => (int) $record->getKey())->all()));
+        }
+
+        if ($kept->isEmpty()) {
+            Alert::success(__('common.notification_deleted'), __($successKey));
+            return;
+        }
+
+        $message = __('common.bulk_delete_skipped_in_use', [
+            'deleted' => $deletable->count(),
+            'count' => $kept->count(),
+            'names' => $kept->pluck('name')->implode(', '),
+        ]);
+        $deletable->isEmpty()
+            ? Alert::error(__('common.notification_failed'), $message)
+            : Alert::warning(__('common.notification_deleted'), $message);
+    }
+
     public function bulkDeleteDamageProducts(Request $req){
-        $this->authorizeFullDelete($req);
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if(empty($ids)){ return back()->with('error',__('common.notification_no_damage_records_selected')); }
         try{
@@ -453,6 +480,10 @@ class productController extends Controller
         $data = Brand::find($id);
         if(!empty($data)):
             $this->authorize('delete', $data);
+            if (app(CatalogUsage::class)->isInUse(CatalogUsage::BRAND, $data)) {
+                Alert::error(__('common.notification_failed'), __('common.in_use_cannot_be_deleted'));
+                return back();
+            }
             $data->delete();
                 Alert::success(__('common.notification_success'),__('common.notification_brand_delete_successfully'));
                 return back();
@@ -522,6 +553,10 @@ class productController extends Controller
         $data = Category::find($id);
         if(!empty($data)):
             $this->authorize('delete', $data);
+            if (app(CatalogUsage::class)->isInUse(CatalogUsage::CATEGORY, $data)) {
+                Alert::error(__('common.notification_failed'), __('common.in_use_cannot_be_deleted'));
+                return back();
+            }
             $data->delete();
                 Alert::success(__('common.notification_success'),__('common.notification_category_delete_successfully'));
                 return back();
@@ -589,6 +624,10 @@ class productController extends Controller
         $data = ProductUnit::find($id);
         if(!empty($data)):
             $this->authorize('delete', $data);
+            if (app(CatalogUsage::class)->isInUse(CatalogUsage::UNIT, $data)) {
+                Alert::error(__('common.notification_failed'), __('common.in_use_cannot_be_deleted'));
+                return back();
+            }
             $data->delete();
                 Alert::success(__('common.notification_success'),__('common.notification_product_unit_delete_successfully'));
                 return back();

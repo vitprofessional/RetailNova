@@ -21,8 +21,6 @@ use Illuminate\Support\Facades\Auth;
 
 class purchase extends Controller
 {
-    use \App\Http\Controllers\Concerns\AuthorizesFullDelete;
-
    public function __construct(){
        $this->middleware(function($request, $next){
            $actor = Auth::guard('admin')->user();
@@ -229,20 +227,6 @@ class purchase extends Controller
 
 
 
-        /** Bulk delete purchases (simple hard delete with related cleanup) */
-        public function bulkDeletePurchases(Request $request){
-        $this->authorizeFullDelete($request);
-        $workflow=app(\App\Services\PurchaseWorkflow::class);
-        $ids=$request->validate(['ids'=>['required','array','min:1'],'ids.*'=>['integer']])['ids'];
-        \Illuminate\Support\Facades\DB::transaction(function() use($workflow,$ids){
-            $workflow->lockSerialNamespace();
-            foreach($ids as $id){$line=$workflow->line((int)$id);
-                if($line->purchase_invoice_id || (float)$line->paidAmount>0){throw \Illuminate\Validation\ValidationException::withMessages(['items'=>__('purchases.use_invoice_actions')]);}
-                $workflow->removeLine($line);
-            }
-        });
-        return redirect()->route('purchaseList');
-    }
 
 
 }

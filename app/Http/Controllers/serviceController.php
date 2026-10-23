@@ -13,8 +13,6 @@ use Illuminate\Support\Facades\Log;
 
 class serviceController extends Controller
 {
-    use \App\Http\Controllers\Concerns\AuthorizesFullDelete;
-
 
     // List service profiles and show create form
     public function addServiceName()
@@ -78,7 +76,6 @@ class serviceController extends Controller
 
     /** Bulk delete provided services */
     public function bulkDeleteProvidedServices(Request $req){
-        $this->authorizeFullDelete($req);
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if(empty($ids)){ return back()->with('error',__('common.notification_no_provided_services_selected')); }
         try{

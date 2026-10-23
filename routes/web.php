@@ -920,7 +920,6 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
     Route::post('/categories/bulk-delete',[productController::class,'bulkDeleteCategories'])->name('categories.bulkDelete');
     Route::post('/units/bulk-delete',[productController::class,'bulkDeleteUnits'])->name('units.bulkDelete');
     Route::post('/damage-products/bulk-delete',[productController::class,'bulkDeleteDamageProducts'])->name('damageProducts.bulkDelete');
-    Route::post('/purchases/bulk-delete',[purchase::class,'bulkDeletePurchases'])->name('purchases.bulkDelete');
     Route::post('/sales/bulk-delete',[saleController::class,'bulkDeleteSales'])->name('sales.bulkDelete');
     Route::post('/provided-services/bulk-delete',[serviceController::class,'bulkDeleteProvidedServices'])->name('providedServices.bulkDelete');
     Route::post('/provided-services/bulk-print',[serviceController::class,'bulkPrintProvidedServices'])->name('providedServices.bulkPrint');

@@ -20,7 +20,7 @@
         var allCheckboxes = document.querySelectorAll('.bulk-select');
 
         // Dynamically find the "Select All" checkbox on the page and assign it the correct class for our script to use.
-        var masterSelectors = ['#selectAllProducts','#selectAllBrands','#selectAllCategories','#selectAllUnits','#selectAllPurchases','#selectAllSales','#selectAllDamage','#selectAllProvidedServices','#selectAllCustomers','#selectAllSuppliers'];
+        var masterSelectors = ['#selectAllProducts','#selectAllBrands','#selectAllCategories','#selectAllUnits','#selectAllSales','#selectAllDamage','#selectAllProvidedServices','#selectAllCustomers','#selectAllSuppliers'];
         var selectAllCheckbox = null;
         masterSelectors.forEach(function(sel){
             var el = document.querySelector(sel);
@@ -247,6 +247,22 @@
 
     // --- Bulk Delete Modal Function ---
     window.showBulkDeleteModal = function(selectedIds, entity, form) {
+        // Most lists have one kind of delete: ask once, then submit.
+        if (form.getAttribute('data-delete-mode') !== 'choice') {
+            Swal.fire({
+                title: (form.getAttribute('data-delete-title') || '').replace(':count', selectedIds.length),
+                text: form.getAttribute('data-delete-text') || '',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: form.getAttribute('data-delete-label') || window.RNTranslate('common.delete'),
+                cancelButtonText: form.getAttribute('data-cancel-label') || window.RNTranslate('common.cancel')
+            }).then(function(result) {
+                if (result.isConfirmed) { submitBulkDelete(selectedIds, form, null); }
+            });
+            return;
+        }
         // Pages may deny "Delete All Data" (admins only) and supply its exact warning text.
         var fullDeleteAllowed = form.getAttribute('data-full-delete') === 'allowed';
         var fullDeleteWarning = form.getAttribute('data-full-delete-warning') || '';
@@ -301,8 +317,9 @@
     window.submitBulkDelete = function(selectedIds, form, deleteType) {
         console.log("Submitting bulk delete with type: " + deleteType);
 
-        // Set delete type
-        document.getElementById('bulkDeleteType').value = deleteType;
+        // Set delete type (only forms that offer a choice carry this field)
+        var deleteTypeInput = document.getElementById('bulkDeleteType');
+        if (deleteTypeInput && deleteType) { deleteTypeInput.value = deleteType; }
 
         // Clear old inputs
         form.querySelectorAll('input[name="selected[]"]').forEach(function(inp) {

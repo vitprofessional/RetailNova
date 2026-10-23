@@ -137,6 +137,7 @@
             @include('partials.bulk-actions', [
                 'deleteRoute' => 'suppliers.bulkDelete',
                 'entity' => 'Suppliers',
+                'deleteChoice' => true,
                 'fullDeleteAllowed' => $canDeleteAllData,
                 'fullDeleteWarning' => __('suppliers.delete_profile_and_all_related_transaction_data'),
                 'fullDeleteConfirm' => __('suppliers.delete_all_data_confirm'),
