@@ -248,8 +248,8 @@
     // --- Bulk Delete Modal Function ---
     window.showBulkDeleteModal = function(selectedIds, entity, form) {
         // Pages may deny "Delete All Data" (admins only) and supply its exact warning text.
-        var fullDeleteAllowed = form.getAttribute('data-full-delete') !== 'denied';
-        var fullDeleteWarning = form.getAttribute('data-full-delete-warning') || 'Delete profile and all related transactions';
+        var fullDeleteAllowed = form.getAttribute('data-full-delete') === 'allowed';
+        var fullDeleteWarning = form.getAttribute('data-full-delete-warning') || '';
         var fullDeleteConfirm = form.getAttribute('data-full-delete-confirm');
         var escapeHtml = function (value) {
             var div = document.createElement('div');

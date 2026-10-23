@@ -965,6 +965,8 @@ return [
     'notification_customer_profile_deleted_successfully_related_transactions_are_preserved' => 'Customer profile deleted successfully. Related transactions are preserved',
     'notification_failed_to_delete_customer' => 'Failed to delete customer: ',
     'notification_only_admins_can_delete_all_related_data' => 'Only admins can delete all related data.',
+    'bulk_delete_all_data_warning' => 'Permanently deletes the selected records and the data linked to them. This cannot be undone.',
+    'bulk_delete_all_data_confirm' => 'Are you sure? The selected records and their linked data will be permanently deleted.',
     'notification_no_customers_selected_for_deletion' => 'No customers selected for deletion',
     'notification_no_selection' => 'No selection',
     'notification_selected_customers_and_all_related_records_deleted_successfully' => 'Selected customers and all related records deleted successfully',

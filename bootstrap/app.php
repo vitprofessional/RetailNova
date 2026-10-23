@@ -38,8 +38,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', \App\Http\Middleware\ResolveLocale::class);
         // Business users can never write rows into another business during a request.
         $middleware->appendToGroup('web', \App\Http\Middleware\EnforceTenantWrites::class);
-        // TestRequestLogger is intentionally not registered: it wrote every test request's
-        // full payload (including passwords) to storage/logs/test-request.log and STDERR.
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Never echo the first-run setup secret back through flashed old input.

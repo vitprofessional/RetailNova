@@ -19,6 +19,8 @@ use App\Http\Requests\ProductUnitSaveRequest;
 
 class productController extends Controller
 {
+    use \App\Http\Controllers\Concerns\AuthorizesFullDelete;
+
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
@@ -186,6 +188,7 @@ class productController extends Controller
      * Bulk delete products (simple hard delete, no stock reversion beyond deleting related ProductStock rows).
      */
     public function bulkDeleteProducts(Request $req){
+        $this->authorizeFullDelete($req);
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if(empty($ids)){ return back()->with('error',__('common.notification_no_products_selected')); }
         try{
@@ -202,6 +205,7 @@ class productController extends Controller
     }
 
     public function bulkDeleteBrands(Request $req){
+        $this->authorizeFullDelete($req);
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if(empty($ids)){ return back()->with('error',__('common.notification_no_brands_selected')); }
         try{
@@ -215,6 +219,7 @@ class productController extends Controller
     }
 
     public function bulkDeleteCategories(Request $req){
+        $this->authorizeFullDelete($req);
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if(empty($ids)){ return back()->with('error',__('common.notification_no_categories_selected')); }
         try{
@@ -228,6 +233,7 @@ class productController extends Controller
     }
 
     public function bulkDeleteUnits(Request $req){
+        $this->authorizeFullDelete($req);
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if(empty($ids)){ return back()->with('error',__('common.notification_no_units_selected')); }
         try{
@@ -241,6 +247,7 @@ class productController extends Controller
     }
 
     public function bulkDeleteDamageProducts(Request $req){
+        $this->authorizeFullDelete($req);
         $ids = (array)$req->input('ids', $req->input('selected', []));
         if(empty($ids)){ return back()->with('error',__('common.notification_no_damage_records_selected')); }
         try{

@@ -1,13 +1,18 @@
 @props(['deleteRoute' => null, 'printRoute' => null, 'pdfRoute' => null, 'entity' => 'Items', 'deleteLabel' => null, 'reasonRequired' => false,
-    'fullDeleteAllowed' => true, 'fullDeleteWarning' => null, 'fullDeleteConfirm' => null])
+    'fullDeleteAllowed' => null, 'fullDeleteWarning' => null, 'fullDeleteConfirm' => null])
+@php
+    // "Delete All Data" is permanent: only admins/superadmins get it (the server enforces the same rule).
+    $fullDeleteAllowed = $fullDeleteAllowed ?? (auth('admin')->user()?->canDeleteAllRelatedData() ?? false);
+    $fullDeleteWarning = $fullDeleteWarning ?: __('common.bulk_delete_all_data_warning');
+    $fullDeleteConfirm = $fullDeleteConfirm ?: __('common.bulk_delete_all_data_confirm');
+@endphp
 <div id="bulkActionsWrapper" class="bulk-actions align-items-center mb-3 d-none" style="gap: 0.5rem;">
     <div class="me-3"><strong id="bulkSelectedCount">0</strong> {{ __('common.selected') }} {{ $entity }}</div>
     <div id="bulkGroupHint" class="alert alert-warning mb-0 py-1 px-2 d-none" style="font-size:12px;">{{ __('common.selection_must_be_from_the_same_customer_and_date_to_print') }}</div>
     @if($deleteRoute)
     <form id="bulkDeleteForm" data-entity="{{ $entity }}" method="POST" action="{{ route($deleteRoute) }}" class="d-inline" @if(!empty($reasonRequired)) data-bulk-reason @endif
-        data-full-delete="{{ ($fullDeleteAllowed ?? true) ? 'allowed' : 'denied' }}"
-        @if(($fullDeleteAllowed ?? true) && !empty($fullDeleteWarning)) data-full-delete-warning="{{ $fullDeleteWarning }}" @endif
-        @if(($fullDeleteAllowed ?? true) && !empty($fullDeleteConfirm)) data-full-delete-confirm="{{ $fullDeleteConfirm }}" @endif>
+        data-full-delete="{{ $fullDeleteAllowed ? 'allowed' : 'denied' }}"
+        @if($fullDeleteAllowed) data-full-delete-warning="{{ $fullDeleteWarning }}" data-full-delete-confirm="{{ $fullDeleteConfirm }}" @endif>
         @csrf
         <input type="hidden" id="bulkDeleteType" name="deleteType" value="profileOnly">
         @if(!empty($reasonRequired))

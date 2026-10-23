@@ -965,6 +965,8 @@ return [
     'notification_customer_profile_deleted_successfully_related_transactions_are_preserved' => 'ক্রেতার প্রোফাইল মুছে ফেলা হয়েছে। সংশ্লিষ্ট লেনদেন সংরক্ষিত আছে',
     'notification_failed_to_delete_customer' => 'ক্রেতা মোছা যায়নি: ',
     'notification_only_admins_can_delete_all_related_data' => 'শুধু অ্যাডমিন সংশ্লিষ্ট সব তথ্য মুছতে পারেন।',
+    'bulk_delete_all_data_warning' => 'নির্বাচিত রেকর্ড ও এগুলোর সঙ্গে যুক্ত সব তথ্য স্থায়ীভাবে মুছে যাবে। এটি আর ফেরানো যাবে না।',
+    'bulk_delete_all_data_confirm' => 'আপনি কি নিশ্চিত? নির্বাচিত রেকর্ড ও এগুলোর সঙ্গে যুক্ত সব তথ্য স্থায়ীভাবে মুছে যাবে।',
     'notification_no_customers_selected_for_deletion' => 'মোছার জন্য ক্রেতা নির্বাচন করা হয়নি',
     'notification_no_selection' => 'নির্বাচন নেই',
     'notification_selected_customers_and_all_related_records_deleted_successfully' => 'নির্বাচিত ক্রেতা ও সংশ্লিষ্ট সব রেকর্ড মোছা হয়েছে',
