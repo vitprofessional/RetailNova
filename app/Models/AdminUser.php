@@ -38,6 +38,15 @@ class AdminUser extends Authenticatable
         return in_array($this->normalizedRole(), ['admin', 'superadmin'], true);
     }
 
+    /**
+     * "Delete all data" of a customer or supplier permanently removes its sales or
+     * purchases, including cancelled-sale history, so it is limited to admins.
+     */
+    public function canDeleteAllRelatedData(): bool
+    {
+        return in_array($this->normalizedRole(), ['admin', 'superadmin'], true);
+    }
+
     public function hasSuperAdminPrivileges(): bool
     {
         // Platform privileges are granted only by an explicit, normalized role.

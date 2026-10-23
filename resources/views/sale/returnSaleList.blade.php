@@ -68,16 +68,6 @@
                                                 <a href="{{ route('saleReturnDetails', ['id' => $return->id]) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('sales.view') }}" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;">
                                                     <i class="ri-eye-line"></i>
                                                 </a>
-                                                @if(!empty($canCancelSales) && $sale)
-                                                <form method="POST" action="{{ route('delSale', ['id' => $return->saleId]) }}" style="display: inline-block;" data-cancel-sale-form>
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <input type="hidden" name="reason" value="">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ __('sales.cancel_sale') }}" aria-label="{{ __('sales.cancel_sale') }}" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                                                        <i class="ri-close-circle-line"></i>
-                                                    </button>
-                                                </form>
-                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -98,9 +88,6 @@
 
 @section('scripts')
     @include('customScript')
-    @if(!empty($canCancelSales))
-    @include('partials.sale-cancel-script')
-    @endif
     <script>
         (function() {
             document.addEventListener('DOMContentLoaded', function() {

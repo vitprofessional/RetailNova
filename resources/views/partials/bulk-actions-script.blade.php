@@ -247,12 +247,23 @@
 
     // --- Bulk Delete Modal Function ---
     window.showBulkDeleteModal = function(selectedIds, entity, form) {
+        // Pages may deny "Delete All Data" (admins only) and supply its exact warning text.
+        var fullDeleteAllowed = form.getAttribute('data-full-delete') !== 'denied';
+        var fullDeleteWarning = form.getAttribute('data-full-delete-warning') || 'Delete profile and all related transactions';
+        var fullDeleteConfirm = form.getAttribute('data-full-delete-confirm');
+        var escapeHtml = function (value) {
+            var div = document.createElement('div');
+            div.textContent = value;
+            return div.innerHTML;
+        };
         Swal.fire({
             title: 'Delete ' + selectedIds.length + ' ' + entity,
             html: '<p>Choose delete type:</p>' +
                   '<div style="text-align: left; margin: 20px 0;">' +
                   '<p style="margin: 10px 0;"><strong>Profile Only:</strong> Delete only the profile data</p>' +
-                  '<p style="margin: 10px 0;"><strong>Delete All Data:</strong> Delete profile and all related transactions</p>' +
+                  (fullDeleteAllowed
+                      ? '<p style="margin: 10px 0;" class="text-danger"><strong>' + escapeHtml(window.RNTranslate('common.client_delete_all_data')) + ':</strong> ' + escapeHtml(fullDeleteWarning) + '</p>'
+                      : '') +
                   '</div>',
             icon: 'warning',
             showCancelButton: true,
@@ -261,6 +272,7 @@
             confirmButtonText: 'Delete Profile Only',
             cancelButtonText: window.RNTranslate('common.cancel'),
             didOpen: function() {
+                if (!fullDeleteAllowed) { return; }
                 // Add additional button for full delete
                 const popup = Swal.getPopup();
                 const footerDiv = popup.querySelector('.swal2-actions');
@@ -271,6 +283,7 @@
                 deleteAllBtn.textContent = window.RNTranslate('common.client_delete_all_data');
                 deleteAllBtn.style.marginLeft = '10px';
                 deleteAllBtn.onclick = function() {
+                    if (fullDeleteConfirm && !window.confirm(fullDeleteConfirm)) { return; }
                     submitBulkDelete(selectedIds, form, 'fullDelete');
                     Swal.close();
                 };

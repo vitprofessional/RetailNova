@@ -62,8 +62,5 @@ class Kernel extends HttpKernel
         'superadmin' => \App\Http\Middleware\EnsureSuperAdminRole::class,
         'firstRunOpen' => \App\Http\Middleware\EnsureFirstRunOpen::class,
         'salesOnly' => \App\Http\Middleware\SalesOnly::class,
-
-        // Lightweight test logger used during `testing` environment
-        'testLogger' => \App\Http\Middleware\TestRequestLogger::class,
     ];
 }

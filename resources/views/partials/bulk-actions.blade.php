@@ -1,9 +1,13 @@
-@props(['deleteRoute' => null, 'printRoute' => null, 'pdfRoute' => null, 'entity' => 'Items', 'deleteLabel' => null, 'reasonRequired' => false])
+@props(['deleteRoute' => null, 'printRoute' => null, 'pdfRoute' => null, 'entity' => 'Items', 'deleteLabel' => null, 'reasonRequired' => false,
+    'fullDeleteAllowed' => true, 'fullDeleteWarning' => null, 'fullDeleteConfirm' => null])
 <div id="bulkActionsWrapper" class="bulk-actions align-items-center mb-3 d-none" style="gap: 0.5rem;">
     <div class="me-3"><strong id="bulkSelectedCount">0</strong> {{ __('common.selected') }} {{ $entity }}</div>
     <div id="bulkGroupHint" class="alert alert-warning mb-0 py-1 px-2 d-none" style="font-size:12px;">{{ __('common.selection_must_be_from_the_same_customer_and_date_to_print') }}</div>
     @if($deleteRoute)
-    <form id="bulkDeleteForm" data-entity="{{ $entity }}" method="POST" action="{{ route($deleteRoute) }}" class="d-inline" @if(!empty($reasonRequired)) data-bulk-reason @endif>
+    <form id="bulkDeleteForm" data-entity="{{ $entity }}" method="POST" action="{{ route($deleteRoute) }}" class="d-inline" @if(!empty($reasonRequired)) data-bulk-reason @endif
+        data-full-delete="{{ ($fullDeleteAllowed ?? true) ? 'allowed' : 'denied' }}"
+        @if(($fullDeleteAllowed ?? true) && !empty($fullDeleteWarning)) data-full-delete-warning="{{ $fullDeleteWarning }}" @endif
+        @if(($fullDeleteAllowed ?? true) && !empty($fullDeleteConfirm)) data-full-delete-confirm="{{ $fullDeleteConfirm }}" @endif>
         @csrf
         <input type="hidden" id="bulkDeleteType" name="deleteType" value="profileOnly">
         @if(!empty($reasonRequired))

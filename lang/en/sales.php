@@ -55,7 +55,6 @@ return [
     'dashboards' => 'Dashboards',
     'date' => 'Date',
     'debit' => 'Debit',
-    'delete' => 'Delete',
     'description' => 'Description',
     'details' => 'Details',
     'discount' => 'Discount',

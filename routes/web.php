@@ -565,10 +565,11 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
         'delSale'
     ])->name('delSale');
 
+    // Numeric ids only, otherwise this route swallows /return/sale/list below.
     Route::get('/return/sale/{id}',[
         saleController::class,
         'returnSale'
-    ])->name('returnSale');
+    ])->name('returnSale')->whereNumber('id');
 
     
     Route::get('/return/sale/list',[

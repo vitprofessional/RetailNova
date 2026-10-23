@@ -38,15 +38,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', \App\Http\Middleware\ResolveLocale::class);
         // Business users can never write rows into another business during a request.
         $middleware->appendToGroup('web', \App\Http\Middleware\EnforceTenantWrites::class);
-        // Keep test-time logger appended to the web group when testing.
-        // During testing, append a lightweight request logger to the web group.
-        // Avoid calling `app()` here (container may not be fully resolved),
-        // use environment variables instead to determine the environment.
-        $detectedEnv = $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? getenv('APP_ENV');
-        if ($detectedEnv === 'testing') {
-            $middleware->alias(['testLogger' => \App\Http\Middleware\TestRequestLogger::class]);
-            $middleware->appendToGroup('web', \App\Http\Middleware\TestRequestLogger::class);
-        }
+        // TestRequestLogger is intentionally not registered: it wrote every test request's
+        // full payload (including passwords) to storage/logs/test-request.log and STDERR.
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Never echo the first-run setup secret back through flashed old input.

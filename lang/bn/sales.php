@@ -55,7 +55,6 @@ return [
     'dashboards' => 'ড্যাশবোর্ড',
     'date' => 'তারিখ',
     'debit' => 'ডেবিট',
-    'delete' => 'মুছুন',
     'description' => 'বিবরণ',
     'details' => 'বিস্তারিত',
     'discount' => 'ছাড়',

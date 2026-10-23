@@ -759,10 +759,7 @@ class saleController extends Controller
             });
         }
         
-        return view('sale.returnSaleList', [
-            'returns' => $returns,
-            'canCancelSales' => $actor instanceof AdminUser && $actor->canCancelSales(),
-        ]);
+        return view('sale.returnSaleList', ['returns' => $returns]);
     }
 
     /** Only admins and superadmins may cancel sales. */

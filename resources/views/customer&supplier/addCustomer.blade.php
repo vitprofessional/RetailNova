@@ -1,5 +1,6 @@
 @extends('include')
 @section('backTitle'){{ __('common.heading_addcoustomer') }}@endsection @section('container')
+@php $canDeleteAllData = auth('admin')->user()?->canDeleteAllRelatedData() ?? false; @endphp
 
 <div class="col-12">
     @include('sweetalert::alert')
@@ -142,7 +143,13 @@
             </div>
         </div>
         <div class="table-responsive rounded mb-3">
-            @include('partials.bulk-actions', ['deleteRoute' => 'customers.bulkDelete', 'entity' => 'Customers'])
+            @include('partials.bulk-actions', [
+                'deleteRoute' => 'customers.bulkDelete',
+                'entity' => 'Customers',
+                'fullDeleteAllowed' => $canDeleteAllData,
+                'fullDeleteWarning' => __('customers.delete_profile_and_all_related_transaction_data'),
+                'fullDeleteConfirm' => __('customers.delete_all_data_confirm'),
+            ])
             <table class="data-tables table mb-0 tbl-server-info rn-table-pro" id="customer-table">
             <thead class="bg-white text-uppercase">
                     <tr class="ligth ligth-data">
@@ -295,14 +302,18 @@
                     <strong>{{ __('customers.choose_delete_type') }}:</strong>
                     <ul class="mb-0 mt-2">
                         <li><strong>{{ __('customers.profile_only') }}:</strong> {{ __('customers.delete_only_the_customer_profile_data') }}</li>
-                        <li><strong>{{ __('customers.delete_all_data') }}:</strong> {{ __('customers.delete_profile_and_all_related_transaction_data') }}</li>
+                        @if($canDeleteAllData)
+                        <li class="text-danger"><strong>{{ __('customers.delete_all_data') }}:</strong> {{ __('customers.delete_profile_and_all_related_transaction_data') }}</li>
+                        @endif
                     </ul>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('customers.cancel') }}</button>
                 <button type="button" class="btn btn-warning" onclick="submitDelete('profileOnly')">{{ __('customers.delete_profile_only') }}</button>
-                <button type="button" class="btn btn-danger" onclick="submitDelete('fullDelete')">{{ __('customers.delete_all_data') }}</button>
+                @if($canDeleteAllData)
+                <button type="button" class="btn btn-danger" data-full-delete onclick="submitDelete('fullDelete')">{{ __('customers.delete_all_data') }}</button>
+                @endif
             </div>
         </div>
     </div>
@@ -330,6 +341,8 @@
 
     function submitDelete(deleteType) {
         if (!currentDeleteUrl) return;
+        // Deleting all data is permanent, including the history of cancelled sales.
+        if (deleteType === 'fullDelete' && !window.confirm(@json(__('customers.delete_all_data_confirm')))) return;
 
         // Set the delete type
         document.getElementById('deleteType').value = deleteType;

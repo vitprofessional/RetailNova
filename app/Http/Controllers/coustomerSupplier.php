@@ -74,7 +74,19 @@ class coustomerSupplier extends Controller
     }
 
     //delete customer
+    /** "Delete all data" is permanent (including cancelled-sale history): admins only. */
+    private function authorizeDeleteType(string $deleteType): void
+    {
+        if ($deleteType !== 'fullDelete') {
+            return;
+        }
+        $actor = auth('admin')->user();
+        abort_unless($actor instanceof \App\Models\AdminUser && $actor->canDeleteAllRelatedData(), 403,
+            __('common.notification_only_admins_can_delete_all_related_data'));
+    }
+
     public function delCustomer($id, Request $request){
+        $this->authorizeDeleteType((string) $request->input('deleteType', 'profileOnly'));
         $data = Customer::withTrashed()->find($id);
         if(!$data){
             Alert::error(__('common.notification_failed'),__('common.notification_customer_not_found'));
@@ -106,6 +118,7 @@ class coustomerSupplier extends Controller
 
     // bulk delete customers
     public function bulkDeleteCustomer(Request $req){
+        $this->authorizeDeleteType((string) $req->input('deleteType', 'profileOnly'));
         $ids = $req->input('selected', []);
         if(!is_array($ids) || count($ids) === 0){
             Alert::error(__('common.notification_no_selection'),__('common.notification_no_customers_selected_for_deletion'));
@@ -324,6 +337,7 @@ class coustomerSupplier extends Controller
     
     //delete supplier
     public function delSupplier($id, Request $request){
+        $this->authorizeDeleteType((string) $request->input('deleteType', 'profileOnly'));
         $data = Supplier::withTrashed()->find($id);
         if(!$data){
             Alert::error(__('common.notification_failed'),__('common.notification_supplier_not_found'));
@@ -354,6 +368,7 @@ class coustomerSupplier extends Controller
 
     // bulk delete suppliers
     public function bulkDeleteSupplier(Request $req){
+        $this->authorizeDeleteType((string) $req->input('deleteType', 'profileOnly'));
         $ids = $req->input('selected', []);
         if(!is_array($ids) || count($ids) === 0){
             Alert::error(__('common.notification_no_selection'),__('common.notification_no_suppliers_selected_for_deletion'));
