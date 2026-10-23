@@ -155,7 +155,7 @@ class SavePurchaseTest extends TestCase
         ]);
 
         foreach ([
-            'bn' => ['PURCHASE-BN-SERIAL', 'চালান ও সরবরাহকারীর তথ্য'],
+            'bn' => ['PURCHASE-BN-SERIAL', 'চালান ও মহাজনের তথ্য'],
             'en' => ['PURCHASE-EN-SERIAL', 'Invoice & supplier information'],
         ] as $locale => [$serial, $heading]) {
             auth('admin')->user()->forceFill(['preferred_locale'=>$locale])->save();

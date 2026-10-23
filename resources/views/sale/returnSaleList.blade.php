@@ -1,4 +1,4 @@
-@extends('include') @section('backTitle') sales return list @endsection @section('container')
+@extends('include') @section('backTitle'){{ __('navigation.sales_returns') }}@endsection @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
 </div>

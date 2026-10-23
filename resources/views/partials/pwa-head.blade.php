@@ -1,5 +1,5 @@
 <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
-<meta name="theme-color" content="#1769e0">
+<meta name="theme-color" content="#14736F">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="RetailNova">

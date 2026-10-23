@@ -1,6 +1,6 @@
 @extends('include')
 
-@section('backTitle')Warranty - RMA @endsection
+@section('backTitle'){{ __('navigation.warranty_claims') }}@endsection
 @section('container')
 <div class="col-12">
     <h4>{{ __('common.rma_warranty_returns') }}</h4>

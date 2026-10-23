@@ -28,7 +28,7 @@ class Sprint02NavigationTest extends TestCase
         foreach(['en','bn'] as $locale){
             $actor->update(['preferred_locale'=>$locale]);$page=$this->get(route('purchaseList'))->assertOk();
             foreach(app(BusinessNavigation::class)->groups() as $group){$page->assertSee(__('navigation.'.$group['key']));foreach($group['items'] as $item){$this->assertTrue(app('translator')->hasForLocale('navigation.'.$item['key'],$locale));}}
-            $page->assertSee($locale==='bn'?'ক্রয়ের তালিকা':'Purchase History')->assertDontSee('Naw Parchase')->assertDontSee('Parchase List');
+            $page->assertSee($locale==='bn'?'কেনার খাতা':'Purchase List')->assertDontSee('Naw Parchase')->assertDontSee('Parchase List');
         }
     }
 

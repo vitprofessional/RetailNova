@@ -1,5 +1,5 @@
 @extends('include')
-@section('backTitle') Edit Quotation @endsection
+@section('backTitle'){{ __('mobile.title_edit_quotation') }}@endsection
 @section('container')
 @php
     $__business = $business ?? null;

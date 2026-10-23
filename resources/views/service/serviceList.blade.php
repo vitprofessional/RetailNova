@@ -1,4 +1,4 @@
-@extends('include') @section('backTitle')Service Provider List @endsection @section('container')
+@extends('include') @section('backTitle'){{ __('navigation.service_history') }}@endsection @section('container')
 <div class="card">
     <div class="card-body">
         <div class="row mt-4">

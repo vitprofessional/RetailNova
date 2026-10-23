@@ -1,4 +1,4 @@
-@extends('include') @section('backTitle') sale view @endsection @section('container')
+@extends('include') @section('backTitle'){{ __('mobile.title_sale_view') }}@endsection @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
 </div>

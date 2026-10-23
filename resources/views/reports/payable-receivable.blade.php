@@ -1,6 +1,6 @@
 @extends('include')
 @section('backTitle')
-Payable & Receivable
+{{ __('navigation.payable_receivable') }}
 @endsection
 @section('container')
 <div class="row">

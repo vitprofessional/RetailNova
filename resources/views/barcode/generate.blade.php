@@ -1,5 +1,5 @@
 @extends('include')
-@section('backTitle') Generate Barcode @endsection
+@section('backTitle'){{ __('navigation.barcodes') }}@endsection
 @section('container')
 
 <div class="col-12">

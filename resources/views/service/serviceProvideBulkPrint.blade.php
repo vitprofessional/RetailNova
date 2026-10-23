@@ -1,5 +1,5 @@
 @extends('include')
-@section('backTitle') Bulk Print Provided Services @endsection
+@section('backTitle'){{ __('mobile.title_bulk_print_services') }}@endsection
 @section('container')
 <div class="row">
     <div class="col-12">

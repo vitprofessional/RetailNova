@@ -45,7 +45,7 @@ return [
     'update_layout' => 'বিন্যাস হালনাগাদ',
     'print_selected' => 'নির্বাচিতগুলো প্রিন্ট',
     'edit_items' => 'পণ্য সম্পাদনা',
-    'back_to_sales' => 'বিক্রয়ে ফিরুন',
+    'back_to_sales' => 'বিক্রিতে ফিরুন',
     'thank_you_for_your_business' => 'আপনার কেনাকাটার জন্য ধন্যবাদ',
     'powered_by_retailnova' => 'পরিচালনায় RetailNova',
     'walking_customer' => 'অনিবন্ধিত ক্রেতা',

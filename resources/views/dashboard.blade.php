@@ -22,6 +22,7 @@
             : $value;
     };
 @endphp
+@include('partials.mobile-home')
 <main class="rn-dashboard" data-currency-symbol="{{ $dashboardCurrencySymbol }}" data-currency-position="{{ $dashboardCurrencyPosition }}" data-currency-negative-parentheses="{{ $dashboardCurrencyNegParentheses ? 'true' : 'false' }}">
     <section class="rn-dashboard-intro" aria-labelledby="rn-dashboard-title">
         <div class="rn-dashboard-welcome">

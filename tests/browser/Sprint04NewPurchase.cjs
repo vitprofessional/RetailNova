@@ -47,7 +47,7 @@ for(const locale of ['en','bn'])for(const width of [320,360,375,390,430,576,768,
  check(await page.locator('[data-purchase-leave]').count()===2,'Back/Cancel missing');
  await page.locator('#supplierName').selectOption(String(fixture.supplierId));check(await page.locator('#productName').isEnabled(),'Supplier did not enable products');
  const selectedProductHelp=locale==='en'?'Product selected. Select Add To List to include it.':'পণ্য নির্বাচন করা হয়েছে। তালিকায় যোগ করতে বোতামটি চাপুন।';
- const chooseProductHelp=locale==='en'?'Supplier selected. Choose a product to add.':'সরবরাহকারী নির্বাচন করা হয়েছে। যোগ করতে একটি পণ্য বেছে নিন।';
+ const chooseProductHelp=locale==='en'?'Supplier selected. Choose a product to add.':'মহাজন নির্বাচন করা হয়েছে। যোগ করতে একটি পণ্য বেছে নিন।';
  check(await page.locator('[data-purchase-supplier-help]').innerText()===(await page.locator('#productName').inputValue()?selectedProductHelp:chooseProductHelp),'Supplier helper did not follow actual selection state');
  for(const id of fixture.productIds){
   await page.locator('#productName').selectOption(String(id));
@@ -78,7 +78,7 @@ for(const locale of ['en','bn'])for(const width of [320,360,375,390,430,576,768,
  check(layout.summaryTitle.height>0,'Purchase Summary title is hidden');
  const snapshot=()=>page.locator('#savePurchase').evaluate(f=>JSON.stringify([...new FormData(f)]));const before=await snapshot();
  await rows.last().locator('.remove-row').press('Enter');await page.locator('.swal2-popup').waitFor({state:'visible'});check(await snapshot()===before,'Removed before confirmation');await page.locator('.swal2-cancel').click();await page.locator('.swal2-container').waitFor({state:'hidden'});check(await snapshot()===before,'Cancel mutated purchase');
- await page.locator('[data-purchase-leave]').last().click();await page.locator('.swal2-popup').waitFor({state:'visible'});check(await page.locator('.swal2-title').innerText().then(t=>t=== (locale==='en'?'Unsaved purchase':'ক্রয় সংরক্ষিত হয়নি')),'Unsaved warning missing/localization');await page.locator('.swal2-cancel').click();await page.locator('.swal2-container').waitFor({state:'hidden'});check(await snapshot()===before,'Navigation cancel mutated purchase');
+ await page.locator('[data-purchase-leave]').last().click();await page.locator('.swal2-popup').waitFor({state:'visible'});check(await page.locator('.swal2-title').innerText().then(t=>t=== (locale==='en'?'Unsaved purchase':'কেনা সংরক্ষিত হয়নি')),'Unsaved warning missing/localization');await page.locator('.swal2-cancel').click();await page.locator('.swal2-container').waitFor({state:'hidden'});check(await snapshot()===before,'Navigation cancel mutated purchase');
  await rows.last().locator('.remove-row').press('Enter');await page.locator('.swal2-confirm').click();await page.locator('.swal2-container').waitFor({state:'hidden'});check(await rows.count()===1,'Confirm did not remove row');check(Number(await page.locator('#grandTotal').inputValue())===18,'Removal discount recalculation changed');
  await page.locator('#paidAmount').fill('10');await page.locator('#paidAmount').press('Tab');
  const payload=await page.locator('#savePurchase').evaluate(f=>[...new FormData(f)]);

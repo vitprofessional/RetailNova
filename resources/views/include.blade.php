@@ -12,8 +12,11 @@
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/backende209.css?v=1.0.0">
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/rn-custom.css">
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/rn-table-pro.css">
+    <link rel="stylesheet" href="{{ asset('css/rn-tokens.css') }}?v={{ filemtime(public_path('css/rn-tokens.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/retailnova-shell.css') }}?v={{ filemtime(public_path('css/retailnova-shell.css')) }}">
     @stack('styles')
+    {{-- Mobile app shell (≤1023px); loaded last so it can adapt page styles on small screens. --}}
+    <link rel="stylesheet" href="{{ asset('css/rn-mobile.css') }}?v={{ filemtime(public_path('css/rn-mobile.css')) }}">
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
     <link rel= "stylesheet" href= "https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css" >
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/remixicon/fonts/remixicon.css">
@@ -733,7 +736,7 @@
 @include('partials.localization')
 @include('partials.pwa-head')
 </head>
-  <body class="">
+  <body class="rn-app">
     <!-- loader Start -->
     <div id="loading">
           <div id="loading-center">
@@ -751,6 +754,7 @@
               ? asset('uploads/business/' . $config[0]->businessLogo)
               : asset('logo.png');
       @endphp
+      @include('partials.mobile-shell')
       <div class="iq-sidebar sidebar-default rn-sidebar" id="rn-sidebar">
           <div class="iq-sidebar-logo rn-sidebar-brand">
               <a href="{{ route('dashboard') }}" class="header-logo rn-sidebar-brand-link" title="{{ $rnBusinessName }}" aria-label="{{ $rnBusinessName }} — {{ __('navigation.dashboard') }}">
@@ -1414,5 +1418,6 @@
             </div>
         </div>
     </div>
+    <script src="{{ asset('js/rn-mobile.js') }}?v={{ filemtime(public_path('js/rn-mobile.js')) }}" defer></script>
   </body>
 </html>

@@ -1,6 +1,6 @@
 @extends('include')
 @section('backTitle')
-{{ $title }} - Documentation
+{{ $title }} - {{ __('navigation.documentation') }}
 @endsection
 
 @push('styles')

@@ -1,5 +1,5 @@
 @extends('include')
-@section('backTitle') Provided Service View @endsection
+@section('backTitle'){{ __('mobile.title_provided_service_view') }}@endsection
 @section('container')
 <div class="row mt-4">
     <div class="col-md-8 offset-md-2">

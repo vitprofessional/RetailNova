@@ -2,11 +2,11 @@
 
 return [
     'login_title' => 'RetailNova-তে প্রবেশ করুন',
-    'retail_platform' => 'খুচরা বিক্রয় ও ব্যবসা ব্যবস্থাপনা',
+    'retail_platform' => 'খুচরা বিক্রি ও ব্যবসা ব্যবস্থাপনা',
     'hero_title' => 'স্মার্ট খুচরা ব্যবসা ব্যবস্থাপনা',
-    'hero_description' => 'বিক্রয়, মজুত, গ্রাহক ও প্রতিবেদন এক জায়গায় পরিচালনার জন্য আধুনিক ও সহজ পিওএস ব্যবস্থা।',
+    'hero_description' => 'বিক্রি, মজুত, গ্রাহক ও প্রতিবেদন এক জায়গায় পরিচালনার জন্য আধুনিক ও সহজ পিওএস ব্যবস্থা।',
     'capabilities' => 'RetailNova-এর সুবিধাসমূহ',
-    'feature_sales' => 'বিক্রয়',
+    'feature_sales' => 'বিক্রি',
     'feature_inventory' => 'মজুত',
     'feature_customers' => 'গ্রাহক',
     'feature_reports' => 'প্রতিবেদন',
@@ -22,7 +22,7 @@ return [
     'secure_login_note' => 'নিরাপদ প্রবেশের মাধ্যমে আপনার অ্যাকাউন্ট সুরক্ষিত।',
     'login_benefits' => 'RetailNova-এর সুবিধাসমূহ',
     'benefit_secure' => 'নিরাপদ প্রবেশ',
-    'benefit_sales' => 'বিক্রয় ব্যবস্থাপনা',
+    'benefit_sales' => 'বিক্রি ব্যবস্থাপনা',
     'benefit_inventory' => 'মজুত ব্যবস্থাপনা',
     'benefit_reports' => 'ব্যবসায়িক প্রতিবেদন',
     'product_footer' => 'RetailNova পিওএস · খুচরা ও ব্যবসা ব্যবস্থাপনা',

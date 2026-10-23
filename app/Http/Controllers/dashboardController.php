@@ -38,6 +38,8 @@ class dashboardController extends Controller
                 ?: (!$admin?->businessId ? \App\Support\Currency::symbol() : ''),
             'dashboardCurrencyPosition' => $currencySetup?->currencyPosition === 'right' ? 'right' : 'left',
             'dashboardCurrencyNegParentheses' => (bool) ($currencySetup?->currencyNegParentheses ?? true),
+            // Mobile home (read-only): today's figures of the user's own business.
+            'today' => app(\App\Services\DashboardToday::class)->summary($admin instanceof \App\Models\AdminUser ? $admin : null),
         ]);
     }
 

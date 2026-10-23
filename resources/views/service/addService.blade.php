@@ -1,4 +1,4 @@
-@extends('include') @section('backTitle')Add Service @endsection @section('container')
+@extends('include') @section('backTitle'){{ __('navigation.service_catalog') }}@endsection @section('container')
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
