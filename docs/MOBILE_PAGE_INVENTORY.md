@@ -48,7 +48,7 @@
 | `/ajax/serials` | `ajax.serials` | অন্য | AJAX JSON (পাতা নয়) |  |
 | `/audits` | `audits.index` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন | UI-3.L.2 |
 | `/audits/export` | `audits.export` | অন্য | ফাইল ডাউনলোড |  |
-| `/balance/sheet` | `balancesheet` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3.R (legacy static data) |
+| `/balance/sheet` | `balancesheet` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3.R.2 (legacy statement contract unresolved) |
 | `/barcode` | `barcode.index` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.L.2 |
 | `/barcode/generate-all-missing` | `generateAllMissingBarcodes` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
 | `/barcode/generate/{id}` | `barcode.generate` | অন্য | সার্ভারে রেন্ডার |  |

@@ -118,7 +118,7 @@ Authenticated browser screenshots were captured at 390×844 for all six routes a
 
 The focused `MobileSuperAdminListsTest` passes (2 tests, 27 assertions). Full isolated SQLite suite passes (343 tests, 10,845 assertions, 0 failures, 6 PHPUnit deprecations). `view:cache` and `git diff --check` are the final checks for this phase. The screenshots use only an isolated database; no development or production database was changed. A first capture attempt used an incorrect seed/router setup and showed the login page; after correcting the temporary fixture hash and public-root routing, the final authenticated captures succeeded.
 
-Still outstanding from the broader UI-3 inventory: mobile report/business overview is blocked by the existing SQLite-incompatible `YEAR()`/`MONTH()` query, and `/balance/sheet` uses legacy static example data. Screenshots are local ignored artifacts and were not committed.
+Still outstanding from the broader UI-3 inventory: `/balance/sheet` uses a legacy customer transaction mockup with static sample data and no customer identifier in its route. The correct account/customer statement definition remains unresolved. Screenshots are local ignored artifacts and were not committed.
 
 ## UI-3.L.2 — Close remaining mobile list inventory
 
@@ -127,3 +127,13 @@ Added mobile card layouts for Business Locations, product barcodes, and audit hi
 Authenticated Android-user-agent Playwright captures are in ignored `tests-output/ui-3-final/L2/` at 390×844. The three changed list pages and Account Ledger all returned HTTP 200, had `scrollWidth` equal to the 390px viewport, rendered no desktop tables, and raised no browser page exceptions. Screenshots were taken after `networkidle` plus 500ms and visually compared with mockup 09. Compared with the transaction-list mockup, the audit page uses its real search/filter/export controls without sale totals, payment tags, or date groups; barcode management keeps its bulk-print controls and action menu; locations show contact/status metadata and an add action. These differences reflect the records' functions. Account Ledger uses a date-range filter and account balance rather than transaction summary chips.
 
 Focused `MobileRemainingListsTest` and `MobileSuperAdminListsTest`: 6 tests, 93 assertions, passing (6 existing PHPUnit deprecations). The complete isolated SQLite suite passes: 344 tests, 10,917 assertions, 0 failures, 6 PHPUnit deprecations. This closes all inventory rows classified as lists; `/admin/manage/users`, Super Admin lists, and the other list routes are assigned to their earlier UI-3 increments in `docs/MOBILE_PAGE_INVENTORY.md`.
+
+## UI-3.R.2 — Business Overview compatibility and report review
+
+Replaced the MySQL-only `YEAR()` / `MONTH()` monthly trend grouping with database-side `SUBSTR()` year/month extraction supported by the configured MySQL/MariaDB and SQLite drivers. The business-scoped sales models and aggregate logic remain unchanged. Mobile Business Overview now lays out its four KPI cards in a 2×2 grid, keeps date filters paired, and uses compact token-based KPI cards. Focused regression coverage confirms SQLite rendering and excludes a second business's sale total.
+
+The authenticated 390×844 Business Overview screenshot and mockup comparison are in ignored `tests-output/ui-3-final/R2/`. The route returns 200 with no horizontal overflow or JavaScript exceptions. Its existing monthly trend remains a table/empty state, and it retains additional summary cards instead of a consolidated chart and top-products section.
+
+The `/balance/sheet` route was audited and captured in `tests-output/ui-3-final/R2/balance-sheet-390x844.png`; it is a customer transaction form with hard-coded sample values and no customer id in its route. It cannot be made a correct account/customer statement without choosing the entity and report semantics. It remains unaccepted and is marked unresolved in the page inventory; no fake data was reinterpreted as live accounting data.
+
+Focused `MobileReportCardsTest`: 3 tests, 17 assertions, passing (6 PHPUnit deprecations). Final complete isolated SQLite suite: 345 tests, 10,922 assertions, 0 failures, 6 PHPUnit deprecations. PHP syntax, Blade cache compilation, and `git diff --check` passed.

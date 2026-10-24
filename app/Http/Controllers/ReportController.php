@@ -56,9 +56,11 @@ class ReportController extends Controller
         $totalPayables = Supplier::where('openingBalance', '>', 0)->sum('openingBalance');
         
         // Monthly trend (last 12 months)
+        // SUBSTR is supported by the configured MySQL/MariaDB and SQLite
+        // drivers, unlike YEAR()/MONTH(), while retaining database-side grouping.
         $monthlySales = SaleProduct::select(
-                DB::raw('YEAR(date) as year'),
-                DB::raw('MONTH(date) as month'),
+                DB::raw('CAST(SUBSTR(date, 1, 4) AS INTEGER) as year'),
+                DB::raw('CAST(SUBSTR(date, 6, 2) AS INTEGER) as month'),
                 DB::raw('SUM(grandTotal) as total')
             )
             ->where('date', '>=', Carbon::now()->subMonths(12)->format('Y-m-d'))

@@ -5,7 +5,7 @@
     <div class="col-lg-12">
         <div class="card card-transparent card-block card-stretch card-height border-none">
             <div class="card-body p-0 mt-lg-2 mt-0">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-center rn-report-header">
                     <div>
                         <h3 class="mb-3">{{ __('settings.business_overview_report') }}</h3>
                         <p class="mb-0">{{ __('settings.complete_business_performance_and_analytics') }}</p>
@@ -22,7 +22,7 @@
     <div class="col-lg-12 mb-3">
         <div class="card">
             <div class="card-body">
-                <form method="GET" action="{{ route('reports.business') }}" class="row align-items-end">
+                <form method="GET" action="{{ route('reports.business') }}" class="row align-items-end rn-report-date-filter">
                     <div class="col-md-4">
                         <label class="form-label">{{ __('settings.start_date') }}</label>
                         <input type="date" name="start_date" class="form-control" value="{{ $startDate }}">
@@ -43,9 +43,9 @@
 
     <!-- Key Metrics -->
     <div class="col-lg-12">
-        <div class="row">
+        <div class="row rn-report-kpi-grid">
             <div class="col-lg-3 col-md-6">
-                <div class="card card-block card-stretch card-height bg-primary">
+                <div class="card card-block card-stretch card-height bg-primary rn-report-kpi-card rn-report-kpi-card--sales">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('settings.total_sales') }}</h6>
                         <h3>@money($totalSales)</h3>
@@ -55,7 +55,7 @@
             </div>
 
             <div class="col-lg-3 col-md-6">
-                <div class="card card-block card-stretch card-height bg-warning">
+                <div class="card card-block card-stretch card-height bg-warning rn-report-kpi-card rn-report-kpi-card--purchases">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('settings.total_purchases') }}</h6>
                         <h3>@money($totalPurchases)</h3>
@@ -65,7 +65,7 @@
             </div>
 
             <div class="col-lg-3 col-md-6">
-                <div class="card card-block card-stretch card-height bg-success">
+                <div class="card card-block card-stretch card-height bg-success rn-report-kpi-card rn-report-kpi-card--profit">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('settings.profit') }}</h6>
                         <h3>@money($profit)</h3>
@@ -75,7 +75,7 @@
             </div>
 
             <div class="col-lg-3 col-md-6">
-                <div class="card card-block card-stretch card-height bg-info">
+                <div class="card card-block card-stretch card-height bg-info rn-report-kpi-card rn-report-kpi-card--products">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('settings.total_products') }}</h6>
                         <h3>{{ $totalProducts }}</h3>
@@ -88,7 +88,7 @@
 
     <!-- Additional Stats -->
     <div class="col-lg-12 mt-3">
-        <div class="row">
+        <div class="row rn-report-summary-grid">
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-body">

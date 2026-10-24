@@ -1072,13 +1072,37 @@
             gap: 8px;
             margin: 0;
         }
-        .rn-report-page > .row > .col-lg-12 > .row:has(> .col-lg-3) > [class*="col-"],
-        .rn-report-page > .row > .col-lg-12 > .row:has(> .col-lg-6) > [class*="col-"] {
+        .rn-report-page > .col-lg-12 > .rn-report-kpi-grid,
+        .rn-report-page > .col-lg-12 > .rn-report-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin: 0;
+        }
+        .rn-report-page > .col-lg-12 > .rn-report-kpi-grid > [class*="col-"],
+        .rn-report-page > .col-lg-12 > .rn-report-summary-grid > [class*="col-"] {
             width: auto;
             max-width: none;
             min-width: 0;
             padding: 0;
         }
+        .rn-report-page .rn-report-header { align-items: flex-start !important; flex-direction: column; gap: 8px; }
+        .rn-report-page .rn-report-header h3 { margin: 0 0 4px !important; font-size: 20px; line-height: 1.3; }
+        .rn-report-page .rn-report-header p { font-size: 13px; line-height: 1.45; }
+        .rn-report-page .rn-report-header .btn { min-height: 40px; padding: 8px 12px; }
+        .rn-report-page .rn-report-date-filter { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+        .rn-report-page .rn-report-date-filter > [class*="col-"] { width: auto; max-width: none; min-width: 0; padding: 0; }
+        .rn-report-page .rn-report-date-filter .btn { min-height: 44px; }
+        .rn-report-page .rn-report-kpi-card { height: 100%; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); box-shadow: var(--rn-shadow-sm); color: var(--rn-color-ink) !important; }
+        .rn-report-page .rn-report-kpi-card .card-body { padding: 14px; color: var(--rn-color-ink) !important; }
+        .rn-report-page .rn-report-kpi-card h6 { font-size: 13px; }
+        .rn-report-page .rn-report-kpi-card h3 { font-size: 20px; }
+        .rn-report-page .rn-report-kpi-card p { font-size: 12px; }
+        .rn-report-page .rn-report-kpi-card--sales { background: var(--rn-color-primary-tint) !important; }
+        .rn-report-page .rn-report-kpi-card--purchases { background: var(--rn-color-warning-tint) !important; }
+        .rn-report-page .rn-report-kpi-card--profit { background: var(--rn-color-success-tint) !important; }
+        .rn-report-page .rn-report-kpi-card--products { background: var(--rn-color-surface) !important; }
+        body.rn-app:has(.rn-report-page) .content-page { padding-bottom: calc(92px + var(--rn-safe-bottom)) !important; }
         .rn-report-page .card:has(> .card-body > .rn-report-table) > .card-body,
         .rn-report-page .card:has(> .card-body > .table-responsive > .rn-report-table) > .card-body {
             padding: 12px;

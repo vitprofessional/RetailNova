@@ -6,6 +6,7 @@ use App\Models\AdminUser;
 use App\Models\BusinessSetup;
 use App\Models\ExpenseCategory;
 use App\Models\ExpenseEntry;
+use App\Models\SaleProduct;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -67,5 +68,25 @@ class MobileReportCardsTest extends TestCase
         $this->assertStringContainsString("cell.dataset.label = headings[index]", $script);
         $this->assertStringContainsString('.rn-report-table tbody tr {', $css);
         $this->assertStringContainsString('content: attr(data-label)', $css);
+    }
+
+    public function test_business_overview_groups_monthly_sales_on_sqlite_without_cross_business_rows(): void
+    {
+        BusinessSetup::forceCreate(['id' => 2, 'businessName' => 'Other Reports Shop']);
+        SaleProduct::forceCreate([
+            'businessId' => 1, 'date' => now()->toDateString(), 'invoice' => 'MOBILE-OVERVIEW-1',
+            'totalSale' => '300', 'grandTotal' => '321',
+        ]);
+        SaleProduct::forceCreate([
+            'businessId' => 2, 'date' => now()->toDateString(), 'invoice' => 'OTHER-OVERVIEW-1',
+            'totalSale' => '900', 'grandTotal' => '999',
+        ]);
+
+        $this->get(route('reports.business'))
+            ->assertOk()
+            ->assertSee('rn-report-kpi-grid', false)
+            ->assertSee('rn-report-kpi-card--sales', false)
+            ->assertSee('321.00')
+            ->assertDontSee('999.00');
     }
 }
