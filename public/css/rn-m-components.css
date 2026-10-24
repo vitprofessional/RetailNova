@@ -742,7 +742,34 @@
         .rn-m-rma-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
         .rn-m-rma-actions .rn-m-btn { min-height: 48px; margin: 0; }
     }
+    @media (max-width: 992px) {
+        .rn-m-account-card { margin: 0; border: 0; background: transparent; box-shadow: none; }
+        .rn-m-account-card > .card-body { padding: 0; }
+        .rn-m-account-card > .card-body > .d-flex { align-items: flex-start !important; gap: 10px; }
+        .rn-m-account-card > .card-body > .d-flex h4 { min-width: 0; font-size: 18px; line-height: 1.35; overflow-wrap: anywhere; }
+        .rn-m-account-card > .card-body > .d-flex .btn { flex: 0 0 auto; min-height: 40px; }
+        .rn-m-account-form { padding-bottom: calc(var(--rn-m-tabbar-h) + 82px + var(--rn-safe-bottom)); }
+        .rn-m-account-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px !important; margin: 0 0 12px; padding: 14px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); }
+        .rn-m-account-fields > [class*="col-"] { width: auto; max-width: none; min-width: 0; padding: 0; }
+        .rn-m-account-fields > .col-md-12 { grid-column: 1 / -1; }
+        .rn-m-account-fields .rn-m-field { display: grid; min-width: 0; gap: 6px; margin: 0 0 14px; }
+        .rn-m-account-fields label { display: block; margin: 0; color: var(--rn-color-ink); font-size: 14px; font-weight: 600; line-height: 1.4; }
+        .rn-m-account-fields .form-control { width: 100%; min-width: 0; min-height: 48px; padding: 8px 11px; border-color: var(--rn-color-border); border-radius: var(--rn-radius-md); }
+        .rn-m-account-fields textarea.form-control { min-height: 100px; }
+        .rn-m-account-fields .form-text { margin: 0; font-size: 12px; line-height: 1.45; }
+        .rn-m-account-fields .text-danger { display: block; margin: 0; font-size: 13px; line-height: 1.4; }
+        .rn-m-account-transaction-form > .alert { margin: 0 0 12px; padding: 12px; border-radius: var(--rn-radius-md); font-size: 13px; }
+        .rn-m-account-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+        .rn-m-account-actions .rn-m-btn { min-width: 0; min-height: 48px; margin: 0; padding: 8px; font-size: 14px; white-space: normal; }
+        .rn-m-account-actions .rn-m-btn--outline { color: var(--rn-color-primary); border-color: var(--rn-color-primary); background: var(--rn-color-surface); }
+        .rn-m-account-actions .rn-m-btn--primary { color: var(--rn-color-on-primary); border-color: var(--rn-color-primary); background: var(--rn-color-primary); }
+        .rn-m-account-fields .select2-container { width: 100% !important; min-width: 0; }
+        .rn-m-account-fields .select2-container .select2-selection { min-height: 48px; border-color: var(--rn-color-border); border-radius: var(--rn-radius-md); }
+        .rn-m-account-fields .select2-container .select2-selection__rendered { line-height: 46px; }
+    }
     @media (max-width: 359px) {
         .rn-m-form-grid--2 { grid-template-columns: minmax(0, 1fr); }
+        .rn-m-account-fields { grid-template-columns: minmax(0, 1fr); }
+        .rn-m-account-fields > .col-md-12 { grid-column: auto; }
     }
 }
