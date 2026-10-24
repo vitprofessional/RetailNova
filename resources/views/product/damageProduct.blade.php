@@ -2,11 +2,11 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<form action="{{ route('damageProductSave') }}" class="row" method="POST" id="damage-product-form">
+<form action="{{ route('damageProductSave') }}" class="row rn-m-form rn-m-damage-form" method="POST" id="damage-product-form">
     @csrf
     <div class="col-12">
         <div class="row">
-            <div class="col-md-12 col-12">
+            <div class="col-md-12 col-12 rn-m-form-section rn-m-damage-meta">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between">
                         <div class="header-title">
@@ -47,11 +47,11 @@
             </div>
         </div>
     </div>
-    <div class="col-12">
+    <div class="col-12 rn-m-damage-items-card">
         <div class="card">
             <div class="card-body">
-                <div class="mb-3 table-responsive product-table">
-                    <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
+                <div class="mb-3 table-responsive product-table rn-m-form-section rn-m-damage-items">
+                    <table class="table mb-0 table-bordered rounded-0 rn-table-pro rn-m-damage-table">
                         <thead class="bg-white text-uppercase">
                             <tr>
                                 <th>{{ __('inventory.product_name') }}</th>
@@ -65,29 +65,29 @@
                         </thead>
                         <tbody id="productDetails">
                             <tr>
-                                <td width="20%">
+                                <td width="20%" data-label="{{ __('inventory.product_name') }}">
                                     <input type="text" class="form-control" name="selectProductName" value="" id="selectProductName" readonly />
                                 </td>
-                                <td width="8%" id="inDate">-
+                                <td width="8%" id="inDate" data-label="{{ __('inventory.in_date') }}">-
                                 </td>
-                                <td width="9%">
+                                <td width="9%" data-label="{{ __('inventory.product_qty') }}">
                                     <input type="number" class="form-control" id="qty" name="qty" min="1" step="1" readonly />
                                     <div id="qty-error" class="text-danger small mt-1" style="display:none;"></div>
                                     <div id="qty-stock" class="text-muted small mt-1">{{ __('common.current_stock') }}: <span id="qty-stock-val">0</span></div>
                                 </td>
-                                <td width="9%">
+                                <td width="9%" data-label="{{ __('inventory.current_stock') }}">
                                     <input type="number" class="form-control" id="currentStock" name="currentStock" readonly />
                                 </td>
-                                <td width="9%">
+                                <td width="9%" data-label="{{ __('inventory.price') }}">
                                     <input type="number" class="form-control" id="buyingPrice" name="buyingPrice" step="0.01" />
                                 </td>
-                                <td width="9%">
+                                <td width="9%" data-label="{{ __('inventory.total_price') }}">
                                     <div style="display:flex;flex-direction:column;">
                                         <input type="number" class="form-control mb-1" id="salingPriceWithoutVat" name="salingPriceWithoutVat" step="0.01" />
                                         <input type="text" class="form-control" id="computedTotal" name="total" readonly placeholder="{{ __('inventory.total') }}" />
                                     </div>
                                 </td>
-                                <td width="9%">
+                                <td width="9%" data-label="{{ __('inventory.remove') }}">
 
                                     <div class="list-action">
                                         <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-remove-row="true" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('inventory.delete') }}"><i class="ri-delete-bin-line mr-0"></i></button>
@@ -97,8 +97,9 @@
                         </tbody>
                     </table>
                 </div>
-                <div class=" d-md-flex  mt-2">
-                    <button class="btn btn-primary btn-sm" type="submit">{{ __('inventory.save') }}</button>
+                <div class="rn-m-sticky-actions rn-m-damage-actions">
+                    <a class="rn-m-btn rn-m-btn--outline" href="{{ route('damageProductList') }}">{{ __('common.cancel') }}</a>
+                    <button class="rn-m-btn rn-m-btn--primary" type="submit">{{ __('inventory.save') }}</button>
                 </div>
             </div>
         </div>
