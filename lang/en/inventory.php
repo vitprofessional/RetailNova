@@ -75,6 +75,8 @@ return [
     'categories' => 'Categories',
     'search_catalog' => 'Search product, brand or category...',
     'product_basic_information' => 'Product basic information',
+    'more_information' => 'More Information',
+    'stock_alert_settings' => 'Stock Alert',
     'catalog_metrics_total' => 'Total Products',
     'catalog_metrics_in_stock' => 'In Stock',
     'catalog_metrics_low_stock' => 'Low Stock',

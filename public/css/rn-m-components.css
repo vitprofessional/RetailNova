@@ -340,6 +340,67 @@
         border-radius: var(--rn-radius-lg);
         background: var(--rn-color-surface);
     }
+    .rn-m-form-section-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 12px; }
+    .rn-m-form-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 12px; }
+    .rn-m-form-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rn-m-field-with-trailing-icon { position: relative; }
+    .rn-m-field-with-trailing-icon > .rn-m-field .rn-m-input { padding-right: 44px; }
+    .rn-m-field-with-trailing-icon > i { position: absolute; top: 40px; right: 13px; color: var(--rn-color-primary); font-size: 20px; pointer-events: none; }
+    .rn-m-field-with-action { position: relative; min-width: 0; }
+    .rn-m-field-with-action > .rn-m-field { min-width: 0; }
+    .rn-m-form-quick-add {
+        display: grid;
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 1;
+        width: 32px;
+        place-items: center;
+        height: 28px;
+        margin: 0;
+        border: 1px solid var(--rn-color-primary);
+        border-radius: var(--rn-radius-md);
+        background: var(--rn-color-surface);
+        color: var(--rn-color-primary);
+        font-size: 21px;
+    }
+    .rn-m-form-quick-add:focus-visible { outline: 3px solid var(--rn-color-primary-soft); outline-offset: 2px; }
+    .rn-m-form-business-field { margin-bottom: 14px; }
+    .rn-m-form-business-field .form-group { margin: 0; }
+    .rn-m-form-business-field label { display: block; margin: 0 0 5px; color: var(--rn-color-ink); font-size: 14px; }
+    .rn-m-form-business-field select { width: 100%; min-height: 48px; padding: 0 12px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); background: var(--rn-color-surface); color: var(--rn-color-ink); }
+    .rn-m-form-business-field small { display: block; margin-top: 4px; color: var(--rn-color-muted); font-size: 12px; }
+    .rn-m-form-accordion {
+        margin: 0 0 16px;
+        border: 1px solid var(--rn-color-border);
+        border-radius: var(--rn-radius-lg);
+        background: var(--rn-color-surface);
+        box-shadow: var(--rn-shadow-card);
+    }
+    .rn-m-form-accordion > summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 56px;
+        padding: 0 16px;
+        color: var(--rn-color-ink);
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        list-style: none;
+    }
+    .rn-m-form-accordion > summary::-webkit-details-marker { display: none; }
+    .rn-m-form-accordion[open] > summary { border-bottom: 1px solid var(--rn-color-border); }
+    .rn-m-form-accordion > summary:focus-visible { outline: 3px solid var(--rn-color-primary-soft); outline-offset: -3px; border-radius: var(--rn-radius-lg); }
+    .rn-m-form-accordion[open] > summary > i { transform: rotate(180deg); }
+    .rn-m-form-accordion-body { padding: 14px 16px 16px; }
+    .rn-m-form-reset { width: 100%; min-height: 44px; margin-top: 2px; }
+    .rn-m-bottom-sheet-modal.modal.show { display: flex !important; align-items: flex-end; padding: 0 !important; }
+    .rn-m-bottom-sheet-modal .modal-dialog { width: 100%; max-width: none; margin: auto 0 0; transform: translateY(100%); }
+    .rn-m-bottom-sheet-modal.show .modal-dialog { transform: translateY(0); }
+    .rn-m-bottom-sheet-modal .modal-content { border: 0; border-radius: var(--rn-radius-lg) var(--rn-radius-lg) 0 0; box-shadow: var(--rn-shadow-card); }
+    .rn-m-bottom-sheet-modal .modal-body { max-height: 65vh; overflow-y: auto; padding-bottom: calc(16px + var(--rn-safe-bottom)); }
+    .rn-m-bottom-sheet-modal .modal-footer { padding-bottom: calc(12px + var(--rn-safe-bottom)); }
     .rn-m-form-section-title { margin: 0 0 12px; color: var(--rn-color-ink); font-size: 16px; font-weight: 600; }
     .rn-m-form-section-text { margin: -6px 0 12px; color: var(--rn-color-muted); font-size: 13px; }
     .rn-m-field label { color: var(--rn-color-ink); font-size: 14px; }
@@ -363,4 +424,7 @@
         background: var(--rn-color-surface);
     }
     .rn-m-sticky-actions .rn-m-btn { min-height: 48px; font-size: 16px; text-decoration: none; }
+    @media (max-width: 359px) {
+        .rn-m-form-grid--2 { grid-template-columns: minmax(0, 1fr); }
+    }
 }

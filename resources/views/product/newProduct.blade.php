@@ -1,7 +1,10 @@
 @extends('include')
-@section('backTitle'){{ __('common.heading_new_products') }}@endsection
+@section('backTitle'){{ isset($profile) ? __('inventory.edit_product') : __('common.heading_new_products') }}@endsection
 @section('container')
 <link rel="stylesheet" href="{{ asset('css/inventory-products.css') }}?v={{ filemtime(public_path('css/inventory-products.css')) }}">
+@mobile
+    @include('product.mobileForm')
+@else
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -175,13 +178,15 @@
 
 <!-- Page end  -->
 
+@endmobile
+
 <!-- brand modal -->
-<div class="modal fade" id="createBrand" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="createBrand" aria-hidden="true">
+<div class="modal fade rn-m-bottom-sheet-modal" id="createBrand" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="createBrand" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title fs-5">{{ __('inventory.create_brand') }}</h6>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="{{ __('inventory.close') }}"></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{{ __('inventory.close') }}"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
                 <form action="{{ route('createBrand') }}" method="GET" id="brandForm" data-ajax="true" data-target="#brand" data-modal-id="createBrand">
@@ -200,12 +205,12 @@
 </div>
 
 <!-- category modal -->
-<div class="modal fade" id="categoryModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="categoryModal" aria-hidden="true">
+<div class="modal fade rn-m-bottom-sheet-modal" id="categoryModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="categoryModal" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title fs-5">{{ __('inventory.create_category') }}</h6>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="{{ __('inventory.close') }}"></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{{ __('inventory.close') }}"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
                 <form action="{{ route('createCategory') }}" method="GET" id="categoryForm" data-ajax="true" data-target="#categoryList" data-modal-id="categoryModal">
@@ -224,12 +229,12 @@
 </div>
 
 <!-- product unit modal -->
-<div class="modal fade" id="productUnitModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="productUnitModal" aria-hidden="true">
+<div class="modal fade rn-m-bottom-sheet-modal" id="productUnitModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="productUnitModal" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title fs-5">{{ __('inventory.create_product_unit') }}</h6>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="{{ __('inventory.close') }}"></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{{ __('inventory.close') }}"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
                 <form action="{{ route('createProductUnit') }}" method="GET" id="productUnitForm" data-ajax="true" data-target="#unitName" data-modal-id="productUnitModal">
@@ -254,6 +259,16 @@
     @include('customScript')
     <script>
     // Legacy click handlers removed. Forms are submitted via data-ajax handler in `customScript`.
+    (function () {
+        var form = document.querySelector('[data-rn-product-form]');
+        if (!form) return;
+        form.addEventListener('submit', function () {
+            if (form.dataset.submitting === 'true') return;
+            form.dataset.submitting = 'true';
+            var submit = form.querySelector('[type="submit"]');
+            if (submit) { submit.disabled = true; submit.setAttribute('aria-busy', 'true'); }
+        });
+    })();
     </script>
 @endsection
 

@@ -75,6 +75,8 @@ return [
     'categories' => 'ক্যাটাগরিগুলো',
     'search_catalog' => 'পণ্য, ব্র্যান্ড বা ক্যাটাগরি খুঁজুন...',
     'product_basic_information' => 'পণ্যের মূল তথ্য',
+    'more_information' => 'আরও তথ্য',
+    'stock_alert_settings' => 'স্টক সতর্কতা',
     'catalog_metrics_total' => 'মোট পণ্য',
     'catalog_metrics_in_stock' => 'মজুত আছে',
     'catalog_metrics_low_stock' => 'কম মজুত',
