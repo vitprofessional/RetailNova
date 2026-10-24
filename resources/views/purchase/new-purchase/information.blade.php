@@ -1,5 +1,5 @@
-<section class="card rn-purchase-information" aria-labelledby="purchaseInformationTitle"><div class="card-body">
- <h2 class="rn-purchase-icon-heading" id="purchaseInformationTitle"><span class="rn-purchase-section-icon" aria-hidden="true"><i class="las la-clipboard"></i></span>{{ __('purchases.purchase_information') }}</h2><div class="rn-purchase-information-grid">@include('partials.business_selector', ['businessSelectionAllowed'=>app(\App\Services\PurchaseWorkflow::class)->platform(), 'businesses' => $businesses ?? [] , 'selectedBusinessId' => null])<div class="rn-purchase-field">
+<section class="card rn-m-form-section rn-purchase-information" aria-labelledby="purchaseInformationTitle"><div class="card-body rn-m-form-section-body">
+ <h2 class="rn-m-form-section-title rn-purchase-icon-heading" id="purchaseInformationTitle"><span class="rn-purchase-section-icon" aria-hidden="true"><i class="las la-clipboard"></i></span>{{ __('purchases.purchase_information') }}</h2><div class="rn-purchase-information-grid">@include('partials.business_selector', ['businessSelectionAllowed'=>app(\App\Services\PurchaseWorkflow::class)->platform(), 'businesses' => $businesses ?? [] , 'selectedBusinessId' => null])<div class="rn-purchase-field">
                                 <div class="form-group">
                                     <label for="date" class="form-label">{{ __('common.date') }} *</label>
                                     <input type="date" class="form-control" id="date" name="purchaseDate" value="{{ old('purchaseDate', date('Y-m-d')) }}" />

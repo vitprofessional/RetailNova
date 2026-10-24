@@ -15,7 +15,7 @@
 </div>
 <link rel="stylesheet" href="{{ asset('css/new-purchase.css') }}?v={{ filemtime(public_path('css/new-purchase.css')) }}">
 <link rel="stylesheet" href="{{ asset('css/inventory-products.css') }}?v={{ filemtime(public_path('css/inventory-products.css')) }}">
-<div class="col-12 rn-new-purchase-shell"><form action="{{ route('savePurchase') }}" class="rn-new-purchase" method="POST" id="savePurchase" data-onsubmit="handleFormSubmit" data-leave-title="{{ __('purchases.unsaved_title') }}" data-leave-message="{{ __('purchases.unsaved_message') }}" data-leave-confirm="{{ __('purchases.leave_page') }}" data-leave-cancel="{{ __('common.cancel') }}">
+<div class="col-12 rn-new-purchase-shell"><form action="{{ route('savePurchase') }}" class="rn-new-purchase rn-m-form" method="POST" id="savePurchase" data-onsubmit="handleFormSubmit" data-leave-title="{{ __('purchases.unsaved_title') }}" data-leave-message="{{ __('purchases.unsaved_message') }}" data-leave-confirm="{{ __('purchases.leave_page') }}" data-leave-cancel="{{ __('common.cancel') }}">
  @csrf
  @include('purchase.new-purchase.header')
  @if($errors->any())<div class="alert alert-danger" role="alert">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif

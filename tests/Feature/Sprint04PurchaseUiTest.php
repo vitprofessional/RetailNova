@@ -9,6 +9,32 @@ class Sprint04PurchaseUiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_mobile_purchase_form_uses_shared_form_sections_sticky_actions_and_labeled_item_fields(): void
+    {
+        BusinessSetup::forceCreate(['id'=>1,'businessName'=>'Sprint 04 QA','businessType'=>'computer_shop']);
+        $actor=AdminUser::create(['role'=>'admin','businessId'=>1,'fullName'=>'QA','mail'=>'sprint04-mobile@example.test','password'=>'unused']);
+        $this->actingAs($actor,'admin');
+
+        $html=$this->withHeader('User-Agent','Mozilla/5.0 (Linux; Android 13) Mobile')
+            ->get(route('addPurchase'))
+            ->assertOk()
+            ->getContent();
+        $dom=new \DOMDocument();$previous=libxml_use_internal_errors(true);$dom->loadHTML('<?xml encoding="UTF-8">'.$html);libxml_clear_errors();libxml_use_internal_errors($previous);$xpath=new \DOMXPath($dom);
+
+        foreach(['purchaseInformationTitle','purchaseAddProductsTitle','purchaseItemsTitle','purchaseSummaryTitle'] as $id){
+            $this->assertSame(1,$xpath->query('//*[@id="'.$id.'" and contains(@class,"rn-m-form-section-title")]')->length,'Missing shared section heading '.$id);
+        }
+        $this->assertSame(4,$xpath->query('//*[@id="savePurchase"]//section[contains(@class,"rn-m-form-section")]')->length);
+        $this->assertSame(1,$xpath->query('//*[@id="saveButton" and contains(@class,"rn-m-sticky-actions")]')->length);
+        $this->assertSame(1,$xpath->query('//*[@id="purchaseSaveButton" and contains(@class,"rn-m-btn--primary")]')->length);
+        $this->assertSame(1,$xpath->query('//*[@id="saveButton"]//a[contains(@class,"rn-m-btn--outline") and @data-purchase-leave]')->length);
+        $this->assertSame(11,$xpath->query('//*[@id="purchase-row-template"]//td[@data-label]')->length,'Every dynamic purchase card field needs a visible label.');
+
+        foreach(['purchaseDate','supplierName','invoiceData','refData','discountStatus','discountAmount','discountPercent','grandTotal','paidAmount','dueAmount','specialNote'] as $field){
+            $this->assertSame(1,$xpath->query('//*[@id="savePurchase"]//*[@name="'.$field.'"]')->length,'Duplicated or missing '.$field);
+        }
+    }
+
     public function test_bilingual_page_preserves_authoritative_fields_navigation_and_serial_popup(): void
     {
         BusinessSetup::forceCreate(['id'=>1,'businessName'=>'Sprint 04 QA','businessType'=>'computer_shop']);

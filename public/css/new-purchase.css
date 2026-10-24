@@ -52,44 +52,6 @@ body:has(.rn-new-purchase) .iq-footer { width:auto !important; }
  .rn-new-purchase td:first-child { position:sticky; left:0; background:#fff; z-index:1; }
  .rn-new-purchase td:last-child { position:sticky; right:0; background:#fff; z-index:1; }
 }
-@media(max-width:992px) {
- body:has(.rn-new-purchase) { padding:0; }
- body:has(.rn-new-purchase) .content-page>.container-fluid { padding-inline:12px; }
- .rn-new-purchase .card-body { padding:14px; }
- .rn-new-purchase .rn-purchase-information, .rn-new-purchase .rn-purchase-summary,
- .rn-new-purchase .rn-purchase-workspace>.card { height:auto; min-height:0; max-height:none; align-self:start; }
- .rn-new-purchase .rn-purchase-layout { grid-template-columns:minmax(0,1fr); grid-auto-rows:min-content; align-items:start; }
- .rn-new-purchase .rn-purchase-workspace, .rn-new-purchase .rn-purchase-billing { display:block; }
- .rn-new-purchase table { min-width:0; width:100%; }
- .rn-new-purchase thead { display:none; }
- .rn-new-purchase tbody { display:block; }
- .rn-new-purchase tbody tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding:12px; margin-bottom:12px; border:1px solid #dce4ee; border-radius:8px; }
- .rn-new-purchase td { display:block; padding:0 !important; border:0; width:auto; min-width:0 !important; }
- .rn-new-purchase td::before { content:attr(data-label); display:block; font-size:12px; font-weight:600; line-height:1.6; margin-bottom:5px; color:#52627a; }
- .rn-new-purchase td:first-child { grid-column:1 / -1; grid-row:2; }
- .rn-new-purchase td:last-child { grid-column:1 / -1; grid-row:1; text-align:right; }
- .rn-new-purchase td:last-child::before { display:none; }
- .rn-new-purchase td .d-flex { flex-wrap:wrap; gap:6px; }
- .rn-new-purchase .vat-percent { max-width:100%; }
- .rn-new-purchase #serialModal .modal-dialog { margin:8px; }
- .rn-new-purchase #serialModal .modal-body { max-height:65vh; overflow:auto; }
- .rn-new-purchase #serialModal .modal-footer { gap:8px; }
- .rn-new-purchase #serialModal .modal-footer>div { display:flex; flex-wrap:wrap; gap:8px; }
-}
-@media(max-width:575px) {
- .rn-new-purchase-shell { padding:0; }
- .rn-new-purchase .rn-purchase-header { flex-direction:column; align-items:flex-start; margin-bottom:16px; }
- .rn-new-purchase h1 { font-size:22px; }
- .rn-new-purchase .rn-purchase-information-grid { grid-template-columns:minmax(0,1fr); }
- .rn-new-purchase .rn-purchase-input-action { display:grid; grid-template-columns:minmax(0,1fr) minmax(112px,auto); align-items:stretch; gap:8px; }
- .rn-new-purchase .rn-purchase-input-action select { width:100%; min-width:0; }
- .rn-new-purchase .rn-purchase-input-action .btn { padding-inline:8px; }
- .rn-new-purchase #purchaseItemsScroll { height:auto; min-height:0; max-height:none; overflow:visible; }
- .rn-new-purchase .rn-purchase-product-controls { grid-template-columns:minmax(0,1fr); }
- .rn-new-purchase .rn-purchase-product-actions { display:grid; grid-template-columns:1fr 1fr; }
- .rn-new-purchase #serialModal .serial-input-row { flex-wrap:wrap; gap:8px; }
- .rn-new-purchase #serialModal .serial-input-row input { flex-basis:100%; margin-right:0 !important; }
-}
 /* Approved card hierarchy and blue accent, retaining the global sidebar. */
 .rn-new-purchase .rn-purchase-icon-heading { display:flex; align-items:center; gap:12px; }
 .rn-new-purchase .rn-purchase-section-icon { display:inline-flex; align-items:center; justify-content:center; flex:0 0 36px; height:36px; border-radius:8px; background:#edf3ff; color:#2d6cff; font-size:25px; }
@@ -108,11 +70,6 @@ body:has(.rn-new-purchase) .iq-footer { width:auto !important; }
  .rn-new-purchase .rn-purchase-input-action { flex-wrap:wrap; }
  .rn-new-purchase .rn-purchase-input-action select { width:100%; flex-basis:100%; }
  .rn-new-purchase .rn-purchase-summary-grid, .rn-new-purchase .rn-purchase-save-actions { grid-template-columns:minmax(0,1fr); }
-}
-@media(max-width:575px) {
- .rn-new-purchase .rn-purchase-information-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
- .rn-new-purchase .rn-purchase-information-grid>.rn-purchase-field:has(#invoice), .rn-new-purchase .rn-purchase-information-grid>.rn-purchase-field:has(#reference) { grid-column:1 / -1; }
- .rn-new-purchase .rn-purchase-save-actions { grid-template-columns:minmax(0,1fr); }
 }
 .rn-new-purchase .rn-purchase-save-actions .btn-outline-secondary { color:#52627a; border-color:#c7d3e1; background:#fff; }
 .rn-new-purchase .rn-purchase-summary-grid .rn-purchase-grand .rn-purchase-help { margin-bottom:0; }
