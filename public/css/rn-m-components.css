@@ -499,6 +499,48 @@
         .rn-new-purchase .rn-m-sticky-actions .rn-m-btn--primary { background: var(--rn-color-primary); border-color: var(--rn-color-primary); color: var(--rn-color-on-primary); }
         .rn-new-purchase .rn-m-sticky-actions .rn-m-btn--outline { background: var(--rn-color-surface); border-color: var(--rn-color-primary); color: var(--rn-color-primary); }
     }
+    /* Purchase invoice edit reuses the shared form sections, item cards and sticky actions. */
+    .rn-invoice-shell .rn-m-form-section { margin-bottom: 12px; padding: 14px; border-color: var(--rn-color-border); border-radius: var(--rn-radius-lg); }
+    .rn-invoice-shell .rn-m-form-section-title { margin-bottom: 12px; color: var(--rn-color-ink); }
+    .rn-invoice-shell .rn-m-sticky-actions {
+        position: fixed;
+        right: 0;
+        bottom: calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom));
+        left: 0;
+        z-index: 1036;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        gap: 8px;
+        margin: 0;
+        padding: 10px 12px;
+        border-top: 1px solid var(--rn-color-border);
+        background: var(--rn-color-surface);
+    }
+    .rn-invoice-shell .rn-m-sticky-actions .rn-m-btn { min-height: 48px; margin: 0; font-size: 16px; text-decoration: none; }
+    .rn-invoice-shell .rn-m-sticky-actions .rn-m-btn--outline { border: 1px solid var(--rn-color-primary); background: var(--rn-color-surface); color: var(--rn-color-primary); }
+    .rn-invoice-shell .rn-m-sticky-actions .rn-m-btn--primary { border: 1px solid var(--rn-color-primary); background: var(--rn-color-primary); color: var(--rn-color-on-primary); }
+    @media (max-width: 992px) {
+        .rn-invoice-shell .rn-m-form { width: 100%; }
+        .rn-invoice-shell #purchaseInvoiceEditTable { display: table !important; width: 100% !important; min-width: 0 !important; max-width: 100%; table-layout: fixed; }
+        .rn-invoice-shell .rn-invoice-table-wrap { overflow: visible !important; }
+        .rn-invoice-shell #purchaseInvoiceEditTable thead { display: none; }
+        .rn-invoice-shell #purchaseInvoiceEditTable tbody { display: block; width: 100%; }
+        .rn-invoice-shell #purchaseInvoiceEditTable tr.invoice-item { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0 0 12px; padding: 12px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); background: var(--rn-color-surface); }
+        .rn-invoice-shell #purchaseInvoiceEditTable tr.invoice-item > td { display: block; min-width: 0; width: auto; padding: 0 !important; border: 0; overflow-wrap: anywhere; }
+        .rn-invoice-shell #purchaseInvoiceEditTable tr.invoice-item > td::before { content: attr(data-label); display: block; margin-bottom: 5px; color: var(--rn-color-muted); font-size: 12px; font-weight: 600; line-height: 1.5; }
+        .rn-invoice-shell #purchaseInvoiceEditTable tr.invoice-item > td:first-child,
+        .rn-invoice-shell #purchaseInvoiceEditTable tr.invoice-item > td:last-child { grid-column: 1 / -1; }
+        .rn-invoice-shell #purchaseInvoiceEditTable .form-control { width: 100%; min-width: 0 !important; min-height: 48px; padding: 8px 10px !important; border-color: var(--rn-color-border); border-radius: var(--rn-radius-md); }
+        .rn-invoice-shell #purchaseInvoiceEditTable [data-line-total] { display: block; min-height: 48px; padding: 12px 10px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); background: var(--rn-color-bg); text-align: right; }
+        .rn-invoice-shell #purchaseInvoiceEditTable [data-edit-serials],
+        .rn-invoice-shell #purchaseInvoiceEditTable [data-remove-item],
+        .rn-invoice-shell #purchaseInvoiceAddRow { min-height: 44px; }
+        .rn-invoice-shell .rn-invoice-fields { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+        .rn-invoice-shell .rn-invoice-footer { justify-content: initial; }
+        .rn-invoice-shell .rn-invoice-summary > div { gap: 8px; }
+        .rn-invoice-shell #serialModal .modal-dialog { width: 100%; max-width: none; margin: auto 0 0; }
+        .rn-invoice-shell #serialModal .modal-body { max-height: 65vh; overflow-y: auto; }
+    }
     @media (max-width: 359px) {
         .rn-m-form-grid--2 { grid-template-columns: minmax(0, 1fr); }
     }

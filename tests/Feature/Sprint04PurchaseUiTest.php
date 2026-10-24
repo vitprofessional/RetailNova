@@ -58,6 +58,7 @@ class Sprint04PurchaseUiTest extends TestCase
             foreach($xpath->query('//*[@id="savePurchase"]//a[@data-purchase-leave]') as $link){$this->assertSame(route('purchaseList'),$link->getAttribute('href'));}
             $this->assertSame(1,$xpath->query('//*[@data-purchase-debug and @hidden]')->length);
             foreach(['purchaseInformationTitle','purchaseAddProductsTitle','purchaseItemsTitle','purchaseSummaryTitle','serialModal','serialNumberBox','saveSerials','add-serial','autoGenerateSerials','purchase-row-template'] as $id){$this->assertSame(1,$xpath->query('//*[@id="'.$id.'"]')->length,'Lost UI contract '.$id);}
+            foreach([$first->id,$second->id] as $productId){$this->assertSame(1,$xpath->query('//*[@id="productName"]/option[@value="'.$productId.'"]')->length,'Purchase product option is missing from the DOM.');}
             foreach(['purchase_information','add_products','purchased_items','purchase_summary','save_purchase','purchase_empty_title'] as $key){$response->assertSee(__('purchases.'.$key));}
             $this->assertSame(1,$xpath->query('//*[@form="purchaseSerialStaging"]')->length);
             if(getenv('RN_EXPORT_PURCHASE04_FIXTURES')==='1'){

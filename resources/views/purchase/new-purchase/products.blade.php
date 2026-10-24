@@ -17,7 +17,7 @@
                                                 $productOptions .= '<option value="'. $productData->id .'">'. htmlspecialchars($productData->name . $brandName) .'</option>';
                                             @endphp
                                         @endforeach
-                                        {!! '<!--product-options-start-->' . $productOptions . '<!--product-options-end-->' !!}
+                                        {!! $productOptions !!}
                                     @endif
                                     </select>
                                 </div>

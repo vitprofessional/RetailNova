@@ -1,9 +1,9 @@
-    <div class="modal fade" id="serialModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="serialModal" aria-hidden="true">
+    <div class="modal fade rn-m-bottom-sheet-modal" id="serialModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="serialModal" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h6 class="modal-title fs-5">{{ __('purchases.new_serial') }}</h6>
-                    <button type="button" class="btn-close" data-dismiss="modal" aria-label="{{ __('purchases.close') }}"></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ __('purchases.close') }}"><span aria-hidden="true">&times;</span></button>
                 </div>
                     <div class="modal-body" id="resetSerial">
                     <div class="p-0">

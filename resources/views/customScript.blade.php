@@ -617,15 +617,10 @@ document.addEventListener('DOMContentLoaded', function(){
     try{
         var productSelect = document.querySelector('.js-product-select');
         if(productSelect){
-            // Save original options contained within special markers if present
+            // Cache real option elements before supplier gating clears the select.
+            // Product options must be DOM nodes; HTML comments inside <select> are ignored by browsers.
             var html = '';
-            var start = document.documentElement.innerHTML.indexOf('<!--product-options-start-->');
-            if(start !== -1){
-                // Fallback: try to extract between markers within the select element text
-                // But simplest: capture any options rendered inside the select now (excluding the placeholder)
-                html = '';
-                Array.prototype.slice.call(productSelect.querySelectorAll('option')).forEach(function(o){ if(o.value) html += o.outerHTML; });
-            }
+            Array.prototype.slice.call(productSelect.querySelectorAll('option')).forEach(function(o){ if(o.value) html += o.outerHTML; });
             productSelect.dataset.origOptions = html;
             // Replace current options with the supplier-prompt and disable
             productSelect.replaceChildren(new Option(@json(__('purchases.please_select_a_supplier_first')), ''));
