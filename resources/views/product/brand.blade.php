@@ -12,6 +12,12 @@
         $name           = '';
         $profileId      = '';
     }
+    $mobileMasterRows = collect($listItem ?? [])->map(fn($item) => [
+        'title' => $item->name,
+        'edit' => route('editBrand', ['id' => $item->id]),
+        'delete' => route('delBrand', ['id' => $item->id]),
+        'confirm' => __('inventory.delete').' '.$item->name.'?',
+    ]);
 @endphp
 <div class="card">
     <div class="card-body">
@@ -19,7 +25,7 @@
             <h4 class="mb-0">@if(isset($profile)) Edit @else Add @endif Brand</h4>
         </div>
 
-        <form action="{{route('saveBrand')}}" method="POST" class="rn-m-form rn-m-admin-form rn-m-master-form">
+        <form id="rnMobileMasterForm" action="{{route('saveBrand')}}" method="POST" class="rn-m-form rn-m-admin-form rn-m-master-form {{ isset($profile) ? 'rn-m-master-edit' : '' }}">
             @csrf
             <div class="row rn-m-form-section">
                 <input type="hidden" name="profileId" value="{{ $profileId }}">
@@ -41,7 +47,10 @@
         </form>
 
         @if(!isset($profile))
-        <div class="thead-start mt-4">
+        @mobile
+            @include('components.mobile.master-data-cards', ['records' => $mobileMasterRows, 'title' => __('inventory.brand')])
+        @else
+        <div class="thead-start mt-4 rn-m-master-desktop-list">
             @include('partials.bulk-actions', ['deleteRoute' => 'brands.bulkDelete', 'entity' => 'Brands'])
             <table class=" data-tables    table  table-success table-bordered table-striped-colums rn-table-pro">
                 <thead class="">
@@ -93,6 +102,7 @@
                 </tbody>
             </table>
         </div>
+        @endmobile
         @endif
     </div>
 </div>
@@ -101,4 +111,17 @@
 @endsection
 @section('scripts')
 @include('partials.bulk-actions-script')
+<script>
+document.addEventListener('click', function (event) {
+    const trigger = event.target.closest('.rn-m-master-fab');
+    if (!trigger) return;
+    const form = document.getElementById('rnMobileMasterForm');
+    if (!form) return;
+    event.preventDefault();
+    document.querySelectorAll('.rn-m-master-menu[open]').forEach(menu => menu.removeAttribute('open'));
+    form.classList.add('is-open');
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    form.querySelector('input[name="name"]')?.focus({ preventScroll: true });
+});
+</script>
 @endsection

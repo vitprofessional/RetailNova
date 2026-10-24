@@ -57,13 +57,23 @@ The prior checkpoint's remaining setup/admin/settings/catalog forms have now bee
 
 The secondary-form focused mobile rules/list tests pass (15 tests, 338 assertions). The latest full isolated SQLite suite passes (329 tests, 10,465 assertions, 0 failures, six PHPUnit deprecations). Blade view cache compilation and `git diff --check` pass. Final secondary-form code and test changes are grouped in a separate reviewable follow-up commit. The `docs/AGENT_NOTES.md` file remains untracked and is not part of any commit.
 
-## UI-3 remaining refinements — Phase A (pending commit)
+## UI-3 remaining refinements — Phase A
 
-Resumed at `2a7477c` on `ui-2-mobile-pages`. Phase A changes cover sale-item editor summary and mobile add-row behavior, POS-style purchase/quotation item pickers, customer/supplier transaction metadata, localized mobile date/time helpers, and filter/stock labels. Browser captures from the authenticated local Laravel app (390×844, Android mobile user agent, `networkidle` plus 500 ms) are in ignored `tests-output/ui-3-final/A/`; the visual comparison is in that directory's `capture-notes.md`.
+Resumed at `2a7477c` on `ui-2-mobile-pages`; committed as `90f749c` (`UI-3R.5: polish`). Phase A changes cover sale-item editor summary and mobile add-row behavior, POS-style purchase/quotation item pickers, customer/supplier transaction metadata, localized mobile date/time helpers, and filter/stock labels. Browser captures from the authenticated local Laravel app (390×844, Android mobile user agent, `networkidle` plus 500 ms) are in ignored `tests-output/ui-3-final/A/`; the visual comparison is in that directory's `capture-notes.md`.
 
 - Latest full isolated SQLite suite: 330 tests, 10,499 assertions, 0 failures, 6 PHPUnit deprecations.
 - Focused mobile lists/forms/purchase tests: previously 18 tests, 456 assertions, passing. Re-run for final phase gate.
 - Browser pages captured: sale item editor, customer/supplier list and filter sheets, new purchase, quotation create/edit. See capture results for individual HTTP status and overflow checks.
-- Remaining known visual/behavior details are recorded in capture notes; no phase A commit is created yet.
+- Remaining known visual/behavior details are recorded in capture notes.
 
 Next: finish and commit UI-3R.5, then work through master-data forms (UI-3.4b), details (UI-3.D), remaining lists (UI-3.L), reports (UI-3.R), and Super Admin lists (UI-3.S) in separate reviewed increments. The untracked `docs/AGENT_NOTES.md` remains preserved and unstaged.
+
+## UI-3.4b — Master-data mobile lists and forms (current phase)
+
+Implemented mobile card lists with compact action menus and a “new” FAB/form transition for brand, category, unit, and service. Expense-category listing now has matching mobile cards with its existing create/edit/delete routes. Desktop tables remain the desktop markup. Screenshots and visual notes are in ignored `tests-output/ui-3-final/B/`.
+
+- Browser: all five list routes returned HTTP 200 at 390×844, no viewport overflow; real screenshots were reviewed against mockups 09/10.
+- The first expense-category capture tried a wrong URI and got 404; route:list confirmed `/expenses/categories`, and the corrected recapture passed.
+- Focused `MobileMasterDataListsTest`: 3 tests, 31 assertions, passing before the final full-suite gate.
+- Full suite: 333 tests, 10,556 assertions, 0 failures, 6 PHPUnit deprecations. Focused master-data/tenant tests: 23 tests, 150 assertions. Blade cache compilation and `git diff --check` pass.
+- Next: commit this phase, then begin details. Remaining lists, reports, and Super Admin lists are still not started.

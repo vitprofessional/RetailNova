@@ -987,6 +987,24 @@
     .rn-m-master-form .rn-m-form-section { gap: 0; }
     .rn-m-master-form .rn-m-admin-field { margin: 0; }
     .rn-m-master-form .rn-m-admin-actions { position: fixed; right: 0; bottom: var(--rn-safe-bottom); left: 0; z-index: 1036; margin: 0; padding: 10px 12px; border-top: 1px solid var(--rn-color-border); background: var(--rn-color-surface); }
+    .rn-m-master-form:not(.rn-m-master-edit):not(.is-open) { display: none !important; }
+    body:has(.rn-m-master-form.is-open) .rn-m-master-cards { display: none !important; }
+    .rn-m-master-desktop-list { display: none !important; }
+    .rn-m-master-cards { display: grid; gap: 10px; margin: 12px 0 calc(78px + var(--rn-safe-bottom)); }
+    .rn-m-master-card { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-width: 0; padding: 14px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); }
+    .rn-m-master-card__copy { display: grid; min-width: 0; gap: 5px; }
+    .rn-m-master-card__copy strong { overflow-wrap: anywhere; color: var(--rn-color-ink); font-size: 15px; font-weight: 700; line-height: 1.4; }
+    .rn-m-master-card__copy small { color: var(--rn-color-muted); font-size: 13px; line-height: 1.4; }
+    .rn-m-master-card__amount { color: var(--rn-color-primary); font-size: 14px; font-weight: 700; }
+    .rn-m-master-menu { position: relative; flex: 0 0 auto; }
+    .rn-m-master-menu > summary { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid var(--rn-color-border); border-radius: 12px; color: var(--rn-color-ink); font-size: 22px; line-height: 1; list-style: none; cursor: pointer; }
+    .rn-m-master-menu > summary::-webkit-details-marker { display: none; }
+    .rn-m-master-menu__items { position: absolute; z-index: 5; top: 44px; right: 0; display: grid; min-width: 136px; padding: 5px; border: 1px solid var(--rn-color-border); border-radius: 12px; background: var(--rn-color-surface); box-shadow: var(--rn-shadow-md); }
+    .rn-m-master-menu__items a, .rn-m-master-menu__items button { display: block; width: 100%; padding: 10px; border: 0; border-radius: 8px; background: transparent; color: var(--rn-color-ink); text-align: left; text-decoration: none; }
+    .rn-m-master-menu__items form { margin: 0; }
+    .rn-m-master-fab { position: fixed; z-index: 1035; right: 16px; bottom: calc(84px + var(--rn-safe-bottom)); display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 24px; background: var(--rn-color-primary); box-shadow: var(--rn-shadow-md); color: var(--rn-color-on-primary); font-weight: 700; text-decoration: none; }
+    .rn-m-master-fab span { font-size: 22px; line-height: 1; }
+    .rn-m-master-cards .rn-m-empty-state { padding: 24px 16px; border: 1px dashed var(--rn-color-border); border-radius: var(--rn-radius-lg); color: var(--rn-color-muted); text-align: center; }
     .rn-m-admin-form .rn-m-file-picker { position: relative; }
     body.rn-app:has(.rn-m-admin-form) .rn-m-tabbar { display: none !important; }
     body.rn-app:has(.rn-m-admin-form) .content-page { padding-bottom: calc(84px + var(--rn-safe-bottom)) !important; }

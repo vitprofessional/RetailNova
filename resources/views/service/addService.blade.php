@@ -19,9 +19,16 @@
                 $rate = '';
                 $profileId = '';
             }
+            $mobileMasterRows = collect($listItem ?? [])->map(fn($item) => [
+                'title' => $item->serviceName,
+                'amount' => \App\Support\Currency::format($item->rate),
+                'edit' => route('editService', ['id' => $item->id]),
+                'delete' => route('delService', ['id' => $item->id]),
+                'confirm' => __('common.delete').' '.$item->serviceName.'?',
+            ]);
 
         @endphp
-        <form action="{{route('saveService')}}" method="POST" class="rn-m-form rn-m-admin-form rn-m-master-form">
+        <form id="rnMobileMasterForm" action="{{route('saveService')}}" method="POST" class="rn-m-form rn-m-admin-form rn-m-master-form {{ isset($profile) ? 'rn-m-master-edit' : '' }}">
             @csrf
             <div class="row rn-m-form-section">
                 <input type="hidden" name="profileId" value="{{$profileId}}">
@@ -51,8 +58,11 @@
         </form>
 
         @if(!isset($profile))
+        @mobile
+        @include('components.mobile.master-data-cards', ['records' => $mobileMasterRows, 'title' => __('common.service_list')])
+        @else
         <div class="row mt-4">
-            <div class="col-lg-12">
+            <div class="col-lg-12 rn-m-master-desktop-list">
                 <div class="d-flex flex-wrap flex-wrap align-items-center justify-content-between mb-4">
                     <div>
                         <h4 class="">{{ __('common.service_list') }}</h4>
@@ -128,6 +138,7 @@
                 </div>
             </div>
         </div>
+        @endmobile
         @endif
     </div>
 </div>
@@ -137,6 +148,13 @@
 @section('scripts')
     @parent
     <script>
+        document.addEventListener('click', function (event) {
+            const trigger = event.target.closest('.rn-m-master-fab'); if (!trigger) return;
+            const form = document.getElementById('rnMobileMasterForm'); if (!form) return;
+            event.preventDefault(); document.querySelectorAll('.rn-m-master-menu[open]').forEach(menu => menu.removeAttribute('open'));
+            form.classList.add('is-open'); form.scrollIntoView({behavior:'smooth',block:'start'});
+            form.querySelector('input[name="serviceName"]')?.focus({preventScroll:true});
+        });
         // select all toggle for service list
         document.addEventListener('DOMContentLoaded', function(){
             var selectAll = document.getElementById('selectAllServices');

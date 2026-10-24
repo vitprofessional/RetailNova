@@ -10,12 +10,14 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="mb-0">{{ __('common.expense_categories') }}</h4>
+            @desktop
             <a href="{{ route('expense.categories.create') }}" class="btn btn-primary btn-sm">
                 <i class="las la-plus"></i> {{ __('common.add_category') }}
             </a>
+            @enddesktop
         </div>
 
-        <div class="table-responsive">
+        <div class="table-responsive rn-m-master-desktop-list">
             <table id="expenseCategoriesTable" class="data-tables table mb-0 table-bordered rn-table-pro">
                 <thead class="bg-white text-uppercase">
                     <tr>
@@ -60,6 +62,27 @@
                 </tbody>
             </table>
         </div>
+        @mobile
+        <div class="rn-m-master-cards" aria-label="{{ __('common.expense_categories') }}">
+            @forelse($categories as $category)
+            <article class="rn-m-master-card">
+                <div class="rn-m-master-card__copy">
+                    <strong>{{ $category->name }}</strong>
+                    @if($category->description)<small>{{ \Illuminate\Support\Str::limit($category->description, 80) }}</small>@endif
+                    <span class="rn-m-master-card__amount">{{ $category->is_active ? __('common.active') : __('common.inactive') }}</span>
+                </div>
+                <details class="rn-m-master-menu">
+                    <summary aria-label="{{ __('mobile.actions') }}">⋮</summary>
+                    <div class="rn-m-master-menu__items">
+                        <a href="{{ route('expense.categories.edit', $category->id) }}">{{ __('mobile.edit') }}</a>
+                        <a href="{{ route('expense.categories.delete', $category->id) }}" onclick="return confirm('{{ addslashes(__('common.delete_category')) }}?')">{{ __('mobile.delete') }}</a>
+                    </div>
+                </details>
+            </article>
+            @empty <div class="rn-m-empty-state">{{ __('mobile.list_empty') }}</div> @endforelse
+            <a class="rn-m-master-fab" href="{{ route('expense.categories.create') }}"><span aria-hidden="true">+</span> {{ __('mobile.add_new') }}</a>
+        </div>
+        @endmobile
     </div>
 </div>
 
