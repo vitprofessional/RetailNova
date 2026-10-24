@@ -22,16 +22,15 @@
         @if($errors->any())
           <div class="alert alert-danger">{{ $errors->first() }}</div>
         @endif
-        <form method="POST" action="{{ route('sale.items.update', ['id' => $sale->id]) }}">
+        <form method="POST" action="{{ route('sale.items.update', ['id' => $sale->id]) }}" class="rn-m-form rn-m-sale-items-edit-form">
           @csrf
-          @include('sale.mobile-styles')
-          <div class="table-responsive">
-            <table class="table table-bordered rn-table-pro rn-sale-mobile-table">
+          <div class="table-responsive rn-m-form-section rn-m-sale-items-edit-list">
+            <table class="table table-bordered rn-table-pro rn-m-sale-mobile-table">
               <thead class="thead-light">
                 <tr>
                   <th style="width:6%">#</th>
                   <th style="width:20%">{{ __('sales.product') }}</th>
-                  <th style="width:10%">Purchase #</th>
+                  <th style="width:10%">{{ __('sales.purchase_id') }}</th>
                   <th style="width:12%" class="text-end">{{ __('sales.current_stock') }}</th>
                   <th style="width:12%" class="text-end">{{ __('sales.qty') }}</th>
                   <th style="width:12%" class="text-end">{{ __('sales.warranty_days') }}</th>
@@ -45,7 +44,7 @@
                   @php $line = (float)($it->totalSale ?? ($it->salePrice * $it->qty)); @endphp
                   <tr data-item-id="{{ $it->id }}" data-purchase-id="{{ $it->purchaseId }}">
                     <td data-label="{{ __('sales.item') }}">{{ $i++ }}</td>
-                    <td data-label="Product / Serials">
+                    <td data-label="{{ __('sales.product') }} / {{ __('sales.serials') }}">
                       <div class="fw-semibold">{{ $it->productName }}</div>
                       <button type="button" class="btn btn-link btn-sm p-0" data-action="toggle-serials" data-purchase-id="{{ $it->purchaseId }}">{{ __('sales.manage_serials') }}</button>
                       @error('serialIdByItem.'.(int)$it->id)<div class="text-danger small" data-role="backend-serial-error">{{ $message }}</div>@enderror
@@ -56,7 +55,7 @@
                         <div class="small text-danger mt-1" data-role="serial-error" style="display:none;">{{ __('sales.please_select_the_required_number_of_serials') }}</div>
                       </div>
                     </td>
-                    <td data-label="Purchase #">{{ $it->purchaseId }}</td>
+                    <td data-label="{{ __('sales.purchase_id') }}">{{ $it->purchaseId }}</td>
                     <td class="text-end" data-label="{{ __('sales.current_stock') }}">{{ $it->currentStock }}</td>
                     <td data-label="{{ __('sales.quantity') }}">
                       <input type="number" name="items[{{ $it->id }}][qty]" min="0" class="form-control form-control-sm text-end" value="{{ old('items.'.$it->id.'.qty', $it->qty) }}" data-purchase-id="{{ $it->purchaseId }}" data-role="qty">
@@ -72,11 +71,11 @@
                 @empty
                   <tr><td colspan="8" class="text-center">{{ __('sales.no_items_found') }}</td></tr>
                 @endforelse
-                <tr class="table-secondary">
+                <tr class="table-secondary rn-m-sale-items-add-heading">
                   <td colspan="8"><strong>{{ __('sales.add_new_item_optional') }}</strong></td>
                 </tr>
-                <tr>
-                  <td colspan="3">
+                <tr class="rn-m-sale-items-add-row">
+                  <td colspan="3" data-label="{{ __('sales.select_product_purchase') }}">
                     <small class="text-muted">{{ __('sales.select_product_purchase') }}</small>
                     <select id="addPurchaseSelect" class="form-control form-control-sm" title="{{ __('common.select_product_purchase_row') }}">
                       <option value="">{{ __('sales.loading_options') }}</option>
@@ -84,19 +83,19 @@
                     <input type="hidden" name="add[purchaseId]" id="addPurchaseId" value="{{ old('add.purchaseId') }}">
                     <div class="small text-muted mt-1" id="addPurchaseMeta" style="display:none;"></div>
                   </td>
-                  <td>
+                  <td data-label="{{ __('sales.available_stock') }}">
                     <small class="text-muted">{{ __('sales.available_stock') }}</small>
                     <input type="text" id="addCurrentStock" class="form-control form-control-sm" value="" placeholder="{{ __('sales.stock') }}" readonly>
                   </td>
-                  <td>
+                  <td data-label="{{ __('sales.quantity') }}">
                     <small class="text-muted">{{ __('sales.quantity') }}</small>
                     <input type="number" name="add[qty]" id="addQty" min="0" class="form-control form-control-sm" value="{{ old('add.qty') }}" placeholder="{{ __('sales.qty') }}">
                   </td>
-                  <td>
+                  <td data-label="{{ __('sales.warranty_days') }}">
                     <small class="text-muted">{{ __('sales.warranty_days') }}</small>
                     <input type="text" name="add[warranty_days]" id="addWarrantyDays" class="form-control form-control-sm text-end" value="{{ old('add.warranty_days') }}" placeholder="{{ __('common.e_g_365') }}">
                   </td>
-                  <td colspan="2">
+                  <td colspan="2" data-label="{{ __('sales.sale_price') }}">
                     <small class="text-muted">{{ __('sales.sale_price') }}</small>
                     <input type="number" step="0.01" min="0" name="add[salePrice]" id="addSalePrice" class="form-control form-control-sm" value="{{ old('add.salePrice') }}" placeholder="{{ __('sales.price') }}">
                     <div class="mt-2">
@@ -113,7 +112,7 @@
               </tbody>
             </table>
           </div>
-          <div class="card mt-2">
+          <div class="card mt-2 rn-m-sale-items-edit-summary">
             <div class="card-body py-2">
               @php
                 $initialTotal = 0;
@@ -135,13 +134,13 @@
               </div>
             </div>
           </div>
-          <div class="d-flex justify-content-between">
-            <a href="{{ route('invoiceGenerate', ['id' => $sale->id]) }}" class="btn btn-outline-secondary">{{ __('sales.cancel') }}</a>
-            <button type="submit" class="btn btn-primary">{{ __('sales.save_item_changes') }}</button>
+          <div class="rn-m-sticky-actions rn-m-sale-items-edit-actions">
+            <a href="{{ route('invoiceGenerate', ['id' => $sale->id]) }}" class="rn-m-btn rn-m-btn--outline">{{ __('sales.cancel') }}</a>
+            <button type="submit" class="rn-m-btn rn-m-btn--primary">{{ __('sales.save_item_changes') }}</button>
           </div>
         </form>
-        <div class="mt-3 small text-muted">
-          {{ __('common.note') }}: Increasing quantities consumes stock from the corresponding purchase row. Reducing quantities returns stock. Adding a new item requires a valid purchase ID with sufficient stock.
+        <div class="mt-3 small text-muted rn-m-form-section rn-m-sale-items-edit-note">
+          {{ __('common.note') }}: {{ __('sales.sale_item_edit_inventory_note') }}
         </div>
       </div>
     </div>

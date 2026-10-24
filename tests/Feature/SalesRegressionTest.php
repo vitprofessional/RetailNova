@@ -127,6 +127,38 @@ class SalesRegressionTest extends TestCase
         $this->actingAs($this->actor(), 'admin');
     }
 
+    public function test_mobile_sale_item_edit_keeps_single_inputs_serial_controls_and_fixed_actions(): void
+    {
+        $inventory = $this->inventory();
+        $this->login();
+        $this->post(route('saveSale'), $this->payload($inventory, 1))->assertRedirect();
+        $sale = SaleProduct::query()->latest('id')->firstOrFail();
+
+        $response = $this->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 13) Mobile')
+            ->get(route('sale.items.edit', ['id' => $sale->id]))
+            ->assertOk()
+            ->assertSee('class="rn-m-form rn-m-sale-items-edit-form"', false)
+            ->assertSee('rn-m-sale-mobile-table', false)
+            ->assertSee('name="items['.$sale->items()->first()->id.'][qty]"', false)
+            ->assertSee('data-action="toggle-serials"', false)
+            ->assertSee('name="discountAmount"', false)
+            ->assertSee('rn-m-sale-items-edit-actions', false)
+            ->assertSee(__('sales.sale_item_edit_inventory_note'))
+            ->assertSee(__('sales.purchase_id'))
+            ->assertSee(route('sale.items.update', ['id' => $sale->id]));
+
+        $document = new \DOMDocument();
+        @$document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
+        $xpath = new \DOMXPath($document);
+        $this->assertCount(8, $xpath->query('//table[contains(@class,"rn-m-sale-mobile-table")]//tbody/tr[@data-item-id]/td[@data-label]'));
+
+        auth('admin')->user()->forceFill(['preferred_locale' => 'bn'])->save();
+        $this->get(route('sale.items.edit', ['id' => $sale->id]))
+            ->assertOk()
+            ->assertSee(__('sales.sale_item_edit_inventory_note'))
+            ->assertSee(__('sales.purchase_id'));
+    }
+
     public function test_explicit_and_spaced_superadmins_can_save_optional_sales_with_both_actions(): void
     {
         $inventory = $this->inventory();

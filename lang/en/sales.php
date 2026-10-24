@@ -307,6 +307,7 @@ return [
     'returned_products' => 'Returned Products',
     'returned_qty' => 'Returned Qty',
     'purchase_id' => 'Purchase ID',
+    'sale_item_edit_inventory_note' => 'Increasing a quantity deducts stock from its purchase row. Reducing it returns stock. Adding an item requires a valid purchase ID and sufficient stock.',
     'no_returned_items_found' => 'No returned items found',
     'sales_return_list' => 'Sales Return List',
     'sale_id' => 'Sale ID',
