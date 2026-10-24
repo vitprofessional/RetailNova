@@ -146,7 +146,7 @@ Authenticated Android-user-agent screenshots in ignored `tests-output/ui-3z/0/` 
 
 Focused checks: `MobileShellTest` + `MobileReportCardsTest`, 16 tests / 489 assertions, passing. Full isolated SQLite suite: 346 tests / 10,969 assertions / 0 failures / 6 PHPUnit deprecations. Updated the old `MobileFormRulesTest` assertion that expected a 34px quick-create button; the implementation correctly uses the 44px shared touch target. `git diff --check` passes.
 
-Commit: pending at this progress-file update. Next: UI-3Z.1 shared mobile money formatting; then account ledger, detail pages, reports and final QA checklist.
+Commit: `1e90a80`. Next: UI-3Z.1 shared mobile money formatting; then account ledger, detail pages, reports and final QA checklist.
 
 ## UI-3Z.1 — Shared mobile money output
 
@@ -156,7 +156,7 @@ Real authenticated Bangla mobile screenshots are in ignored `tests-output/ui-3z/
 
 Focused `MobileShellTest` + `MobileDetailLayoutTest`: 16 tests / 499 assertions, passing. Full isolated SQLite suite: 347 tests / 10,973 assertions / 0 failures / 6 PHPUnit deprecations. Blade view cache compilation passed. `git diff --check` passes.
 
-Commit: pending. Next: implement the business-scoped customer/supplier account ledger with cross-business 404 isolation and accurate transaction totals (UI-3Z.2).
+Commit: `a34113c`. Next: implement the business-scoped customer/supplier account ledger with cross-business 404 isolation and accurate transaction totals (UI-3Z.2).
 
 ## UI-3Z.2 — Business-scoped customer and supplier ledgers
 
@@ -168,7 +168,7 @@ Bangla screenshots at 390×844 are in ignored `tests-output/ui-3z/2/`; both cust
 
 Focused checks: `ContactLedgerTest`, `MobileShellTest`, and `CustomerDisplayRegressionTest`, 26 tests / 545 assertions, passing. Full isolated SQLite suite: 351 tests / 11,018 assertions / 0 failures / 6 PHPUnit deprecations. Blade cache compilation passed. `git diff --check` passes.
 
-Commit: pending. Next: UI-3Z.3 mobile sale/purchase invoice, quotation, service invoice and return details, including the “no products found” purchase-invoice issue.
+Commit: `8dc7979`. Next: UI-3Z.3 mobile sale/purchase invoice, quotation, service invoice and return details, including the “no products found” purchase-invoice issue.
 
 ## UI-3Z.3 — Mobile transaction details and legacy purchase lines
 
@@ -178,4 +178,16 @@ Added `PurchaseInvoiceLegacyLinesTest` for a uniquely matching legacy line and a
 
 Mockup 04 comparison: teal status/total and labeled detail lines follow the receipt hierarchy. Differences remain: the mockup represents a compact sale-success receipt, while actual transaction details retain their own supplier/VAT/serial/return/terms fields and purchase lines remain bordered cards; sale invoice retains the A4/thermal document structure. SMS/share/PDF actions were not added because no matching existing actions/contracts were found. Existing print/edit/back actions remain. See ignored `tests-output/ui-3z/3/capture-notes.md` for screen-by-screen observations.
 
-Focused `PurchaseInvoiceLegacyLinesTest`, `MobileDetailLayoutTest`, and `Sprint02PurchaseCustomerTest`: 26 tests, 355 assertions, 0 failures, 6 PHPUnit deprecations. Full isolated SQLite PHPUnit suite: 353 tests, 11,028 assertions, 0 failures, 6 PHPUnit deprecations. PHP syntax, Blade view cache compilation, and `git diff --check` passed. Commit: pending. Next: UI-3Z.4 report refinements, followed by final QA checklist and progress/inventory reconciliation.
+Focused `PurchaseInvoiceLegacyLinesTest`, `MobileDetailLayoutTest`, and `Sprint02PurchaseCustomerTest`: 26 tests, 355 assertions, 0 failures, 6 PHPUnit deprecations. Full isolated SQLite PHPUnit suite: 353 tests, 11,028 assertions, 0 failures, 6 PHPUnit deprecations. PHP syntax, Blade view cache compilation, and `git diff --check` passed. Commit: `5ef98c2`. Next: UI-3Z.4 report refinements, followed by final QA checklist and progress/inventory reconciliation.
+
+## UI-3Z.4 — Mobile reports and final QA handoff
+
+Completed the mobile report pass for the report hub, Business Overview, sales, purchases, top customers, payable/receivable, stock, account financial reports, and expense reports. Business Overview now uses validated Today / 7 days / This month / custom periods, real business-scoped sales, expense, due, and profit values, a seven-day sales chart, and the top five sold products. Its monthly aggregation now renders on SQLite as well as MySQL. Report tables use labeled mobile cards; mobile monetary and count values use localized formatting while desktop formatting stays on its existing path. Stock summary cards use a two-column mobile grid. Removed duplicate download controls where the shared period toolbar already provides one; each report keeps a functioning download action where supported. Fixed mobile report title resolution for Business Overview and Stock.
+
+Authenticated Playwright screenshots were captured in Bangla at 390×844 after `networkidle` and 500 ms using the isolated SQLite screenshot fixture. All nine report routes returned HTTP 200, `scrollWidth` matched the 390px viewport, and no page errors were recorded. Images were opened and reviewed against mockup 07; per-screen observations are in ignored `tests-output/ui-3z/4/capture-notes.md`. The overview has the requested KPI/chart/top-products hierarchy. Differences remain: native date inputs use the host browser's Latin date display in Bangla, and the shared bottom tab bar remains visible; separate report pages keep their existing filters and tables, which become cards on mobile.
+
+Focused `MobileReportCardsTest`, `MobileMasterDataListsTest`, and `MobileRemainingListsTest`: 12 tests, 133 assertions, 0 failures, 6 PHPUnit deprecations, and 4 existing risky output-buffer notices. Full isolated SQLite suite: 355 tests, 11,116 assertions, 0 failures, 6 deprecations, and 6 risky output-buffer notices. `php artisan view:cache` and `git diff --check` pass. A Bengali mobile manual QA checklist is in `docs/MOBILE_QA_CHECKLIST.md`; real-device transaction checks remain a manual release task.
+
+The report rows in `docs/MOBILE_PAGE_INVENTORY.md` now point to UI-3Z.4. Earlier UI-3.R notes about Business Overview failing on SQLite are superseded by this compatibility fix. `/balance/sheet` remains intentionally removed because it displayed fabricated data; the scoped customer/supplier ledger is the supported statement route.
+
+Commit: pending. This closes UI-3Z implementation; run real-device checklist before release.

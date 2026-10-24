@@ -41,6 +41,7 @@ class MobileMasterDataListsTest extends TestCase
             ['addServiceName', 'Mobile Service', 'editService', 'delService'],
         ] as [$route, $label, $editRoute, $deleteRoute]) {
             $response = $this->get(route($route))->assertOk()->assertSee('rn-m-master-cards', false)->assertSee($label);
+            if ($route==='addBrand') $response->assertSee(__('inventory.brand'));
             $response->assertSee(route($editRoute, ['id' => 1]), false);
             $response->assertSee(route($deleteRoute, ['id' => 1]), false);
         }

@@ -1,5 +1,5 @@
 @extends('include')
-@section('backTitle'){{ __('common.heading_stock_report') }}@endsection
+@section('backTitle'){{ app(\App\Support\MobileView::class)->isMobile() ? __('reports.stock_low_stock_report') : __('common.heading_stock_report') }}@endsection
 @section('container')
 <div class="row rn-report-page">
     <div class="col-lg-12">
@@ -25,7 +25,7 @@
                 <div class="card card-block card-stretch card-height bg-primary">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('reports.total_products') }}</h6>
-                        <h3>{{ $totalProducts }}</h3>
+                        <h3><x-mobile.report-count :value="$totalProducts" /></h3>
                         <p class="mb-0">{{ __('reports.in_inventory') }}</p>
                     </div>
                 </div>
@@ -35,8 +35,8 @@
                 <div class="card card-block card-stretch card-height bg-warning">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('reports.low_stock_products') }}</h6>
-                        <h3>{{ $lowStockCount }}</h3>
-                        <p class="mb-0">10 or Fewer Items</p>
+                        <h3><x-mobile.report-count :value="$lowStockCount" /></h3>
+                        <p class="mb-0">{{ __('reports.ten_or_fewer_items') }}</p>
                     </div>
                 </div>
             </div>
@@ -45,7 +45,7 @@
                 <div class="card card-block card-stretch card-height bg-danger">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('reports.out_of_stock') }}</h6>
-                        <h3>{{ $outOfStockCount }}</h3>
+                        <h3><x-mobile.report-count :value="$outOfStockCount" /></h3>
                         <p class="mb-0">{{ __('reports.zero_quantity') }}</p>
                     </div>
                 </div>
@@ -86,16 +86,17 @@
             <div class="card-header d-flex justify-content-between">
                 <h5>
                     @if($filter == 'low')
-                        Low Stock Products
+                        {{ __('reports.low_stock_products') }}
                     @elseif($filter == 'out')
-                        Out of Stock Products
+                        {{ __('reports.out_of_stock') }}
                     @else
-                        All Products
+                        {{ __('reports.all_products') }}
                     @endif
                 </h5>
-                <button onclick="window.print()" class="btn btn-sm btn-primary">
+                <button onclick="window.print()" class="btn btn-sm btn-primary rn-report-print">
                     <i class="ri-printer-line"></i> {{ __('reports.print') }}
                 </button>
+                @mobile<button type="button" class="rn-report-download" data-rn-report-download aria-label="{{ __('reports.download') }}"><i class="ri-download-line" aria-hidden="true"></i></button>@endmobile
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -115,28 +116,28 @@
                             @forelse($products as $product)
                                 @php
                                     $quantity = intval($product->quantity ?? 0);
-                                    $status = 'normal';
+                                    $status = __('inventory.in_stock');
                                     $statusClass = 'success';
 
                                     if($quantity <= 0) {
-                                        $status = 'Out of Stock';
+                                        $status = __('reports.out_of_stock');
                                         $statusClass = 'danger';
                                     } elseif($quantity <= 10) {
-                                        $status = 'Low Stock';
+                                        $status = __('reports.low_stock_products');
                                         $statusClass = 'warning';
                                     } else {
-                                        $status = 'In Stock';
+                                        $status = __('inventory.in_stock');
                                         $statusClass = 'success';
                                     }
                                 @endphp
                                 <tr class="{{ $quantity <= 0 ? 'table-danger' : ($quantity <= 10 ? 'table-warning' : '') }}">
                                     <td><strong>{{ $product->name }}</strong></td>
-                                    <td>{{ $product->barCode ?? 'N/A' }}</td>
-                                    <td>{{ $product->brandModel->name ?? 'N/A' }}</td>
-                                    <td>{{ $product->categoryModel->name ?? 'N/A' }}</td>
-                                    <td>{{ $product->unitModel->name ?? 'N/A' }}</td>
+                                    <td>{{ $product->barCode ?: '—' }}</td>
+                                    <td>{{ $product->brandModel->name ?? '—' }}</td>
+                                    <td>{{ $product->categoryModel->name ?? '—' }}</td>
+                                    <td>{{ $product->unitModel->name ?? '—' }}</td>
                                     <td class="text-center">
-                                        <strong class="text-{{ $statusClass }}">{{ $quantity }}</strong>
+                                        <strong class="text-{{ $statusClass }}"><x-mobile.report-count :value="$quantity" /></strong>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-{{ $statusClass }}">{{ $status }}</span>

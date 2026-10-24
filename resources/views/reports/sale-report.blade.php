@@ -22,7 +22,8 @@
     <div class="col-lg-12 mb-3">
         <div class="card">
             <div class="card-body">
-                <form method="GET" action="{{ route('reports.sales') }}" class="row align-items-end">
+                <form method="GET" action="{{ route('reports.sales') }}" class="row align-items-end" data-rn-report-date-form>
+                    @include('components.mobile.report-period-tools')
                     <div class="col-md-3">
                         <label class="form-label">{{ __('sales.start_date') }}</label>
                         <input type="date" name="start_date" class="form-control" value="{{ $startDate }}">
@@ -59,8 +60,8 @@
                 <div class="card card-block card-stretch card-height bg-success">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('sales.total_sales') }}</h6>
-                        <h3>@money($totalSales)</h3>
-                        <p class="mb-0">{{ $sales->total() }} {{ __('common.transactions') }}</p>
+                        <h3><x-mobile.report-money :amount="$totalSales" /></h3>
+                        <p class="mb-0"><x-mobile.report-count :value="$sales->total()" /> {{ __('common.transactions') }}</p>
                     </div>
                 </div>
             </div>
@@ -69,7 +70,7 @@
                 <div class="card card-block card-stretch card-height bg-primary">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('sales.total_profit') }}</h6>
-                        <h3>@money($totalProfit)</h3>
+                        <h3><x-mobile.report-money :amount="$totalProfit" /></h3>
                         <p class="mb-0">{{ __('sales.from_sales') }}</p>
                     </div>
                 </div>
@@ -105,11 +106,11 @@
                             @forelse($sales as $sale)
                                 <tr>
                                     <td>{{ \Carbon\Carbon::parse($sale->date)->format('d M Y') }}</td>
-                                    <td>{{ $sale->invoice ?? 'N/A' }}</td>
+                                    <td>{{ $sale->invoice ?: '—' }}</td>
                                     <td>{{ \App\Models\Customer::displayLabel($sale->customer, $sale->customerId, $sale->businessId) }}</td>
-                                    <td class="text-right">@money($sale->totalSale ?? 0)</td>
-                                    <td class="text-right">@money($sale->discountAmount ?? 0)</td>
-                                    <td class="text-right"><strong>@money($sale->grandTotal)</strong></td>
+                                    <td class="text-right"><x-mobile.report-money :amount="$sale->totalSale ?? 0" /></td>
+                                    <td class="text-right"><x-mobile.report-money :amount="$sale->discountAmount ?? 0" /></td>
+                                    <td class="text-right"><strong><x-mobile.report-money :amount="$sale->grandTotal" /></strong></td>
                                     <td class="text-right text-success">@money($sale->grandTotal - ($sale->totalSale ?? 0))</td>
                                     <td>
                                         @php
@@ -134,8 +135,8 @@
                             <tfoot class="bg-light">
                                 <tr>
                                     <th colspan="5" class="text-right">{{ __('common.total') }}:</th>
-                                    <th class="text-right">@money($totalSales)</th>
-                                    <th class="text-right text-success">@money($totalProfit)</th>
+                                    <th class="text-right"><x-mobile.report-money :amount="$totalSales" /></th>
+                                    <th class="text-right text-success"><x-mobile.report-money :amount="$totalProfit" /></th>
                                     <th></th>
                                 </tr>
                             </tfoot>

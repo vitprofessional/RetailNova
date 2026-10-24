@@ -16,7 +16,7 @@
 | `/accounts/delete/{id}` | `account.delete` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
 | `/accounts/edit/{id}` | `account.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/accounts/ledger/{id}` | `account.ledger` | তালিকা | সার্ভারে রেন্ডার | UI-3.11 |
-| `/accounts/reports` | `account.reports` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3.R |
+| `/accounts/reports` | `account.reports` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3Z.4 |
 | `/accounts/transactions` | `account.transactions` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন ৫০ | UI-3.L |
 | `/accounts/transactions/create` | `account.transactions.create` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/add/customer` | `addCustomer` | তালিকা — তালিকা + যোগ করার ফর্ম একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-2 |
@@ -93,7 +93,7 @@
 | `/expenses/delete/{id}` | `expense.delete` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
 | `/expenses/edit/{id}` | `expense.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/expenses/list` | `expense.list` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন ৫০ + DataTables (ব্রাউজারে) | UI-2 |
-| `/expenses/reports` | `expense.reports` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3.R |
+| `/expenses/reports` | `expense.reports` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3Z.4 |
 | `/expenses/statistics` | `expense.statistics` | অন্য | AJAX JSON (পাতা নয়) |  |
 | `/generate/invoice/{id}` | `invoiceGenerate` | অন্য | সার্ভারে রেন্ডার |  |
 | `/invoice` | `invoicePage` | অন্য | সার্ভারে রেন্ডার |  |
@@ -124,13 +124,13 @@
 | `/quotation/{id}` | `quotation.show` | অন্য | সার্ভারে রেন্ডার |  |
 | `/quotation/{id}/edit` | `quotation.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/quotation/{id}/print` | `quotation.print` | অন্য | সার্ভারে রেন্ডার |  |
-| `/reports` | `reports.index` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3.R |
-| `/reports/business` | `reports.business` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3.R (SQLite query blocker) |
-| `/reports/payable-receivable` | `reports.payableReceivable` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3.R |
-| `/reports/purchases` | `reports.purchases` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3.R |
-| `/reports/sales` | `reports.sales` | রিপোর্ট | সার্ভারে রেন্ডার, পেজিনেশন ৫০ | UI-3.R |
-| `/reports/stock` | `reports.stock` | রিপোর্ট | সার্ভারে রেন্ডার, পেজিনেশন ৫০ | UI-3.R |
-| `/reports/top-customers` | `reports.topCustomers` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3.R |
+| `/reports` | `reports.index` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3Z.4 |
+| `/reports/business` | `reports.business` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3Z.4 (SQLite verified) |
+| `/reports/payable-receivable` | `reports.payableReceivable` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3Z.4 |
+| `/reports/purchases` | `reports.purchases` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3Z.4 |
+| `/reports/sales` | `reports.sales` | রিপোর্ট | সার্ভারে রেন্ডার, পেজিনেশন ৫০ | UI-3Z.4 |
+| `/reports/stock` | `reports.stock` | রিপোর্ট | সার্ভারে রেন্ডার, পেজিনেশন ৫০ | UI-3Z.4 |
+| `/reports/top-customers` | `reports.topCustomers` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3Z.4 |
 | `/return/purchase/list` | `returnPurchaseList` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.L |
 | `/return/purchase/{id}` | `returnPurchase` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/return/sale/details/{id}` | `saleReturnDetails` | অন্য | সার্ভারে রেন্ডার |  |

@@ -17,7 +17,7 @@
                 <strong class="rn-m-card-title">{{ $card['title'] }}</strong>
                 @if(($card['subtitle'] ?? '') !== '')<span class="rn-m-card-sub">{{ $card['subtitle'] }}</span>@endif
             </span>
-            <span class="rn-m-card-amount is-{{ $card['amount_tone'] ?? 'ink' }}">{{ $card['amount'] }}</span>
+            @if(!empty($card['amount']))<span class="rn-m-card-amount is-{{ $card['amount_tone'] ?? 'ink' }}">{{ $card['amount'] }}</span>@endif
         </span>
         <span class="rn-m-card-footer">
             <span class="rn-m-card-tags">

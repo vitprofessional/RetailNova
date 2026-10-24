@@ -6,7 +6,11 @@ use App\Models\AdminUser;
 use App\Models\BusinessSetup;
 use App\Models\ExpenseCategory;
 use App\Models\ExpenseEntry;
+use App\Models\InvoiceItem;
+use App\Models\Product;
+use App\Models\PurchaseProduct;
 use App\Models\SaleProduct;
+use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -53,7 +57,7 @@ class MobileReportCardsTest extends TestCase
             ->assertSee('rn-report-page', false)
             ->assertSee('rn-report-table', false)
             ->assertSee('Mobile Test Rent')
-            ->assertSee('275.00')
+            ->assertSee('৳275')
             ->assertDontSee('Mr Green')
             ->assertDontSee('01880375361');
     }
@@ -84,9 +88,51 @@ class MobileReportCardsTest extends TestCase
 
         $this->get(route('reports.business'))
             ->assertOk()
-            ->assertSee('rn-report-kpi-grid', false)
-            ->assertSee('rn-report-kpi-card--sales', false)
-            ->assertSee('321.00')
+            ->assertSee('rn-report-mobile-overview', false)
+            ->assertSee('rn-report-mobile-kpis', false)
+            ->assertSee('৳321')
             ->assertDontSee('999.00');
+    }
+
+    public function test_mobile_business_overview_has_real_weekly_sales_top_products_periods_and_export(): void
+    {
+        BusinessSetup::forceCreate(['id'=>2,'businessName'=>'Other Reports Shop']);
+        $supplier=Supplier::forceCreate(['name'=>'Report Supplier','businessId'=>1]);
+        $product=Product::forceCreate(['name'=>'Seven Day Product','businessId'=>1]);
+        $foreignProduct=Product::forceCreate(['name'=>'Foreign Product','businessId'=>2]);
+        $lot=PurchaseProduct::forceCreate(['businessId'=>1,'supplier'=>(string)$supplier->id,'productName'=>(string)$product->id,
+            'invoice'=>'REPORT-LOT','purchase_date'=>now()->toDateString(),'qty'=>10,'buyPrice'=>50,'salePriceExVat'=>80]);
+        $sale=SaleProduct::forceCreate(['businessId'=>1,'date'=>now()->toDateString(),'invoice'=>'OVERVIEW-SELL-1',
+            'totalSale'=>160,'grandTotal'=>160,'curDue'=>40,'created_at'=>now(),'updated_at'=>now()]);
+        InvoiceItem::forceCreate(['businessId'=>1,'saleId'=>$sale->id,'purchaseId'=>$lot->id,'qty'=>2,
+            'totalSale'=>160,'totalPurchase'=>100,'profitTotal'=>60]);
+        $foreignSale=SaleProduct::forceCreate(['businessId'=>2,'date'=>now()->toDateString(),'invoice'=>'FOREIGN-SELL-1',
+            'totalSale'=>900,'grandTotal'=>900,'curDue'=>900,'created_at'=>now(),'updated_at'=>now()]);
+        InvoiceItem::forceCreate(['businessId'=>2,'saleId'=>$foreignSale->id,'purchaseId'=>$lot->id,'qty'=>9,
+            'totalSale'=>900,'totalPurchase'=>450,'profitTotal'=>450]);
+        $category=ExpenseCategory::forceCreate(['name'=>'Overview Expense','businessId'=>1,'is_active'=>true]);
+        ExpenseEntry::forceCreate(['businessId'=>1,'expense_date'=>now()->toDateString(),'category_id'=>$category->id,
+            'amount'=>25,'payment_method'=>'cash','created_by'=>1,'created_by_type'=>'admin']);
+
+        $this->get(route('reports.business',['period'=>'week']))
+            ->assertOk()->assertSee('rn-report-mobile-overview',false)
+            ->assertSee('rn-report-mobile-kpis',false)->assertSee('data-rn-report-download',false)
+            ->assertSee('Seven Day Product')->assertSee('৳160')->assertSee('৳25')->assertSee('৳40')
+            ->assertDontSee('Foreign Product')->assertDontSee('900.00')
+            ->assertSee(__('reports.period_today'))->assertSee(__('reports.period_custom'));
+    }
+
+    public function test_mobile_business_overview_uses_bangla_labels_when_bangla_is_selected(): void
+    {
+        auth('admin')->user()->forceFill(['preferred_locale' => 'bn'])->save();
+
+        $this->get(route('reports.business', ['period' => 'week']))
+            ->assertOk()
+            ->assertSee('ব্যবসার ওভারভিউ')
+            ->assertSee('প্রতিবেদন ডাউনলোড')
+            ->assertSee('গত ৭ দিনের বিক্রি')
+            ->assertSee('এই সময়ে কোনো পণ্য বিক্রি হয়নি।')
+            ->assertDontSee('Business Overview')
+            ->assertDontSee('Download report');
     }
 }

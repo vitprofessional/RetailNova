@@ -22,7 +22,8 @@
     <div class="col-lg-12 mb-3">
         <div class="card">
             <div class="card-body">
-                <form method="GET" action="{{ route('reports.purchases') }}" class="row align-items-end">
+                <form method="GET" action="{{ route('reports.purchases') }}" class="row align-items-end" data-rn-report-date-form>
+                    @include('components.mobile.report-period-tools')
                     <div class="col-md-3">
                         <label class="form-label">{{ __('purchases.start_date') }}</label>
                         <input type="date" name="start_date" class="form-control" value="{{ $startDate }}">
@@ -57,8 +58,8 @@
         <div class="card card-block card-stretch card-height bg-info">
             <div class="card-body text-white">
                 <h6 class="mb-2">{{ __('purchases.total_purchases') }}</h6>
-                <h3>@money($totalPurchases)</h3>
-                <p class="mb-0">{{ $totals['transactions'] ?? $purchases->total() }} {{ __('common.transactions') }}</p>
+                <h3><x-mobile.report-money :amount="$totalPurchases" /></h3>
+                <p class="mb-0"><x-mobile.report-count :value="$totals['transactions'] ?? $purchases->total()" /> {{ __('common.transactions') }}</p>
             </div>
         </div>
     </div>
@@ -98,14 +99,14 @@
                                 @endphp
                                 <tr>
                                     <td>{{ $reportDate ? \Carbon\Carbon::parse($reportDate)->format('d M Y') : '-' }}</td>
-                                    <td>{{ $purchase->invoice_no ?? 'N/A' }}</td>
+                                    <td>{{ $purchase->invoice_no ?: '—' }}</td>
                                     <td>{{ $purchase->supplier_name ?? 'Unknown Supplier' }}</td>
                                     <td class="text-center">{{ intval($purchase->line_items ?? 0) }}</td>
-                                    <td class="text-right">@money($purchase->sub_total ?? 0)</td>
-                                    <td class="text-right">@money($purchase->discount_total ?? 0)</td>
-                                    <td class="text-right"><strong>@money($purchase->grand_total ?? 0)</strong></td>
-                                    <td class="text-right">@money($purchase->paid_total ?? 0)</td>
-                                    <td class="text-right">@money($purchase->due_total ?? 0)</td>
+                                    <td class="text-right"><x-mobile.report-money :amount="$purchase->sub_total ?? 0" /></td>
+                                    <td class="text-right"><x-mobile.report-money :amount="$purchase->discount_total ?? 0" /></td>
+                                    <td class="text-right"><strong><x-mobile.report-money :amount="$purchase->grand_total ?? 0" /></strong></td>
+                                    <td class="text-right"><x-mobile.report-money :amount="$purchase->paid_total ?? 0" /></td>
+                                    <td class="text-right"><x-mobile.report-money :amount="$purchase->due_total ?? 0" /></td>
                                     <td>
                                         @if($due <= 0)
                                             <span class="badge bg-success">{{ __('purchases.paid') }}</span>
@@ -126,11 +127,11 @@
                             <tfoot class="bg-light">
                                 <tr>
                                     <th colspan="4" class="text-right">{{ __('common.total') }}:</th>
-                                    <th class="text-right">@money($totals['sub_total'] ?? 0)</th>
-                                    <th class="text-right">@money($totals['discount'] ?? 0)</th>
-                                    <th class="text-right">@money($totals['grand_total'] ?? 0)</th>
-                                    <th class="text-right">@money($totals['paid_total'] ?? 0)</th>
-                                    <th class="text-right">@money($totals['due_total'] ?? 0)</th>
+                                    <th class="text-right"><x-mobile.report-money :amount="$totals['sub_total'] ?? 0" /></th>
+                                    <th class="text-right"><x-mobile.report-money :amount="$totals['discount'] ?? 0" /></th>
+                                    <th class="text-right"><x-mobile.report-money :amount="$totals['grand_total'] ?? 0" /></th>
+                                    <th class="text-right"><x-mobile.report-money :amount="$totals['paid_total'] ?? 0" /></th>
+                                    <th class="text-right"><x-mobile.report-money :amount="$totals['due_total'] ?? 0" /></th>
                                     <th></th>
                                 </tr>
                             </tfoot>

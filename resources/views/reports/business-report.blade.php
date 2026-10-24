@@ -1,6 +1,59 @@
 @extends('include')
-@section('backTitle'){{ __('common.heading_business_report') }}@endsection
+@section('backTitle'){{ app(\App\Support\MobileView::class)->isMobile() ? __('reports.mobile_business_overview') : __('common.heading_business_report') }}@endsection
 @section('container')
+@mobile
+@php $weeklyPeak=max(1,(float)$weeklySales->max('total')); @endphp
+<main class="rn-report-mobile-overview" data-rn-report-overview>
+    <header class="rn-report-mobile-header">
+        <div class="rn-report-mobile-title">
+            <button type="button" class="rn-report-download" data-rn-report-download aria-label="{{ __('reports.download') }}"><i class="ri-download-line" aria-hidden="true"></i></button>
+        </div>
+        <nav class="rn-report-periods" aria-label="{{ __('reports.period') }}">
+            @foreach($periodRanges as $key=>$range)
+                <a href="{{ route('reports.business',$range) }}" @if($period===$key) aria-current="page" @endif>{{ __('reports.period_'.$key) }}</a>
+            @endforeach
+            <button type="button" data-rn-custom-period aria-expanded="{{ $period==='custom'?'true':'false' }}">{{ __('reports.period_custom') }}</button>
+        </nav>
+        <form method="GET" action="{{ route('reports.business') }}" class="rn-report-custom-range" @if($period!=='custom') hidden @endif>
+            <input type="hidden" name="period" value="custom">
+            <label><span>{{ __('reports.start_date') }}</span><input type="date" name="start_date" value="{{ $startDate }}"></label>
+            <label><span>{{ __('reports.end_date') }}</span><input type="date" name="end_date" value="{{ $endDate }}"></label>
+            <button type="submit">{{ __('reports.apply_period') }}</button>
+        </form>
+    </header>
+
+    <section class="rn-report-mobile-kpis" aria-label="{{ __('reports.summary') }}">
+        <article class="rn-report-mobile-kpi" data-rn-export-row data-label="{{ __('reports.sale_report') }}" data-value="{{ \App\Support\LocalizedNumber::money($totalSales) }}"><span><i class="is-teal"></i>{{ __('reports.sale_report') }}</span><strong>{{ \App\Support\LocalizedNumber::money($totalSales) }}</strong></article>
+        <article class="rn-report-mobile-kpi" data-rn-export-row data-label="{{ __('settings.profit') }}" data-value="{{ \App\Support\LocalizedNumber::money($profit) }}"><span><i class="is-green"></i>{{ __('settings.profit') }}</span><strong>{{ \App\Support\LocalizedNumber::money($profit) }}</strong></article>
+        <article class="rn-report-mobile-kpi" data-rn-export-row data-label="{{ __('reports.expenses') }}" data-value="{{ \App\Support\LocalizedNumber::money($totalExpenses) }}"><span><i class="is-amber"></i>{{ __('reports.expenses') }}</span><strong>{{ \App\Support\LocalizedNumber::money($totalExpenses) }}</strong></article>
+        <article class="rn-report-mobile-kpi" data-rn-export-row data-label="{{ __('reports.new_due') }}" data-value="{{ \App\Support\LocalizedNumber::money($newDue) }}"><span><i class="is-red"></i>{{ __('reports.new_due') }}</span><strong>{{ \App\Support\LocalizedNumber::money($newDue) }}</strong></article>
+    </section>
+
+    <section class="rn-report-mobile-card rn-report-week-chart">
+        <div class="rn-report-mobile-card-heading"><h2>{{ __('reports.seven_day_sales') }}</h2><span>{{ __('reports.daily_sales') }}</span></div>
+        <div class="rn-report-bars" role="img" aria-label="{{ __('reports.seven_day_sales') }}">
+            @foreach($weeklySales as $day)
+                <div class="rn-report-bar-column" data-rn-export-row data-label="{{ $day['date'] }}" data-value="{{ \App\Support\LocalizedNumber::money($day['total']) }}">
+                    <small>{{ \App\Support\LocalizedNumber::money($day['total']) }}</small>
+                    <span class="rn-report-bar" style="height: {{ $day['total'] > 0 ? max(8,round(($day['total']/$weeklyPeak)*100)) : 4 }}%"></span>
+                    <span class="rn-report-bar-label">{{ $day['label'] }}</span>
+                </div>
+            @endforeach
+        </div>
+    </section>
+
+    <section class="rn-report-mobile-card rn-report-top-products">
+        <h2>{{ __('reports.top_five_products') }}</h2>
+        @forelse($topProducts as $index=>$product)
+            <div class="rn-report-top-product" data-rn-export-row data-label="{{ $product['name'] }}" data-value="{{ \App\Support\LocalizedNumber::count($product['quantity']) }}">
+                <span class="rn-report-rank">{{ \App\Support\LocalizedNumber::count($index+1) }}</span><strong>{{ $product['name'] }}</strong><span>{{ \App\Support\LocalizedNumber::count($product['quantity']) }}</span>
+            </div>
+        @empty
+            <p class="rn-report-empty">{{ __('reports.no_top_products') }}</p>
+        @endforelse
+    </section>
+</main>
+@else
 <div class="row rn-report-page">
     <div class="col-lg-12">
         <div class="card card-transparent card-block card-stretch card-height border-none">
@@ -48,8 +101,8 @@
                 <div class="card card-block card-stretch card-height bg-primary rn-report-kpi-card rn-report-kpi-card--sales">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('settings.total_sales') }}</h6>
-                        <h3>@money($totalSales)</h3>
-                        <p class="mb-0">{{ $totalSalesCount }} {{ __('common.transactions') }}</p>
+                        <h3><x-mobile.report-money :amount="$totalSales" /></h3>
+                        <p class="mb-0"><x-mobile.report-count :value="$totalSalesCount" /> {{ __('common.transactions') }}</p>
                     </div>
                 </div>
             </div>
@@ -58,8 +111,8 @@
                 <div class="card card-block card-stretch card-height bg-warning rn-report-kpi-card rn-report-kpi-card--purchases">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('settings.total_purchases') }}</h6>
-                        <h3>@money($totalPurchases)</h3>
-                        <p class="mb-0">{{ $totalPurchasesCount }} {{ __('common.transactions') }}</p>
+                        <h3><x-mobile.report-money :amount="$totalPurchases" /></h3>
+                        <p class="mb-0"><x-mobile.report-count :value="$totalPurchasesCount" /> {{ __('common.transactions') }}</p>
                     </div>
                 </div>
             </div>
@@ -68,7 +121,7 @@
                 <div class="card card-block card-stretch card-height bg-success rn-report-kpi-card rn-report-kpi-card--profit">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('settings.profit') }}</h6>
-                        <h3>@money($profit)</h3>
+                        <h3><x-mobile.report-money :amount="$profit" /></h3>
                         <p class="mb-0">{{ __('settings.gross_profit') }}</p>
                     </div>
                 </div>
@@ -99,7 +152,7 @@
                         </div>
                         <div class="d-flex justify-content-between">
                             <span>{{ __('settings.total_receivables') }}:</span>
-                            <strong class="text-success">@money($totalReceivables)</strong>
+                            <strong class="text-success"><x-mobile.report-money :amount="$totalReceivables" /></strong>
                         </div>
                     </div>
                 </div>
@@ -115,7 +168,7 @@
                         </div>
                         <div class="d-flex justify-content-between">
                             <span>{{ __('settings.total_payables') }}:</span>
-                            <strong class="text-danger">@money($totalPayables)</strong>
+                            <strong class="text-danger"><x-mobile.report-money :amount="$totalPayables" /></strong>
                         </div>
                     </div>
                 </div>
@@ -130,7 +183,7 @@
                             <strong>{{ $totalProducts }}</strong>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span>Low Stock (≤10):</span>
+                            <span>{{ __('reports.low_stock_products') }} ({{ __('reports.ten_or_fewer_items') }}):</span>
                             <strong class="text-warning">{{ $lowStockProducts }}</strong>
                         </div>
                     </div>
@@ -158,7 +211,7 @@
                             @forelse($monthlySales as $sale)
                                 <tr>
                                     <td>{{ \Carbon\Carbon::create($sale->year, $sale->month)->format('F Y') }}</td>
-                                    <td class="text-right">@money($sale->total)</td>
+                                    <td class="text-right"><x-mobile.report-money :amount="$sale->total" /></td>
                                 </tr>
                             @empty
                                 <tr>
@@ -172,7 +225,9 @@
         </div>
     </div>
 </div>
+@endmobile
 @section('scripts')
     @include('components.mobile.report-card-script')
+    @include('components.mobile.report-overview-script')
 @endsection
 @endsection

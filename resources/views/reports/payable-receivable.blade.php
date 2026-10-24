@@ -27,8 +27,8 @@
                 <div class="card card-block card-stretch card-height bg-success">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('reports.total_receivables') }}</h6>
-                        <h3>@money($totalReceivable)</h3>
-                        <p class="mb-0">{{ __('common.from') }} {{ $receivables->count() }} {{ __('common.customers') }}</p>
+                        <h3><x-mobile.report-money :amount="$totalReceivable" /></h3>
+                        <p class="mb-0">{{ __('common.from') }} <x-mobile.report-count :value="$receivables->count()" /> {{ __('common.customers') }}</p>
                     </div>
                 </div>
             </div>
@@ -37,8 +37,8 @@
                 <div class="card card-block card-stretch card-height bg-danger">
                     <div class="card-body text-white">
                         <h6 class="mb-2">{{ __('reports.total_payables') }}</h6>
-                        <h3>@money($totalPayable)</h3>
-                        <p class="mb-0">{{ __('common.to') }} {{ $payables->count() }} {{ __('common.suppliers') }}</p>
+                        <h3><x-mobile.report-money :amount="$totalPayable" /></h3>
+                        <p class="mb-0">{{ __('common.to') }} <x-mobile.report-count :value="$payables->count()" /> {{ __('common.suppliers') }}</p>
                     </div>
                 </div>
             </div>
@@ -53,6 +53,7 @@
                 <button onclick="window.print()" class="btn btn-sm btn-light">
                     <i class="ri-printer-line"></i> {{ __('reports.print') }}
                 </button>
+                @mobile<button type="button" class="rn-report-download" data-rn-report-download aria-label="{{ __('reports.download') }}"><i class="ri-download-line" aria-hidden="true"></i></button>@endmobile
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -71,10 +72,10 @@
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td><strong>{{ $customer->name }}</strong></td>
-                                    <td>{{ $customer->mail ?? 'N/A' }}</td>
-                                    <td>{{ $customer->mobile ?? 'N/A' }}</td>
+                                    <td>{{ $customer->mail ?: '—' }}</td>
+                                    <td>{{ $customer->mobile ?: '—' }}</td>
                                     <td class="text-right">
-                                        <strong class="text-success">@money($customer->openingBalance)</strong>
+                                        <strong class="text-success"><x-mobile.report-money :amount="$customer->openingBalance" /></strong>
                                     </td>
                                 </tr>
                             @empty
@@ -87,7 +88,7 @@
                             <tfoot class="bg-light">
                                 <tr>
                                     <th colspan="4" class="text-right">{{ __('reports.total_receivable') }}:</th>
-                                    <th class="text-right text-success">@money($totalReceivable)</th>
+                                    <th class="text-right text-success"><x-mobile.report-money :amount="$totalReceivable" /></th>
                                 </tr>
                             </tfoot>
                         @endif
@@ -123,10 +124,10 @@
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td><strong>{{ $supplier->name }}</strong></td>
-                                    <td>{{ $supplier->mail ?? 'N/A' }}</td>
-                                    <td>{{ $supplier->mobile ?? 'N/A' }}</td>
+                                    <td>{{ $supplier->mail ?: '—' }}</td>
+                                    <td>{{ $supplier->mobile ?: '—' }}</td>
                                     <td class="text-right">
-                                        <strong class="text-danger">@money($supplier->openingBalance)</strong>
+                                        <strong class="text-danger"><x-mobile.report-money :amount="$supplier->openingBalance" /></strong>
                                     </td>
                                 </tr>
                             @empty
@@ -139,7 +140,7 @@
                             <tfoot class="bg-light">
                                 <tr>
                                     <th colspan="4" class="text-right">{{ __('reports.total_payable') }}:</th>
-                                    <th class="text-right text-danger">@money($totalPayable)</th>
+                                    <th class="text-right text-danger"><x-mobile.report-money :amount="$totalPayable" /></th>
                                 </tr>
                             </tfoot>
                         @endif
@@ -156,11 +157,11 @@
                 <div class="row">
                     <div class="col-md-4">
                         <h6>{{ __('reports.total_receivable') }}:</h6>
-                        <h4 class="text-success">@money($totalReceivable)</h4>
+                        <h4 class="text-success"><x-mobile.report-money :amount="$totalReceivable" /></h4>
                     </div>
                     <div class="col-md-4">
                         <h6>{{ __('reports.total_payable') }}:</h6>
-                        <h4 class="text-danger">@money($totalPayable)</h4>
+                        <h4 class="text-danger"><x-mobile.report-money :amount="$totalPayable" /></h4>
                     </div>
                     <div class="col-md-4">
                         <h6>{{ __('reports.net_position') }}:</h6>
@@ -168,11 +169,11 @@
                             $netPosition = $totalReceivable - $totalPayable;
                         @endphp
                         <h4 class="{{ $netPosition >= 0 ? 'text-success' : 'text-danger' }}">
-                            @money(abs($netPosition))
+                            <x-mobile.report-money :amount="abs($netPosition)" />
                             @if($netPosition >= 0)
-                                (In Favor)
+                                ({{ __('reports.in_favor') }})
                             @else
-                                (Against)
+                                ({{ __('reports.against') }})
                             @endif
                         </h4>
                     </div>

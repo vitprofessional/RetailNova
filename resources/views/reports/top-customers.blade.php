@@ -22,7 +22,8 @@
     <div class="col-lg-12 mb-3">
         <div class="card">
             <div class="card-body">
-                <form method="GET" action="{{ route('reports.topCustomers') }}" class="row align-items-end">
+                <form method="GET" action="{{ route('reports.topCustomers') }}" class="row align-items-end" data-rn-report-date-form>
+                    @include('components.mobile.report-period-tools')
                     <div class="col-md-3">
                         <label class="form-label">{{ __('customers.start_date') }}</label>
                         <input type="date" name="start_date" class="form-control" value="{{ $startDate }}">
@@ -84,20 +85,20 @@
                                         @elseif($index == 2)
                                             <span class="badge bg-danger">🥉</span>
                                         @else
-                                            {{ $index + 1 }}
+                                            <x-mobile.report-count :value="$index + 1" />
                                         @endif
                                     </td>
                                     <td><strong>{{ $customer->name }}</strong></td>
-                                    <td>{{ $customer->mail ?? 'N/A' }}</td>
-                                    <td>{{ $customer->mobile ?? 'N/A' }}</td>
+                                    <td>{{ $customer->mail ?: '—' }}</td>
+                                    <td>{{ $customer->mobile ?: '—' }}</td>
                                     <td class="text-center">
-                                        <span class="badge bg-primary">{{ $customer->total_orders }}</span>
+                                        <span class="badge bg-primary"><x-mobile.report-count :value="$customer->total_orders" /></span>
                                     </td>
                                     <td class="text-right">
-                                        <strong class="text-success">@money($customer->total_spent)</strong>
+                                        <strong class="text-success"><x-mobile.report-money :amount="$customer->total_spent" /></strong>
                                     </td>
                                     <td>
-                                        {{ $customer->last_purchase_date ? \Carbon\Carbon::parse($customer->last_purchase_date)->format('d M Y') : 'N/A' }}
+                                        {{ $customer->last_purchase_date ? (app(\App\Support\MobileView::class)->isMobile() ? \App\Support\MobileDateTime::date($customer->last_purchase_date) : \Carbon\Carbon::parse($customer->last_purchase_date)->format('d M Y')) : '—' }}
                                     </td>
                                 </tr>
                             @empty
@@ -110,8 +111,8 @@
                             <tfoot class="bg-light">
                                 <tr>
                                     <th colspan="4" class="text-right">{{ __('common.total') }}:</th>
-                                    <th class="text-center">{{ $topCustomers->sum('total_orders') }}</th>
-                                    <th class="text-right">@money($topCustomers->sum('total_spent'))</th>
+                                    <th class="text-center"><x-mobile.report-count :value="$topCustomers->sum('total_orders')" /></th>
+                                    <th class="text-right"><x-mobile.report-money :amount="$topCustomers->sum('total_spent')" /></th>
                                     <th></th>
                                 </tr>
                             </tfoot>

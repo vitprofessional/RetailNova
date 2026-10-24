@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\Product;
 use App\Models\InvoiceItem;
+use App\Models\ExpenseEntry;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Carbon\Carbon;
@@ -20,16 +21,29 @@ class ReportController extends Controller
      */
     public function businessReport(Request $request)
     {
-        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        $filters=$request->validate([
+            'period'=>['nullable','in:today,week,month,custom'],
+            'start_date'=>['nullable','date'],
+            'end_date'=>['nullable','date','after_or_equal:start_date'],
+        ]);
+        $period=$filters['period']??((isset($filters['start_date'])||isset($filters['end_date']))?'custom':'month');
+        $today=Carbon::today();
+        [$startDate,$endDate]=match($period) {
+            'today'=>[$today->toDateString(),$today->toDateString()],
+            'week'=>[$today->copy()->subDays(6)->toDateString(),$today->toDateString()],
+            'custom'=>[$filters['start_date']??$today->copy()->startOfMonth()->toDateString(),$filters['end_date']??$today->toDateString()],
+            default=>[$today->copy()->startOfMonth()->toDateString(),$today->toDateString()],
+        };
 
         // Sales Summary (use SaleProduct totalAmount)
-        $salesQuery = SaleProduct::whereBetween('created_at', [$startDate, $endDate]);
+        $salesQuery = SaleProduct::whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate);
         $totalSales = (clone $salesQuery)->sum('totalSale');
         $totalSalesCount = (clone $salesQuery)->count();
         
         // Purchase Summary (use PurchaseProduct grandTotal)
-        $purchaseQuery = PurchaseProduct::whereBetween('created_at', [$startDate, $endDate]);
+        $purchaseQuery = PurchaseProduct::whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate);
         $totalPurchases = (clone $purchaseQuery)->sum('grandTotal');
         $totalPurchasesCount = (clone $purchaseQuery)->count();
         
@@ -54,6 +68,38 @@ class ReportController extends Controller
         // Receivables & Payables
         $totalReceivables = Customer::where('openingBalance', '>', 0)->sum('openingBalance');
         $totalPayables = Supplier::where('openingBalance', '>', 0)->sum('openingBalance');
+
+        // Dashboard chart and top products are real, tenant-scoped sales from
+        // the trailing seven days, independent of the overview period selector.
+        $weekStart=$today->copy()->subDays(6)->toDateString();
+        $weekEnd=$today->toDateString();
+        $dailyTotals=SaleProduct::query()->whereBetween('date',[$weekStart,$weekEnd])
+            ->select('date')->selectRaw('SUM(grandTotal) AS total')->groupBy('date')->pluck('total','date');
+        $weeklySales=collect();
+        for($day=$today->copy()->subDays(6);$day->lte($today);$day->addDay()) {
+            $date=$day->toDateString();
+            $weeklySales->push(['date'=>$date,'label'=>$day->copy()->locale(app()->getLocale())->isoFormat('ddd'),
+                'total'=>(float)($dailyTotals[$date]??0)]);
+        }
+        $weeklySaleIds=SaleProduct::query()->whereBetween('date',[$weekStart,$weekEnd])->pluck('id');
+        $topProducts=InvoiceItem::query()->whereIn('saleId',$weeklySaleIds)->with('purchase.product')
+            ->get()->filter(fn($item)=>$item->purchase?->product)
+            ->groupBy(fn($item)=>(int)$item->purchase->product->id)
+            ->map(fn($items)=>['name'=>$items->first()->purchase->product->name,'quantity'=>(int)$items->sum(fn($item)=>(int)$item->qty)])
+            ->sortByDesc('quantity')->take(5)->values();
+        $totalExpenses=(float)ExpenseEntry::query()->whereDate('expense_date','>=',$startDate)
+            ->whereDate('expense_date','<=',$endDate)->sum('amount');
+        $newDue=(float)SaleProduct::query()->whereDate('date','>=',$startDate)
+            ->whereDate('date','<=',$endDate)->sum('curDue');
+        $periodRanges=[];
+        foreach(['today','week','month'] as $key) {
+            [$from,$to]=match($key) {
+                'today'=>[$today->toDateString(),$today->toDateString()],
+                'week'=>[$today->copy()->subDays(6)->toDateString(),$today->toDateString()],
+                default=>[$today->copy()->startOfMonth()->toDateString(),$today->toDateString()],
+            };
+            $periodRanges[$key]=['start_date'=>$from,'end_date'=>$to,'period'=>$key];
+        }
         
         // Monthly trend (last 12 months)
         // SUBSTR is supported by the configured MySQL/MariaDB and SQLite
@@ -75,7 +121,8 @@ class ReportController extends Controller
             'totalPurchases', 'totalPurchasesCount', 'profit',
             'totalCustomers', 'totalSuppliers', 'totalProducts',
             'lowStockProducts', 'totalReceivables', 'totalPayables',
-            'monthlySales'
+            'monthlySales', 'period', 'periodRanges', 'weeklySales', 'topProducts',
+            'totalExpenses', 'newDue'
         ));
     }
 

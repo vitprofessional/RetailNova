@@ -8,9 +8,10 @@
 </div>
 <div class="card rn-report-page">
     <div class="card-body">
-        <h4 class="mb-4">{{ __('reports.financial_reports') }}</h4>
+        <h4 class="mb-4 rn-report-inner-heading">{{ __('reports.financial_reports') }}</h4>
 
-        <form method="GET" action="{{ route('account.reports') }}">
+        <form method="GET" action="{{ route('account.reports') }}" data-rn-report-date-form>
+            @include('components.mobile.report-period-tools')
             <div class="row mb-4">
                                     <div class="col-md-3">
                                         <label>{{ __('reports.report_type') }}</label>
@@ -31,7 +32,7 @@
                                     <div class="col-md-3">
                                         <label>&nbsp;</label><br>
                                         <button type="submit" class="btn btn-primary"><i class="las la-chart-bar"></i> {{ __('reports.generate') }}</button>
-                                        <button type="button" class="btn btn-print" onclick="window.print()"><i class="las la-print"></i> {{ __('reports.print') }}</button>
+                                        <button type="button" class="btn btn-print rn-report-print" onclick="window.print()"><i class="las la-print"></i> {{ __('reports.print') }}</button>
                                     </div>
                                 </div>
                             </form>
@@ -50,12 +51,12 @@
                                             @foreach($data['assets'] as $asset)
                                                 <tr>
                                                 <td>{{ $asset->account_name }}</td>
-                                                <td class="text-right">{{ number_format($asset->current_balance, 2) }}</td>
+                                                <td class="text-right"><x-mobile.report-money :amount="$asset->current_balance" format="number" /></td>
                                             </tr>
                                             @endforeach
                                             <tr class="font-weight-bold">
                                                 <td>{{ __('reports.total_assets') }}</td>
-                                                <td class="text-right">{{ number_format($data['total_assets'], 2) }}</td>
+                                                <td class="text-right"><x-mobile.report-money :amount="$data['total_assets']" format="number" /></td>
                                             </tr>
                                         </table>
                                     </div>
@@ -66,12 +67,12 @@
                                             @foreach($data['liabilities'] as $liability)
                                                 <tr>
                                                 <td>{{ $liability->account_name }}</td>
-                                                <td class="text-right">{{ number_format($liability->current_balance, 2) }}</td>
+                                                <td class="text-right"><x-mobile.report-money :amount="$liability->current_balance" format="number" /></td>
                                             </tr>
                                             @endforeach
                                             <tr class="font-weight-bold">
                                                 <td>{{ __('reports.total_liabilities') }}</td>
-                                                <td class="text-right">{{ number_format($data['total_liabilities'], 2) }}</td>
+                                                <td class="text-right"><x-mobile.report-money :amount="$data['total_liabilities']" format="number" /></td>
                                             </tr>
                                         </table>
 
@@ -80,19 +81,19 @@
                                             @foreach($data['equity'] as $eq)
                                                 <tr>
                                                 <td>{{ $eq->account_name }}</td>
-                                                <td class="text-right">{{ number_format($eq->current_balance, 2) }}</td>
+                                                <td class="text-right"><x-mobile.report-money :amount="$eq->current_balance" format="number" /></td>
                                             </tr>
                                             @endforeach
                                             <tr class="font-weight-bold">
                                                 <td>{{ __('reports.total_equity') }}</td>
-                                                <td class="text-right">{{ number_format($data['total_equity'], 2) }}</td>
+                                                <td class="text-right"><x-mobile.report-money :amount="$data['total_equity']" format="number" /></td>
                                             </tr>
                                         </table>
 
                                         <table class="table rn-report-table table-sm">
                                             <tr class="font-weight-bold bg-light">
                                                 <td>{{ __('reports.total_liabilities_equity') }}</td>
-                                                <td class="text-right">{{ number_format($data['total_liabilities'] + $data['total_equity'], 2) }}</td>
+                                                <td class="text-right"><x-mobile.report-money :amount="$data['total_liabilities'] + $data['total_equity']" format="number" /></td>
                                             </tr>
                                         </table>
                                     </div>
@@ -108,12 +109,12 @@
                                     @foreach($data['revenue'] as $rev)
                                         <tr>
                                         <td>{{ $rev->account_name }}</td>
-                                        <td class="text-right">{{ number_format($rev->current_balance, 2) }}</td>
+                                        <td class="text-right"><x-mobile.report-money :amount="$rev->current_balance" format="number" /></td>
                                     </tr>
                                     @endforeach
                                     <tr class="font-weight-bold">
                                         <td>{{ __('reports.total_revenue') }}</td>
-                                        <td class="text-right">{{ number_format($data['total_revenue'], 2) }}</td>
+                                        <td class="text-right"><x-mobile.report-money :amount="$data['total_revenue']" format="number" /></td>
                                     </tr>
                                 </table>
 
@@ -122,19 +123,19 @@
                                     @foreach($data['expenses'] as $expense)
                                         <tr>
                                         <td>{{ $expense->account_name }}</td>
-                                        <td class="text-right">{{ number_format($expense->current_balance, 2) }}</td>
+                                        <td class="text-right"><x-mobile.report-money :amount="$expense->current_balance" format="number" /></td>
                                     </tr>
                                     @endforeach
                                     <tr class="font-weight-bold">
                                         <td>{{ __('reports.total_expenses') }}</td>
-                                        <td class="text-right">{{ number_format($data['total_expenses'], 2) }}</td>
+                                        <td class="text-right"><x-mobile.report-money :amount="$data['total_expenses']" format="number" /></td>
                                     </tr>
                                 </table>
 
                                 <table class="table rn-report-table table-sm">
                                     <tr class="font-weight-bold bg-{{ $data['net_income'] >= 0 ? 'success' : 'danger' }} text-white">
                                         <td>{{ __('reports.net_income_loss') }}</td>
-                                        <td class="text-right">{{ number_format($data['net_income'], 2) }}</td>
+                                        <td class="text-right"><x-mobile.report-money :amount="$data['net_income']" format="number" /></td>
                                     </tr>
                                 </table>
 
@@ -159,14 +160,14 @@
                                             <td>{{ $account->account_name }}</td>
                                             <td class="text-right">
                                                 @if(in_array($account->account_type, ['asset', 'expense']))
-                                                    {{ number_format($account->current_balance, 2) }}
+                                                    <x-mobile.report-money :amount="$account->current_balance" format="number" />
                                                 @else
                                                     -
                                                 @endif
                                             </td>
                                             <td class="text-right">
                                                 @if(in_array($account->account_type, ['liability', 'equity', 'revenue']))
-                                                    {{ number_format($account->current_balance, 2) }}
+                                                    <x-mobile.report-money :amount="$account->current_balance" format="number" />
                                                 @else
                                                     -
                                                 @endif
@@ -177,8 +178,8 @@
                                     <tfoot class="font-weight-bold">
                                         <tr>
                                             <td colspan="2" class="text-right">{{ __('common.total') }}:</td>
-                                            <td class="text-right">{{ number_format($data['debit_total'], 2) }}</td>
-                                            <td class="text-right">{{ number_format($data['credit_total'], 2) }}</td>
+                                            <td class="text-right"><x-mobile.report-money :amount="$data['debit_total']" format="number" /></td>
+                                            <td class="text-right"><x-mobile.report-money :amount="$data['credit_total']" format="number" /></td>
                                         </tr>
                                     </tfoot>
                                 </table>

@@ -1,6 +1,6 @@
 @extends('include')
 
-@section('backTitle'){{ __('common.heading_brand_type') }}@endsection @section('container')
+@section('backTitle')@mobile{{ __('inventory.brand') }}@else{{ __('common.heading_brand_type') }}@endmobile@endsection @section('container')
     <div class="col-12">
     @include('sweetalert::alert')
 </div>

@@ -58,6 +58,7 @@ class MobileRemainingListsTest extends TestCase
             ->assertSee($inventory['product']->name)
             ->assertSee($inventory['purchase']->invoice)
             ->assertSee((string) $inventory['stock']->currentStock)
+            ->assertSee(__('mobile.stock').' '.\App\Support\LocalizedNumber::count($inventory['stock']->currentStock))
             ->assertDontSee('Purchase ID');
     }
 
