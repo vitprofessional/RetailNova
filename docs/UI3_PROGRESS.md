@@ -147,3 +147,13 @@ Authenticated Android-user-agent screenshots in ignored `tests-output/ui-3z/0/` 
 Focused checks: `MobileShellTest` + `MobileReportCardsTest`, 16 tests / 489 assertions, passing. Full isolated SQLite suite: 346 tests / 10,969 assertions / 0 failures / 6 PHPUnit deprecations. Updated the old `MobileFormRulesTest` assertion that expected a 34px quick-create button; the implementation correctly uses the 44px shared touch target. `git diff --check` passes.
 
 Commit: pending at this progress-file update. Next: UI-3Z.1 shared mobile money formatting; then account ledger, detail pages, reports and final QA checklist.
+
+## UI-3Z.1 — Shared mobile money output
+
+Standardized the mobile sale-return, purchase-invoice, quotation, and service-invoice summary displays on the existing `LocalizedNumber::money` helper. Purchase invoice card/table amounts use it only in mobile rendering; desktop still uses the existing `@money` formatter. Existing mobile dashboard, POS, list-card, stock, returns, damage, quotation and account surfaces already used the same helper. Regression coverage asserts `৳1,640`, `৳১,৬৪০`, and fractional values with localized digits. The formatter keeps the configured business currency symbol and position and trims `.00`.
+
+Real authenticated Bangla mobile screenshots are in ignored `tests-output/ui-3z/1/`, 390×844. Dashboard, New Sale and Sales List returned HTTP 200 without horizontal overflow or JavaScript errors. The fixture contains no non-zero sales, so non-zero visual output is covered by helper assertions and is explicitly unverified in capture notes.
+
+Focused `MobileShellTest` + `MobileDetailLayoutTest`: 16 tests / 499 assertions, passing. Full isolated SQLite suite: 347 tests / 10,973 assertions / 0 failures / 6 PHPUnit deprecations. Blade view cache compilation passed. `git diff --check` passes.
+
+Commit: pending. Next: implement the business-scoped customer/supplier account ledger with cross-business 404 isolation and accurate transaction totals (UI-3Z.2).

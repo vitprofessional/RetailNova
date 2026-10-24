@@ -329,6 +329,14 @@ class MobileShellTest extends TestCase
         $this->assertSame('ক্যাটাগরি', __('common.category', [], 'bn'));
     }
 
+    public function test_mobile_money_uses_grouped_localized_digits_and_only_keeps_real_fractional_digits(): void
+    {
+        $this->assertSame('৳1,640', LocalizedNumber::money(1640, 'en'));
+        $this->assertSame('৳১,৬৪০', LocalizedNumber::money(1640, 'bn'));
+        $this->assertSame('৳১,৬৪০.৫', LocalizedNumber::money('1640.50', 'bn'));
+        $this->assertSame('৳1,640.25', LocalizedNumber::money('1640.25', 'en'));
+    }
+
     public function test_fonts_and_libraries_are_served_locally(): void
     {
         // Every @font-face source in the tokens resolves to a file in public/fonts.

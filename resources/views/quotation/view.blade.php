@@ -53,7 +53,7 @@
     <div class="card" id="rn-invoice-root">
       <div class="card-body">
         @mobile
-        <div class="rn-m-detail-summary"><span class="rn-m-detail-summary__status">{{ __('common.status') }} · {{ ucfirst($quote->status) }}</span><strong>{{ $currencySymbol }}{{ number_format($quote->grand_total, 2) }}</strong><small>{{ __('common.quotation_no') }} · {{ $quote->quote_number }}</small></div>
+        <div class="rn-m-detail-summary"><span class="rn-m-detail-summary__status">{{ __('common.status') }} · {{ ucfirst($quote->status) }}</span><strong>{{ \App\Support\LocalizedNumber::money($quote->grand_total) }}</strong><small>{{ __('common.quotation_no') }} · {{ $quote->quote_number }}</small></div>
         @endmobile
         <div class="invoice-header">
           <div class="row align-items-start">

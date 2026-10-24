@@ -16,7 +16,7 @@
             </div>
             <div class="card-body">
                 @mobile
-                <div class="rn-m-detail-summary"><span class="rn-m-detail-summary__status">{{ __('common.service_invoice') }}</span><strong>{{ \App\Support\Currency::format($invoice->total_amount) }}</strong><small>{{ __('common.invoice') }} · {{ $invoice->invoice_number }}</small></div>
+                <div class="rn-m-detail-summary"><span class="rn-m-detail-summary__status">{{ __('common.service_invoice') }}</span><strong>{{ \App\Support\LocalizedNumber::money($invoice->total_amount) }}</strong><small>{{ __('common.invoice') }} · {{ $invoice->invoice_number }}</small></div>
                 @endmobile
                 <div class="row mb-3">
                     <div class="col-md-6">

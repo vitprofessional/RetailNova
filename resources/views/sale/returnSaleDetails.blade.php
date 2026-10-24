@@ -11,7 +11,7 @@
     </div>
     <div class="card-body">
         @mobile
-        <div class="rn-m-detail-summary"><span class="rn-m-detail-summary__status">{{ __('sales.sale_return_details') }}</span><strong>{{ \App\Support\Currency::format($returnRecord->totalReturnAmount ?? 0) }}</strong><small>{{ __('common.invoice') }} · {{ $invoice->invoice }}</small></div>
+        <div class="rn-m-detail-summary"><span class="rn-m-detail-summary__status">{{ __('sales.sale_return_details') }}</span><strong>{{ \App\Support\LocalizedNumber::money($returnRecord->totalReturnAmount ?? 0) }}</strong><small>{{ __('common.invoice') }} · {{ $invoice->invoice }}</small></div>
         @endmobile
         <div class="row mb-4">
             <div class="col-md-4">
