@@ -126,7 +126,7 @@
                                 +'<td data-label="{{ __('common.rate') }}"><input type="number" step="0.01" class="form-control rate-input" value="'+rateVal+'" name="rate[]" /></td>'
                                 +'<td data-label="{{ __('common.qty') }}"><input type="number" min="1" class="form-control qty-input" value="1" name="qty[]" /></td>'
                                 +'<td data-label="{{ __('common.line_total') }}"><input type="text" readonly class="form-control line-total-input" value="'+rateVal+'" /></td>'
-                                +'<td data-label="{{ __('common.action') }}"><button type="button" class="btn btn-sm btn-outline-danger remove-service" title="{{ __('common.delete') }}" data-service-id="'+result.id+'"><i class="ri-delete-bin-line mr-0"></i></button></td>'
+                                +'<td data-label="{{ __('common.action') }}"><button type="button" class="btn btn-sm btn-outline-danger remove-service" title="{{ __('common.delete') }}" aria-label="{{ __('common.delete') }}" data-service-id="'+result.id+'"><i class="ri-delete-bin-line mr-0"></i></button></td>'
                                 +'</tr>';
 
                             $('#serviceBox').append(field);

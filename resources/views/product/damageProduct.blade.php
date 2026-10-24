@@ -68,7 +68,7 @@
                                 <td width="20%" data-label="{{ __('inventory.product_name') }}">
                                     <input type="text" class="form-control" name="selectProductName" value="" id="selectProductName" readonly />
                                 </td>
-                                <td width="8%" id="inDate" data-label="{{ __('inventory.in_date') }}">-
+                                <td width="8%" id="inDate" data-label="{{ __('inventory.in_date') }}">
                                 </td>
                                 <td width="9%" data-label="{{ __('inventory.product_qty') }}">
                                     <input type="number" class="form-control" id="qty" name="qty" min="1" step="1" readonly />
@@ -90,7 +90,7 @@
                                 <td width="9%" data-label="{{ __('inventory.remove') }}">
 
                                     <div class="list-action">
-                                        <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-remove-row="true" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ __('inventory.delete') }}"><i class="ri-delete-bin-line mr-0"></i></button>
+                                        <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-remove-row="true" data-toggle="tooltip" data-placement="top" aria-label="{{ __('inventory.delete') }}" title="{{ __('inventory.delete') }}"><i class="ri-delete-bin-line mr-0"></i></button>
                                     </div>
                                 </td>
                             </tr>
@@ -118,7 +118,7 @@
             if(row){
                 var inputs = row.querySelectorAll('input');
                 inputs.forEach(function(i){ if(i.type === 'number' || i.type === 'text') i.value = ''; });
-                var inDateEl = document.getElementById('inDate'); if(inDateEl) inDateEl.innerText = '-';
+                var inDateEl = document.getElementById('inDate'); if(inDateEl) inDateEl.innerText = '';
                 var qtyStockVal = document.getElementById('qty-stock-val'); if(qtyStockVal) qtyStockVal.innerText = '0';
                 var qtyEl = document.getElementById('qty'); if(qtyEl) { qtyEl.setAttribute('readonly','readonly'); qtyEl.value = ''; }
                 var currentStockEl = document.getElementById('currentStock'); if(currentStockEl) currentStockEl.value = '';
@@ -146,7 +146,7 @@
                     document.getElementById('selectProductName').value = data.productName || '';
                     document.getElementById('currentStock').value = data.currentStock || 0;
                     // set inDate if present (from product details this may be empty)
-                    var inDateEl = document.getElementById('inDate'); if(inDateEl){ inDateEl.innerText = data.purchaseDate || '-'; }
+                    var inDateEl = document.getElementById('inDate'); if(inDateEl){ inDateEl.innerText = data.purchaseDate || ''; }
                     // enable qty input and set max to currentStock
                     var qty = document.getElementById('qty');
                     if(qty){ qty.removeAttribute('readonly'); qty.max = data.currentStock || 0; qty.value = qty.value || 1; }

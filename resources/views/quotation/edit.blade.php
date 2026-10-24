@@ -42,7 +42,7 @@
           </div>
 
           <div class="mb-3 table-responsive product-table rn-m-form-section rn-m-quotation-items">
-            <table class="table mb-0 table-bordered rounded-0 rn-table-pro" id="itemsTable">
+            <table class="table mb-0 table-bordered rounded-0 rn-table-pro rn-m-quote-items" id="itemsTable">
               <thead>
                 <tr>
                   <th style="width:30%">{{ __('common.product') }}</th>
@@ -76,7 +76,7 @@
                   <td data-label="{{ __('common.disc') }}"><input type="number" name="items[discount_percent][]" class="form-control text-end dperc" step="0.01" value="{{ $dp }}" /></td>
                   <td data-label="{{ __('common.disc_amt') }}"><input type="number" name="items[discount_amount][]" class="form-control text-end damt" step="0.01" value="{{ $da }}" /></td>
                   <td data-label="{{ __('common.line_total') }}" class="text-end line">{{ number_format($it->line_total,2) }}</td>
-                  <td data-label="{{ __('common.remove') }}"><button type="button" class="btn btn-sm btn-danger del">{{ __('common.remove') }}</button></td>
+                  <td data-label="{{ __('common.remove') }}"><button type="button" class="btn btn-sm btn-danger del rn-m-quote-remove" aria-label="{{ __('common.remove') }}" title="{{ __('common.remove') }}"><i class="ri-delete-bin-line" aria-hidden="true"></i></button></td>
                 </tr>
                 @endforeach
               </tbody>
@@ -121,7 +121,7 @@
   var products = @json($products->map(function($p){ return ['id'=>$p->id,'name'=>$p->name]; }));
   function fmt(n){ return (Math.round(n*100)/100).toFixed(2); }
   function addRow(){
-    var opts = '<option value="">Select Product</option>' + products.map(function(p){ return '<option value="'+p.id+'">'+p.name+'</option>'; }).join('');
+    var opts = '<option value="">{{ addslashes(__('common.select_product')) }}</option>' + products.map(function(p){ return '<option value="'+p.id+'">'+p.name+'</option>'; }).join('');
     var tr = document.createElement('tr');
     tr.innerHTML = `
       <td data-label="{{ __('common.product') }}"><select name="items[product_id][]" class="form-control">${opts}</select></td>
@@ -131,7 +131,7 @@
       <td data-label="{{ __('common.disc') }}"><input type="number" name="items[discount_percent][]" class="form-control text-end dperc" step="0.01" /></td>
       <td data-label="{{ __('common.disc_amt') }}"><input type="number" name="items[discount_amount][]" class="form-control text-end damt" step="0.01" /></td>
       <td data-label="{{ __('common.line_total') }}" class="text-end line">0.00</td>
-      <td data-label="{{ __('common.remove') }}"><button type="button" class="btn btn-sm btn-danger del">{{ __('common.remove') }}</button></td>
+      <td data-label="{{ __('common.remove') }}"><button type="button" class="btn btn-sm btn-danger del rn-m-quote-remove" aria-label="{{ __('common.remove') }}" title="{{ __('common.remove') }}"><i class="ri-delete-bin-line" aria-hidden="true"></i></button></td>
     `;
     document.getElementById('quoteItems').appendChild(tr);
   }

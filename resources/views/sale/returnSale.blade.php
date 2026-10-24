@@ -22,13 +22,16 @@
                 <h5>{{ __('sales.customer_details') }}</h5>
                 <hr />
                 <p><strong>{{ __('common.name') }}:</strong> {{ \App\Models\Customer::displayLabel($customer, $invoice->customerId ?? null, $invoice->businessId ?? null) }}</p>
-                <p><strong>{{ __('common.mobile') }}:</strong> {{ $customer->mobile }}</p>
-                <p><strong>{{ __('common.address') }}:</strong> {{ $customer->city }},{{ $customer->area }}</p>
+                @if(filled($customer->mobile))<p><strong>{{ __('common.mobile') }}:</strong> {{ $customer->mobile }}</p>@endif
+                @php
+                    $customerAddress = collect([$customer->city, $customer->area])->filter(fn ($value) => filled($value))->implode(', ');
+                @endphp
+                @if($customerAddress !== '')<p><strong>{{ __('common.address') }}:</strong> {{ $customerAddress }}</p>@endif
             </div>
             <div class="col-md-4 mt-5 rn-m-form-section">
                 <p class="mt-1"><strong>{{ __('common.date') }}:</strong> {{ \Carbon\Carbon::parse($invoice->date)->format('d-m-Y') }}</p>
-                <p><strong>{{ __('common.reference') }}:</strong> {{ $invoice->reference }}</p>
-                <p><strong>{{ __('common.note') }}:</strong>{{ $invoice->note }}</p>
+                @if(filled($invoice->reference))<p><strong>{{ __('common.reference') }}:</strong> {{ $invoice->reference }}</p>@endif
+                @if(filled($invoice->note))<p><strong>{{ __('common.note') }}:</strong> {{ $invoice->note }}</p>@endif
             </div>
             <div class="col-md-4 text-md-end">
                 <div class="card rn-m-form-section rn-m-return-summary">

@@ -41,3 +41,13 @@ Secondary/administrative forms not adapted in this checkpoint include business s
 ## Working tree note
 
 Preserve untracked `docs/AGENT_NOTES.md`; it was intentionally not staged. Browser screenshots/scripts and local fixtures under `tests-output/ui-3/` are ignored.
+
+## UI-3R refinement checkpoint
+
+Branch: `ui-2-mobile-pages`; work resumes from `1ab5c1e`. The UI-3R shared mobile form and list patterns are being implemented in three reviewable commits. Form rules and list pattern changes are locally verified at 390×844 using the documented isolated SQLite scratchpad and Android Mobile user agent. Screenshots and mockup comparison notes are ignored under `tests-output/ui-3R/`.
+
+- UI-3R.1 form rules: shared one-column form rules, file picker, compact row removal, optional-field omission, and form regression tests. Focused tests: 27 tests, 542 assertions, 0 failures. Full suite: 328 tests, 10,415 assertions, 0 failures; six existing PHPUnit deprecations.
+- UI-3R.2 list pattern: six UI-2 lists use a teal search/period header, date groups, transaction card hierarchy and chip/date filter sheet. The six actual 390px list screenshots and filter screenshots are under `tests-output/ui-3R/lists/`.
+- UI-3R.3 wording: update Bangla labels for general walk-in customer, expense/cost, unit, and save actions; replace remaining English quotation product placeholder with the language key.
+
+Secondary X pages from the prior checkpoint remain for business setup, admin profile/user, Super Admin, settings, and brand/category/unit/service master forms. These will continue after the three UI-3R commits.

@@ -99,7 +99,11 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="receipt_file">{{ __('common.upload_receipt') }}</label>
-                                            <input type="file" class="form-control" id="receipt_file" name="receipt_file" accept=".jpg,.jpeg,.png,.pdf">
+                                            @mobile<div class="rn-m-file-picker">
+                                                <label for="receipt_file" class="rn-m-file-button">{{ __('mobile.add_file') }}</label>
+                                                <span class="rn-m-file-name" data-rn-file-name>{{ __('mobile.no_file_selected') }}</span>
+                                                <input type="file" class="form-control rn-m-file-input" id="receipt_file" name="receipt_file" accept=".jpg,.jpeg,.png,.pdf">
+                                            </div>@else<input type="file" class="form-control" id="receipt_file" name="receipt_file" accept=".jpg,.jpeg,.png,.pdf">@endmobile
                                             <small class="form-text text-muted">{{ __('common.max_2mb_jpg_png_pdf') }}</small>
                                             @error('receipt_file')
                                                 <span class="text-danger">{{ $message }}</span>

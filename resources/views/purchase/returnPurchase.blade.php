@@ -20,15 +20,18 @@
             <div class="col-md-4 rn-m-form-section">
                 <h5>{{ __('purchases.supplier_details') }}</h5>
                 <hr />
-                <p><strong>{{ __('common.name') }}:</strong> {{ $supplier->name ?? 'N/A' }}</p>
-                <p><strong>{{ __('common.mobile') }}:</strong> {{ $supplier->mobile ?? 'N/A' }}</p>
-                <p><strong>{{ __('common.email') }}:</strong> {{ $supplier->mail ?? 'N/A' }}</p>
-                <p><strong>{{ __('purchases.location') }}:</strong> {{ $supplier->city ?? 'N/A' }}@if($supplier->area), {{ $supplier->area }}@endif</p>
+                @if(filled($supplier->name))<p><strong>{{ __('common.name') }}:</strong> {{ $supplier->name }}</p>@endif
+                @if(filled($supplier->mobile))<p><strong>{{ __('common.mobile') }}:</strong> {{ $supplier->mobile }}</p>@endif
+                @if(filled($supplier->mail))<p><strong>{{ __('common.email') }}:</strong> {{ $supplier->mail }}</p>@endif
+                @php
+                    $supplierAddress = collect([$supplier->city, $supplier->area])->filter(fn ($value) => filled($value))->implode(', ');
+                @endphp
+                @if($supplierAddress !== '')<p><strong>{{ __('purchases.location') }}:</strong> {{ $supplierAddress }}</p>@endif
             </div>
             <div class="col-md-4 mt-5 rn-m-form-section">
                 <p class="mt-1"><strong>{{ __('common.date') }}:</strong> {{ \Carbon\Carbon::parse($purchase->purchase_date ?? now())->format('d-m-Y') }}</p>
-                <p><strong>{{ __('common.invoice') }}:</strong> {{ $purchase->invoice ?? 'N/A' }}</p>
-                <p><strong>{{ __('common.reference') }}:</strong> {{ $purchase->reference ?? 'N/A' }}</p>
+                @if(filled($purchase->invoice))<p><strong>{{ __('common.invoice') }}:</strong> {{ $purchase->invoice }}</p>@endif
+                @if(filled($purchase->reference))<p><strong>{{ __('common.reference') }}:</strong> {{ $purchase->reference }}</p>@endif
             </div>
             <div class="col-md-4 text-md-end">
                 <div class="card rn-m-form-section rn-m-return-summary">

@@ -130,4 +130,13 @@
             .catch(function () { status.textContent = box.getAttribute('data-i18n-failed') || ''; })
             .then(function () { button.removeAttribute('aria-busy'); });
     });
+
+    document.addEventListener('change', function (event) {
+        var input = event.target;
+        if (!input.matches || !input.matches('.rn-m-file-picker input[type="file"]')) { return; }
+        var picker = input.closest('.rn-m-file-picker');
+        var name = picker && picker.querySelector('[data-rn-file-name]');
+        if (!name) { return; }
+        name.textContent = input.files && input.files.length ? input.files[0].name : name.getAttribute('data-empty-label') || name.textContent;
+    });
 })();

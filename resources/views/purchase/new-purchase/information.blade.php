@@ -25,6 +25,6 @@
                             </div><div class="rn-purchase-field">
                                 <div class="form-group">
                                     <label for="reference" class="form-label">{{ __('common.reference') }}</label>
-                                    <input type="text" class="form-control" id="reference" name="refData" value="N/A" placeholder="{{ __('common.n_a_you_can_change') }}" />
+                                    <input type="text" class="form-control" id="reference" name="refData" value="{{ old('refData') }}" placeholder="{{ __('common.optional') }}" />
                                 </div>
                             </div></div></div></section>

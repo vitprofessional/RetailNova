@@ -1,4 +1,4 @@
-<section class="card rn-m-form-section" aria-labelledby="purchaseItemsTitle"><div class="card-body rn-m-form-section-body"><div class="rn-purchase-section-heading"><h2 class="rn-m-form-section-title rn-purchase-icon-heading rn-purchase-items-title" id="purchaseItemsTitle"><span class="rn-purchase-section-icon" aria-hidden="true"><i class="las la-list-alt"></i></span>{{ __('purchases.purchased_items') }}</h2><span data-serial-label="{{ __('purchases.selected_serials') }}" id="purchaseItemCount" class="rn-purchase-count" aria-live="polite">0</span></div>
+<section class="rn-m-form-section rn-purchase-items-section" aria-labelledby="purchaseItemsTitle"><div class="card-body rn-m-form-section-body"><div class="rn-purchase-section-heading"><h2 class="rn-m-form-section-title rn-purchase-icon-heading rn-purchase-items-title" id="purchaseItemsTitle"><span class="rn-purchase-section-icon" aria-hidden="true"><i class="las la-list-alt"></i></span>{{ __('purchases.purchased_items') }}</h2><span data-serial-label="{{ __('purchases.selected_serials') }}" id="purchaseItemCount" class="rn-purchase-count" aria-live="polite">0</span></div>
                 <div id="purchaseEmptyState" class="rn-purchase-empty"><i class="las la-box-open rn-purchase-empty-icon" aria-hidden="true"></i><h3>{{ __('purchases.purchase_empty_title') }}</h3><p>{{ __('purchases.purchase_empty_help') }}</p></div>
 <div class="mb-3 table-responsive product-table" id="purchaseItemsScroll" tabindex="0" aria-label="{{ __('purchases.purchased_items') }}" hidden>
                     <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
@@ -67,7 +67,7 @@
                                 <input type="number" class="form-control" id="totalAmount__IDX__" name="totalAmount[__IDX__]" readonly placeholder="{{ __('purchases.total') }}" />
                             </td>
                             <td width="4%" data-label="{{ __('common.remove') }}">
-                                <button type="button" class="btn btn-danger btn-sm remove-row">{{ __('purchases.remove') }}</button>
+                                <button type="button" class="btn btn-danger btn-sm remove-row rn-m-purchase-remove" aria-label="{{ __('purchases.remove') }}" title="{{ __('purchases.remove') }}"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
                             </td>
                         </tr>
                     </template></div></div></section>
