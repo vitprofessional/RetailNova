@@ -48,9 +48,11 @@ Branch: `ui-2-mobile-pages`; work resumed from `1ab5c1e`. The three requested re
 
 - UI-3R.1 form rules: `1dd7e0d0fa3de03c4699611e86d8c76df14ab4d4` — shared one-column form rules, file picker, compact row removal, optional-field omission, and form regression tests.
 - UI-3R.2 list pattern: `b8cc1aafda62ce4156e282a91df1b7fd88638051` — six UI-2 lists use a teal search/period header, date groups, transaction card hierarchy and chip/date filter sheet.
-- UI-3R.3 wording: pending final local commit — Bangla labels for general walk-in customer, expense, unit, and save actions; English walk-in labels corrected and quotation product placeholder uses a language key.
-- Latest full isolated SQLite suite before UI-3R.3 wording-only edits: 328 tests, 10,415 assertions, 0 failures; six PHPUnit deprecations. The full suite is rerun for UI-3R.3 before commit.
+- UI-3R.3 wording: `ddede68dba551898623c3fe98be371700fa2222c` — Bangla labels for general walk-in customer, expense, unit, and save actions; English walk-in labels corrected and quotation product placeholder uses a language key.
+- UI-3R.3 full isolated SQLite suite: 328 tests, 10,415 assertions, 0 failures; six PHPUnit deprecations.
 
 Refreshed 390px screenshots: all six lists and their filters returned HTTP 200 with no horizontal overflow. Updated mobile forms were recaptured and visually checked; browser console reports the documented Font Awesome kit 403 responses, without page JavaScript exceptions.
 
-Secondary X pages from the prior checkpoint remain for business setup, admin profile/user, Super Admin, settings, and brand/category/unit/service master forms. Continue these after UI-3R.3 in separate, reviewable commits; do not mark the overall mobile work complete until they are addressed and captured.
+The prior checkpoint's remaining setup/admin/settings/catalog forms have now been adapted to the shared mobile form rules: business setup, admin profile/user, one-time Super Admin, language/sales settings, brand/category/unit, and service create/edit. They were captured at 390×844 and compared with the shared form pattern; screenshots and details are in ignored `tests-output/ui-3R/forms/secondary/` and `tests-output/ui-3R/capture-notes.md`. The normal local scratchpad correctly keeps first-run Super Admin provisioning closed; the screenshot was taken from an empty isolated SQLite fixture without submitting it. Master-data forms preserve their existing legacy tables below the mobile form, which remain visually dense at narrow widths.
+
+The secondary-form focused mobile rules/list tests pass (15 tests, 338 assertions). The latest full isolated SQLite suite passes (329 tests, 10,465 assertions, 0 failures, six PHPUnit deprecations). Blade view cache compilation and `git diff --check` pass. Final secondary-form code and test changes are grouped in a separate reviewable follow-up commit. The `docs/AGENT_NOTES.md` file remains untracked and is not part of any commit.

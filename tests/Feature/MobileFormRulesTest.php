@@ -58,4 +58,31 @@ class MobileFormRulesTest extends TestCase
         $this->assertStringContainsString("__('common.select_product')", $create);
         $this->assertStringContainsString("__('common.select_product')", $edit);
     }
+
+    public function test_secondary_admin_and_catalog_forms_use_the_shared_mobile_form_contract(): void
+    {
+        $views = [
+            'resources/views/business/businessSetup.blade.php',
+            'resources/views/business/languageSettings.blade.php',
+            'resources/views/business/salesSettings.blade.php',
+            'resources/views/admin/profile/edit.blade.php',
+            'resources/views/admin/users/edit.blade.php',
+            'resources/views/auth/superadmin_setup.blade.php',
+            'resources/views/product/brand.blade.php',
+            'resources/views/product/category.blade.php',
+            'resources/views/product/productUnit.blade.php',
+            'resources/views/service/addService.blade.php',
+        ];
+
+        foreach ($views as $view) {
+            $contents = file_get_contents(base_path($view));
+            $this->assertIsString($contents, $view);
+            $this->assertStringContainsString('rn-m-form', $contents, $view);
+        }
+
+        $css = file_get_contents(public_path('css/rn-m-components.css'));
+        $this->assertIsString($css);
+        $this->assertStringContainsString('body.rn-app:has(.rn-m-admin-form) .rn-m-tabbar { display: none !important; }', $css);
+        $this->assertStringContainsString('.rn-m-admin-actions .rn-m-btn', $css);
+    }
 }

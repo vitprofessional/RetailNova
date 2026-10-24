@@ -5,7 +5,7 @@
 <div class="card">
     <div class="card-body">
         <div class="row">
-            <div class="col-12 mb-3">
+            <div class="col-12 mb-3 rn-m-form-page-title">
                 <h4>{{ __('common.create_service') }}</h4>
             </div>
         </div>
@@ -21,25 +21,32 @@
             }
 
         @endphp
-        <form action="{{route('saveService')}}" method="POST">
+        <form action="{{route('saveService')}}" method="POST" class="rn-m-form rn-m-admin-form rn-m-master-form">
             @csrf
-            <div class="row">
+            <div class="row rn-m-form-section">
                 <input type="hidden" name="profileId" value="{{$profileId}}">
-                <div class="col-md-6">
+                <div class="col-md-6 rn-m-admin-field">
                     <div class="form-group">
                         <label for="serviceName" class="form-label">{{ __('common.service_name') }}</label>
                         <input type="text" class="form-control" placeholder="{{ __('common.enter_the_service_name') }}" id="serviceName" name="serviceName" value="{{$serviceName}}" required />
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6 rn-m-admin-field">
                     <div class="form-group">
                         <label for="rate" class="form-label">{{ __('common.service_rate') }}</label>
                         <input type="number" class="form-control" placeholder="{{ __('common.enter_the_amount') }}" id="rate" name="rate" value="{{$rate}}" />
                     </div>
                 </div>
             </div>
-            <div class="justify-content-md-end mt-2">
-                <button class="btn btn-primary btn-sm" type="submit">@if(isset($profile)) Update @else Add @endif Service </button>
+            <div class="rn-m-sticky-actions rn-m-admin-actions">
+                <a class="btn btn-secondary rn-m-btn rn-m-btn--outline" href="{{ route('addServiceName') }}">{{ __('common.cancel') }}</a>
+                <button class="btn btn-primary rn-m-btn rn-m-btn--primary" type="submit">
+                    @mobile
+                        {{ __('common.save') }}
+                    @else
+                        @if(isset($profile)) Update Service @else Add Service @endif
+                    @endmobile
+                </button>
             </div>
         </form>
 

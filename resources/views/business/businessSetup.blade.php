@@ -49,7 +49,7 @@
 @endphp
 @endif
 
-<div class="row mb-4">
+<div class="row mb-4 rn-m-business-setup">
     <div class="col-12">
         <div class="card shadow-sm">
             <div class="card-header bg-gradient py-3 d-flex justify-content-between align-items-center">
@@ -61,7 +61,7 @@
             <div class="card-body">
                 <!-- Logo Section -->
                 <div class="row mb-4">
-                    <div class="col-lg-3 col-md-4 col-sm-12">
+                    <div class="col-lg-3 col-md-4 col-sm-12 rn-m-admin-logo-section">
                         <div class="card border-0 bg-light">
                             <div class="card-body text-center py-4">
                                 @if(!empty($businessLogo))
@@ -92,13 +92,13 @@
 
                     <!-- Business Details Form -->
                     <div class="col-lg-9 col-md-8 col-sm-12">
-                        <form action="{{ route('saveBusiness') }}" method="POST">
+                        <form action="{{ route('saveBusiness') }}" method="POST" class="rn-m-form rn-m-admin-form">
                             @csrf
                             <input type="hidden" value="{{ $businessId }}" name="businessId">
 
                             <div class="row">
                                 <!-- Left Column -->
-                                <div class="col-md-6 mb-4">
+                                <div class="col-md-6 mb-4 rn-m-admin-section">
                                     <div class="form-group mb-4">
                                         <label for="businessName" class="form-label font-weight-600">
                                             <i class="las la-store mr-2"></i>{{ __('settings.business_name') }} <span class="text-danger">*</span>
@@ -142,7 +142,7 @@
                                 </div>
 
                                 <!-- Right Column -->
-                                <div class="col-md-6 mb-4">
+                                <div class="col-md-6 mb-4 rn-m-admin-section">
                                     <div class="form-group mb-4">
                                         <label for="tinCert" class="form-label font-weight-600">
                                             <i class="las la-certificate mr-2"></i>{{ __('settings.tin_number') }} <span class="text-danger">*</span>
@@ -326,14 +326,19 @@
                             </div>
 
                             <!-- Form Actions -->
-                            <div class="row mt-4">
+                            <div class="row mt-4 rn-m-admin-actions rn-m-sticky-actions">
                                 <div class="col-12">
-                                    <button type="submit" class="btn btn-primary btn-lg">
-                                        <i class="las la-save mr-2"></i>{{ __('settings.save_changes') }}
-                                    </button>
-                                    <a href="{{ route('dashboard') }}" class="btn btn-secondary btn-lg ml-2">
+                                    <a href="{{ route('dashboard') }}" class="btn btn-secondary btn-lg ml-2 rn-m-btn rn-m-btn--outline">
                                         <i class="las la-times mr-2"></i>{{ __('settings.cancel') }}
                                     </a>
+                                    <button type="submit" class="btn btn-primary btn-lg rn-m-btn rn-m-btn--primary">
+                                        <i class="las la-save mr-2"></i>
+                                        @mobile
+                                            {{ __('mobile.save') }}
+                                        @else
+                                            {{ __('settings.save_changes') }}
+                                        @endmobile
+                                    </button>
                                 </div>
                             </div>
                         </form>
@@ -433,10 +438,18 @@
                         @endif
                     <div class="form-group">
                         <label for="businessLogo" class="form-label font-weight-600">{{ __('settings.choose_logo_file') }}</label>
+                        @mobile
+                        <div class="rn-m-file-picker">
+                            <label for="businessLogo" class="rn-m-file-button">{{ __('mobile.add_file') }}</label>
+                            <span class="rn-m-file-name" data-rn-file-name>{{ __('mobile.no_file_selected') }}</span>
+                            <input type="file" class="custom-file-input rn-m-file-input" id="businessLogo" name="businessLogo" accept="image/*" {{ empty($businessId) ? 'disabled' : 'required' }}>
+                        </div>
+                        @else
                         <div class="custom-file">
                             <input type="file" class="custom-file-input" id="businessLogo" name="businessLogo" accept="image/*" {{ empty($businessId) ? 'disabled' : 'required' }}>
                             <label class="custom-file-label" for="businessLogo">{{ __('settings.choose_file') }}</label>
                         </div>
+                        @endmobile
                         <small class="form-text text-muted d-block mt-2">
                             <i class="las la-info-circle"></i>Recommended size: 150px × 150px
                         </small>

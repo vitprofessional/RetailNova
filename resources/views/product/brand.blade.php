@@ -15,18 +15,26 @@
 @endphp
 <div class="card">
     <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 rn-m-form-page-title">
             <h4 class="mb-0">@if(isset($profile)) Edit @else Add @endif Brand</h4>
         </div>
 
-        <form action="{{route('saveBrand')}}" method="POST" >
+        <form action="{{route('saveBrand')}}" method="POST" class="rn-m-form rn-m-admin-form rn-m-master-form">
             @csrf
-            <div class="row">
+            <div class="row rn-m-form-section">
                 <input type="hidden" name="profileId" value="{{ $profileId }}">
-                <div class="col-md-4">
-                    <input type="text" class="form-control" placeholder="{{ __('common.enter_brand_name') }}" aria-label="{{ __('common.name') }}"  name ="name" value="{{$name}}" />
-                    <div class="justify-content-md-end mt-2">
-                        <button class="btn btn-primary btn-sm" type="submit">@if(isset($profile)) Update @else Add @endif Brand </button>
+                <div class="col-md-4 rn-m-admin-field">
+                    <label class="rn-m-master-label" for="brandName">{{ __('inventory.brand') }}</label>
+                    <input type="text" id="brandName" class="form-control" placeholder="{{ __('common.enter_brand_name') }}" aria-label="{{ __('common.name') }}"  name ="name" value="{{$name}}" />
+                    <div class="rn-m-sticky-actions rn-m-admin-actions">
+                        <a class="btn btn-secondary rn-m-btn rn-m-btn--outline" href="{{ route('addBrand') }}">{{ __('common.cancel') }}</a>
+                        <button class="btn btn-primary rn-m-btn rn-m-btn--primary" type="submit">
+                            @mobile
+                                {{ __('common.save') }}
+                            @else
+                                @if(isset($profile)) Update Brand @else Add Brand @endif
+                            @endmobile
+                        </button>
                     </div>
                 </div>
             </div>
