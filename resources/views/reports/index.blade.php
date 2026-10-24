@@ -120,6 +120,26 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Financial and expense reports are available only through the Reports tab on mobile. -->
+            @mobile
+            @if(Route::has('account.reports'))
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card card-block card-stretch card-height"><div class="card-body">
+                    <h5 class="card-title">{{ __('mobile.financial_reports') }}</h5>
+                    <a href="{{ route('account.reports') }}" class="btn btn-primary mt-3 w-100">{{ __('reports.view_report') }}</a>
+                </div></div>
+            </div>
+            @endif
+            @if(Route::has('expense.reports'))
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card card-block card-stretch card-height"><div class="card-body">
+                    <h5 class="card-title">{{ __('mobile.expense_reports') }}</h5>
+                    <a href="{{ route('expense.reports') }}" class="btn btn-primary mt-3 w-100">{{ __('reports.view_report') }}</a>
+                </div></div>
+            </div>
+            @endif
+            @endmobile
         </div>
     </div>
 </div>

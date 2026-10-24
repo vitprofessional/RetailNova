@@ -1,6 +1,9 @@
 @extends('include') @section('backTitle'){{ __('navigation.service_history') }}@endsection @section('container')
 @mobile
 <section class="rn-m-list-page" data-rn-list="provided-services">
+  @if(app(\App\Support\MobileNavigation::class)->allows('provideService'))
+    <x-m.fab :url="route('provideService')" :label="__('mobile.new_service')" />
+  @endif
   <ul class="rn-m-cards" role="list">
     @forelse(($provideList ?? []) as $row)
       <x-m.list-card :card="['id'=>$row->id,'url'=>route('provideServiceView',$row->id),'avatar'=>mb_substr($row->customerLabel(),0,1),'title'=>$row->customerLabel(),'subtitle'=>$row->serviceName,'amount'=>\App\Support\LocalizedNumber::money($row->amount ?? (($row->rate ?? 0)*($row->qty ?? 1))),'meta'=>array_values(array_filter([$row->created_at ? \App\Support\MobileDateTime::date($row->created_at) : null])),'badge'=>null,'actions'=>[['type'=>'link','label'=>__('common.view'),'url'=>route('provideServiceView',$row->id),'icon'=>'ri-eye-line'],['type'=>'link','label'=>__('common.print'),'url'=>route('provideServicePrint',$row->id),'icon'=>'ri-printer-line'],['type'=>'link','label'=>__('common.delete'),'url'=>route('delProvideService',$row->id),'icon'=>'ri-delete-bin-line']]]" />

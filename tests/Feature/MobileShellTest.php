@@ -57,6 +57,7 @@ class MobileShellTest extends TestCase
         $tabs = $xpath->query('//nav[@data-rn-tabbar]//a[@data-rn-tab]');
         $this->assertSame(['home', 'stock', 'sale', 'reports', 'more'], array_map(fn ($a) => $a->getAttribute('data-rn-tab'), iterator_to_array($tabs)));
         $this->assertSame(route('newsale'), $xpath->query('//a[@data-rn-tab="sale" and contains(@class,"rn-m-tab--sale")]')->item(0)->getAttribute('href'));
+        $this->assertSame(route('reports.index'), $xpath->query('//a[@data-rn-tab="reports"]')->item(0)->getAttribute('href'));
         $this->assertSame('page', $xpath->query('//a[@data-rn-tab="home"]')->item(0)->getAttribute('aria-current'));
         $this->assertSame('#rn-more', $xpath->query('//a[@data-rn-tab="more"]')->item(0)->getAttribute('href'));
 
@@ -65,6 +66,15 @@ class MobileShellTest extends TestCase
         $this->assertNotEmpty($grid);
         $this->assertNotContains(route('newsale'), $grid, 'Destinations in the tab bar are not repeated on the More page.');
         $this->assertCount(count(array_unique($grid)), $grid, 'Each destination appears once.');
+        $tabHrefs = $this->hrefs($xpath, '//nav[@data-rn-tabbar]//a[@data-rn-tab and @href!="#rn-more"]');
+        $shortcutHrefs = $this->hrefs($xpath, '//*[@data-rn-home]//a[contains(@class,"rn-m-grid-item")]');
+        foreach ($tabHrefs as $href) {
+            $this->assertNotContains($href, $grid, 'Bottom-tab destinations are not repeated in More.');
+            $this->assertNotContains($href, $shortcutHrefs, 'Bottom-tab destinations are not repeated in Home shortcuts.');
+        }
+        foreach (['addPurchase', 'quotation.create', 'addProduct', 'damageProduct', 'provideService', 'expense.create'] as $routeName) {
+            $this->assertNotContains(route($routeName), $grid, "$routeName is exposed by a list FAB rather than duplicated in More.");
+        }
         $this->assertCount(2, $xpath->query('//*[@id="rn-more"]//form[@action="'.route('language.preference').'"]//button[@name="preferred_locale"]'));
         $this->assertCount(1, $xpath->query('//*[@id="rn-more"]//a[@href="'.route('logout').'"]'));
 
@@ -84,9 +94,9 @@ class MobileShellTest extends TestCase
         $xpath = $this->xpath($this->get(route('dashboard'))->assertOk()->getContent());
 
         $sections = iterator_to_array($xpath->query('//*[@id="rn-more"]//section[@data-rn-more-section]'));
-        $this->assertSame(['sale', 'purchase', 'inventory', 'people', 'finance', 'reports', 'settings'], array_map(fn ($s) => $s->getAttribute('data-rn-more-section'), $sections));
+        $this->assertSame(['sale', 'purchase', 'inventory', 'people', 'finance', 'settings'], array_map(fn ($s) => $s->getAttribute('data-rn-more-section'), $sections));
         $this->assertSame(
-            ['বিক্রি', 'কেনা', 'পণ্য ও স্টক', 'কাস্টমার ও মহাজন', 'হিসাব ও খরচ', 'রিপোর্ট', 'সেটিংস'],
+            ['বিক্রি', 'কেনা', 'পণ্য ও স্টক', 'কাস্টমার ও মহাজন', 'হিসাব ও খরচ', 'সেটিংস'],
             array_map(fn ($s) => trim($xpath->query('.//h3', $s)->item(0)->textContent), $sections),
         );
         foreach ($sections as $section) {
@@ -96,14 +106,32 @@ class MobileShellTest extends TestCase
 
         $in = fn (string $key, string $route) => $xpath->query('//section[@data-rn-more-section="'.$key.'"]//a[@href="'.route($route).'"]')->length;
         foreach ([
-            'sale' => ['saleList', 'returnSaleList'], 'purchase' => ['addPurchase', 'purchaseList', 'returnPurchaseList'],
+            'sale' => ['saleList', 'returnSaleList'], 'purchase' => ['purchaseList', 'returnPurchaseList'],
             'inventory' => ['productlist', 'addCategory', 'damageProductList'], 'people' => ['addCustomer', 'addSupplier'],
-            'finance' => ['account.chart', 'expense.list'], 'reports' => ['reports.sales', 'reports.payableReceivable'],
+            'finance' => ['account.chart', 'expense.list'],
             'settings' => ['addBusinessSetupPage'],
         ] as $key => $routes) {
             foreach ($routes as $route) {
                 $this->assertSame(1, $in($key, $route), "$route belongs under $key");
             }
+        }
+        $this->assertSame(0, $in('people', 'reports.payableReceivable'), 'Due reporting is presented from the customer filter and report hub, not a duplicate More route.');
+        $this->assertSame('কাস্টমার ও বাকি', trim($xpath->query('//section[@data-rn-more-section="people"]//a[@href="'.route('addCustomer').'"]')->item(0)->textContent));
+    }
+
+    public function test_reports_tab_is_the_single_mobile_entry_for_report_destinations(): void
+    {
+        $this->inventory();
+        $this->actingAs($this->actor('admin'), 'admin');
+        $xpath = $this->xpath($this->get(route('dashboard'))->assertOk()->getContent());
+        $this->assertSame(1, $xpath->query('//nav[@data-rn-tabbar]//a[@data-rn-tab="reports" and @href="'.route('reports.index').'"]')->length);
+        $grid = $this->hrefs($xpath, '//*[@id="rn-more"]//ul[contains(@class,"rn-m-grid")]//a');
+        foreach (['reports.business', 'reports.sales', 'reports.purchases', 'reports.stock', 'reports.topCustomers', 'reports.payableReceivable', 'account.reports', 'expense.reports'] as $name) {
+            $this->assertNotContains(route($name), $grid, "$name belongs under Reports.");
+        }
+        $hub = $this->get(route('reports.index'))->assertOk();
+        foreach (['reports.business', 'reports.sales', 'reports.purchases', 'reports.stock', 'reports.topCustomers', 'reports.payableReceivable', 'account.reports', 'expense.reports'] as $name) {
+            $hub->assertSee(route($name), false);
         }
     }
 
@@ -333,6 +361,18 @@ class MobileShellTest extends TestCase
         $tokens = file_get_contents(public_path('css/rn-tokens.css'));
         foreach (['--rn-color-primary: #14736F', '--rn-color-primary-tint: #E2F2F1', '--rn-color-bg: #F4F5F7', '--rn-color-ink: #1B1F27', 'Hind Siliguri'] as $token) {
             $this->assertStringContainsString($token, $tokens);
+        }
+        foreach ([
+            '--rn-type-page-title: 21px', '--rn-type-summary-amount: 30px', '--rn-type-card-amount: 18px',
+            '--rn-type-card-name: 17px', '--rn-type-body: 16px', '--rn-type-label: 15px', '--rn-type-helper: 14px',
+            '--rn-type-tag: 13.5px', '--rn-type-bottom-label: 13px', '--rn-type-button: 17px',
+            '--rn-icon-header: 24px', '--rn-icon-tab: 26px', '--rn-icon-menu: 28px', '--rn-icon-avatar: 44px',
+        ] as $token) {
+            $this->assertStringContainsString($token, $tokens);
+        }
+        foreach (['rn-mobile.css', 'rn-m-components.css'] as $file) {
+            $mobileCss = file_get_contents(public_path('css/'.$file));
+            $this->assertDoesNotMatchRegularExpression('/font-size:\s*(?:[0-9]|1[0-2])(?:\.\d+)?(?:px|rem|em)\b/i', $mobileCss, "$file keeps mobile text at 13px or larger.");
         }
         // Components use the tokens, not raw colors.
         $this->assertDoesNotMatchRegularExpression('/#[0-9a-fA-F]{3,8}\b/', file_get_contents(public_path('css/rn-mobile.css')));

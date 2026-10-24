@@ -137,3 +137,13 @@ The authenticated 390×844 Business Overview screenshot and mockup comparison ar
 The `/balance/sheet` route was audited and captured in `tests-output/ui-3-final/R2/balance-sheet-390x844.png`; it is a customer transaction form with hard-coded sample values and no customer id in its route. It cannot be made a correct account/customer statement without choosing the entity and report semantics. It remains unaccepted and is marked unresolved in the page inventory; no fake data was reinterpreted as live accounting data.
 
 Focused `MobileReportCardsTest`: 3 tests, 17 assertions, passing (6 PHPUnit deprecations). Final complete isolated SQLite suite: 345 tests, 10,922 assertions, 0 failures, 6 PHPUnit deprecations. PHP syntax, Blade cache compilation, and `git diff --check` passed.
+
+## UI-3Z.0 — Typography, icons, and destination de-duplication
+
+Started from `9851815` on `ui-2-mobile-pages`. Added `docs/AGENT_NOTES.md` to the first UI-3Z commit as requested, and created `docs/MOBILE_MENU_AUDIT.md` mapping bottom tabs, More destinations, reports and list FABs. Mobile typography now uses semantic shared tokens; mobile text below 13px was removed from the two shared mobile stylesheets, and icon/touch controls use the shared icon and touch-size tokens. Navigation now reserves report links for the Reports hub and create actions for authorized list FABs, with no repeated route destinations in the bottom tabs, Home shortcuts and More groups.
+
+Authenticated Android-user-agent screenshots in ignored `tests-output/ui-3z/0/` were captured at 390×844 in Bangla after `networkidle` plus 500 ms. Both More and Reports render without horizontal overflow or browser page exceptions; computed visible text below 13px: none. `capture-notes.md` records the actual comparison with mockup 08 and the remaining visual differences: the existing More sheet does not include the mockup's business-brand header, settings list, language control or bottom navigation. This phase verifies grouping and routes, not exact More-screen parity.
+
+Focused checks: `MobileShellTest` + `MobileReportCardsTest`, 16 tests / 489 assertions, passing. Full isolated SQLite suite: 346 tests / 10,969 assertions / 0 failures / 6 PHPUnit deprecations. Updated the old `MobileFormRulesTest` assertion that expected a 34px quick-create button; the implementation correctly uses the 44px shared touch target. `git diff --check` passes.
+
+Commit: pending at this progress-file update. Next: UI-3Z.1 shared mobile money formatting; then account ledger, detail pages, reports and final QA checklist.

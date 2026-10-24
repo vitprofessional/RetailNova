@@ -52,11 +52,33 @@
     --rn-color-bg: #F4F5F7;
     --rn-color-ink: #1B1F27;
     --rn-color-muted: #667085;
+    --rn-color-helper: #475467;
     --rn-color-border: #D0D5DD;
     --rn-color-surface: #FFFFFF;
     --rn-color-on-primary: #FFFFFF;
 
     --rn-font-family: "Hind Siliguri", "Noto Sans Bengali", "Nirmala UI", "Segoe UI", Roboto, Arial, sans-serif;
+
+    /* Shared mobile type scale. Mobile components should use these semantic roles. */
+    --rn-type-page-title: 21px;
+    --rn-type-summary-amount: 30px;
+    --rn-type-card-amount: 18px;
+    --rn-type-card-name: 17px;
+    --rn-type-body: 16px;
+    --rn-type-label: 15px;
+    --rn-type-helper: 14px;
+    --rn-type-tag: 13.5px;
+    --rn-type-bottom-label: 13px;
+    --rn-type-button: 17px;
+
+    --rn-icon-header: 24px;
+    --rn-icon-tab: 26px;
+    --rn-icon-menu: 28px;
+    --rn-icon-avatar: 44px;
+    --rn-icon-control: 20px;
+    --rn-icon-chevron: 22px;
+    --rn-icon-empty: 26px;
+    --rn-icon-action: 18px;
 
     --rn-radius-sm: 8px;
     --rn-radius-md: 12px;

@@ -37,6 +37,7 @@ class MobileNavigation
         'dashboard' => 'mobile.home', 'newsale' => 'mobile.sale', 'addPurchase' => 'mobile.purchase', 'purchaseList' => 'mobile.purchase_list',
         'stockProduct' => 'mobile.stock_management', 'expense.list' => 'mobile.expense_list', 'account.transactions' => 'mobile.cashbox',
         'reports.payableReceivable' => 'mobile.due_list', 'reports.business' => 'mobile.business_overview', 'addSupplier' => 'mobile.suppliers',
+        'productlist' => 'mobile.stock_management',
         'returnSaleList' => 'mobile.returns', 'damageProductList' => 'mobile.damaged_items',
     ];
 
@@ -45,6 +46,9 @@ class MobileNavigation
         'newsale', 'addPurchase', 'stockProduct', 'reports.payableReceivable', 'expense.list', 'account.transactions',
         'returnSaleList', 'addSupplier', 'purchaseList', 'damageProductList', 'saleList', 'addCustomer', 'productlist',
     ];
+
+    /** Creation destinations are exposed by their list FABs, not duplicated in "More". */
+    private const FAB_DESTINATIONS = ['addPurchase', 'quotation.create', 'addProduct', 'damageProduct', 'provideService', 'expense.create'];
 
     /** "More" page sections, in display order. */
     private const SECTIONS = ['sale', 'purchase', 'inventory', 'people', 'finance', 'reports', 'settings'];
@@ -76,7 +80,8 @@ class MobileNavigation
             $tab('home', $this->first(['dashboard']), 'ri-home-5-line', 'mobile.home'),
             $tab('stock', $this->first(['stockProduct', 'productlist']), 'ri-archive-line', 'mobile.stock', ['stockProduct', 'productlist', 'editProduct']),
             $tab('sale', $this->first(['newsale']), 'ri-shopping-cart-2-line', 'mobile.sale', ['newsale']),
-            $tab('reports', $this->first(['reports.business', 'reports.sales', 'saleList']), 'ri-bar-chart-2-line', 'mobile.reports', ['reports.*']),
+            // The reports tab is a hub so every permitted report is reached from one place.
+            $tab('reports', $this->hasAny(['reports.business', 'reports.sales', 'reports.purchases', 'reports.stock', 'reports.topCustomers', 'reports.payableReceivable', 'account.reports', 'expense.reports']) ? 'reports.index' : null, 'ri-bar-chart-2-line', 'mobile.reports', ['reports.*', 'account.reports', 'expense.reports']),
         ]));
     }
 
@@ -87,9 +92,15 @@ class MobileNavigation
     public function moreSections(): array
     {
         $inTabs = array_column($this->tabs(), 'route');
+        $reportRoutes = ['reports.business', 'reports.sales', 'reports.purchases', 'reports.stock', 'reports.topCustomers', 'reports.payableReceivable', 'account.reports', 'expense.reports'];
         $sections = array_fill_keys(self::SECTIONS, []);
         foreach ($this->items() as $item) {
-            if (!in_array($item['route'], $inTabs, true)) {
+            if (!in_array($item['route'], $inTabs, true)
+                && !in_array($item['route'], self::FAB_DESTINATIONS, true)
+                && !in_array($item['route'], $reportRoutes, true)) {
+                if ($item['route'] === 'addCustomer') {
+                    $item['label'] = __('mobile.customer_and_due');
+                }
                 $sections[$item['section']][] = $item;
             }
         }
@@ -104,7 +115,10 @@ class MobileNavigation
 
     public function shortcuts(int $limit = 8): array
     {
-        $byRoute = array_column($this->items(), null, 'route');
+        $tabRoutes = array_column($this->tabs(), 'route');
+        $reportRoutes = ['reports.business', 'reports.sales', 'reports.purchases', 'reports.stock', 'reports.topCustomers', 'reports.payableReceivable', 'account.reports', 'expense.reports'];
+        $byRoute = array_column(array_filter($this->items(), fn (array $item) => !in_array($item['route'], $tabRoutes, true)
+            && !in_array($item['route'], self::FAB_DESTINATIONS, true) && !in_array($item['route'], $reportRoutes, true)), null, 'route');
         $shortcuts = [];
         foreach (self::SHORTCUTS as $route) {
             if (isset($byRoute[$route]) && count($shortcuts) < $limit) {
@@ -129,6 +143,17 @@ class MobileNavigation
         }
 
         return null;
+    }
+
+    private function hasAny(array $routes): bool
+    {
+        foreach ($routes as $route) {
+            if ($this->allows($route)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Flattened, de-duplicated menu items the user may open. */

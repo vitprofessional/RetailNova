@@ -1,6 +1,9 @@
 @extends('include') @section('backTitle'){{ __('common.heading_damage_product_list') }}@endsection @section('container')
 @mobile
 <section class="rn-m-list-page" data-rn-list="damage-products">
+  @if(app(\App\Support\MobileNavigation::class)->allows('damageProduct'))
+    <x-m.fab :url="route('damageProduct')" :label="__('mobile.new_damage')" />
+  @endif
   <ul class="rn-m-cards" role="list">
     @forelse($damageList as $d)
       @php($productName = $d->product?->name ?? '-')
