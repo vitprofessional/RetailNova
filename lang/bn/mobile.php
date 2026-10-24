@@ -15,6 +15,17 @@ return [
     'sign_out' => 'বের হন',
     'notifications' => 'নোটিফিকেশন',
     'no_notifications' => 'নতুন কোনো নোটিফিকেশন নেই।',
+    'ledger_customer' => 'কাস্টমারের খাতা',
+    'ledger_supplier' => 'মহাজনের খাতা',
+    'ledger_total_customer' => 'মোট বিক্রি',
+    'ledger_total_supplier' => 'মোট কেনা',
+    'ledger_paid' => 'পরিশোধ',
+    'ledger_due' => 'বাকি',
+    'ledger_sale' => 'বিক্রি',
+    'ledger_purchase' => 'কেনা',
+    'ledger_transactions' => 'লেনদেন',
+    'ledger_empty' => 'কোনো লেনদেন পাওয়া যায়নি।',
+    'ledger_undated' => 'তারিখ নেই',
 
     // "আরও" পাতার ভাগ
     'section_sale' => 'বিক্রি',

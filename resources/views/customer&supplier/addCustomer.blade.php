@@ -219,7 +219,7 @@
                         <td class="rn-col-compact">
                                      <div class="d-flex align-items-center justify-content-center list-action">
                                 <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" data-original-title="{{ __('customers.view') }}"
-                                   href="{{route('balancesheet')}}"><i class="ri-eye-line mr-0 "></i></a>
+                                   href="{{ route('contact.ledger', ['type' => 'customer', 'id' => $customerList->id]) }}"><i class="ri-eye-line mr-0 "></i></a>
                                 <a href="{{route('editCustomer',['id'=>$customerList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" data-original-title="{{ __('customers.edit') }}">
                                    <i class="ri-pencil-line mr-0"></i></a>
                                 <button type="button" class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" data-original-title="{{ __('customers.delete') }}" style="border:none;background:transparent;padding:0;"
@@ -231,30 +231,7 @@
                     </tr>
                     @endforeach
                     @else
-                    <tr>
-                        <td>
-                            <div class="checkbox d-inline-block">
-                                <input type="checkbox" class="checkbox-input bulk-select" value="demo">
-                                <label class="mb-0"></label>
-                            </div>
-                        </td>
-                        <td>
-                            Hasnat Saimun
-                        </td>
-                        <td>1200</td>
-                        <td>01755048017</td>
-                        <td>Cumilla</td>
-                        <td>10000</td>
-                        <td>10.10.2025</td>
-                        <td class="rn-col-compact">
-                            <div class="d-flex align-items-center justify-content-center list-action">
-                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" data-original-title="{{ __('customers.view') }}"
-                                   href="{{route('balancesheet')}}"><i class="ri-eye-line mr-0"></i></a>
-                                <a  class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" data-original-title="{{ __('customers.edit') }}" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                <button type="button" class="badge bg-warning mr-2 btn btn-link p-0" data-toggle="tooltip" data-placement="top" data-original-title="{{ __('customers.delete') }}"><i class="ri-delete-bin-line mr-0"></i></button>
-                            </div>
-                        </td>
-                    </tr>
+                    <tr><td colspan="8" class="text-center text-muted">{{ __('common.no_data_available') }}</td></tr>
                     @endif
                 </tbody>
                 </table>

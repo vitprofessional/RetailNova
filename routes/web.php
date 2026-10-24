@@ -596,13 +596,9 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
 
     // OLD expense routes removed - replaced by ExpenseManagementController
 
-    // balance_sheet------------------------
-
-        Route::get('/balance/sheet',[
-        coustomerSupplier::class,
-        'balancesheet'
-    ])->name('balancesheet');
-    // end_balancesheet
+    Route::get('/balance/sheet/{type}/{id}', [coustomerSupplier::class, 'contactLedger'])
+        ->where(['type' => 'customer|supplier', 'id' => '[0-9]+'])
+        ->name('contact.ledger');
 
 
     // jquery routes are goes here

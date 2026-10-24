@@ -157,3 +157,15 @@ Real authenticated Bangla mobile screenshots are in ignored `tests-output/ui-3z/
 Focused `MobileShellTest` + `MobileDetailLayoutTest`: 16 tests / 499 assertions, passing. Full isolated SQLite suite: 347 tests / 10,973 assertions / 0 failures / 6 PHPUnit deprecations. Blade view cache compilation passed. `git diff --check` passes.
 
 Commit: pending. Next: implement the business-scoped customer/supplier account ledger with cross-business 404 isolation and accurate transaction totals (UI-3Z.2).
+
+## UI-3Z.2 — Business-scoped customer and supplier ledgers
+
+Removed the public-to-authenticated fake `/balance/sheet` form route and its action method. Added `/balance/sheet/{type}/{id}` as a read-only customer/supplier ledger. Each request resolves the actor's authorized business, then resolves the contact and every transaction using that exact business ID. Normal business users cannot supply a different business; unknown or foreign contact IDs return 404. Customer totals use live, non-cancelled sale rows (`grandTotal`/`totalSale` and `paidAmount`); supplier totals use purchase invoice headers plus only legacy purchase rows without a header, preventing double counting. Contact list cards now open the ledger; edit actions remain separate. Removed the old customer table's fabricated empty-state row.
+
+No collection-due or SMS control was added because no matching application endpoint exists. No financial mutation or schema change was introduced.
+
+Bangla screenshots at 390×844 are in ignored `tests-output/ui-3z/2/`; both customer and supplier ledger routes returned 200, with correct isolated totals, no horizontal overflow and no browser errors. `capture-notes.md` compares them with mockup 06 and records the individual-ledger/list-mockup distinction.
+
+Focused checks: `ContactLedgerTest`, `MobileShellTest`, and `CustomerDisplayRegressionTest`, 26 tests / 545 assertions, passing. Full isolated SQLite suite: 351 tests / 11,018 assertions / 0 failures / 6 PHPUnit deprecations. Blade cache compilation passed. `git diff --check` passes.
+
+Commit: pending. Next: UI-3Z.3 mobile sale/purchase invoice, quotation, service invoice and return details, including the “no products found” purchase-invoice issue.

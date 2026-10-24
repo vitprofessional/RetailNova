@@ -399,6 +399,8 @@
         font-size: var(--rn-icon-control);
     }
     .rn-m-form-quick-add:focus-visible { outline: 3px solid var(--rn-color-primary-soft); outline-offset: 2px; }
+    .rn-m-contact-ledger .rn-m-list-header h2 { margin: 0; color: var(--rn-color-on-primary); font-size: var(--rn-type-page-title); font-weight: 700; }
+    .rn-m-contact-ledger .rn-m-detail-contact { margin: 6px 0 0; color: color-mix(in srgb, var(--rn-color-on-primary) 82%, transparent); font-size: var(--rn-type-helper); }
     .rn-m-form-business-field { margin-bottom: 14px; }
     .rn-m-form-business-field .form-group { margin: 0; }
     .rn-m-form-business-field label { display: block; margin: 0 0 5px; color: var(--rn-color-ink); font-size: var(--rn-type-label); font-weight: 600; }

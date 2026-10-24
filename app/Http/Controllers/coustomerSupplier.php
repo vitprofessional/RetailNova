@@ -9,8 +9,8 @@ use Illuminate\Validation\Rule;
 use App\Http\Requests\SaveCustomerRequest;
 use App\Models\Customer;
 use App\Models\Supplier;
-use App\Models\balancesheet;
 use App\Models\SaleProduct;
+use App\Models\PurchaseInvoice;
 use App\Models\InvoiceItem;
 use App\Models\ReturnSaleItem;
 use App\Models\SaleReturn;
@@ -464,9 +464,81 @@ class coustomerSupplier extends Controller
     }
 
 
-    // balancesheet
-    public function balancesheet(){
-        return  view('customer&supplier.balancesheet');
+    /** Read-only, business-scoped transaction history for one customer or supplier. */
+    public function contactLedger(Request $request, string $type, int $id)
+    {
+        abort_unless(in_array($type, ['customer', 'supplier'], true), 404);
+
+        $workflow = app(\App\Services\PurchaseWorkflow::class);
+        $requestedBusiness = $request->query('businessId', auth('admin')->user()?->businessId);
+        $businessId = $workflow->resolveBusinessId($requestedBusiness);
+        $contact = ($type === 'customer' ? Customer::query() : Supplier::query())
+            ->where('businessId', $businessId)->findOrFail($id);
+
+        $transactions = collect();
+        if ($type === 'customer') {
+            $sales = SaleProduct::withoutGlobalScope('business')
+                ->where('businessId', $businessId)
+                ->where('customerId', $contact->id)
+                ->orderByDesc('date')->orderByDesc('id')->get();
+            foreach ($sales as $sale) {
+                $total = (float) ($sale->grandTotal ?? $sale->totalSale ?? 0);
+                $paid = (float) ($sale->paidAmount ?? 0);
+                $transactions->push([
+                    'date' => $sale->date ?? $sale->created_at,
+                    'reference' => $sale->invoice ?: __('common.invoice').' #'.$sale->id,
+                    'description' => __('mobile.ledger_sale'),
+                    'total' => $total,
+                    'paid' => $paid,
+                    'due' => max(0, $total - $paid),
+                    'tone' => 'warning',
+                ]);
+            }
+        } else {
+            $invoices = PurchaseInvoice::withoutGlobalScopes()
+                ->where('businessId', $businessId)
+                ->where('supplier_id', $contact->id)
+                ->orderByDesc('purchase_date')->orderByDesc('id')->get();
+            foreach ($invoices as $invoice) {
+                $transactions->push([
+                    'date' => $invoice->purchase_date ?? $invoice->created_at,
+                    'reference' => $invoice->invoice ?: __('purchases.invoice').' #'.$invoice->id,
+                    'description' => __('mobile.ledger_purchase'),
+                    'total' => (float) $invoice->grand_total,
+                    'paid' => (float) $invoice->paid_amount,
+                    'due' => (float) $invoice->due_amount,
+                    'tone' => 'warning',
+                ]);
+            }
+
+            // Old purchases without an invoice header remain visible and are counted once.
+            $legacyLines = PurchaseProduct::withoutGlobalScopes()
+                ->where('businessId', $businessId)
+                ->where('supplier', $contact->id)
+                ->whereNull('purchase_invoice_id')
+                ->orderByDesc('purchase_date')->orderByDesc('id')->get();
+            foreach ($legacyLines as $line) {
+                $total = (float) ($line->grandTotal ?? $line->totalAmount ?? 0);
+                $transactions->push([
+                    'date' => $line->purchase_date ?? $line->created_at,
+                    'reference' => $line->invoice ?: __('purchases.invoice').' #'.$line->id,
+                    'description' => $line->product?->name ?: __('mobile.ledger_purchase'),
+                    'total' => $total,
+                    'paid' => (float) ($line->paidAmount ?? 0),
+                    'due' => (float) ($line->dueAmount ?? max(0, $total - (float) ($line->paidAmount ?? 0))),
+                    'tone' => 'warning',
+                ]);
+            }
+            $transactions = $transactions->sortByDesc(fn ($row) => $row['date'] ? \Illuminate\Support\Carbon::parse($row['date'])->timestamp : 0)->values();
+        }
+
+        $summary = [
+            'total' => $transactions->sum('total'),
+            'paid' => $transactions->sum('paid'),
+            'due' => $transactions->sum('due'),
+        ];
+
+        return view('customer&supplier.ledger', compact('contact', 'type', 'transactions', 'summary', 'businessId'));
     }
 
     

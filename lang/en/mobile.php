@@ -15,6 +15,17 @@ return [
     'sign_out' => 'Sign out',
     'notifications' => 'Notifications',
     'no_notifications' => 'No new notifications.',
+    'ledger_customer' => 'Customer account',
+    'ledger_supplier' => 'Supplier account',
+    'ledger_total_customer' => 'Total sales',
+    'ledger_total_supplier' => 'Total purchases',
+    'ledger_paid' => 'Paid',
+    'ledger_due' => 'Due',
+    'ledger_sale' => 'Sale',
+    'ledger_purchase' => 'Purchase',
+    'ledger_transactions' => 'Transactions',
+    'ledger_empty' => 'No transactions found.',
+    'ledger_undated' => 'Date unavailable',
 
     // "More" page sections
     'section_sale' => 'Sales',
