@@ -44,10 +44,13 @@ Preserve untracked `docs/AGENT_NOTES.md`; it was intentionally not staged. Brows
 
 ## UI-3R refinement checkpoint
 
-Branch: `ui-2-mobile-pages`; work resumes from `1ab5c1e`. The UI-3R shared mobile form and list patterns are being implemented in three reviewable commits. Form rules and list pattern changes are locally verified at 390×844 using the documented isolated SQLite scratchpad and Android Mobile user agent. Screenshots and mockup comparison notes are ignored under `tests-output/ui-3R/`.
+Branch: `ui-2-mobile-pages`; work resumed from `1ab5c1e`. The three requested refinement commits are complete. Actual Laravel screenshots were captured at 390×844 with the documented isolated SQLite scratchpad and Android Mobile user agent, then visually reviewed against mockups 09/09b/10. Screenshots and comparison notes are ignored under `tests-output/ui-3R/`.
 
-- UI-3R.1 form rules: shared one-column form rules, file picker, compact row removal, optional-field omission, and form regression tests. Focused tests: 27 tests, 542 assertions, 0 failures. Full suite: 328 tests, 10,415 assertions, 0 failures; six existing PHPUnit deprecations.
-- UI-3R.2 list pattern: six UI-2 lists use a teal search/period header, date groups, transaction card hierarchy and chip/date filter sheet. The six actual 390px list screenshots and filter screenshots are under `tests-output/ui-3R/lists/`.
-- UI-3R.3 wording: update Bangla labels for general walk-in customer, expense/cost, unit, and save actions; replace remaining English quotation product placeholder with the language key.
+- UI-3R.1 form rules: `1dd7e0d0fa3de03c4699611e86d8c76df14ab4d4` — shared one-column form rules, file picker, compact row removal, optional-field omission, and form regression tests.
+- UI-3R.2 list pattern: `b8cc1aafda62ce4156e282a91df1b7fd88638051` — six UI-2 lists use a teal search/period header, date groups, transaction card hierarchy and chip/date filter sheet.
+- UI-3R.3 wording: pending final local commit — Bangla labels for general walk-in customer, expense, unit, and save actions; English walk-in labels corrected and quotation product placeholder uses a language key.
+- Latest full isolated SQLite suite before UI-3R.3 wording-only edits: 328 tests, 10,415 assertions, 0 failures; six PHPUnit deprecations. The full suite is rerun for UI-3R.3 before commit.
 
-Secondary X pages from the prior checkpoint remain for business setup, admin profile/user, Super Admin, settings, and brand/category/unit/service master forms. These will continue after the three UI-3R commits.
+Refreshed 390px screenshots: all six lists and their filters returned HTTP 200 with no horizontal overflow. Updated mobile forms were recaptured and visually checked; browser console reports the documented Font Awesome kit 403 responses, without page JavaScript exceptions.
+
+Secondary X pages from the prior checkpoint remain for business setup, admin profile/user, Super Admin, settings, and brand/category/unit/service master forms. Continue these after UI-3R.3 in separate, reviewable commits; do not mark the overall mobile work complete until they are addressed and captured.

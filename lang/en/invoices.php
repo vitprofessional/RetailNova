@@ -48,7 +48,7 @@ return [
     'back_to_sales' => 'Back to Sales',
     'thank_you_for_your_business' => 'Thank you for your business',
     'powered_by_retailnova' => 'Powered by RetailNova',
-    'walking_customer' => 'Walking Customer',
+    'walking_customer' => 'Walk-in Customer',
     'back_to_list' => 'Back to List',
     'status_paid' => 'PAID',
     'status_due' => 'DUE',

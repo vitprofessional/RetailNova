@@ -95,7 +95,7 @@ return [
     'common.client_this_product_has_no_purchase_rows' => 'This product has no purchase rows',
     'common.client_unable_to_print' => 'Unable to print',
     'common.client_updated' => 'Updated',
-    'common.client_using_walking_customer' => 'Using Walking Customer',
+    'common.client_using_walking_customer' => 'Using Walk-in Customer',
     'common.client_validation' => 'Validation',
     'common.client_validation_error' => 'Validation Error',
     'common.client_vat' => 'VAT: ',

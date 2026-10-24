@@ -55,7 +55,7 @@ return [
     'attributes' => [
         'fullName'=>'পূর্ণ নাম','sureName'=>'শেষ নাম','storeName'=>'দোকানের নাম','userMail'=>'ইমেইল',
         'contactNumber'=>'যোগাযোগ নম্বর','mobile'=>'মোবাইল','country'=>'দেশ','state'=>'রাজ্য','city'=>'শহর','area'=>'এলাকা',
-        'openingBalance'=>'প্রারম্ভিক স্থিতি','profileId'=>'প্রোফাইল','brand'=>'ব্র্যান্ড','category'=>'ক্যাটাগরি','unitName'=>'পণ্যের একক',
+        'openingBalance'=>'প্রারম্ভিক স্থিতি','profileId'=>'প্রোফাইল','brand'=>'ব্র্যান্ড','category'=>'ক্যাটাগরি','unitName'=>'পণ্যের ইউনিট',
         'quantity'=>'পরিমাণ','quantity.*'=>'পণ্যের পরিমাণ','details'=>'বিবরণ','barCode'=>'বারকোড','businessName'=>'ব্যবসার নাম',
         'businessType'=>'ব্যবসার ধরন','businessLocation'=>'ব্যবসার অবস্থান','website'=>'ওয়েবসাইট','logo'=>'লোগো',
         'purchaseDate'=>'কেনার তারিখ','supplierName'=>'মহাজন','productName'=>'পণ্য','productName.*'=>'পণ্য',
@@ -67,7 +67,7 @@ return [
         'account_code'=>'হিসাবের কোড','account_name'=>'হিসাবের নাম','account_type'=>'হিসাবের ধরন','opening_balance'=>'প্রারম্ভিক স্থিতি',
         'transaction_date'=>'লেনদেনের তারিখ','transaction_type'=>'লেনদেনের ধরন','reference_no'=>'রেফারেন্স নম্বর',
         'debit_account_id'=>'ডেবিট হিসাব','credit_account_id'=>'ক্রেডিট হিসাব','amount'=>'টাকার পরিমাণ','description'=>'বিবরণ',
-        'business_location_id'=>'ব্যবসার অবস্থান','expense_date'=>'ব্যয়ের তারিখ','payment_method'=>'পেমেন্টের ধরন',
+        'business_location_id'=>'ব্যবসার অবস্থান','expense_date'=>'খরচের তারিখ','payment_method'=>'পেমেন্টের ধরন',
         'receipt_file'=>'রসিদের ফাইল','current_password'=>'বর্তমান পাসওয়ার্ড','new_password'=>'নতুন পাসওয়ার্ড',
         'password_confirmation'=>'পাসওয়ার্ড নিশ্চিতকরণ','role'=>'ভূমিকা','avatar'=>'প্রোফাইলের ছবি',
         'default_locale'=>'ব্যবসার ভাষা','preferred_locale'=>'পছন্দের ভাষা','businessId'=>'ব্যবসা',

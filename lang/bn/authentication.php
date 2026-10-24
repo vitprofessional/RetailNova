@@ -43,7 +43,7 @@ return [
     'password' => 'পাসওয়ার্ড',
     'remember_me' => 'মনে রাখুন',
     'reset' => 'পুনঃস্থাপন',
-    'save' => 'সংরক্ষণ',
+    'save' => 'সেভ করুন',
     'sign_in' => 'লগইন',
     'submit' => 'জমা দিন',
     'first_time_super_admin_setup' => 'প্রথম সুপার অ্যাডমিন সেটআপ',
