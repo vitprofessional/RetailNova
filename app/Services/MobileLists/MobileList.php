@@ -178,6 +178,42 @@ abstract class MobileList
         }
     }
 
+    /** Date heading for the grouped mobile transaction cards. */
+    protected function dateGroup(mixed $value): ?array
+    {
+        if (!$value) {
+            return null;
+        }
+
+        try {
+            $date = Carbon::parse($value)->startOfDay();
+            $today = Carbon::today();
+            $period = $date->isSameDay($today)
+                ? __('mobile.period_today')
+                : ($date->isSameDay($today->copy()->subDay())
+                    ? __('mobile.period_yesterday')
+                    : null);
+            $dateLabel = LocalizedNumber::digits($date->locale(app()->getLocale())->translatedFormat('j F'));
+
+            return ['key' => $date->toDateString(), 'label' => $period ? $period.' · '.$dateLabel : $dateLabel];
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    protected function time(mixed $value): string
+    {
+        if (!$value) {
+            return '';
+        }
+
+        try {
+            return LocalizedNumber::digits(Carbon::parse($value)->format('h:i A'));
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
     protected function like(string $term): string
     {
         return '%'.addcslashes($term, '%_\\').'%';

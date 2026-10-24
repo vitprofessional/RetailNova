@@ -11,18 +11,21 @@
 @endphp
 <li class="rn-m-card" data-rn-card="{{ $card['id'] }}">
     <{{ $tag }} @if($card['url']) href="{{ $card['url'] }}" @endif class="rn-m-card-main">
-        <span class="rn-m-card-avatar" aria-hidden="true">{{ $card['avatar'] }}</span>
-        <span class="rn-m-card-body">
-            <strong class="rn-m-card-title">{{ $card['title'] }}</strong>
-            @if(($card['subtitle'] ?? '') !== '')<span class="rn-m-card-sub">{{ $card['subtitle'] }}</span>@endif
-            @if(!empty($card['meta']))
-                <span class="rn-m-card-meta">@foreach($card['meta'] as $meta)<span>{{ $meta }}</span>@endforeach</span>
-            @endif
+        <span class="rn-m-card-top">
+            <span class="rn-m-card-avatar" aria-hidden="true">{{ $card['avatar'] }}</span>
+            <span class="rn-m-card-body">
+                <strong class="rn-m-card-title">{{ $card['title'] }}</strong>
+                @if(($card['subtitle'] ?? '') !== '')<span class="rn-m-card-sub">{{ $card['subtitle'] }}</span>@endif
+            </span>
+            <span class="rn-m-card-amount is-{{ $card['amount_tone'] ?? 'ink' }}">{{ $card['amount'] }}</span>
         </span>
-        <span class="rn-m-card-figure">
-            <strong class="rn-m-card-amount is-{{ $card['amount_tone'] ?? 'ink' }}">{{ $card['amount'] }}</strong>
-            @if(!empty($card['note']))<small class="rn-m-card-note is-{{ $card['note_tone'] ?? 'muted' }}">{{ $card['note'] }}</small>@endif
-            @if(!empty($card['badge']))<span class="rn-m-badge rn-m-badge--{{ $card['badge']['tone'] }}">{{ $card['badge']['label'] }}</span>@endif
+        <span class="rn-m-card-footer">
+            <span class="rn-m-card-tags">
+                @if(!empty($card['meta']))@foreach($card['meta'] as $meta)<span class="rn-m-card-tag">{{ $meta }}</span>@endforeach @endif
+                @if(!empty($card['badge']))<span class="rn-m-badge rn-m-badge--{{ $card['badge']['tone'] }}">{{ $card['badge']['label'] }}</span>@endif
+                @if(!empty($card['note']))<small class="rn-m-card-note is-{{ $card['note_tone'] ?? 'muted' }}">{{ $card['note'] }}</small>@endif
+            </span>
+            @if($card['url'])<i class="ri-arrow-right-s-line rn-m-card-chevron" aria-hidden="true"></i>@endif
         </span>
     </{{ $tag }}>
     @if(!empty($card['actions']))

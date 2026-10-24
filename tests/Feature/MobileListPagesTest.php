@@ -179,7 +179,8 @@ class MobileListPagesTest extends TestCase
         $this->actingAs($admin, 'admin');
 
         $page = $this->xpath($this->onPhone()->get(route('saleList'))->getContent());
-        $this->assertCount(MobileList::PER_PAGE, $page->query('//ul[@data-rn-cards]/li'));
+        $this->assertCount(MobileList::PER_PAGE, $page->query('//ul[@data-rn-cards]/li[contains(@class,"rn-m-card")]'));
+        $this->assertCount(1, $page->query('//ul[@data-rn-cards]/li[contains(@class,"rn-m-date-heading")]'));
         $more = $page->query('//*[@data-rn-load-more]//button[@data-rn-load-more-button]')->item(0)->getAttribute('data-url');
         $this->assertStringStartsWith(route('m.lists', ['list' => 'sales']), $more);
 
@@ -257,7 +258,7 @@ class MobileListPagesTest extends TestCase
 
         // The page reads the same query: chips and the filter sheet show the current values.
         $page = $this->xpath($this->onPhone()->get(route('saleList', ['method' => 'bkash', 'from' => now()->toDateString(), 'to' => now()->toDateString()]))->getContent());
-        $this->assertCount(1, $page->query('//select[@name="method"]/option[@value="bkash" and @selected]'));
+        $this->assertCount(1, $page->query('//*[@data-rn-sheet]//input[@type="radio" and @name="method" and @value="bkash" and @checked]'));
         $this->assertCount(1, $page->query('//nav[contains(@class,"rn-m-periods")]/a[@data-rn-period="today" and @aria-current="true"]'));
         $this->assertSame('1', trim($page->query('//*[contains(@class,"rn-m-filter-count")]')->item(0)->textContent));
         $this->assertCount(4, $page->query('//nav[contains(@class,"rn-m-periods")]/a'));

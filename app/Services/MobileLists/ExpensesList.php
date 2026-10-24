@@ -101,13 +101,17 @@ class ExpensesList extends MobileList
             'url' => route('expense.edit', $expense->id),
             'avatar' => $this->initial($category),
             'title' => $category,
-            'subtitle' => trim($this->date($expense->expense_date).' · '.__('mobile.expense_method_'.$expense->payment_method), ' ·'),
+            'subtitle' => $this->time($expense->created_at),
+            'date_group' => $this->dateGroup($expense->expense_date),
             'amount' => $this->money($expense->amount),
             'amount_tone' => 'danger',
             'note' => $expense->reference_no ?: null,
             'note_tone' => 'muted',
             'badge' => null,
-            'meta' => $expense->description ? [Str::limit($expense->description, 60)] : [],
+            'meta' => array_values(array_filter([
+                __('mobile.expense_method_'.$expense->payment_method),
+                $expense->description ? Str::limit($expense->description, 60) : null,
+            ])),
             'actions' => [
                 $this->link(__('mobile.action_edit'), route('expense.edit', $expense->id), 'ri-pencil-line'),
                 // A delete link: the layout's handler confirms it and sends it as DELETE.

@@ -55,7 +55,7 @@ class SalesList extends MobileList
     protected function query(array $filters): Builder
     {
         $actor = auth('admin')->user();
-        $query = SaleProduct::query()->with('customer')->orderByDesc('id');
+        $query = SaleProduct::query()->with('customer')->withCount('items')->orderByDesc('id');
         // Like the desktop list: only the platform owner sees every salesperson's bills.
         if (!$actor instanceof AdminUser || !$actor->hasSuperAdminPrivileges()) {
             $query->where('salespersonId', $actor?->id ?? 0);
@@ -127,12 +127,16 @@ class SalesList extends MobileList
             'url' => route('invoiceGenerate', ['id' => $sale->id]),
             'avatar' => $this->initial($name),
             'title' => $name,
-            'subtitle' => trim($sale->invoice.' · '.$this->date($sale->date), ' ·'),
+            'subtitle' => trim($sale->invoice.' · '.$this->time($sale->created_at), ' ·'),
+            'date_group' => $this->dateGroup($sale->date),
             'amount' => $this->money($sale->grandTotal ?? 0),
             'note' => $due > 0 ? __('mobile.due').' '.$this->money($due) : null,
             'note_tone' => 'warning',
             'badge' => ['label' => __('sales.'.$status), 'tone' => ['paid' => 'success', 'partial' => 'warning', 'due' => 'danger'][$status]],
-            'meta' => array_values(array_filter([$sale->paymentMethodLabel()])),
+            'meta' => array_values(array_filter([
+                $sale->paymentMethodLabel(),
+                __('mobile.sale_items_count', ['count' => \App\Support\LocalizedNumber::count($sale->items_count ?? 0)]),
+            ])),
             'actions' => $actions,
         ];
     }
