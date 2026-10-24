@@ -88,6 +88,8 @@ return [
     'no_sales_data_available' => 'No sales data available',
     'create_new_business_location' => 'Create New Business Location',
     'location_name' => 'Location Name',
+    'main_location_description' => 'This will be the primary business location.',
+    'location_active_description' => 'This location is available for operations.',
     'address_information' => 'Address Information',
     'street_address' => 'Street Address',
     'city' => 'City',

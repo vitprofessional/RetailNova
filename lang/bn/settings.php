@@ -88,6 +88,8 @@ return [
     'no_sales_data_available' => 'বিক্রির তথ্য নেই',
     'create_new_business_location' => 'ব্যবসার নতুন অবস্থান তৈরি করুন',
     'location_name' => 'অবস্থানের নাম',
+    'main_location_description' => 'এটি ব্যবসার প্রধান অবস্থান হবে।',
+    'location_active_description' => 'এই অবস্থানটি ব্যবসায়িক কাজে ব্যবহার করা যাবে।',
     'address_information' => 'ঠিকানার তথ্য',
     'street_address' => 'সড়কের ঠিকানা',
     'city' => 'শহর',
