@@ -1051,6 +1051,29 @@
         .rn-m-detail-summary .rn-invoice-status--paid { background: var(--rn-color-success-tint); color: var(--rn-color-success); }
         .rn-m-detail-summary .rn-invoice-status--due { background: var(--rn-color-warning-tint); color: var(--rn-color-warning); }
         .rn-m-detail-summary .rn-invoice-status--partial { background: var(--rn-color-warning-tint); color: var(--rn-color-warning); }
+        #rn-invoice-root.rn-m-sale-invoice { max-width: none; margin: 0; border: 0; border-radius: 0; box-shadow: none; overflow: visible; background: transparent; }
+        #rn-invoice-root.rn-m-sale-invoice > .card-body { padding: 0; }
+        .rn-m-sale-invoice-receipt { display: grid; gap: 12px; }
+        .rn-m-invoice-receipt-card { overflow: hidden; padding: 16px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); box-shadow: var(--rn-shadow-card); }
+        .rn-m-invoice-customer { display: grid; gap: 3px; padding-bottom: 12px; border-bottom: 1px solid var(--rn-color-border); }
+        .rn-m-invoice-customer > span, .rn-m-invoice-line small { color: var(--rn-color-muted); font-size: var(--rn-type-helper); }
+        .rn-m-invoice-customer > strong, .rn-m-invoice-line strong { color: var(--rn-color-ink); font-size: var(--rn-type-card-name); font-weight: 700; overflow-wrap: anywhere; }
+        .rn-m-invoice-customer > small { color: var(--rn-color-helper); font-size: var(--rn-type-helper); }
+        .rn-m-invoice-lines { display: grid; }
+        .rn-m-invoice-line { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--rn-color-border); }
+        .rn-m-invoice-line > div { display: grid; gap: 4px; min-width: 0; }
+        .rn-m-invoice-line > strong { flex: 0 0 auto; font-size: var(--rn-type-body); }
+        .rn-m-invoice-empty { margin: 12px 0 0; color: var(--rn-color-helper); font-size: var(--rn-type-body); }
+        .rn-m-invoice-totals { display: grid; gap: 8px; margin: 12px 0 0; }
+        .rn-m-invoice-totals > div { display: flex; justify-content: space-between; gap: 12px; color: var(--rn-color-helper); font-size: var(--rn-type-body); }
+        .rn-m-invoice-totals dt, .rn-m-invoice-totals dd { margin: 0; }
+        .rn-m-invoice-totals dd { color: var(--rn-color-ink); font-weight: 600; text-align: right; }
+        .rn-m-invoice-totals .is-total { margin-top: 4px; padding-top: 10px; border-top: 1px dashed var(--rn-color-border); color: var(--rn-color-primary); font-weight: 700; }
+        .rn-m-invoice-totals .is-total dd { color: var(--rn-color-primary); font-size: var(--rn-type-card-amount); }
+        .rn-m-invoice-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+        .rn-m-invoice-actions > a, .rn-m-invoice-actions > button { display: grid; min-height: var(--rn-touch); place-items: center; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); background: var(--rn-color-surface); color: var(--rn-color-primary); font-size: var(--rn-icon-header); text-decoration: none; }
+        .rn-m-invoice-primary { display: flex; min-height: 54px; align-items: center; justify-content: space-between; padding: 0 16px; border-radius: 14px; background: var(--rn-color-primary); color: var(--rn-color-on-primary); font-size: var(--rn-type-button); font-weight: 700; text-decoration: none; }
+        .rn-m-invoice-primary:hover, .rn-m-invoice-primary:focus { color: var(--rn-color-on-primary); }
         body.rn-app:has(.rn-m-detail-page) .rn-m-tabbar,
         body.rn-app:has(.rn-m-sale-invoice) .rn-m-tabbar { display: none !important; }
         body.rn-app:has(.rn-m-detail-page) .content-page,
@@ -1065,6 +1088,14 @@
 
     /* ---------- Mobile report cards ---------- */
     .rn-report-page { min-width: 0; }
+    .rn-m-report-hub { display: grid; gap: 10px; min-width: 0; }
+    .rn-m-report-hub-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) 24px; align-items: center; gap: 12px; min-height: 72px; padding: 12px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); color: var(--rn-color-ink); box-shadow: var(--rn-shadow-card); text-decoration: none; }
+    .rn-m-report-hub-icon { display: grid; width: 44px; height: 44px; place-items: center; border-radius: var(--rn-radius-md); background: var(--rn-color-primary-tint); color: var(--rn-color-primary); font-size: 24px; }
+    .rn-m-report-hub-copy { display: grid; gap: 2px; min-width: 0; }
+    .rn-m-report-hub-copy strong { color: var(--rn-color-ink); font-size: 17px; font-weight: 600; line-height: 1.2; }
+    .rn-m-report-hub-copy small { overflow: hidden; color: var(--rn-color-helper); font-size: 14px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+    .rn-m-report-hub-chevron { color: var(--rn-color-muted); font-size: 24px; text-align: center; }
+    .rn-m-contact-ledger .rn-m-list-section > h2 { margin: 16px 0 8px; color: var(--rn-color-ink); font-size: 17px; font-weight: 700; }
     .rn-report-mobile-overview { display: none; }
     .rn-report-table { width: 100%; }
     .rn-report-page canvas { max-width: 100%; max-height: 240px; }
@@ -1075,14 +1106,31 @@
         .rn-report-mobile-title h1 { margin: 0; color: inherit; font-size: var(--rn-type-page-title); font-weight: 700; }
         .rn-report-download { display: grid; width: var(--rn-touch); height: var(--rn-touch); flex: 0 0 var(--rn-touch); place-items: center; border: 0; border-radius: 12px; background: color-mix(in srgb, var(--rn-color-on-primary) 18%, transparent); color: var(--rn-color-on-primary); font-size: 22px; }
         .rn-report-periods { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 14px; background: color-mix(in srgb, var(--rn-color-on-primary) 18%, transparent); }
-        .rn-report-periods a, .rn-report-periods button { display: grid; min-height: 42px; place-items: center; padding: 4px 5px; border: 0; border-radius: 11px; background: transparent; color: var(--rn-color-on-primary); font: inherit; font-size: var(--rn-type-tag); font-weight: 600; text-align: center; text-decoration: none; }
+        .rn-report-periods a, .rn-report-periods button { display: grid; min-height: 42px; place-items: center; padding: 4px 5px; border: 0; border-radius: 11px; background: transparent; color: var(--rn-color-on-primary); font: inherit; font-size: var(--rn-type-helper); font-weight: 600; text-align: center; text-decoration: none; }
         .rn-report-periods [aria-current="page"] { background: var(--rn-color-surface); color: var(--rn-color-primary); }
         .rn-report-period-tools { display: flex; grid-column: 1 / -1; align-items: center; gap: 8px; width: 100%; margin: 0 0 8px; }
         .rn-report-period-tools .rn-report-periods { flex: 1; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--rn-color-primary-tint); }
-        .rn-report-period-tools .rn-report-periods button { color: var(--rn-color-primary); }
+        .rn-report-period-tools .rn-report-periods button { min-width: 0; padding-inline: 2px; color: var(--rn-color-primary); font-size: var(--rn-type-helper); white-space: nowrap; }
         .rn-report-period-tools .rn-report-periods button[aria-pressed="true"] { background: var(--rn-color-primary); color: var(--rn-color-on-primary); }
         .rn-report-period-tools .rn-report-download { background: var(--rn-color-primary); color: var(--rn-color-on-primary); }
+        .rn-report-period-tools .rn-report-filter-trigger { display: grid; width: var(--rn-touch); height: var(--rn-touch); flex: 0 0 var(--rn-touch); place-items: center; border: 0; border-radius: 12px; background: var(--rn-color-primary); color: var(--rn-color-on-primary); font-size: 22px; }
+        .rn-report-filter-sheet[hidden] { display: none !important; }
+        .rn-report-filter-sheet { position: fixed; inset: 0; z-index: 1100; display: grid; align-items: end; }
+        .rn-report-filter-backdrop { position: absolute; inset: 0; background: rgba(27,31,39,.48); }
+        .rn-report-filter-panel { position: relative; display: grid; gap: 16px; width: 100%; max-height: min(80vh, 680px); overflow: auto; padding: 20px 16px calc(16px + var(--rn-safe-bottom)); border-radius: 20px 20px 0 0; background: var(--rn-color-surface); box-shadow: var(--rn-shadow-card); }
+        .rn-report-filter-panel > header, .rn-report-filter-panel > footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .rn-report-filter-panel > header strong { font-size: var(--rn-type-card-name); }
+        .rn-report-filter-panel > header button { width: var(--rn-touch); height: var(--rn-touch); border: 0; border-radius: var(--rn-radius-md); background: var(--rn-color-bg); font-size: 24px; }
+        .rn-report-filter-fields { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .rn-report-filter-fields > [class*="col-"] { width: 100%; max-width: 100%; padding: 0; }
+        .rn-report-filter-fields label { font-size: var(--rn-type-label); font-weight: 600; }
+        .rn-report-filter-panel footer button { min-height: 48px; flex: 1; border: 1px solid var(--rn-color-border); border-radius: 12px; background: var(--rn-color-surface); color: var(--rn-color-primary); font-size: var(--rn-type-button); font-weight: 700; }
+        .rn-report-filter-panel footer [data-rn-filter-apply] { border-color: var(--rn-color-primary); background: var(--rn-color-primary); color: var(--rn-color-on-primary); }
+        body.rn-report-filter-open { overflow: hidden; }
         .rn-report-custom-range { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+        .rn-report-custom-range[hidden] { display: none !important; }
+        .rn-report-custom-range:not([hidden]) { position: fixed; z-index: 1101; inset: auto 0 0; width: 100%; padding: 20px 16px calc(16px + var(--rn-safe-bottom)); border-radius: 20px 20px 0 0; background: var(--rn-color-surface); box-shadow: 0 -8px 28px rgba(16,24,40,.2); }
+        .rn-report-custom-range:not([hidden])::before { position: fixed; z-index: -1; inset: -100vh 0 0; background: rgba(27,31,39,.48); content: ""; }
         .rn-report-custom-range label { display: grid; gap: 4px; min-width: 0; margin: 0; font-size: var(--rn-type-tag); }
         .rn-report-custom-range input { width: 100%; min-width: 0; min-height: 44px; padding: 7px; border: 1px solid var(--rn-color-border); border-radius: 10px; background: var(--rn-color-surface); color: var(--rn-color-ink); }
         .rn-report-custom-range button { grid-column: 1 / -1; min-height: var(--rn-touch); border: 0; border-radius: 12px; background: var(--rn-color-surface); color: var(--rn-color-primary); font-size: var(--rn-type-button); font-weight: 700; }
@@ -1093,6 +1141,8 @@
         .rn-report-mobile-kpi i.is-green { background: var(--rn-color-success); }
         .rn-report-mobile-kpi i.is-amber { background: var(--rn-color-warning); }
         .rn-report-mobile-kpi i.is-red { background: var(--rn-color-danger); }
+        .rn-report-page .card.bg-success h6::before, .rn-report-page .card.bg-primary h6::before { display: inline-block; width: 9px; height: 9px; margin-inline-end: 7px; border-radius: 50%; background: var(--rn-color-success); content: ""; vertical-align: 1px; }
+        .rn-report-page .card.bg-primary h6::before { background: var(--rn-color-primary-soft); }
         .rn-report-mobile-kpi strong { color: var(--rn-color-ink); font-size: var(--rn-type-card-amount); line-height: 1.2; overflow-wrap: anywhere; }
         .rn-report-mobile-card { min-width: 0; padding: 16px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); box-shadow: var(--rn-shadow-sm); }
         .rn-report-mobile-card h2 { margin: 0; color: var(--rn-color-ink); font-size: var(--rn-type-card-title); font-weight: 700; }
@@ -1305,4 +1355,46 @@
     .rn-m-audit-values summary { min-height: var(--rn-touch); color: var(--rn-color-primary); font-weight: 700; }
     .rn-m-audit-values pre { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--rn-color-muted); font-size: var(--rn-type-tag); }
     .rn-m-audit-values > small { display: block; overflow-wrap: anywhere; }
+
+    /* Final mobile text floor for readable content; status and payment pills keep their compact scale. */
+    .rn-m-hero-meta,
+    .rn-m-stat dt,
+    .rn-m-alert-text span,
+    .rn-m-tx-body span,
+    .rn-m-tx-amount small,
+    .rn-m-card-meta,
+    .rn-m-card-note,
+    .rn-m-date-heading,
+    .rn-m-detail-summary small,
+    .rn-m-detail-summary__subtitle,
+    .rn-purchase-count { font-size: var(--rn-type-helper) !important; }
+    .rn-m-grid-label { font-size: 14px !important; }
+    .rn-new-purchase .rn-purchase-empty p,
+    .rn-new-purchase .rn-purchase-count { font-size: var(--rn-type-helper) !important; }
+    .rn-invoice-shell .rn-invoice-subtitle,
+    .rn-invoice-shell .rn-invoice-help,
+    .rn-invoice-shell .rn-invoice-breadcrumb,
+    .rn-invoice-shell .rn-invoice-overview dt,
+    .rn-invoice-shell table.table th,
+    .rn-invoice-shell table.table td,
+    .rn-invoice-shell .rn-invoice-summary dt,
+    .rn-invoice-shell .rn-invoice-field label,
+    .rn-invoice-shell .rn-invoice-section > p,
+    .rn-invoice-shell .rn-invoice-section .btn,
+    .rn-invoice-shell .signature-label,
+    .signature-label,
+    .btn-sm { font-size: var(--rn-type-helper) !important; }
+    .rn-report-page .rn-report-mobile-card-heading > span,
+    .rn-report-page .rn-report-bar-column small,
+    .rn-report-page .rn-report-bar-label,
+    .rn-report-page .rn-report-table tbody td::before,
+    .rn-report-page .rn-report-table tfoot th,
+    .rn-report-page .rn-report-table tfoot td,
+    .rn-report-page .rn-report-kpi-card p,
+    .rn-report-page .rn-report-header p,
+    .rn-report-page .text-danger,
+    .rn-report-mobile-overview .rn-report-mobile-card-heading > span,
+    .rn-report-mobile-overview .rn-report-bar-column small,
+    .rn-report-mobile-overview .rn-report-bar-label,
+    .rn-report-mobile-overview .rn-report-mobile-kpi > span { font-size: var(--rn-type-helper) !important; }
 }

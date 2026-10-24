@@ -414,11 +414,13 @@ class saleController extends Controller
             }
             $customer = Customer::find($invoice->customerId);
             $items = InvoiceItem::where(['saleId'=>$id])
-            ->join('purchase_products','purchase_products.id','invoice_items.purchaseId')
-            ->join('products','products.id','purchase_products.productName')
+            // Keep historical sale lines visible even if an old/deleted lot or product
+            // record is no longer available. InvoiceItem is the authoritative sale row.
+            ->leftJoin('purchase_products','purchase_products.id','invoice_items.purchaseId')
+            ->leftJoin('products','products.id','purchase_products.productName')
             ->leftJoin('product_units','product_units.id','=','products.unitName')
             ->select(
-                'purchase_products.id as purchaseId',
+                'invoice_items.purchaseId as purchaseId',
                 'products.id as productId',
                 'products.name as productName',
                 // Professional POS code: use product barcode
@@ -432,6 +434,11 @@ class saleController extends Controller
                 'invoice_items.warranty_days',
                 'invoice_items.totalSale',
             )->orderBy('totalSale','desc')->get();
+            $items->each(function ($item) {
+                if (blank($item->productName)) {
+                    $item->productName = __('invoices.item').' #'.$item->purchaseId;
+                }
+            });
 
             // Fetch sold serials for this sale grouped by purchase row for quick lookup
             $serialsByPurchase = ProductSerial::where('saleId', $id)

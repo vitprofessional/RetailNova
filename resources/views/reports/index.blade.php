@@ -1,6 +1,31 @@
 @extends('include')
 @section('backTitle'){{ __('common.heading_reports_dashboard') }}@endsection
 @section('container')
+@mobile
+@php
+    $mobileReports = [
+        ['reports.business', 'ri-bar-chart-line', 'reports.business_report', 'reports.view_overall_business_performance_sales_purchases_and_profit_analysis'],
+        ['reports.sales', 'ri-shopping-cart-line', 'reports.sale_report', 'reports.detailed_sales_transactions_with_date_filtering_and_customer_analysis'],
+        ['reports.purchases', 'ri-file-list-line', 'reports.purchase_report', 'reports.track_all_purchase_transactions_and_supplier_wise_analysis'],
+        ['reports.topCustomers', 'ri-user-star-line', 'reports.top_customers', 'reports.identify_your_best_customers_by_sales_volume_and_order_frequency'],
+        ['reports.payableReceivable', 'ri-money-dollar-circle-line', 'reports.payable_receivable', 'reports.monitor_outstanding_payments_from_customers_and_to_suppliers'],
+        ['reports.stock', 'ri-stack-line', 'reports.stock_low_stock', 'reports.view_current_inventory_levels_and_identify_low_stock_products'],
+    ];
+    if (Route::has('account.reports')) $mobileReports[] = ['account.reports', 'ri-line-chart-line', 'mobile.financial_reports', 'reports.business_report'];
+    if (Route::has('expense.reports')) $mobileReports[] = ['expense.reports', 'ri-wallet-3-line', 'mobile.expense_reports', 'reports.expenses'];
+@endphp
+<main class="rn-m-report-hub">
+    @foreach($mobileReports as [$routeName, $icon, $titleKey, $descriptionKey])
+        @if(Route::has($routeName) && app(\App\Support\MobileNavigation::class)->allows($routeName))
+        <a class="rn-m-report-hub-row" href="{{ route($routeName) }}">
+            <span class="rn-m-report-hub-icon"><i class="{{ $icon }}" aria-hidden="true"></i></span>
+            <span class="rn-m-report-hub-copy"><strong>{{ __($titleKey) }}</strong><small>{{ __($descriptionKey) }}</small></span>
+            <i class="ri-arrow-right-s-line rn-m-report-hub-chevron" aria-hidden="true"></i>
+        </a>
+        @endif
+    @endforeach
+</main>
+@else
 <div class="row rn-report-page">
     <div class="col-lg-12">
         <div class="card card-transparent card-block card-stretch card-height border-none">
@@ -143,4 +168,5 @@
         </div>
     </div>
 </div>
+@endmobile
 @endsection

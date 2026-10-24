@@ -236,14 +236,27 @@
         min-height: 88px;
         padding: 4px 2px;
         color: var(--rn-color-ink);
-        font-size: var(--rn-type-bottom-label);
-        line-height: 1.25;
+        font-size: var(--rn-type-menu-label);
+        font-weight: 600;
+        line-height: 1.2;
         text-align: center;
         text-decoration: none;
-        overflow-wrap: anywhere;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .rn-m-grid-item:hover,
     .rn-m-grid-item:focus-visible { color: var(--rn-color-primary); text-decoration: none; }
+    .rn-m-grid-label {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        font-size: var(--rn-type-menu-label);
+        font-weight: 600;
+        line-height: 1.2;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
     .rn-m-grid-icon {
         display: grid;
         place-items: center;
@@ -254,6 +267,7 @@
         color: var(--rn-color-primary);
         font-size: var(--rn-icon-menu);
     }
+    .rn-m-grid-icon i { font-size: var(--rn-icon-menu); line-height: 1; }
     .rn-m-section-title {
         margin: 20px 0 8px;
         color: var(--rn-color-muted);
@@ -430,6 +444,44 @@
     .rn-m-tx-amount { flex: 0 0 auto; font-weight: 700; text-align: right; }
     .rn-m-tx-amount small { display: block; color: var(--rn-color-warning); font-size: var(--rn-type-tag); font-weight: 600; }
     .rn-m-card .rn-m-empty { margin: 8px 16px 16px; text-align: left; }
+
+    /* Keep readable text at the mobile type scale; compact status pills remain token-sized. */
+    .rn-m-hero-meta,
+    .rn-m-stat dt,
+    .rn-m-alert-text span,
+    .rn-m-tx-body span,
+    .rn-m-tx-amount small,
+    .rn-m-card-meta,
+    .rn-m-card-note,
+    .rn-m-date-heading,
+    .rn-m-detail-summary small,
+    .rn-m-detail-summary__subtitle { font-size: var(--rn-type-helper); }
+    .rn-m-grid-label { font-size: 14px; }
+
+    /* Legacy purchase-invoice markup is still used on small screens; keep its labels readable. */
+    .rn-invoice-shell .rn-invoice-subtitle,
+    .rn-invoice-shell .rn-invoice-help,
+    .rn-invoice-shell .rn-invoice-breadcrumb,
+    .rn-invoice-shell .rn-invoice-overview dt,
+    .rn-invoice-shell table.table th,
+    .rn-invoice-shell table.table td,
+    .rn-invoice-shell .rn-invoice-summary dt,
+    .rn-invoice-shell .rn-invoice-field label,
+    .rn-invoice-shell .rn-invoice-section > p,
+    .rn-invoice-shell .rn-invoice-section .btn,
+    .rn-invoice-shell .signature-label,
+    .rn-invoice-shell .btn-sm,
+    .signature-label,
+    .btn-sm { font-size: var(--rn-type-helper) !important; }
+    .rn-report-page .rn-report-mobile-card-heading > span,
+    .rn-report-page .rn-report-bar-column small,
+    .rn-report-page .rn-report-bar-label,
+    .rn-report-page .rn-report-table tbody td::before,
+    .rn-report-page .rn-report-table tfoot th,
+    .rn-report-page .rn-report-table tfoot td,
+    .rn-report-page .rn-report-kpi-card p,
+    .rn-report-page .rn-report-header p,
+    .rn-report-page .text-danger { font-size: var(--rn-type-helper) !important; }
 
     /* ---------- Sale (POS) ---------- */
     body.rn-app .rn-new-sale-shell { display: flex; flex-direction: column; padding: 0; }

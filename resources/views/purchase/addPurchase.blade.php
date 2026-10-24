@@ -1,4 +1,9 @@
-@extends('include') @section('backTitle') {{ __('navigation.new_purchase') }} @endsection @section('container')
+@extends('include') @section('backTitle') {{ __('navigation.new_purchase') }} @endsection
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/new-purchase.css') }}?v={{ filemtime(public_path('css/new-purchase.css')) }}">
+<link rel="stylesheet" href="{{ asset('css/inventory-products.css') }}?v={{ filemtime(public_path('css/inventory-products.css')) }}">
+@endpush
+@section('container')
 @php
     // Load currency symbol from BusinessSetup or default to BDT '৳'
     $__businessSetup = \App\Models\BusinessSetup::orderBy('id','desc')->first();
@@ -13,8 +18,6 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<link rel="stylesheet" href="{{ asset('css/new-purchase.css') }}?v={{ filemtime(public_path('css/new-purchase.css')) }}">
-<link rel="stylesheet" href="{{ asset('css/inventory-products.css') }}?v={{ filemtime(public_path('css/inventory-products.css')) }}">
 <div class="col-12 rn-new-purchase-shell"><form action="{{ route('savePurchase') }}" class="rn-new-purchase rn-m-form" method="POST" id="savePurchase" data-onsubmit="handleFormSubmit" data-leave-title="{{ __('purchases.unsaved_title') }}" data-leave-message="{{ __('purchases.unsaved_message') }}" data-leave-confirm="{{ __('purchases.leave_page') }}" data-leave-cancel="{{ __('common.cancel') }}">
  @csrf
  @include('purchase.new-purchase.header')

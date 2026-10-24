@@ -93,7 +93,7 @@
                 <h3 id="rnMore-{{ $section['key'] }}" class="rn-m-section-title">{{ $section['title'] }}</h3>
                 <ul class="rn-m-grid" role="list">
                     @foreach($section['items'] as $item)
-                        <li><a href="{{ $item['url'] }}" class="rn-m-grid-item"><span class="rn-m-grid-icon" aria-hidden="true"><i class="{{ $item['icon'] }}"></i></span><span class="rn-m-grid-label">{{ $item['label'] }}</span></a></li>
+                        <li><a href="{{ $item['url'] }}" class="rn-m-grid-item" title="{{ $item['label'] }}"><span class="rn-m-grid-icon" aria-hidden="true"><i class="{{ $item['icon'] }}"></i></span><span class="rn-m-grid-label">{{ $item['label'] }}</span></a></li>
                     @endforeach
                 </ul>
             </section>

@@ -165,8 +165,8 @@
             <div class="alert alert-warning">
                 <h6><i class="ri-alert-line"></i> {{ __('reports.stock_alert') }}</h6>
                 <p class="mb-0">
-                    {{ __('reports.you_have') }} <strong>{{ $lowStockCount }}</strong> {{ __('reports.low_stock_products_and') }}
-                    <strong>{{ $outOfStockCount }}</strong> {{ __('reports.out_of_stock_products') }}
+                    {{ __('reports.you_have') }} <strong>{{ \App\Support\LocalizedNumber::count($lowStockCount) }}</strong>{{ app()->getLocale() === 'bn' ? '' : ' ' }}{{ __('reports.low_stock_products_and') }}
+                    <strong>{{ \App\Support\LocalizedNumber::count($outOfStockCount) }}</strong>{{ app()->getLocale() === 'bn' ? '' : ' ' }}{{ __('reports.out_of_stock_products') }}
                     {{ __('reports.restock_advice') }}
                 </p>
             </div>

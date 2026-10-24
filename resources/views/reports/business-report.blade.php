@@ -14,7 +14,7 @@
             @endforeach
             <button type="button" data-rn-custom-period aria-expanded="{{ $period==='custom'?'true':'false' }}">{{ __('reports.period_custom') }}</button>
         </nav>
-        <form method="GET" action="{{ route('reports.business') }}" class="rn-report-custom-range" @if($period!=='custom') hidden @endif>
+        <form method="GET" action="{{ route('reports.business') }}" class="rn-report-custom-range" role="dialog" aria-modal="true" aria-label="{{ __('reports.filter') }}" @if($period!=='custom') hidden @endif>
             <input type="hidden" name="period" value="custom">
             <label><span>{{ __('reports.start_date') }}</span><input type="date" name="start_date" value="{{ $startDate }}"></label>
             <label><span>{{ __('reports.end_date') }}</span><input type="date" name="end_date" value="{{ $endDate }}"></label>
@@ -23,7 +23,7 @@
     </header>
 
     <section class="rn-report-mobile-kpis" aria-label="{{ __('reports.summary') }}">
-        <article class="rn-report-mobile-kpi" data-rn-export-row data-label="{{ __('reports.sale_report') }}" data-value="{{ \App\Support\LocalizedNumber::money($totalSales) }}"><span><i class="is-teal"></i>{{ __('reports.sale_report') }}</span><strong>{{ \App\Support\LocalizedNumber::money($totalSales) }}</strong></article>
+        <article class="rn-report-mobile-kpi" data-rn-export-row data-label="{{ __('mobile.sale') }}" data-value="{{ \App\Support\LocalizedNumber::money($totalSales) }}"><span><i class="is-teal"></i>{{ __('mobile.sale') }}</span><strong>{{ \App\Support\LocalizedNumber::money($totalSales) }}</strong></article>
         <article class="rn-report-mobile-kpi" data-rn-export-row data-label="{{ __('settings.profit') }}" data-value="{{ \App\Support\LocalizedNumber::money($profit) }}"><span><i class="is-green"></i>{{ __('settings.profit') }}</span><strong>{{ \App\Support\LocalizedNumber::money($profit) }}</strong></article>
         <article class="rn-report-mobile-kpi" data-rn-export-row data-label="{{ __('reports.expenses') }}" data-value="{{ \App\Support\LocalizedNumber::money($totalExpenses) }}"><span><i class="is-amber"></i>{{ __('reports.expenses') }}</span><strong>{{ \App\Support\LocalizedNumber::money($totalExpenses) }}</strong></article>
         <article class="rn-report-mobile-kpi" data-rn-export-row data-label="{{ __('reports.new_due') }}" data-value="{{ \App\Support\LocalizedNumber::money($newDue) }}"><span><i class="is-red"></i>{{ __('reports.new_due') }}</span><strong>{{ \App\Support\LocalizedNumber::money($newDue) }}</strong></article>

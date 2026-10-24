@@ -31,7 +31,7 @@ return [
     'cash_flow' => 'নগদ প্রবাহ',
     'net_sale' => 'নিট বিক্রি',
     'total_stock_qty' => 'মোট মজুতের পরিমাণ',
-    'financial_report' => 'আর্থিক প্রতিবেদন',
+    'financial_report' => 'আর্থিক রিপোর্ট',
     'latest_invoices' => 'সর্বশেষ চালান',
     'low_stock_products' => 'কম মজুতের পণ্য',
     'top_products' => 'শীর্ষ পণ্য',

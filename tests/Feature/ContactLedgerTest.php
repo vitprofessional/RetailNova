@@ -24,14 +24,17 @@ class ContactLedgerTest extends TestCase
         $customer = Customer::forceCreate(['name' => 'Local Ledger Customer', 'businessId' => $business->id]);
         $foreignCustomer = Customer::forceCreate(['name' => 'Foreign Ledger Customer', 'businessId' => $otherBusiness->id]);
 
-        $this->sale((int) $business->id, (int) $customer->id, 'SALE-LOCAL-1', 100, 40);
+        $saleId = $this->sale((int) $business->id, (int) $customer->id, 'SALE-LOCAL-1', 100, 40);
         $this->sale((int) $otherBusiness->id, (int) $foreignCustomer->id, 'SALE-FOREIGN-1', 900, 0);
 
         $this->actingAs($actor, 'admin');
         $response = $this->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 14; Mobile)')
             ->get(route('contact.ledger', ['type' => 'customer', 'id' => $customer->id]))
             ->assertOk()->assertSee('SALE-LOCAL-1')->assertDontSee('SALE-FOREIGN-1')
-            ->assertSee('৳100')->assertSee('৳40')->assertSee('৳60');
+            ->assertSee('৳100')->assertSee('৳40')->assertSee('৳60')
+            ->assertDontSee(__('mobile.ledger_empty'))
+            ->assertSee('href="'.route('invoiceGenerate', ['id' => $saleId]).'"', false)
+            ->assertSee(__('mobile.ledger_transactions'));
 
         $this->assertSame(1, substr_count($response->getContent(), 'SALE-LOCAL-1'));
         $this->get(route('contact.ledger', ['type' => 'customer', 'id' => $foreignCustomer->id]))->assertNotFound();
@@ -90,9 +93,9 @@ class ContactLedgerTest extends TestCase
         ]);
     }
 
-    private function sale(int $businessId, int $customerId, string $invoice, float $total, float $paid): void
+    private function sale(int $businessId, int $customerId, string $invoice, float $total, float $paid): int
     {
-        DB::table('sale_products')->insert([
+        return DB::table('sale_products')->insertGetId([
             'businessId' => $businessId, 'customerId' => $customerId, 'invoice' => $invoice,
             'date' => '2026-10-24', 'grandTotal' => $total, 'paidAmount' => $paid,
             'curDue' => max(0, $total - $paid), 'status' => 'Ordered', 'created_at' => now(), 'updated_at' => now(),

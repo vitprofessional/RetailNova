@@ -9,8 +9,10 @@
         const open = range.hidden;
         range.hidden = !open;
         customButton.setAttribute('aria-expanded', String(open));
+        document.body.classList.toggle('rn-report-filter-open', open);
         if (open) range.querySelector('input[type="date"]')?.focus();
     });
+    range?.addEventListener('submit', () => document.body.classList.remove('rn-report-filter-open'));
 
     root.querySelector('[data-rn-report-download]')?.addEventListener('click', () => {
         const quote = value => `"${String(value ?? '').replaceAll('"', '""')}"`;

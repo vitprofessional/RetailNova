@@ -1,7 +1,9 @@
 @extends('include')
 @section('backTitle'){{ __('purchases.purchase_invoice') }}@endsection
-@section('container')
+@push('styles')
 <link rel="stylesheet" href="{{ asset('css/purchase-invoice.css') }}">
+@endpush
+@section('container')
 <div class="col-12 rn-invoice-shell"><div class="card"><div class="card-body" id="purchaseInvoicePrint">
 @php $paymentStatus=$invoice->due_amount<=0 ? 'paid' : ($invoice->paid_amount>0 ? 'partial' : 'due'); @endphp
 @mobile

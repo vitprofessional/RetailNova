@@ -50,6 +50,7 @@ class MobileShellTest extends TestCase
     public function test_bottom_navigation_and_more_page_are_rendered(): void
     {
         $this->inventory();
+        \App\Models\BusinessSetup::whereKey(1)->update(['businessType' => 'computer_shop']);
         $this->actingAs($this->actor('admin'), 'admin');
 
         $xpath = $this->xpath($this->get(route('dashboard'))->assertOk()->getContent());
@@ -71,6 +72,13 @@ class MobileShellTest extends TestCase
         foreach ($tabHrefs as $href) {
             $this->assertNotContains($href, $grid, 'Bottom-tab destinations are not repeated in More.');
             $this->assertNotContains($href, $shortcutHrefs, 'Bottom-tab destinations are not repeated in Home shortcuts.');
+        }
+        $this->assertNotContains(route('stockProduct'), $grid, 'Stock stays in the bottom tab, not the More page.');
+        $this->assertNotContains(route('productlist'), $grid, 'The product-list alias does not duplicate the Stock tab.');
+        $expectedHomeRoutes = ['addPurchase', 'addCustomer', 'expense.list', 'account.transactions', 'addSupplier', 'returnSaleList', 'quotation.list', 'damageProductList'];
+        $this->assertSame(array_map(fn ($name) => route($name), $expectedHomeRoutes), $shortcutHrefs, 'Home presents the approved eight destinations in order.');
+        foreach ($expectedHomeRoutes as $routeName) {
+            $this->assertNotContains(route($routeName), $tabHrefs, "$routeName is not duplicated from the bottom navigation.");
         }
         foreach (['addPurchase', 'quotation.create', 'addProduct', 'damageProduct', 'provideService', 'expense.create'] as $routeName) {
             $this->assertNotContains(route($routeName), $grid, "$routeName is exposed by a list FAB rather than duplicated in More.");
@@ -107,7 +115,7 @@ class MobileShellTest extends TestCase
         $in = fn (string $key, string $route) => $xpath->query('//section[@data-rn-more-section="'.$key.'"]//a[@href="'.route($route).'"]')->length;
         foreach ([
             'sale' => ['saleList', 'returnSaleList'], 'purchase' => ['purchaseList', 'returnPurchaseList'],
-            'inventory' => ['productlist', 'addCategory', 'damageProductList'], 'people' => ['addCustomer', 'addSupplier'],
+            'inventory' => ['addCategory', 'damageProductList'], 'people' => ['addCustomer', 'addSupplier'],
             'finance' => ['account.chart', 'expense.list'],
             'settings' => ['addBusinessSetupPage'],
         ] as $key => $routes) {
@@ -116,6 +124,7 @@ class MobileShellTest extends TestCase
             }
         }
         $this->assertSame(0, $in('people', 'reports.payableReceivable'), 'Due reporting is presented from the customer filter and report hub, not a duplicate More route.');
+        $this->assertSame(0, $in('inventory', 'productlist'), 'Stock catalog alias is not repeated in More.');
         $this->assertSame('কাস্টমার ও বাকি', trim($xpath->query('//section[@data-rn-more-section="people"]//a[@href="'.route('addCustomer').'"]')->item(0)->textContent));
     }
 
@@ -133,6 +142,11 @@ class MobileShellTest extends TestCase
         foreach (['reports.business', 'reports.sales', 'reports.purchases', 'reports.stock', 'reports.topCustomers', 'reports.payableReceivable', 'account.reports', 'expense.reports'] as $name) {
             $hub->assertSee(route($name), false);
         }
+        $mobileHub = $this->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 13) Mobile')
+            ->get(route('reports.index'))->assertOk()->assertSee('rn-m-report-hub-row', false);
+        $mobileXpath = $this->xpath($mobileHub->getContent());
+        $this->assertGreaterThan(0, $mobileXpath->query('//main[contains(@class,"rn-m-report-hub")]//a[contains(@class,"rn-m-report-hub-row")]')->length);
+        $this->assertSame(0, $mobileXpath->query('//main[contains(@class,"rn-m-report-hub")]//table')->length);
     }
 
     public function test_home_header_shows_brand_date_and_notifications(): void

@@ -19,13 +19,14 @@
     </dl>
     <section class="rn-m-list-section" aria-label="{{ __('mobile.ledger_transactions') }}">
         <h2>{{ __('mobile.ledger_transactions') }}</h2>
-        @forelse($datedTransactions as $date => $rows)
-            <h3 class="rn-m-date-heading">{{ $date }}</h3>
-            <ul class="rn-m-cards" role="list">
-                @foreach($rows as $row)
-                    <x-m.list-card :card="[
+        @if($transactions->isNotEmpty())
+            @foreach($datedTransactions as $date => $rows)
+                <h3 class="rn-m-date-heading">{{ $date }}</h3>
+                <ul class="rn-m-cards" role="list">
+                    @foreach($rows as $row)
+                        <x-m.list-card :card="[
                         'id' => sha1($type.'|'.$row['reference'].'|'.(string)$row['date']),
-                        'url' => null,
+                        'url' => $row['url'] ?? null,
                         'avatar' => mb_substr($row['reference'], 0, 1),
                         'title' => $row['reference'],
                         'subtitle' => $row['description'],
@@ -36,12 +37,13 @@
                         ])),
                         'badge' => ['label' => __('mobile.ledger_'.$type), 'tone' => 'muted'],
                         'actions' => [],
-                    ]" />
-                @endforeach
-            </ul>
-        @empty
+                        ]" />
+                    @endforeach
+                </ul>
+            @endforeach
+        @else
             <x-m.empty-state icon="ri-file-list-3-line" :title="__('mobile.ledger_empty')" />
-        @endforelse
+        @endif
     </section>
 </main>
 @else

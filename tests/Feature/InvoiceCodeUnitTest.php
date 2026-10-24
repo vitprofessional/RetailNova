@@ -95,5 +95,34 @@ class InvoiceCodeUnitTest extends TestCase
         $response->assertSee('SKU-123ABC');
         $response->assertSee('Warranty (days)');
         $response->assertSee('data-label="Warranty (days)" class="text-center">365</td>', false);
+
+        $mobile = $this->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 13) Mobile')
+            ->get(route('invoiceGenerate', ['id' => $saleId]));
+        $mobile->assertOk()->assertSee('data-mobile-sale-invoice', false)
+            ->assertSee('data-invoice-product', false)->assertSee('Test Item')
+            ->assertDontSee('<div class="invoice-qr-section', false)
+            ->assertDontSee('id="invoiceBodyA4"', false)
+            ->assertDontSee('id="invoiceBodyThermal"', false);
+
+        // The user-facing /invoice route must resolve display fields through the
+        // tenant-scoped purchase/product relations instead of returning raw rows.
+        $mobileInvoicePage = $this->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 13) Mobile')
+            ->get(route('invoicePage', ['id' => $saleId]));
+        $mobileInvoicePage->assertOk()->assertSee('data-mobile-sale-invoice', false)
+            ->assertSee('Test Item')->assertSee('data-invoice-product', false)->assertSee('×')
+            ->assertDontSee('id="invoiceBodyA4"', false);
+
+        $thermal = $this->get(route('invoiceThermalPrint', ['id' => $saleId, 'printer' => 'thermal58']));
+        $thermal->assertOk()->assertSee('Test Item');
+
+        DB::table('invoice_items')->insert([
+            'saleId' => $saleId, 'purchaseId' => 999999, 'qty' => 1, 'salePrice' => 20,
+            'buyPrice' => 10, 'totalSale' => 20, 'totalPurchase' => 10,
+            'profitTotal' => 10, 'profitMargin' => '50', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $mobileWithHistoricalLine = $this->get(route('invoiceGenerate', ['id' => $saleId]));
+        $mobileWithHistoricalLine->assertOk()->assertSee(__('invoices.item').' #999999')
+            ->assertDontSee(__('invoices.no_items_found'));
+        $this->assertSame(2, substr_count($mobileWithHistoricalLine->getContent(), 'data-invoice-product'));
     }
 }

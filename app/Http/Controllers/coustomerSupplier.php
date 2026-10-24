@@ -487,6 +487,7 @@ class coustomerSupplier extends Controller
                 $transactions->push([
                     'date' => $sale->date ?? $sale->created_at,
                     'reference' => $sale->invoice ?: __('common.invoice').' #'.$sale->id,
+                    'url' => route('invoiceGenerate', ['id' => $sale->id]),
                     'description' => __('mobile.ledger_sale'),
                     'total' => $total,
                     'paid' => $paid,
@@ -503,6 +504,7 @@ class coustomerSupplier extends Controller
                 $transactions->push([
                     'date' => $invoice->purchase_date ?? $invoice->created_at,
                     'reference' => $invoice->invoice ?: __('purchases.invoice').' #'.$invoice->id,
+                    'url' => route('purchase.invoice.show', ['id' => $invoice->id]),
                     'description' => __('mobile.ledger_purchase'),
                     'total' => (float) $invoice->grand_total,
                     'paid' => (float) $invoice->paid_amount,
@@ -522,6 +524,7 @@ class coustomerSupplier extends Controller
                 $transactions->push([
                     'date' => $line->purchase_date ?? $line->created_at,
                     'reference' => $line->invoice ?: __('purchases.invoice').' #'.$line->id,
+                    'url' => route('purchaseView', ['id' => $line->id]),
                     'description' => $line->product?->name ?: __('mobile.ledger_purchase'),
                     'total' => $total,
                     'paid' => (float) ($line->paidAmount ?? 0),

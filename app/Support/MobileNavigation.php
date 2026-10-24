@@ -34,17 +34,18 @@ class MobileNavigation
 
     /** Labels from lang/*\/mobile.php where the app's own vocabulary differs from the sidebar. */
     private const LABELS = [
-        'dashboard' => 'mobile.home', 'newsale' => 'mobile.sale', 'addPurchase' => 'mobile.purchase', 'purchaseList' => 'mobile.purchase_list',
+        'dashboard' => 'mobile.home', 'newsale' => 'mobile.sale', 'saleList' => 'mobile.sale', 'addPurchase' => 'mobile.purchase', 'purchaseList' => 'mobile.purchase_list',
         'stockProduct' => 'mobile.stock_management', 'expense.list' => 'mobile.expense_list', 'account.transactions' => 'mobile.cashbox',
         'reports.payableReceivable' => 'mobile.due_list', 'reports.business' => 'mobile.business_overview', 'addSupplier' => 'mobile.suppliers',
-        'productlist' => 'mobile.stock_management',
+        'productlist' => 'mobile.stock_management', 'addCustomer' => 'mobile.customer_and_due',
+        'quotation.list' => 'mobile.quotation',
         'returnSaleList' => 'mobile.returns', 'damageProductList' => 'mobile.damaged_items',
     ];
 
     /** Home shortcuts in order of preference; the first eight the user may open are shown. */
     private const SHORTCUTS = [
-        'newsale', 'addPurchase', 'stockProduct', 'reports.payableReceivable', 'expense.list', 'account.transactions',
-        'returnSaleList', 'addSupplier', 'purchaseList', 'damageProductList', 'saleList', 'addCustomer', 'productlist',
+        'addPurchase', 'addCustomer', 'expense.list', 'account.transactions', 'addSupplier', 'returnSaleList',
+        'quotation.list', 'damageProductList',
     ];
 
     /** Creation destinations are exposed by their list FABs, not duplicated in "More". */
@@ -96,6 +97,7 @@ class MobileNavigation
         $sections = array_fill_keys(self::SECTIONS, []);
         foreach ($this->items() as $item) {
             if (!in_array($item['route'], $inTabs, true)
+                && $item['route'] !== 'productlist'
                 && !in_array($item['route'], self::FAB_DESTINATIONS, true)
                 && !in_array($item['route'], $reportRoutes, true)) {
                 if ($item['route'] === 'addCustomer') {
@@ -117,8 +119,10 @@ class MobileNavigation
     {
         $tabRoutes = array_column($this->tabs(), 'route');
         $reportRoutes = ['reports.business', 'reports.sales', 'reports.purchases', 'reports.stock', 'reports.topCustomers', 'reports.payableReceivable', 'account.reports', 'expense.reports'];
+        $homeFabDestinations = array_values(array_diff(self::FAB_DESTINATIONS, ['addPurchase']));
         $byRoute = array_column(array_filter($this->items(), fn (array $item) => !in_array($item['route'], $tabRoutes, true)
-            && !in_array($item['route'], self::FAB_DESTINATIONS, true) && !in_array($item['route'], $reportRoutes, true)), null, 'route');
+            && $item['route'] !== 'productlist'
+            && !in_array($item['route'], $homeFabDestinations, true) && !in_array($item['route'], $reportRoutes, true)), null, 'route');
         $shortcuts = [];
         foreach (self::SHORTCUTS as $route) {
             if (isset($byRoute[$route]) && count($shortcuts) < $limit) {

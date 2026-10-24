@@ -11,6 +11,26 @@ use App\Models\Customer;
 class invoiceController extends Controller
 {
 
+    /**
+     * Resolve invoice rows through their tenant-scoped purchase and product models.
+     * The /invoice and thermal-print routes render different views from the legacy
+     * generate/invoice route, so their rows must be enriched consistently here.
+     */
+    private function invoiceItems(int $saleId)
+    {
+        $items = InvoiceItem::with(['purchase.product.unitModel'])
+            ->where('saleId', $saleId)
+            ->get();
+
+        return $items->each(function (InvoiceItem $item): void {
+            $product = $item->purchase?->product;
+            $item->productId = $product?->id;
+            $item->productName = $product?->name ?? __('invoices.item').' #'.$item->purchaseId;
+            $item->productCode = $product?->barCode;
+            $item->unit = $product?->unitModel?->name;
+        });
+    }
+
     private function authorizeInvoiceBusiness(SaleProduct $invoice): void
     {
         $actor = auth('admin')->user();
@@ -43,7 +63,7 @@ class invoiceController extends Controller
 
         $this->authorizeInvoiceBusiness($invoice);
 
-        $items = InvoiceItem::where('saleId', $invoice->id)->get();
+        $items = $this->invoiceItems((int) $invoice->id);
         $customer = null;
         try{ if($invoice->customerId) $customer = Customer::find($invoice->customerId); }catch(\Throwable $_){ $customer = null; }
 
@@ -64,7 +84,7 @@ class invoiceController extends Controller
 
         $this->authorizeInvoiceBusiness($invoice);
 
-        $items = InvoiceItem::where('saleId', $invoice->id)->get();
+        $items = $this->invoiceItems((int) $invoice->id);
         $customer = null;
         try{ if($invoice->customerId) $customer = Customer::find($invoice->customerId); }catch(\Throwable $_){ $customer = null; }
 

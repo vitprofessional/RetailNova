@@ -56,6 +56,7 @@ return [
     'reset' => 'Reset',
     'save' => 'Save',
     'search' => 'Search',
+    'share' => 'Share',
     'select_business' => 'Select Business',
     'select_category' => 'Select Category',
     'select_product' => 'Select Product',

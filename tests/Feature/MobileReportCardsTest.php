@@ -64,7 +64,7 @@ class MobileReportCardsTest extends TestCase
 
     public function test_report_table_card_script_and_responsive_rules_are_shared(): void
     {
-        $this->get(route('reports.index'))->assertOk()->assertSee('rn-report-page', false);
+        $this->get(route('reports.index'))->assertOk()->assertSee('rn-m-report-hub', false);
 
         $script = file_get_contents(resource_path('views/components/mobile/report-card-script.blade.php'));
         $css = file_get_contents(public_path('css/rn-m-components.css'));
@@ -72,6 +72,44 @@ class MobileReportCardsTest extends TestCase
         $this->assertStringContainsString("cell.dataset.label = headings[index]", $script);
         $this->assertStringContainsString('.rn-report-table tbody tr {', $css);
         $this->assertStringContainsString('content: attr(data-label)', $css);
+    }
+
+    public function test_mobile_sales_report_uses_one_line_periods_and_filter_sheet_trigger(): void
+    {
+        $response = $this->get(route('reports.sales'))->assertOk()
+            ->assertSee('data-rn-report-period-tools', false)
+            ->assertSee('data-rn-report-filter', false)
+            ->assertSee('data-rn-report-period="today"', false)
+            ->assertSee('data-rn-report-period="week"', false)
+            ->assertSee('data-rn-report-period="month"', false)
+            ->assertSee('data-rn-report-period="custom"', false);
+
+        $css = file_get_contents(public_path('css/rn-m-components.css'));
+        $script = file_get_contents(resource_path('views/components/mobile/report-card-script.blade.php'));
+        $this->assertStringContainsString('white-space: nowrap;', $css);
+        $this->assertStringContainsString('position: fixed;', $css);
+        $this->assertStringContainsString('data-rn-report-filter', $script);
+        $this->assertStringContainsString('data-rn-filter-apply', $script);
+        $this->assertStringContainsString('aria-modal="true"', $script);
+        $document = new \DOMDocument();
+        @$document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
+        $this->assertSame(1, (new \DOMXPath($document))->query('//*[@data-rn-report-filter]')->length);
+    }
+
+    public function test_mobile_sales_report_localizes_transaction_date_and_profit_currency(): void
+    {
+        auth('admin')->user()->forceFill(['preferred_locale' => 'bn'])->save();
+        $saleDate = now()->toDateString();
+        SaleProduct::forceCreate([
+            'businessId' => 1, 'date' => $saleDate, 'invoice' => 'MOBILE-REPORT-LOCALE-1',
+            'totalSale' => 300, 'grandTotal' => 321, 'curDue' => 0,
+        ]);
+
+        $this->get(route('reports.sales'))
+            ->assertOk()
+            ->assertSee(\App\Support\MobileDateTime::date($saleDate))
+            ->assertSee(\App\Support\LocalizedNumber::money(21))
+            ->assertDontSee('৳0.00');
     }
 
     public function test_business_overview_groups_monthly_sales_on_sqlite_without_cross_business_rows(): void
@@ -129,7 +167,7 @@ class MobileReportCardsTest extends TestCase
         $this->get(route('reports.business', ['period' => 'week']))
             ->assertOk()
             ->assertSee('ব্যবসার ওভারভিউ')
-            ->assertSee('প্রতিবেদন ডাউনলোড')
+            ->assertSee('রিপোর্ট ডাউনলোড')
             ->assertSee('গত ৭ দিনের বিক্রি')
             ->assertSee('এই সময়ে কোনো পণ্য বিক্রি হয়নি।')
             ->assertDontSee('Business Overview')

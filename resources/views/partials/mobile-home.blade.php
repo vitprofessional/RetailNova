@@ -23,7 +23,7 @@
         <h2 class="sr-only">{{ __('mobile.shortcuts') }}</h2>
         <ul class="rn-m-grid" role="list">
             @foreach($mobileNav->shortcuts() as $item)
-                <li><a href="{{ $item['url'] }}" class="rn-m-grid-item"><span class="rn-m-grid-icon" aria-hidden="true"><i class="{{ $item['icon'] }}"></i></span><span class="rn-m-grid-label">{{ $item['label'] }}</span></a></li>
+                <li><a href="{{ $item['url'] }}" class="rn-m-grid-item" title="{{ $item['label'] }}"><span class="rn-m-grid-icon" aria-hidden="true"><i class="{{ $item['icon'] }}"></i></span><span class="rn-m-grid-label">{{ $item['label'] }}</span></a></li>
             @endforeach
         </ul>
 

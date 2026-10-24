@@ -94,7 +94,7 @@ return [
     'period' => 'Report period',
     'period_today' => 'Today',
     'period_week' => '7 days',
-    'period_month' => 'This month',
+    'period_month' => 'Month',
     'period_custom' => 'Custom',
     'apply_period' => 'Apply',
     'summary' => 'Summary',
