@@ -46,7 +46,10 @@ class SubscriptionAdminController extends Controller
     {
         $subs = Subscription::with('plan')->orderBy('created_at','desc')->paginate(20);
         $plans = SubscriptionPlan::where('is_active',true)->get();
-        return view('admin.subscriptions.index', compact('subs','plans'));
+        $businesses = \App\Models\BusinessSetup::orderBy('businessName')->get(['id', 'businessName']);
+        $businessMap = \App\Models\BusinessSetup::whereIn('id', $subs->getCollection()->pluck('business_id')->unique())
+            ->pluck('businessName', 'id');
+        return view('admin.subscriptions.index', compact('subs','plans','businesses','businessMap'));
     }
 
     public function store(Request $request)

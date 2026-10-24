@@ -423,6 +423,7 @@ return [
     'select_supplier' => 'মহাজন নির্বাচন করুন',
     'save_changes' => 'পরিবর্তন সেভ করুন',
     'loading' => 'লোড হচ্ছে...',
+    'branch' => 'শাখা',
     'no_records_found' => 'কোনো রেকর্ড পাওয়া যায়নি।',
     'no_data_available' => 'কোনো তথ্য নেই',
     'terms_conditions' => 'শর্তাবলি',

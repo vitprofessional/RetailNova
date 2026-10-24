@@ -122,7 +122,7 @@
                 <form id="bulk-delete-form" action="{{ route($routeBase.'.users.bulkDelete') }}" method="POST">
                 @csrf
                 <button type="submit" id="bulk-hidden-submit" class="d-none"></button>
-                <table class="table table-striped table-hover">
+                <table class="table table-striped table-hover rn-superadmin-user-table">
                     <thead>
                         <tr>
                             <th style="width:32px"><input type="checkbox" id="select-all"></th>
@@ -146,7 +146,7 @@
                             <td>{{ $u->fullName }}</td>
                             <td><a href="mailto:{{ $u->mail }}">{{ $u->mail }}</a></td>
                             <td><span class="{{ $badge }}">{{ ucfirst($u->role) }}</span></td>
-                            <td>{{ ($businessMap[$u->businessId] ?? '') ?: ($u->businessId ?: '-') }}</td>
+                            <td>{{ ($businessMap[$u->businessId] ?? '') ?: __('common.no_data_found') }}</td>
                             <td>{{ $u->contactNumber ?: '-' }}</td>
                             <td>{{ optional($u->created_at)->format('Y-m-d') ?: '-' }}</td>
                             <td class="text-right">
@@ -263,6 +263,16 @@
                 // Initialize state on load
                 updateModalCount();
                 updateBulkBtn();
+            })();
+            </script>
+            <script>
+            (function(){
+                var table = document.querySelector('.rn-superadmin-user-table');
+                if(!table) return;
+                var labels = Array.from(table.querySelectorAll('thead th')).map(function(th){ return th.textContent.trim(); });
+                table.querySelectorAll('tbody tr').forEach(function(row){
+                    Array.from(row.children).forEach(function(cell,index){ if(cell.tagName === 'TD' && labels[index]) cell.dataset.label = labels[index]; });
+                });
             })();
             </script>
         </div>

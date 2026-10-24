@@ -17,7 +17,7 @@
                 <div class="mt-2"><button class="btn btn-primary btn-sm">{{ __('common.add_plan') }}</button></div>
             </form>
 
-            <table class="table">
+            <table class="table rn-superadmin-desktop-list">
                 <thead><tr><th>{{ __('common.name') }}</th><th>{{ __('common.price') }}</th><th>{{ __('common.days') }}</th><th>{{ __('common.actions') }}</th></tr></thead>
                 <tbody>
                     @foreach($plans as $p)
@@ -35,6 +35,25 @@
                     @endforeach
                 </tbody>
             </table>
+            <div class="rn-superadmin-mobile-list" aria-label="{{ __('common.plans') }}">
+                @forelse($plans as $p)
+                    <article class="rn-superadmin-card">
+                        <div class="rn-superadmin-card__main">
+                            <strong>{{ $p->name }}</strong>
+                            <span>@money($p->price) · {{ $p->duration_days }} {{ __('common.days') }}</span>
+                            @if($p->features)<small>{{ $p->features }}</small>@endif
+                        </div>
+                        <details class="rn-superadmin-menu">
+                            <summary aria-label="{{ __('common.actions') }}">⋮</summary>
+                            <div class="rn-superadmin-menu__items"><form action="{{ route('admin.super.subscriptions.plans.delete', $p->id) }}" method="POST">@csrf @method('DELETE')
+                                <button type="submit" onclick="return confirm('{{ __('common.confirm_delete') }}')">{{ __('common.delete') }}</button>
+                            </form></div>
+                        </details>
+                    </article>
+                @empty
+                    <div class="rn-m-empty-state">{{ __('common.no_data_found') }}</div>
+                @endforelse
+            </div>
         </div>
     </div>
 </div>

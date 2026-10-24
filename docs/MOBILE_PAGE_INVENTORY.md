@@ -26,14 +26,14 @@
 | `/admin/manage/users/{id}/edit` | `admin.manage.users.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/admin/profile` | `admin.profile.show` | অন্য | সার্ভারে রেন্ডার |  |
 | `/admin/profile/edit` | `admin.profile.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
-| `/admin/provide-services/missing-data` | `admin.provideServices.missing` | তালিকা | সার্ভারে রেন্ডার |  |
+| `/admin/provide-services/missing-data` | `admin.provideServices.missing` | তালিকা | সার্ভারে রেন্ডার | UI-3.S |
 | `/admin/provide-services/missing-data/export` | `admin.provideServices.missing.export` | অন্য | ফাইল ডাউনলোড |  |
-| `/admin/super/gateways` | `admin.super.gateways.index` | তালিকা — তালিকা + ফর্ম | সার্ভারে রেন্ডার |  |
-| `/admin/super/stores` | `admin.super.stores.index` | তালিকা | সার্ভারে রেন্ডার |  |
-| `/admin/super/subscriptions` | `admin.super.subscriptions.index` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন |  |
-| `/admin/super/subscriptions/plans` | `admin.super.subscriptions.plans` | তালিকা — তালিকা + ফর্ম | সার্ভারে রেন্ডার |  |
+| `/admin/super/gateways` | `admin.super.gateways.index` | তালিকা — তালিকা + ফর্ম | সার্ভারে রেন্ডার | UI-3.S |
+| `/admin/super/stores` | `admin.super.stores.index` | তালিকা | সার্ভারে রেন্ডার | UI-3.S |
+| `/admin/super/subscriptions` | `admin.super.subscriptions.index` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন | UI-3.S |
+| `/admin/super/subscriptions/plans` | `admin.super.subscriptions.plans` | তালিকা — তালিকা + ফর্ম | সার্ভারে রেন্ডার | UI-3.S |
 | `/admin/super/subscriptions/{id}/cancel` | `admin.super.subscriptions.cancel` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
-| `/admin/super/users` | `admin.super.users.index` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন (ফর্ম মডালে) |  |
+| `/admin/super/users` | `admin.super.users.index` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন (ফর্ম মডালে) | UI-3.S |
 | `/admin/super/users/{id}/edit` | `admin.super.users.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/ajax/customer/{id}/products` | `ajax.customer.products` | অন্য | AJAX JSON (পাতা নয়) |  |
 | `/ajax/public/brands` | `ajax.brands.public` | অন্য | AJAX JSON (পাতা নয়) |  |

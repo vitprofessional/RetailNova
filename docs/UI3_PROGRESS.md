@@ -108,4 +108,14 @@ Mobile screenshots at 390×844 are in ignored `tests-output/ui-3-final/E/`; capt
 
 Focused `MobileReportCardsTest`: 2 tests, 12 assertions. Full isolated SQLite feature suite: 340 tests, 10,766 assertions, 0 failures, 6 PHPUnit deprecations. Blade cache compilation passed. Mockup 07 comparison is partial: report rows and compact KPIs are responsive, but separate reports retain their existing filters and headers rather than becoming a single consolidated overview panel; see capture notes.
 
-Next: close remaining mobile-list coverage and implement the Super Admin list patterns. The two report data-source blockers remain open.
+Next: close any remaining mobile-list and secondary-page inventory marked blank or partial below. The two report data-source blockers remain open.
+
+## UI-3.S — Super Admin lists
+
+Implemented responsive record cards for Super Admin stores, subscription plans, subscriptions, payment gateways, and users, plus the missing-service-data admin list. Existing create/edit/delete routes remain in place; card actions are grouped under a compact overflow menu, and subscription cards resolve business names rather than showing business IDs. The missing-service page now renders its existing filters and initial table partial before its AJAX refresh.
+
+Authenticated browser screenshots were captured at 390×844 for all six routes and at 1280×800 for stores using the isolated SQLite fixture and Android mobile user agent. All routes returned HTTP 200 with no viewport horizontal overflow or page JavaScript exceptions. Visual comparison with mockup 09 confirms the teal title bar, compact white record cards, concise metadata, and overflow actions. Super Admin pages remain simpler than the general list mockup: they keep their existing create/filter forms, do not use date grouping or period chips, and the users list is rendered as labeled compact cards rather than the same card component. Screenshots and comparison notes are in ignored `tests-output/ui-3-final/F/`.
+
+The focused `MobileSuperAdminListsTest` passes (2 tests, 27 assertions). Full isolated SQLite suite passes (343 tests, 10,845 assertions, 0 failures, 6 PHPUnit deprecations). `view:cache` and `git diff --check` are the final checks for this phase. The screenshots use only an isolated database; no development or production database was changed. A first capture attempt used an incorrect seed/router setup and showed the login page; after correcting the temporary fixture hash and public-root routing, the final authenticated captures succeeded.
+
+Still outstanding from the broader UI-3 inventory: mobile report/business overview is blocked by the existing SQLite-incompatible `YEAR()`/`MONTH()` query, `/balance/sheet` uses legacy static example data, and list/detail/form routes not explicitly covered in phases A–F remain marked below in the inventory. Screenshots are local ignored artifacts and were not committed.

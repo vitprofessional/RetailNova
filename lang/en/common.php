@@ -423,6 +423,7 @@ return [
     'select_supplier' => 'Select Supplier',
     'save_changes' => 'Save Changes',
     'loading' => 'Loading...',
+    'branch' => 'Branch',
     'no_records_found' => 'No records found.',
     'no_data_available' => 'No data available',
     'terms_conditions' => 'Terms & Conditions',

@@ -1140,4 +1140,50 @@
         .rn-report-page canvas { max-height: 190px; }
     }
 
+    /* ---------- Super Admin mobile lists ---------- */
+    .rn-superadmin-mobile-list { display: none; }
+    .rn-superadmin-page { min-width: 0; }
+    @media (max-width: 767px) {
+        .rn-superadmin-mobile-list { display: grid; gap: 10px; margin: 12px 0; }
+        .rn-superadmin-desktop-list,
+        .rn-superadmin-missing-desktop { display: none !important; }
+        .rn-superadmin-page .table-responsive { display: none !important; }
+        .rn-superadmin-page .rn-superadmin-table-card-body { display: none !important; }
+        .rn-superadmin-pagination { display: block; margin: 8px 0 16px; }
+        .rn-superadmin-card { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-width: 0; padding: 14px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); }
+        .rn-superadmin-card__main { display: grid; min-width: 0; gap: 5px; padding-right: 4px; }
+        .rn-superadmin-card__main strong { color: var(--rn-color-ink); font-size: 15px; font-weight: 700; line-height: 1.4; overflow-wrap: anywhere; }
+        .rn-superadmin-card__main span,
+        .rn-superadmin-card__main small { color: var(--rn-color-muted); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+        .rn-superadmin-tag { display: inline-flex; width: fit-content; max-width: 100%; padding: 4px 9px; border-radius: 999px; background: var(--rn-color-primary-tint); color: var(--rn-color-primary); font-size: 12px; font-weight: 700; }
+        .rn-superadmin-menu { position: relative; flex: 0 0 auto; }
+        .rn-superadmin-menu > summary { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid var(--rn-color-border); border-radius: 12px; color: var(--rn-color-ink); font-size: 22px; line-height: 1; list-style: none; cursor: pointer; }
+        .rn-superadmin-menu > summary::-webkit-details-marker { display: none; }
+        .rn-superadmin-menu__items { position: absolute; z-index: 1040; top: 44px; right: 0; display: grid; min-width: 148px; gap: 2px; padding: 5px; border: 1px solid var(--rn-color-border); border-radius: 12px; background: var(--rn-color-surface); box-shadow: var(--rn-shadow-md); }
+        .rn-superadmin-menu__items > a,
+        .rn-superadmin-menu__items > form > button,
+        .rn-superadmin-edit > summary { display: block; width: 100%; min-height: 42px; padding: 10px; border: 0; border-radius: 8px; background: transparent; color: var(--rn-color-ink); text-align: left; text-decoration: none; cursor: pointer; }
+        .rn-superadmin-menu__items form { margin: 0; }
+        .rn-superadmin-edit form { display: grid; gap: 10px; min-width: min(280px, calc(100vw - 64px)); padding: 10px; }
+        .rn-superadmin-edit label { display: grid; gap: 5px; color: var(--rn-color-muted); font-size: 12px; font-weight: 600; }
+        .rn-superadmin-edit .form-control { min-height: 44px; }
+        .rn-superadmin-checkbox { display: flex !important; align-items: center; gap: 8px !important; min-height: 44px; }
+        .rn-superadmin-user-table { display: block; width: 100%; min-width: 0; border: 0; }
+        .rn-superadmin-user-table thead { display: none; }
+        .rn-superadmin-user-table tbody { display: grid; gap: 10px; }
+        .rn-superadmin-user-table tbody tr { position: relative; display: grid; gap: 0; min-width: 0; padding: 8px 12px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); }
+        .rn-superadmin-user-table tbody td { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; min-width: 0; padding: 7px 0 !important; border: 0 !important; border-bottom: 1px solid var(--rn-color-line) !important; overflow-wrap: anywhere; text-align: right; }
+        .rn-superadmin-user-table tbody td::before { flex: 0 0 34%; color: var(--rn-color-muted); content: attr(data-label); font-size: 12px; font-weight: 600; text-align: left; }
+        .rn-superadmin-user-table tbody td:first-child { position: absolute; top: 8px; right: 9px; z-index: 1; border: 0 !important; }
+        .rn-superadmin-user-table tbody td:first-child::before,
+        .rn-superadmin-user-table tbody td:nth-child(2)::before { content: none; }
+        .rn-superadmin-user-table tbody td:nth-child(2) { display: none !important; }
+        .rn-superadmin-user-table tbody td:nth-child(3) { padding-right: 38px !important; color: var(--rn-color-ink); font-weight: 700; }
+        .rn-superadmin-user-table tbody td:last-child { border-bottom: 0 !important; flex-wrap: wrap; justify-content: flex-end; }
+        .rn-superadmin-user-table tbody td[colspan] { display: block; text-align: center; }
+        .rn-superadmin-user-table tbody td[colspan]::before { content: none; }
+        .rn-superadmin-page .card-body { min-width: 0; }
+        .rn-superadmin-page .table-responsive { overflow: visible; }
+    }
+
 }

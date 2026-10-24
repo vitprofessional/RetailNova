@@ -1,6 +1,6 @@
 <div>
     <div class="table-responsive">
-        <table class="table table-bordered">
+        <table class="table table-bordered rn-superadmin-missing-desktop">
             <thead>
                 <tr>
                     <th>{{ __('common.id') }}</th>
@@ -30,6 +30,22 @@
                 @endforelse
             </tbody>
         </table>
+
+        <div class="rn-superadmin-mobile-list" aria-label="{{ __('common.provide_services_missing_rate_or_qty') }}">
+            @forelse($rows as $r)
+                <article class="rn-superadmin-card">
+                    <div class="rn-superadmin-card__main">
+                        <strong>{{ $r->serviceName }}</strong>
+                        <span>{{ $r->customerLabel() }} · {{ optional($r->created_at)->format('d/m/Y') }}</span>
+                        <span>{{ __('common.amount') }}: @currency($r->amount)</span>
+                        <span>{{ __('common.qty') }}: {{ $r->qty ?? '—' }} · {{ __('common.rate') }}: @currency($r->rate ?? 0)</span>
+                        @if($r->note)<small>{{ $r->note }}</small>@endif
+                    </div>
+                </article>
+            @empty
+                <div class="rn-m-empty-state">{{ __('common.no_rows_found') }}</div>
+            @endforelse
+        </div>
 
         <div class="mt-3">
             {{ $rows->links() }}
