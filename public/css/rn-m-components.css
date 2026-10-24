@@ -678,6 +678,24 @@
         .rn-m-damage-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
         .rn-m-damage-actions .rn-m-btn { min-height: 48px; margin: 0; }
     }
+    @media (max-width: 992px) {
+        .rn-m-sale-edit-page > .col-md-8 { width: 100%; max-width: 100%; flex: 0 0 100%; }
+        .rn-m-sale-edit-summary > .card-body { padding: 14px; }
+        .rn-m-sale-edit-summary > .card-body > .d-flex { align-items: flex-start !important; flex-direction: column; gap: 10px; }
+        .rn-m-sale-edit-summary > .card-body > .d-flex .btn { min-height: 44px; }
+        .rn-m-sale-edit-form { padding-bottom: calc(var(--rn-m-tabbar-h) + 82px + var(--rn-safe-bottom)); }
+        .rn-m-sale-edit-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; margin: 0; padding: 14px; }
+        .rn-m-sale-edit-fields > .form-group { min-width: 0; margin-bottom: 14px !important; }
+        .rn-m-sale-edit-paid,
+        .rn-m-sale-edit-note { grid-column: 1 / -1; }
+        .rn-m-sale-edit-fields .form-control { width: 100%; min-width: 0; min-height: 48px; border-color: var(--rn-color-border); border-radius: var(--rn-radius-md); }
+        .rn-m-sale-edit-fields textarea.form-control { min-height: 96px; }
+        .rn-m-sale-edit-status { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px !important; margin-top: 10px !important; }
+        .rn-m-sale-edit-status > div { min-width: 0; padding: 8px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); background: var(--rn-color-surface); overflow-wrap: anywhere; }
+        .rn-m-sale-edit-status #saleDuePreview { white-space: nowrap; }
+        .rn-m-sale-edit-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+        .rn-m-sale-edit-actions .rn-m-btn { min-height: 48px; margin: 0; }
+    }
     @media (max-width: 359px) {
         .rn-m-form-grid--2 { grid-template-columns: minmax(0, 1fr); }
     }

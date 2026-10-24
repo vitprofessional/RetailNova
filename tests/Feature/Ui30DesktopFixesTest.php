@@ -67,6 +67,27 @@ class Ui30DesktopFixesTest extends TestCase
         $this->assertEquals(50.0, (float) $sale->fresh()->curDue);
     }
 
+    public function test_mobile_sale_edit_uses_shared_form_components_without_changing_payment_fields(): void
+    {
+        $inventory = $this->inventory(1);
+        $actor = $this->actor('admin', 1);
+        $this->actingAs($actor, 'admin');
+        $sale = $this->sell($inventory, 1, false, null, ['payment_method' => 'bkash']);
+
+        $this->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 13) Mobile')
+            ->get(route('sale.edit', ['id' => $sale->id]))
+            ->assertOk()
+            ->assertSee('rn-m-sale-edit-page', false)
+            ->assertSee('class="rn-m-form rn-m-sale-edit-form"', false)
+            ->assertSee('name="paidAmount"', false)
+            ->assertSee('name="date"', false)
+            ->assertSee('name="payment_method"', false)
+            ->assertSee('name="note"', false)
+            ->assertSee('rn-m-sale-edit-actions', false)
+            ->assertSee('value="bkash" selected', false)
+            ->assertSee(route('sale.items.edit', ['id' => $sale->id]));
+    }
+
     public function test_desktop_sale_cancel_form_skips_generic_confirmation_for_reason_prompt(): void
     {
         $inventory = $this->inventory(1);
