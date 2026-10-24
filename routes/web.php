@@ -507,7 +507,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
     Route::get('/return/purchase/{id}',[
         purchase::class,
         'returnPurchase'
-    ])->name('returnPurchase');
+    ])->whereNumber('id')->name('returnPurchase');
 
     Route::post('purchase/return/save',[
         purchase::class,

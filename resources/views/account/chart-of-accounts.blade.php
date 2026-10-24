@@ -3,6 +3,24 @@
 @section('backTitle'){{ __('common.heading_chart_of_accounts') }}@endsection
 
 @section('container')
+@mobile
+<section class="rn-m-list-page" data-rn-list="accounts">
+  <ul class="rn-m-cards" role="list">
+    @forelse($accounts as $account)
+      <x-m.list-card :card="['id'=>$account->id,'url'=>route('account.ledger',$account->id),'avatar'=>mb_substr($account->account_code,0,1),'title'=>$account->account_name,'subtitle'=>$account->account_code.' · '.ucfirst($account->account_type),'amount'=>\App\Support\LocalizedNumber::money($account->current_balance),'meta'=>array_values(array_filter([$account->parentAccount?->account_name])),'badge'=>['label'=>$account->is_active?__('common.active'):__('common.inactive'),'tone'=>$account->is_active?'success':'muted'],'actions'=>[['type'=>'link','label'=>__('common.view_ledger'),'url'=>route('account.ledger',$account->id),'icon'=>'ri-book-2-line'],['type'=>'link','label'=>__('common.edit'),'url'=>route('account.edit',$account->id),'icon'=>'ri-pencil-line'],['type'=>'link','label'=>__('common.delete'),'url'=>route('account.delete',$account->id),'icon'=>'ri-delete-bin-line']]]" />
+    @empty
+      <li class="rn-m-empty">{{ __('common.no_accounts_found') }} <a href="{{ route('account.create') }}">{{ __('common.create_your_first_account') }}</a></li>
+    @endforelse
+  </ul>
+  <x-m.fab :url="route('account.create')" :label="__('common.add_new_account')" />
+  <section class="rn-m-summary-panel">
+    <h2>{{ __('common.account_summary_by_type') }}</h2>
+    @foreach([['total_assets','asset'],['total_liabilities','liability'],['total_equity','equity']] as [$label,$type])
+      <div class="rn-m-summary-row"><span>{{ __('common.'.$label) }}</span><strong>{{ \App\Support\LocalizedNumber::money($accounts->where('account_type',$type)->sum('current_balance')) }}</strong></div>
+    @endforeach
+  </section>
+</section>
+@else
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -139,4 +157,5 @@
         </div>
     </div>
 </div>
+@endmobile
 @endsection

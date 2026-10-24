@@ -246,6 +246,7 @@ return [
     'create_rma' => 'Create RMA',
     'serial' => 'Serial',
     'open' => 'Open',
+    'draft' => 'Draft',
     'in_progress' => 'In Progress',
     'resolved' => 'Resolved',
     'closed' => 'Closed',

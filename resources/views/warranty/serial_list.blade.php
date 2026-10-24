@@ -2,6 +2,20 @@
 
 @section('backTitle'){{ __('common.heading_warranty_serial_list') }}@endsection
 @section('container')
+@mobile
+<section class="rn-m-list-page" data-rn-list="serials">
+  <header class="rn-m-list-header"><div class="rn-m-list-toolbar"><form class="rn-m-search" id="serialSearch" method="GET" role="search"><i class="ri-search-line"></i><label class="sr-only" for="serialQuery">{{ __('common.search_serial') }}</label><input id="serialQuery" type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('common.search_serial') }}"><button type="submit" class="sr-only">{{ __('common.search') }}</button></form></div></header>
+  <ul class="rn-m-cards" role="list">
+    @forelse($serials as $s)
+      <x-m.list-card :card="['id'=>$s->id,'url'=>null,'avatar'=>mb_substr((string)($s->serialNumber ?? $s->serial ?? $s->serial_number),0,1),'title'=>$s->serialNumber ?? $s->serial ?? $s->serial_number,'subtitle'=>$s->product?->name ?? null,'amount'=>'','meta'=>array_values(array_filter([$s->created_at ? \App\Support\MobileDateTime::date($s->created_at).' '.\App\Support\MobileDateTime::time($s->created_at) : null])),'badge'=>null,'actions'=>[]]" />
+    @empty
+      <li class="rn-m-empty">{{ __('common.no_serials_found') }}</li>
+    @endforelse
+  </ul>
+  {{ $serials->links() }}
+  <a class="rn-m-btn rn-m-btn--outline" href="{{ route('serials.export', request()->all()) }}">{{ __('common.export_csv') }}</a>
+</section>
+@else
 <div class="col-12">
     <h4>{{ __('common.product_serials') }}</h4>
     <p class="text-muted">{{ __('common.listing_of_product_serials') }}</p>
@@ -47,4 +61,5 @@
         </div>
     </div>
 </div>
+@endmobile
 @endsection

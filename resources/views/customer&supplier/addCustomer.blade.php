@@ -6,6 +6,16 @@
 @include('mobile.contacts.form', ['type' => 'customers', 'profile' => $profile ?? null, 'businesses' => $businesses ?? null])
 @else
 @include('mobile.lists.page', ['list' => app(\App\Services\MobileLists\CustomersList::class)])
+@if(isset($trashedList) && count($trashedList) > 0)
+<section class="rn-m-list-section rn-m-restored-list">
+    <h2>{{ __('customers.deleted_customers') }}</h2>
+    <ul class="rn-m-cards" role="list">
+        @foreach($trashedList as $deletedCustomer)
+            <x-m.list-card :card="['id' => $deletedCustomer->id, 'url' => null, 'avatar' => mb_substr($deletedCustomer->name, 0, 1), 'title' => $deletedCustomer->name, 'subtitle' => null, 'amount' => '', 'meta' => array_values(array_filter([$deletedCustomer->mobile ?: null, $deletedCustomer->deleted_at ? \App\Support\MobileDateTime::date($deletedCustomer->deleted_at) : null])), 'badge' => ['label' => __('customers.deleted_at'), 'tone' => 'muted'], 'actions' => [['type' => 'link', 'label' => __('customers.restore'), 'url' => route('restoreCustomer', ['id' => $deletedCustomer->id]), 'icon' => 'ri-refresh-line']]]" />
+        @endforeach
+    </ul>
+</section>
+@endif
 @endif
 @else
 @php $canDeleteAllData = auth('admin')->user()?->canDeleteAllRelatedData() ?? false; @endphp

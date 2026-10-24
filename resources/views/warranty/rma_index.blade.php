@@ -3,6 +3,26 @@
 @section('title','Warranty - RMA list')
 @section('backTitle'){{ __('common.heading_warranty_rma_list') }}@endsection
 @section('container')
+@mobile
+<section class="rn-m-list-page" data-rn-list="rma">
+  <header class="rn-m-list-header"><div class="rn-m-list-toolbar"><form method="GET" class="rn-m-search" role="search"><i class="ri-search-line"></i><label class="sr-only" for="rmaSearch">{{ __('mobile.list_search') }}</label><input id="rmaSearch" type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('mobile.list_search') }}"></form></div></header>
+  <ul class="rn-m-cards" role="list">
+    @forelse($rmas as $r)
+      @php($customerName = $r->customer?->name ?? __('mobile.walk_in_customer'))
+      @php($rmaActions = [['type'=>'link','label'=>__('common.view'),'url'=>route('rma.show',$r->id),'icon'=>'ri-eye-line']])
+      @canEdit(false)
+        @php($rmaActions[] = ['type'=>'link','label'=>__('common.edit'),'url'=>route('rma.edit',$r->id),'icon'=>'ri-pencil-line'])
+        @php($rmaActions[] = ['type'=>'form','label'=>__('common.delete'),'url'=>route('rma.destroy',$r->id),'icon'=>'ri-delete-bin-line','method'=>'DELETE','confirm'=>__('common.notification_rma_deleted'),'fields'=>[],'attributes'=>['data-onsubmit'=>'confirm']])
+      @endcanEdit
+      <x-m.list-card :card="['id'=>$r->id,'url'=>route('rma.show',$r->id),'avatar'=>mb_substr($customerName,0,1),'title'=>$customerName,'subtitle'=>optional($r->productSerial)->serialNumber ?: ($r->reason ?: null),'amount'=>'','meta'=>array_values(array_filter([$r->created_at ? \App\Support\MobileDateTime::date($r->created_at) : null])),'badge'=>['label'=>__('common.'.$r->status),'tone'=>in_array($r->status,['resolved','closed'])?'success':'warning'],'actions'=>$rmaActions]" />
+    @empty
+      <li class="rn-m-empty">{{ __('common.no_rmas_found') }}</li>
+    @endforelse
+  </ul>
+  {{ $rmas->links() }}
+  <x-m.fab :url="route('rma.create')" :label="__('common.new_rma')" />
+</section>
+@else
 <div class="col-12">
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h4>{{ __('common.rma_returns') }}</h4>
@@ -84,4 +104,5 @@
         </div>
     </div>
 </div>
+@endmobile
 @endsection

@@ -137,8 +137,14 @@ class MobileListPagesTest extends TestCase
             $this->assertGreaterThan(0, $xpath->query('//ul[@data-rn-cards]/li[contains(@class,"rn-m-card")]')->length, $route);
             $this->assertStringContainsString($text, $xpath->query('//ul[@data-rn-cards]')->item(0)->textContent, $route);
             $this->assertCount(1, $xpath->query('//*[@data-rn-list]//form[@role="search"]//input[@name="q"]'), $route);
+            if ($route === 'stockProduct') {
+                $this->assertCount(0, $xpath->query('//dl[contains(@class,"rn-m-summary")]/div'), 'Lot-level stock is shown without product-level summary figures.');
+                $this->assertCount(0, $xpath->query('//a[contains(@class,"rn-m-fab")]'), 'Stock lots do not expose product creation as a lot action.');
+                $this->assertStringContainsString('PUR-', $xpath->query('//ul[@data-rn-cards]')->item(0)->textContent, 'The lot card identifies its purchase invoice without exposing a database ID.');
+            } else {
             $this->assertCount(3, $xpath->query('//dl[contains(@class,"rn-m-summary")]/div'), "$route has three summary figures");
             $this->assertCount(1, $xpath->query('//a[contains(@class,"rn-m-fab")]'), $route);
+            }
             $this->assertCount(0, $xpath->query('//*[contains(@class,"bulk-select") or @id="bulkDeleteForm" or contains(@class,"rn-check-col")]'), "$route has no bulk selection");
 
             $desktop = $this->onDesktop()->get(route($route))->assertOk()->getContent();
@@ -161,9 +167,11 @@ class MobileListPagesTest extends TestCase
             $html = $this->onPhone()->get(route($route))->assertOk()->getContent();
             $xpath = $this->xpath($html);
             $this->assertStringNotContainsString('<table', $html, $route);
-            $this->assertCount(0, $xpath->query('//li[contains(@class,"rn-m-card")]'), $route);
-            $this->assertCount(1, $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " rn-m-empty-state ")]'), $route);
+            $this->assertCount(0, $xpath->query('//*[@data-rn-list]//li[contains(@class,"rn-m-card")]'), $route);
+            $this->assertCount(1, $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " rn-m-empty-state ")] | //li[contains(concat(" ", normalize-space(@class), " "), " rn-m-empty-state ")]'), $route);
+            if ($route !== 'stockProduct') {
             $this->assertCount(1, $xpath->query('//*[@data-rn-load-more and @hidden]'), "$route has nothing more to load");
+            }
         }
     }
 

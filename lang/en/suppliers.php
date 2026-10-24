@@ -40,6 +40,7 @@ return [
     'last_transaction' => 'Last Transaction',
     'not_entry' => 'not entry',
     'deleted_customers' => 'Deleted Customers',
+    'deleted_suppliers' => 'Deleted Suppliers',
     'deleted_at' => 'Deleted At',
     'restore' => 'Restore',
     'delete_customer' => 'Delete Customer',

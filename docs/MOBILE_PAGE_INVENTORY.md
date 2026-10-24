@@ -11,13 +11,13 @@
 | `/` | — | ফর্ম — লগইন (/) | সার্ভারে রেন্ডার |  |
 | `/Business/setup` | `addBusinessSetupPage` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/Sale/list` | `saleList` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-2 |
-| `/accounts/chart` | `account.chart` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
+| `/accounts/chart` | `account.chart` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.L |
 | `/accounts/create` | `account.create` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/accounts/delete/{id}` | `account.delete` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
 | `/accounts/edit/{id}` | `account.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/accounts/ledger/{id}` | `account.ledger` | তালিকা | সার্ভারে রেন্ডার |  |
 | `/accounts/reports` | `account.reports` | রিপোর্ট | সার্ভারে রেন্ডার |  |
-| `/accounts/transactions` | `account.transactions` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন ৫০ |  |
+| `/accounts/transactions` | `account.transactions` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন ৫০ | UI-3.L |
 | `/accounts/transactions/create` | `account.transactions.create` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/add/customer` | `addCustomer` | তালিকা — তালিকা + যোগ করার ফর্ম একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-2 |
 | `/add/purchase` | `addPurchase` | ফর্ম | সার্ভারে রেন্ডার |  |
@@ -74,7 +74,7 @@
 | `/customer/edit/{id}` | `editCustomer` | ফর্ম — এডিট ফর্ম + তালিকা একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-2 (ফর্ম) |
 | `/customer/restore/{id}` | `restoreCustomer` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
 | `/damage/product` | `damageProduct` | ফর্ম | সার্ভারে রেন্ডার |  |
-| `/damage/product/list` | `damageProductList` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
+| `/damage/product/list` | `damageProductList` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.L |
 | `/damage/product/print/{id}` | `damageProductPrint` | অন্য | সার্ভারে রেন্ডার |  |
 | `/damage/product/view/{id}` | `damageProductView` | অন্য | সার্ভারে রেন্ডার |  |
 | `/dashboard` | `dashboard` | অন্য — ড্যাশবোর্ড | সার্ভারে রেন্ডার + JSON (dashboard.metrics) + Chart.js | UI-1 (হোম) |
@@ -110,7 +110,7 @@
 | `/productUnit/edit/{id}` | `editProductUnit` | ফর্ম — এডিট ফর্ম + তালিকা একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
 | `/productUnit/save` | `createProductUnit` | অন্য | AJAX JSON (পাতা নয়) |  |
 | `/provide/service` | `provideService` | ফর্ম | সার্ভারে রেন্ডার |  |
-| `/provide/service/list` | `serviceProvideList` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
+| `/provide/service/list` | `serviceProvideList` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.L |
 | `/provide/service/print/{id}` | `provideServicePrint` | অন্য | সার্ভারে রেন্ডার |  |
 | `/provide/service/view/{id}` | `provideServiceView` | অন্য | সার্ভারে রেন্ডার |  |
 | `/purchase/details/{id}` | `getPurchaseDetails` | অন্য | AJAX JSON (পাতা নয়) |  |
@@ -120,7 +120,7 @@
 | `/purchase/list` | `purchaseList` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন ২০ (Laravel), ফিল্টার কোয়েরি-স্ট্রিংয়ে | UI-2 |
 | `/purchase/view/{id}` | `purchaseView` | অন্য | সার্ভারে রেন্ডার |  |
 | `/quotation/create` | `quotation.create` | ফর্ম | সার্ভারে রেন্ডার |  |
-| `/quotation/list` | `quotation.list` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন ২০ |  |
+| `/quotation/list` | `quotation.list` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন ২০ | UI-3.L |
 | `/quotation/{id}` | `quotation.show` | অন্য | সার্ভারে রেন্ডার |  |
 | `/quotation/{id}/edit` | `quotation.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/quotation/{id}/print` | `quotation.print` | অন্য | সার্ভারে রেন্ডার |  |
@@ -131,10 +131,10 @@
 | `/reports/sales` | `reports.sales` | রিপোর্ট | সার্ভারে রেন্ডার, পেজিনেশন ৫০ |  |
 | `/reports/stock` | `reports.stock` | রিপোর্ট | সার্ভারে রেন্ডার, পেজিনেশন ৫০ |  |
 | `/reports/top-customers` | `reports.topCustomers` | রিপোর্ট | সার্ভারে রেন্ডার |  |
-| `/return/purchase/list` | `returnPurchaseList` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
+| `/return/purchase/list` | `returnPurchaseList` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.L |
 | `/return/purchase/{id}` | `returnPurchase` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/return/sale/details/{id}` | `saleReturnDetails` | অন্য | সার্ভারে রেন্ডার |  |
-| `/return/sale/list` | `returnSaleList` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
+| `/return/sale/list` | `returnSaleList` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.L |
 | `/return/sale/{id}` | `returnSale` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/sale/edit/{id}` | `sale.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/sale/items/edit/{id}` | `sale.items.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
@@ -145,7 +145,7 @@
 | `/service/invoice/{id}/print` | `serviceInvoicePrint` | অন্য | সার্ভারে রেন্ডার |  |
 | `/service/next-invoice-number` | `service.nextInvoiceNumber` | অন্য | AJAX JSON (পাতা নয়) |  |
 | `/setup/superadmin` | `superadmin.setup.show` | ফর্ম | সার্ভারে রেন্ডার |  |
-| `/stock/product` | `stockProduct` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-2 |
+| `/stock/product` | `stockProduct` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.L (lot cards) |
 | `/supplier/balance/sheet` | `supplierbalancesheet` | অন্য | ভাঙা রুট: কন্ট্রোলারে মেথড নেই |  |
 | `/supplier/edit/{id}` | `editSupplier` | ফর্ম — এডিট ফর্ম + তালিকা একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-2 (ফর্ম) |
 | `/supplier/restore/{id}` | `restoreSupplier` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
@@ -154,10 +154,10 @@
 | `/user/recover` | `userRecover` | অন্য | সার্ভারে রেন্ডার |  |
 | `/user/recover/code` | `userRecoverCode` | অন্য | সার্ভারে রেন্ডার |  |
 | `/user/recover/password` | `userRecoverPassword` | অন্য | সার্ভারে রেন্ডার |  |
-| `/warranty/rma` | `rma.index` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন ২৫ |  |
+| `/warranty/rma` | `rma.index` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন ২৫ | UI-3.L |
 | `/warranty/rma/create` | `rma.create` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/warranty/rma/export` | `rma.export` | অন্য | ফাইল ডাউনলোড |  |
 | `/warranty/rma/{id}` | `rma.show` | অন্য | সার্ভারে রেন্ডার |  |
 | `/warranty/rma/{id}/edit` | `rma.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
-| `/warranty/serials` | `serialList` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন ২৫ |  |
+| `/warranty/serials` | `serialList` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন ২৫ | UI-3.L |
 | `/warranty/serials/export` | `serials.export` | অন্য | ফাইল ডাউনলোড |  |

@@ -1,4 +1,11 @@
 @extends('include') @section('backTitle'){{ __('common.heading_purchase_return_list') }}@endsection @section('container')
+@mobile
+@php $returnCards = collect($returnList ?? [])->map(fn($r) => ['id'=>$r->id,'url'=>null,'avatar'=>mb_substr((string)$r->invoice,0,1),'title'=>$r->invoice ?: __('purchases.return_id').' '.$r->id,'subtitle'=>trim($r->supplierName.' · '.$r->productName,' ·'),'amount'=>\App\Support\LocalizedNumber::money($r->totalReturnAmount),'meta'=>array_values(array_filter([$r->created_at ? \App\Support\MobileDateTime::date($r->created_at) : null, __('purchases.adjust_amount').': '.\App\Support\LocalizedNumber::money($r->adjustAmount)])),'badge'=>['label'=>__('purchases.purchase_return_list'),'tone'=>'warning'],'actions'=>[]]); @endphp
+<section class="rn-m-list-page" data-rn-list="purchase-returns">
+  <header class="rn-m-list-header"><div class="rn-m-list-toolbar"><form method="GET" class="rn-m-search" role="search"><i class="ri-search-line"></i><label class="sr-only" for="purchaseReturnSearch">{{ __('mobile.list_search') }}</label><input id="purchaseReturnSearch" name="q" value="{{ request('q') }}" placeholder="{{ __('mobile.list_search') }}"></form></div></header>
+  <ul class="rn-m-cards" role="list">@forelse($returnCards as $card)<x-m.list-card :card="$card" />@empty<li class="rn-m-empty">{{ __('purchases.no_purchase_returns_found') }}</li>@endforelse</ul>
+</section>
+@else
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -64,4 +71,5 @@
         </div>
     </div>
 </div>
+@endmobile
 @endsection

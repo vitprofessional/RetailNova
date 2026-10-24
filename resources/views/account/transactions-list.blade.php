@@ -3,6 +3,26 @@
 @section('backTitle'){{ __('common.heading_account_transactions') }}@endsection
 
 @section('container')
+@mobile
+<section class="rn-m-list-page" data-rn-list="account-transactions">
+  <form method="GET" action="{{ route('account.transactions') }}" class="rn-m-filter-fields rn-m-list-filters">
+    <x-m.field name="start_date" :label="__('common.start_date')" type="date" :value="request('start_date')" />
+    <x-m.field name="end_date" :label="__('common.end_date')" type="date" :value="request('end_date')" />
+    <x-m.field name="transaction_type" :label="__('common.transaction_type')" :options="['' => __('common.all_types')] + $transactionTypes" :value="request('transaction_type')" />
+    <x-m.field name="account_id" :label="__('common.account')" :options="['' => __('common.all_accounts')] + $accounts->mapWithKeys(fn($a) => [$a->id => $a->account_code.' - '.$a->account_name])->all()" :value="request('account_id')" />
+    <button class="rn-m-btn rn-m-btn--primary">{{ __('common.filter') }}</button><a class="rn-m-btn rn-m-btn--outline" href="{{ route('account.transactions') }}">{{ __('common.reset') }}</a>
+  </form>
+  <ul class="rn-m-cards" role="list">
+    @forelse($transactions as $transaction)
+      <x-m.list-card :card="['id'=>$transaction->id,'url'=>null,'avatar'=>mb_substr($transaction->reference_no,0,1),'title'=>$transaction->reference_no,'subtitle'=>trim(($transaction->debitAccount?->account_name ?? '').' → '.($transaction->creditAccount?->account_name ?? ''),' →'),'amount'=>\App\Support\LocalizedNumber::money($transaction->amount),'meta'=>array_values(array_filter([$transaction->transaction_date ? \App\Support\MobileDateTime::date($transaction->transaction_date) : null,$transaction->description ?: null,$transaction->creator?->name ?: null])),'badge'=>['label'=>__('common.'.$transaction->transaction_type),'tone'=>'muted'],'actions'=>[]]" />
+    @empty
+      <li class="rn-m-empty">{{ __('common.no_transactions_found') }}</li>
+    @endforelse
+  </ul>
+  {{ $transactions->appends(request()->query())->links() }}
+  <x-m.fab :url="route('account.transactions.create')" :label="__('common.new_transaction')" />
+</section>
+@else
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -103,4 +123,5 @@
         </div>
     </div>
 </div>
+@endmobile
 @endsection

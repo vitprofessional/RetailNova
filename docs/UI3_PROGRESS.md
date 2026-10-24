@@ -87,3 +87,15 @@ Added screen-only mobile summary blocks and labeled line cards to sale invoice, 
 - Latest complete isolated SQLite suite: 335 tests, 10,620 assertions, 0 failures, 6 PHPUnit deprecations. Blade cache compilation and `git diff --check` pass.
 - Mockup 04 comparison remains partial: sale invoice retains its full print-oriented A4/thermal structure, unsupported SMS/share/PDF actions were not invented, and no separate customer/supplier detail routes exist. See capture notes.
 - Next: commit this detail increment with these differences recorded; then proceed to remaining lists, reports, and Super Admin lists.
+
+## UI-3.L — Remaining mobile list layouts (phase D)
+
+Implemented mobile card layouts for stock lots, damage records, purchase and sale returns, quotations, service history, serials, RMA, account chart and account transactions. Customer and supplier pages now render their existing soft-deleted contact collections as restore cards. The stock route now reflects the actual per-purchase-lot rows from its controller, while preserving the desktop product catalog aggregation on its separate route.
+
+The `/return/purchase/list` request was previously intercepted by the preceding `/return/purchase/{id}` route and returned 404. The detail route now constrains `{id}` to numeric values so the intended list route resolves; this is a route matching correction and leaves return behavior unchanged. The deleted-contact templates previously used `empty($trashedList)` on a Collection, which considered the collection empty and hid its restore section; the condition now checks the variable and its count directly. Added matching English/Bangla deleted-supplier and quotation draft labels.
+
+Actual mobile screenshots are under ignored `tests-output/ui-3-final/D/`, captured at 390×844 after `networkidle` plus 500 ms. Twelve routes returned 200 with no horizontal overflow and no browser page exceptions. Comparison notes are in that directory's `capture-notes.md`. The screenshots for damage, service history, purchase returns and serials use an empty local fixture; restore-card screenshots did not include deleted records even though the focused feature test verifies their rendered names and restore links.
+
+Focused verification: mobile list, master-data, detail and localization checks pass. The full isolated SQLite suite now passes: 338 tests, 10,753 assertions, 0 failures, 6 existing PHPUnit deprecations.
+
+Remaining list inventory still needs mobile coverage for audits, barcode management, admin user management, and the admin missing-service data list. Account Ledger remains uncovered. Super Admin lists are phase F. This is a checkpoint, not full inventory completion.

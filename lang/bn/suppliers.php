@@ -40,6 +40,7 @@ return [
     'last_transaction' => 'শেষ লেনদেন',
     'not_entry' => 'তথ্য নেই',
     'deleted_customers' => 'মুছে ফেলা কাস্টমার',
+    'deleted_suppliers' => 'মুছে ফেলা মহাজন',
     'deleted_at' => 'মুছে ফেলার সময়',
     'restore' => 'ফিরিয়ে আনুন',
     'delete_customer' => 'কাস্টমার মুছুন',

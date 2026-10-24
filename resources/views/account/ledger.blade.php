@@ -3,6 +3,22 @@
 @section('backTitle'){{ __('common.heading_account_ledger') }}@endsection
 
 @section('container')
+@mobile
+<section class="rn-m-list-page" data-rn-list="account-ledger">
+  <header class="rn-m-list-header"><h2>{{ $account->account_code }} · {{ $account->account_name }}</h2><div class="rn-m-summary-row"><span>{{ __('common.current_balance') }}</span><strong>{{ \App\Support\LocalizedNumber::money($account->current_balance) }}</strong></div></header>
+  <form method="GET" action="{{ route('account.ledger', $account->id) }}" class="rn-m-filter-fields rn-m-list-filters">
+    <x-m.field name="start_date" :label="__('common.start_date')" type="date" :value="request('start_date')" /><x-m.field name="end_date" :label="__('common.end_date')" type="date" :value="request('end_date')" />
+    <button class="rn-m-btn rn-m-btn--primary">{{ __('common.filter') }}</button><a class="rn-m-btn rn-m-btn--outline" href="{{ route('account.ledger', $account->id) }}">{{ __('common.reset') }}</a><a class="rn-m-btn rn-m-btn--outline" href="{{ route('account.chart') }}">{{ __('common.back') }}</a>
+  </form>
+  <ul class="rn-m-cards" role="list">
+    @forelse($ledgerEntries as $entry)
+      <x-m.list-card :card="['id'=>sha1(($entry['reference'] ?? '').($entry['date'] ?? '')),'url'=>null,'avatar'=>mb_substr((string)($entry['reference'] ?: '•'),0,1),'title'=>$entry['reference'] ?: __('common.reference'),'subtitle'=>$entry['description'] ?: null,'amount'=>\App\Support\LocalizedNumber::money($entry['balance']),'meta'=>array_values(array_filter([$entry['date'] ? \App\Support\MobileDateTime::date($entry['date']) : null,__('common.debit').': '.\App\Support\LocalizedNumber::money($entry['debit']),__('common.credit').': '.\App\Support\LocalizedNumber::money($entry['credit'])])),'badge'=>null,'actions'=>[]]" />
+    @empty
+      <li class="rn-m-empty">{{ __('common.no_transactions_in_this_period') }}</li>
+    @endforelse
+  </ul>
+</section>
+@else
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -103,4 +119,5 @@
         </div>
     </div>
 </div>
+@endmobile
 @endsection

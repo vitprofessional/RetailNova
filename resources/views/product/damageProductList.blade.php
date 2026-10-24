@@ -1,4 +1,16 @@
 @extends('include') @section('backTitle'){{ __('common.heading_damage_product_list') }}@endsection @section('container')
+@mobile
+<section class="rn-m-list-page" data-rn-list="damage-products">
+  <ul class="rn-m-cards" role="list">
+    @forelse($damageList as $d)
+      @php($productName = $d->product?->name ?? '-')
+      <x-m.list-card :card="['id'=>$d->id,'url'=>route('damageProductView',$d->id),'avatar'=>mb_substr($productName,0,1),'title'=>$productName,'subtitle'=>$d->reference ?: null,'amount'=>\App\Support\LocalizedNumber::money($d->total ?? 0),'meta'=>array_values(array_filter([$d->admin?->name ?: null, $d->date ? \App\Support\MobileDateTime::date($d->date) : null])),'badge'=>['label'=>__('inventory.damage_product'),'tone'=>'danger'],'actions'=>[['type'=>'link','label'=>__('inventory.view'),'url'=>route('damageProductView',$d->id),'icon'=>'ri-eye-line'],['type'=>'link','label'=>__('inventory.print'),'url'=>route('damageProductPrint',$d->id),'icon'=>'ri-printer-line'],['type'=>'link','label'=>__('inventory.delete'),'url'=>route('damageProductDelete',$d->id),'icon'=>'ri-delete-bin-line']]]" />
+    @empty
+      <li class="rn-m-empty">{{ __('inventory.no_damage_records_found') }}</li>
+    @endforelse
+  </ul>
+</section>
+@else
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -84,6 +96,7 @@
         </div>
     </div>
 </div>
+@endmobile
 @endsection
 @section('scripts')
     @parent

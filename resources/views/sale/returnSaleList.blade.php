@@ -1,4 +1,20 @@
 @extends('include') @section('backTitle'){{ __('navigation.sales_returns') }}@endsection @section('container')
+@mobile
+<section class="rn-m-list-page" data-rn-list="sale-returns">
+  <ul class="rn-m-cards" role="list">
+    @forelse($returns as $return)
+      @php
+        $sale = $return->sale;
+        $customer = \App\Models\Customer::displayLabel($sale?->customer, $sale?->customerId, $sale?->businessId);
+        $actions = [['type'=>'link','label'=>__('sales.view'),'url'=>route('saleReturnDetails',['id'=>$return->id]),'icon'=>'ri-eye-line']];
+      @endphp
+      <x-m.list-card :card="['id'=>$return->id,'url'=>route('saleReturnDetails',['id'=>$return->id]),'avatar'=>mb_substr($customer,0,1),'title'=>$sale?->invoice ?: __('sales.sale_id').' '.$return->id,'subtitle'=>$customer,'amount'=>\App\Support\LocalizedNumber::money($return->totalReturnAmount ?? 0),'meta'=>array_values(array_filter([$return->created_at ? \App\Support\MobileDateTime::date($return->created_at) : null, __('sales.items_returned').': '.\App\Support\LocalizedNumber::count($return->items?->sum('qty') ?? 0), __('sales.adjust_amount').': '.\App\Support\LocalizedNumber::money($return->adjustAmount ?? 0)])),'badge'=>['label'=>__('sales.sales_return_list'),'tone'=>'warning'],'actions'=>$actions]" />
+    @empty
+      <li class="rn-m-empty">{{ __('sales.no_sale_returns_found') }}</li>
+    @endforelse
+  </ul>
+</section>
+@else
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -84,6 +100,7 @@
         </div>
     </div>
 </div>
+@endmobile
 @endsection
 
 @section('scripts')
