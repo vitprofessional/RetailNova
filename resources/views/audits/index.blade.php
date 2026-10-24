@@ -1,6 +1,50 @@
-@extends('layouts.app')
+@php($rnAuditMobile = app(\App\Support\MobileView::class)->isMobile())
+@extends($rnAuditMobile ? 'include' : 'layouts.app')
 
-@section('content')
+@section($rnAuditMobile ? 'container' : 'content')
+@mobile
+<section class="rn-m-list-page" data-rn-list="audit-history">
+    <header class="rn-m-list-header"><h2>{{ __('common.audit_logs') }}</h2></header>
+    <form method="GET" action="{{ route('audits.index') }}" class="rn-m-filter-fields rn-m-list-filters">
+        <label class="sr-only" for="audit-mobile-search">{{ __('common.search') }}</label>
+        <input id="audit-mobile-search" type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="{{ __('common.text_search') }}">
+        <button type="submit" class="rn-m-btn rn-m-btn--primary">{{ __('common.search') }}</button>
+        <details class="rn-m-audit-filter">
+            <summary class="rn-m-btn rn-m-btn--outline">{{ __('common.filter') }}</summary>
+            <div class="rn-m-audit-filter__body">
+                <label>{{ __('common.event') }}<select name="event" class="form-control"><option value="">{{ __('common.all') }}</option>@foreach($events as $ev)<option value="{{ $ev }}" @selected(request('event')===$ev)>{{ $ev }}</option>@endforeach</select></label>
+                <label>{{ __('common.model') }}<select name="model" class="form-control"><option value="">{{ __('common.all') }}</option>@foreach($models as $m)<option value="{{ $m }}" @selected(request('model')===$m)>{{ class_basename($m) }}</option>@endforeach</select></label>
+                <label>{{ __('common.user_id') }}<input type="text" name="user_id" value="{{ request('user_id') }}" class="form-control"></label>
+                <div class="rn-m-audit-filter__dates"><label>{{ __('common.date_from') }}<input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control"></label><label>{{ __('common.date_to') }}<input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control"></label></div>
+                <label>{{ __('common.per_page') }}<select name="per_page" class="form-control">@foreach([15,25,50,100] as $pp)<option value="{{ $pp }}" @selected(request('per_page',15)==$pp)>{{ $pp }}</option>@endforeach</select></label>
+                <div class="rn-m-audit-filter__actions"><a class="rn-m-btn rn-m-btn--outline" href="{{ route('audits.index') }}">{{ __('common.reset') }}</a><button class="rn-m-btn rn-m-btn--primary">{{ __('common.filter') }}</button></div>
+            </div>
+        </details>
+        <a href="{{ route('audits.export', request()->query()) }}" class="rn-m-btn rn-m-btn--outline">{{ __('common.export_csv') }}</a>
+    </form>
+    <ul class="rn-m-cards" role="list">
+        @forelse($audits as $audit)
+            @php($old = $audit->old_values ?? [])
+            @php($new = $audit->new_values ?? [])
+            <li class="rn-m-audit-card">
+                <div class="rn-m-audit-card__head"><strong>{{ ucfirst($audit->event) }}</strong><span>{{ class_basename($audit->auditable_type) }}</span></div>
+                <small>{{ \App\Support\MobileDateTime::date($audit->created_at) }} · {{ \App\Support\MobileDateTime::time($audit->created_at) }}</small>
+                @if(!empty($old) || !empty($new) || $audit->url || $audit->ip_address)
+                    <details class="rn-m-audit-values"><summary>{{ __('common.view') }}</summary>
+                        @if(!empty($old))<strong>{{ __('common.old') }}</strong><pre>{{ json_encode($old, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE) }}</pre>@endif
+                        @if(!empty($new))<strong>{{ __('common.new') }}</strong><pre>{{ json_encode($new, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE) }}</pre>@endif
+                        @if($audit->url)<small>{{ __('common.url') }}: {{ $audit->url }}</small>@endif
+                        @if($audit->ip_address)<small>{{ __('common.ip') }}: {{ $audit->ip_address }}</small>@endif
+                    </details>
+                @endif
+            </li>
+        @empty
+            <li class="rn-m-empty">{{ __('common.no_audits_found') }}</li>
+        @endforelse
+    </ul>
+    {{ $audits->withQueryString()->links() }}
+</section>
+@else
 <div class="container-fluid">
     <h1 class="h4 mb-3">{{ __('common.audit_logs') }}</h1>
 
@@ -87,7 +131,7 @@
                         <td>{{ class_basename($audit->auditable_type) }}</td>
                         <td>{{ $audit->user_id ?? '—' }}</td>
                                 <td style="max-width:200px;">
-                                    @php($old = $audit->getOldValues())
+                                    @php($old = $audit->old_values ?? [])
                                     @if(empty($old))
                                         <em class="text-muted">∅</em>
                                     @else
@@ -101,7 +145,7 @@
                                     @endif
                                 </td>
                                 <td style="max-width:200px;">
-                                    @php($new = $audit->getNewValues())
+                                    @php($new = $audit->new_values ?? [])
                                     @if(empty($new))
                                         <em class="text-muted">∅</em>
                                     @else
@@ -130,6 +174,8 @@
     </div>
 </div>
 
+@endmobile
+
 @push('scripts')
 <script>
 document.addEventListener('click', function(e){
@@ -151,5 +197,4 @@ document.addEventListener('click', function(e){
 });
 </script>
 @endpush
-</div>
 @endsection

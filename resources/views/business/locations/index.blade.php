@@ -2,6 +2,33 @@
 @section('backTitle'){{ __('common.heading_business_locations') }}@endsection
 @section('container')
 
+@mobile
+<section class="rn-m-list-page" data-rn-list="business-locations">
+    <header class="rn-m-list-header">
+        <h2>{{ __('settings.business_locations') }}</h2>
+        <a href="{{ route('business.locations.create') }}" class="rn-m-btn rn-m-btn--primary">+ {{ __('mobile.add_new') }}</a>
+    </header>
+    <ul class="rn-m-cards" role="list">
+        @forelse($locations as $location)
+            @php
+                $address = collect([$location->address, $location->city, $location->state, $location->postal_code, $location->country])->filter()->implode(', ');
+                $actions = [['type' => 'link', 'label' => __('common.edit'), 'url' => route('business.locations.edit', $location->id), 'icon' => 'ri-edit-line']];
+                if (!$location->is_main_location) {
+                    $actions[] = ['type' => 'link', 'label' => __('common.delete'), 'url' => route('business.locations.delete', $location->id), 'icon' => 'ri-delete-bin-line'];
+                }
+            @endphp
+            @php
+                $badgeLabel = $location->is_main_location ? __('settings.main_location') : ($location->status ? __('settings.active') : __('settings.inactive'));
+                $badgeTone = $location->status ? 'success' : 'muted';
+            @endphp
+            <x-m.list-card :card="['id'=>$location->id,'url'=>null,'avatar'=>mb_substr($location->name,0,1),'title'=>$location->name,'subtitle'=>$address ?: null,'amount'=>'','meta'=>array_values(array_filter([$location->phone,$location->email,$location->manager_name ? __('common.manager').': '.$location->manager_name : null])),'badge'=>['label'=>$badgeLabel,'tone'=>$badgeTone],'actions'=>$actions]" />
+        @empty
+            <li class="rn-m-empty">{{ __('settings.no_business_locations_found') }}</li>
+        @endforelse
+    </ul>
+    @if($locations->hasPages()){{ $locations->links() }}@endif
+</section>
+@else
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -120,6 +147,7 @@
         @endif
     </div>
 </div>
+@endmobile
 @endsection
 <style>
     .table-header {

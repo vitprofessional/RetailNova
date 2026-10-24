@@ -15,14 +15,14 @@
 | `/accounts/create` | `account.create` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/accounts/delete/{id}` | `account.delete` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
 | `/accounts/edit/{id}` | `account.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
-| `/accounts/ledger/{id}` | `account.ledger` | তালিকা | সার্ভারে রেন্ডার |  |
+| `/accounts/ledger/{id}` | `account.ledger` | তালিকা | সার্ভারে রেন্ডার | UI-3.11 |
 | `/accounts/reports` | `account.reports` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3.R |
 | `/accounts/transactions` | `account.transactions` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন ৫০ | UI-3.L |
 | `/accounts/transactions/create` | `account.transactions.create` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/add/customer` | `addCustomer` | তালিকা — তালিকা + যোগ করার ফর্ম একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-2 |
 | `/add/purchase` | `addPurchase` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/add/supplier` | `addSupplier` | তালিকা — তালিকা + যোগ করার ফর্ম একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-2 |
-| `/admin/manage/users` | `admin.manage.users.index` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন (ফর্ম মডালে) |  |
+| `/admin/manage/users` | `admin.manage.users.index` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন (ফর্ম মডালে) | UI-3.S |
 | `/admin/manage/users/{id}/edit` | `admin.manage.users.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/admin/profile` | `admin.profile.show` | অন্য | সার্ভারে রেন্ডার |  |
 | `/admin/profile/edit` | `admin.profile.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
@@ -46,10 +46,10 @@
 | `/ajax/public/purchase/{id}/serials` | `ajax.purchase.serials.public` | অন্য | AJAX JSON (পাতা নয়) |  |
 | `/ajax/public/sale/product/{id}/purchase-details` | `ajax.sale.product.purchaseDetails.public` | অন্য | AJAX JSON (পাতা নয়) |  |
 | `/ajax/serials` | `ajax.serials` | অন্য | AJAX JSON (পাতা নয়) |  |
-| `/audits` | `audits.index` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন |  |
+| `/audits` | `audits.index` | তালিকা | সার্ভারে রেন্ডার, পেজিনেশন | UI-3.L.2 |
 | `/audits/export` | `audits.export` | অন্য | ফাইল ডাউনলোড |  |
 | `/balance/sheet` | `balancesheet` | রিপোর্ট | সার্ভারে রেন্ডার | UI-3.R (legacy static data) |
-| `/barcode` | `barcode.index` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
+| `/barcode` | `barcode.index` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.L.2 |
 | `/barcode/generate-all-missing` | `generateAllMissingBarcodes` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
 | `/barcode/generate/{id}` | `barcode.generate` | অন্য | সার্ভারে রেন্ডার |  |
 | `/brand/delete/{id}` | `delBrand` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
@@ -57,7 +57,7 @@
 | `/brand/save` | `createBrand` | অন্য | AJAX JSON (পাতা নয়) |  |
 | `/brochure` | `brochure.marketing` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
 | `/business/language-settings` | `language.settings.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
-| `/business/locations` | `business.locations` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
+| `/business/locations` | `business.locations` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.L.2 |
 | `/business/locations/create` | `business.locations.create` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/business/locations/{id}/delete` | `business.locations.delete` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
 | `/business/locations/{id}/edit` | `business.locations.edit` | ফর্ম | সার্ভারে রেন্ডার |  |
@@ -67,10 +67,10 @@
 | `/category/delete/{id}` | `delCategory` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
 | `/category/edit/{id}` | `editCategory` | ফর্ম — এডিট ফর্ম + তালিকা একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
 | `/category/save` | `createCategory` | অন্য | AJAX JSON (পাতা নয়) |  |
-| `/create/brand` | `addBrand` | তালিকা — তালিকা + যোগ করার ফর্ম একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
-| `/create/category` | `addCategory` | তালিকা — তালিকা + যোগ করার ফর্ম একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
-| `/create/productUnit` | `addProductUnit` | তালিকা — তালিকা + যোগ করার ফর্ম একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
-| `/create/service` | `addServiceName` | তালিকা — তালিকা + যোগ করার ফর্ম একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
+| `/create/brand` | `addBrand` | তালিকা — তালিকা + যোগ করার ফর্ম একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.4b |
+| `/create/category` | `addCategory` | তালিকা — তালিকা + যোগ করার ফর্ম একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.4b |
+| `/create/productUnit` | `addProductUnit` | তালিকা — তালিকা + যোগ করার ফর্ম একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.4b |
+| `/create/service` | `addServiceName` | তালিকা — তালিকা + যোগ করার ফর্ম একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.4b |
 | `/customer/edit/{id}` | `editCustomer` | ফর্ম — এডিট ফর্ম + তালিকা একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-2 (ফর্ম) |
 | `/customer/restore/{id}` | `restoreCustomer` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
 | `/damage/product` | `damageProduct` | ফর্ম | সার্ভারে রেন্ডার |  |
@@ -85,7 +85,7 @@
 | `/documentation/print` | `documentation.print` | অন্য | সার্ভারে রেন্ডার |  |
 | `/documentation/{section}` | `documentation.show` | অন্য | সার্ভারে রেন্ডার |  |
 | `/documentation/{section}/download-pdf` | `documentation.sectionPdf` | অন্য | সার্ভারে রেন্ডার |  |
-| `/expenses/categories` | `expense.categories` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) |  |
+| `/expenses/categories` | `expense.categories` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.13 |
 | `/expenses/categories/create` | `expense.categories.create` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/expenses/categories/delete/{id}` | `expense.categories.delete` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
 | `/expenses/categories/edit/{id}` | `expense.categories.edit` | ফর্ম | সার্ভারে রেন্ডার |  |

@@ -98,7 +98,7 @@ Actual mobile screenshots are under ignored `tests-output/ui-3-final/D/`, captur
 
 Focused verification: mobile list, master-data, detail and localization checks pass. The full isolated SQLite suite now passes: 338 tests, 10,753 assertions, 0 failures, 6 existing PHPUnit deprecations.
 
-Remaining list inventory still needs mobile coverage for audits, barcode management, admin user management, and the admin missing-service data list. Account Ledger has mobile markup but was not included in the phase D screenshot batch. Super Admin lists are phase F. This is a checkpoint, not full inventory completion.
+At this checkpoint audits, barcode management, business locations, admin users, missing-service data, and Account Ledger still needed final inventory/capture review. The remaining list follow-up is recorded under UI-3.L.2 below.
 
 ## UI-3.R — Reports and finance reporting screens (phase E)
 
@@ -118,4 +118,12 @@ Authenticated browser screenshots were captured at 390×844 for all six routes a
 
 The focused `MobileSuperAdminListsTest` passes (2 tests, 27 assertions). Full isolated SQLite suite passes (343 tests, 10,845 assertions, 0 failures, 6 PHPUnit deprecations). `view:cache` and `git diff --check` are the final checks for this phase. The screenshots use only an isolated database; no development or production database was changed. A first capture attempt used an incorrect seed/router setup and showed the login page; after correcting the temporary fixture hash and public-root routing, the final authenticated captures succeeded.
 
-Still outstanding from the broader UI-3 inventory: mobile report/business overview is blocked by the existing SQLite-incompatible `YEAR()`/`MONTH()` query, `/balance/sheet` uses legacy static example data, and list/detail/form routes not explicitly covered in phases A–F remain marked below in the inventory. Screenshots are local ignored artifacts and were not committed.
+Still outstanding from the broader UI-3 inventory: mobile report/business overview is blocked by the existing SQLite-incompatible `YEAR()`/`MONTH()` query, and `/balance/sheet` uses legacy static example data. Screenshots are local ignored artifacts and were not committed.
+
+## UI-3.L.2 — Close remaining mobile list inventory
+
+Added mobile card layouts for Business Locations, product barcodes, and audit history. Existing desktop table branches and actions are preserved. Audits now use the shared application shell on mobile; both the list and CSV export read the audit model's cast `old_values` and `new_values` attributes, fixing the previously unexercised missing-method error when audit records exist. Barcode cards retain selection for bulk printing, search, and view/edit/generate overflow actions. Location cards retain edit and non-main-location delete actions.
+
+Authenticated Android-user-agent Playwright captures are in ignored `tests-output/ui-3-final/L2/` at 390×844. The three changed list pages and Account Ledger all returned HTTP 200, had `scrollWidth` equal to the 390px viewport, rendered no desktop tables, and raised no browser page exceptions. Screenshots were taken after `networkidle` plus 500ms and visually compared with mockup 09. Compared with the transaction-list mockup, the audit page uses its real search/filter/export controls without sale totals, payment tags, or date groups; barcode management keeps its bulk-print controls and action menu; locations show contact/status metadata and an add action. These differences reflect the records' functions. Account Ledger uses a date-range filter and account balance rather than transaction summary chips.
+
+Focused `MobileRemainingListsTest` and `MobileSuperAdminListsTest`: 6 tests, 93 assertions, passing (6 existing PHPUnit deprecations). The complete isolated SQLite suite passes: 344 tests, 10,917 assertions, 0 failures, 6 PHPUnit deprecations. This closes all inventory rows classified as lists; `/admin/manage/users`, Super Admin lists, and the other list routes are assigned to their earlier UI-3 increments in `docs/MOBILE_PAGE_INVENTORY.md`.

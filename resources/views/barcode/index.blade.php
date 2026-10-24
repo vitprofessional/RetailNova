@@ -6,6 +6,45 @@
     @include('sweetalert::alert')
 </div>
 
+@mobile
+<section class="rn-m-list-page" data-rn-list="product-barcodes">
+    <header class="rn-m-list-header">
+        <h2>{{ __('common.manage_product_barcodes') }}</h2>
+        <div class="rn-m-barcode-header-actions">
+            <a href="{{ route('generateAllMissingBarcodes') }}" class="rn-m-btn rn-m-btn--outline" onclick="return confirm('{{ __('common.generate_missing_barcodes') }}?')">{{ __('common.generate_missing_barcodes') }}</a>
+            <button type="submit" form="bulkPrintForm" class="rn-m-btn rn-m-btn--primary">{{ __('common.print_selected') }}</button>
+        </div>
+    </header>
+    <label class="sr-only" for="barcodeMobileSearch">{{ __('common.search') }}</label>
+    <input id="barcodeMobileSearch" type="search" class="form-control mb-2" placeholder="{{ __('common.search_by_product_name_or_barcode') }}">
+    <form id="bulkPrintForm" method="POST" action="{{ route('barcode.print') }}" target="_blank">
+        @csrf
+        <ul class="rn-m-cards" role="list" id="barcodeMobileCards">
+            @forelse($products as $product)
+                <li class="rn-m-barcode-card" data-product-search="{{ strtolower($product->name.' '.($product->barCode ?? '')) }}">
+                    <div class="rn-m-barcode-card__top">
+                        <label class="rn-m-barcode-select"><input type="checkbox" class="product-checkbox" name="product_ids[]" value="{{ $product->id }}" aria-label="{{ __('common.select') }} {{ $product->name }}"></label>
+                        <div class="rn-m-barcode-card__copy"><strong>{{ $product->name }}</strong><span>{{ $product->barCode ?: __('common.no_barcode') }}</span><span class="rn-superadmin-tag">{{ $product->barCode ? __('common.active') : __('common.pending') }}</span></div>
+                        <details class="rn-m-master-menu">
+                            <summary aria-label="{{ __('common.actions') }}">⋮</summary>
+                            <div class="rn-m-master-menu__items">
+                                @if($product->barCode)
+                                    <a href="{{ route('barcode.generate', $product->id) }}">{{ __('common.view') }}</a>
+                                    <button type="button" class="edit-barcode-btn" data-product-id="{{ $product->id }}" data-barcode="{{ $product->barCode }}">{{ __('common.edit') }}</button>
+                                @else
+                                    <a href="{{ route('barcode.generate', $product->id) }}">{{ __('common.generate') }}</a>
+                                @endif
+                            </div>
+                        </details>
+                    </div>
+                </li>
+            @empty
+                <li class="rn-m-empty">{{ __('common.no_products_available') }}</li>
+            @endforelse
+        </ul>
+    </form>
+</section>
+@else
 <div class="row">
     <div class="col-12">
         <div class="card shadow-sm">
@@ -111,6 +150,7 @@
         </div>
     </div>
 </div>
+@endmobile
 
 <!-- Edit Barcode Modal -->
 <div class="modal fade" id="editBarcodeModal" tabindex="-1" role="dialog">
@@ -151,6 +191,16 @@
     const bulkPrintForm = document.getElementById('bulkPrintForm');
     const selectAllProducts = document.getElementById('selectAllProducts');
     const productCheckboxes = document.querySelectorAll('.product-checkbox');
+
+    const mobileSearch = document.getElementById('barcodeMobileSearch');
+    if (mobileSearch) {
+        mobileSearch.addEventListener('input', function () {
+            const query = this.value.trim().toLowerCase();
+            document.querySelectorAll('#barcodeMobileCards [data-product-search]').forEach(card => {
+                card.hidden = !card.dataset.productSearch.includes(query);
+            });
+        });
+    }
 
     window.__jqOnReady(function() {
         try {

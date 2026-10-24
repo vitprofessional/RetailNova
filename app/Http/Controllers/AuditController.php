@@ -89,8 +89,8 @@ class AuditController extends Controller
 
             $query->chunk(200, function($rows) use ($handle) {
                 foreach ($rows as $r) {
-                    $old = json_encode($r->getOldValues(), JSON_UNESCAPED_UNICODE);
-                    $new = json_encode($r->getNewValues(), JSON_UNESCAPED_UNICODE);
+                    $old = json_encode($r->old_values ?? [], JSON_UNESCAPED_UNICODE);
+                    $new = json_encode($r->new_values ?? [], JSON_UNESCAPED_UNICODE);
                     fputcsv($handle, [
                         $r->id,
                         $r->event,
