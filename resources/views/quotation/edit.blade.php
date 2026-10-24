@@ -19,9 +19,9 @@
         </div>
       </div>
       <div class="card-body">
-        <form action="{{ route('quotation.update', ['id'=>$quote->id]) }}" method="POST" id="quotationForm">
+        <form action="{{ route('quotation.update', ['id'=>$quote->id]) }}" method="POST" id="quotationForm" class="rn-m-form rn-m-quotation-form">
           @csrf
-          <div class="row mb-3">
+          <div class="row mb-3 rn-m-form-section rn-m-quotation-meta">
             <div class="col-md-4">
               <label class="form-label">{{ __('common.date') }}</label>
               <input type="date" name="date" class="form-control" value="{{ optional($quote->date)->format('Y-m-d') }}" />
@@ -41,7 +41,7 @@
             </div>
           </div>
 
-          <div class="mb-3 table-responsive product-table">
+          <div class="mb-3 table-responsive product-table rn-m-form-section rn-m-quotation-items">
             <table class="table mb-0 table-bordered rounded-0 rn-table-pro" id="itemsTable">
               <thead>
                 <tr>
@@ -62,7 +62,7 @@
                   $da = $it->discount_amount ?: 0;
                 @endphp
                 <tr>
-                  <td>
+                  <td data-label="{{ __('common.product') }}">
                     <select name="items[product_id][]" class="form-control">
                       <option value="">{{ __('common.select_product') }}</option>
                       @foreach($products as $p)
@@ -70,13 +70,13 @@
                       @endforeach
                     </select>
                   </td>
-                  <td><input type="text" name="items[description][]" class="form-control" value="{{ $it->description }}" placeholder="{{ __('common.optional') }}" /></td>
-                  <td><input type="number" name="items[qty][]" class="form-control text-end qty" value="{{ $it->qty }}" min="1" /></td>
-                  <td><input type="number" name="items[unit_price][]" class="form-control text-end price" step="0.01" value="{{ $it->unit_price }}" /></td>
-                  <td><input type="number" name="items[discount_percent][]" class="form-control text-end dperc" step="0.01" value="{{ $dp }}" /></td>
-                  <td><input type="number" name="items[discount_amount][]" class="form-control text-end damt" step="0.01" value="{{ $da }}" /></td>
-                  <td class="text-end line">{{ number_format($it->line_total,2) }}</td>
-                  <td><button type="button" class="btn btn-sm btn-danger del">{{ __('common.remove') }}</button></td>
+                  <td data-label="{{ __('common.description') }}"><input type="text" name="items[description][]" class="form-control" value="{{ $it->description }}" placeholder="{{ __('common.optional') }}" /></td>
+                  <td data-label="{{ __('common.qty') }}"><input type="number" name="items[qty][]" class="form-control text-end qty" value="{{ $it->qty }}" min="1" /></td>
+                  <td data-label="{{ __('common.unit_price') }}"><input type="number" name="items[unit_price][]" class="form-control text-end price" step="0.01" value="{{ $it->unit_price }}" /></td>
+                  <td data-label="{{ __('common.disc') }}"><input type="number" name="items[discount_percent][]" class="form-control text-end dperc" step="0.01" value="{{ $dp }}" /></td>
+                  <td data-label="{{ __('common.disc_amt') }}"><input type="number" name="items[discount_amount][]" class="form-control text-end damt" step="0.01" value="{{ $da }}" /></td>
+                  <td data-label="{{ __('common.line_total') }}" class="text-end line">{{ number_format($it->line_total,2) }}</td>
+                  <td data-label="{{ __('common.remove') }}"><button type="button" class="btn btn-sm btn-danger del">{{ __('common.remove') }}</button></td>
                 </tr>
                 @endforeach
               </tbody>
@@ -90,7 +90,7 @@
             </table>
           </div>
 
-          <div class="row mb-2">
+          <div class="row mb-2 rn-m-quotation-summary">
             <div class="col-md-8">
               <label class="form-label">{{ __('common.notes') }}</label>
               <textarea name="notes" class="form-control" rows="3">{{ $quote->notes }}</textarea>
@@ -104,9 +104,9 @@
             </div>
           </div>
 
-          <div>
-            <button type="submit" class="btn btn-success">{{ __('common.update_quotation') }}</button>
-            <a href="{{ route('quotation.show',['id'=>$quote->id]) }}" class="btn btn-link">{{ __('common.cancel') }}</a>
+          <div class="rn-m-sticky-actions rn-m-quotation-actions">
+            <a href="{{ route('quotation.show',['id'=>$quote->id]) }}" class="rn-m-btn rn-m-btn--outline">{{ __('common.cancel') }}</a>
+            <button type="submit" class="rn-m-btn rn-m-btn--primary">{{ __('common.update_quotation') }}</button>
           </div>
         </form>
       </div>
@@ -124,14 +124,14 @@
     var opts = '<option value="">Select Product</option>' + products.map(function(p){ return '<option value="'+p.id+'">'+p.name+'</option>'; }).join('');
     var tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><select name="items[product_id][]" class="form-control">${opts}</select></td>
-      <td><input type="text" name="items[description][]" class="form-control" placeholder="{{ __('common.optional') }}" /></td>
-      <td><input type="number" name="items[qty][]" class="form-control text-end qty" value="1" min="1" /></td>
-      <td><input type="number" name="items[unit_price][]" class="form-control text-end price" step="0.01" /></td>
-      <td><input type="number" name="items[discount_percent][]" class="form-control text-end dperc" step="0.01" /></td>
-      <td><input type="number" name="items[discount_amount][]" class="form-control text-end damt" step="0.01" /></td>
-      <td class="text-end line">0.00</td>
-      <td><button type="button" class="btn btn-sm btn-danger del">{{ __('common.remove') }}</button></td>
+      <td data-label="{{ __('common.product') }}"><select name="items[product_id][]" class="form-control">${opts}</select></td>
+      <td data-label="{{ __('common.description') }}"><input type="text" name="items[description][]" class="form-control" placeholder="{{ __('common.optional') }}" /></td>
+      <td data-label="{{ __('common.qty') }}"><input type="number" name="items[qty][]" class="form-control text-end qty" value="1" min="1" /></td>
+      <td data-label="{{ __('common.unit_price') }}"><input type="number" name="items[unit_price][]" class="form-control text-end price" step="0.01" /></td>
+      <td data-label="{{ __('common.disc') }}"><input type="number" name="items[discount_percent][]" class="form-control text-end dperc" step="0.01" /></td>
+      <td data-label="{{ __('common.disc_amt') }}"><input type="number" name="items[discount_amount][]" class="form-control text-end damt" step="0.01" /></td>
+      <td data-label="{{ __('common.line_total') }}" class="text-end line">0.00</td>
+      <td data-label="{{ __('common.remove') }}"><button type="button" class="btn btn-sm btn-danger del">{{ __('common.remove') }}</button></td>
     `;
     document.getElementById('quoteItems').appendChild(tr);
   }

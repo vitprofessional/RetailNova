@@ -6,6 +6,7 @@ use App\Models\AdminUser;
 use App\Models\BusinessSetup;
 use App\Models\Customer;
 use App\Models\ProvideService;
+use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\SaleProduct;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -116,6 +117,31 @@ class CustomerDisplayRegressionTest extends TestCase
         $this->get(route('invoicePage', ['id' => $deletedSale->id]))->assertOk()->assertSee($missingLabel)->assertDontSee('Former Private Customer');
 
         App::setLocale('en');
+    }
+
+    public function test_quotation_create_and_edit_render_responsive_form_contracts(): void
+    {
+        $business = $this->business('Quotation Mobile Shop');
+        $actor = $this->actor((int) $business->id);
+        Customer::forceCreate(['name' => 'Quote Customer', 'businessId' => $business->id]);
+        Product::forceCreate(['name' => 'Quote Product', 'businessId' => $business->id]);
+        $quote = Quotation::forceCreate([
+            'businessId' => $business->id,
+            'quote_number' => 'Q-MOBILE-1',
+            'date' => '2026-10-24',
+            'status' => 'draft',
+        ]);
+        $this->actingAs($actor, 'admin');
+
+        $this->get(route('quotation.create'))->assertOk()
+            ->assertSee('class="rn-m-form rn-m-quotation-form"', false)
+            ->assertSee('rn-m-quotation-meta', false)
+            ->assertSee('data-label="'.__('common.unit_price').'"', false)
+            ->assertSee('rn-m-quotation-actions', false);
+        $this->get(route('quotation.edit', $quote->id))->assertOk()
+            ->assertSee('class="rn-m-form rn-m-quotation-form"', false)
+            ->assertSee('rn-m-quotation-items', false)
+            ->assertSee('rn-m-quotation-actions', false);
     }
 
     public function test_tenant_presence_validation_rejects_foreign_customers_and_suppliers(): void

@@ -579,6 +579,35 @@
         .rn-m-return-form fieldset.rn-m-form-section { display: grid; gap: 8px; }
         .rn-m-return-form fieldset legend { float: none; width: auto; margin: 0; font-size: 15px; font-weight: 700; }
     }
+    @media (max-width: 992px) {
+        .rn-m-quotation-form { padding-bottom: calc(var(--rn-m-tabbar-h) + 82px + var(--rn-safe-bottom)); }
+        .rn-m-quotation-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; margin: 0 0 12px; padding: 14px; }
+        .rn-m-quotation-meta > [class*="col-"] { width: auto; max-width: none; padding: 0; }
+        .rn-m-quotation-meta > [class*="col-"]:first-child { grid-column: 1 / -1; }
+        .rn-m-quotation-meta .form-control,
+        .rn-m-quotation-summary .form-control,
+        .rn-m-quotation-items .form-control { min-width: 0; min-height: 48px; border-color: var(--rn-color-border); border-radius: var(--rn-radius-md); }
+        .rn-m-quotation-items { min-width: 0; margin: 0 0 12px !important; padding: 14px; overflow: visible !important; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); }
+        .rn-m-quotation-items table { width: 100%; min-width: 0 !important; max-width: 100%; table-layout: fixed; }
+        .rn-m-quotation-items thead { display: none; }
+        .rn-m-quotation-items tbody { display: block; }
+        .rn-m-quotation-items tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0 0 10px; padding: 12px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); }
+        .rn-m-quotation-items tbody td { display: block; width: auto; min-width: 0; padding: 0 !important; border: 0; overflow-wrap: anywhere; }
+        .rn-m-quotation-items tbody td::before { content: attr(data-label); display: block; margin-bottom: 5px; color: var(--rn-color-muted); font-size: 12px; font-weight: 600; line-height: 1.5; }
+        .rn-m-quotation-items tbody td:nth-child(1),
+        .rn-m-quotation-items tbody td:nth-child(2),
+        .rn-m-quotation-items tbody td:nth-child(7),
+        .rn-m-quotation-items tbody td:nth-child(8) { grid-column: 1 / -1; }
+        .rn-m-quotation-items tbody td:nth-child(7) { text-align: left !important; }
+        .rn-m-quotation-items tbody td:nth-child(8) button,
+        .rn-m-quotation-items tfoot button { min-height: 44px; }
+        .rn-m-quotation-summary { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin: 0; }
+        .rn-m-quotation-summary > [class*="col-"] { width: 100%; max-width: 100%; padding: 0; }
+        .rn-m-quotation-summary > div { padding: 14px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); }
+        .rn-m-quotation-summary textarea { min-height: 96px; }
+        .rn-m-quotation-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+        .rn-m-quotation-actions .rn-m-btn { min-height: 48px; }
+    }
     @media (max-width: 359px) {
         .rn-m-form-grid--2 { grid-template-columns: minmax(0, 1fr); }
     }
