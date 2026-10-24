@@ -1,7 +1,7 @@
 @extends('include')
 @section('backTitle'){{ __('common.heading_reports_dashboard') }}@endsection
 @section('container')
-<div class="row">
+<div class="row rn-report-page">
     <div class="col-lg-12">
         <div class="card card-transparent card-block card-stretch card-height border-none">
             <div class="card-body p-0 mt-lg-2 mt-0">

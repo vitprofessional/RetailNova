@@ -1,7 +1,7 @@
 @extends('include')
 @section('backTitle'){{ __('common.heading_purchase_report') }}@endsection
 @section('container')
-<div class="row">
+<div class="row rn-report-page">
     <div class="col-lg-12">
         <div class="card card-transparent card-block card-stretch card-height border-none">
             <div class="card-body p-0 mt-lg-2 mt-0">
@@ -74,7 +74,7 @@
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover rn-table-pro">
+                    <table class="table rn-report-table table-bordered table-hover rn-table-pro">
                         <thead class="bg-light">
                             <tr>
                                 <th>{{ __('purchases.date') }}</th>
@@ -145,4 +145,7 @@
         </div>
     </div>
 </div>
+@section('scripts')
+    @include('components.mobile.report-card-script')
+@endsection
 @endsection

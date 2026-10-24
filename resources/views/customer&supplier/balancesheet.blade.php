@@ -1,5 +1,5 @@
 @extends('include') @section('backTitle'){{ __('common.heading_expense_type') }}@endsection @section('container')
-<div class="row">
+<div class="row rn-report-page">
     <div class="col-12">
         <h3>{{ __('customers.creat_transection') }}</h3>
     </div>
@@ -127,7 +127,7 @@
                     </div>
                 </div>
 
-                    <table class="table mt-3 table-bordered rn-table-pro">
+                    <table class="table rn-report-table mt-3 table-bordered rn-table-pro">
                         <thead class="bg-white text-uppercase">
                             <tr>
 
@@ -165,4 +165,7 @@
             </div>
     </div>
 </div>
+@section('scripts')
+    @include('components.mobile.report-card-script')
+@endsection
 @endsection

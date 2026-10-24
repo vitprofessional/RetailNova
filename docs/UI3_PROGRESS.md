@@ -98,4 +98,14 @@ Actual mobile screenshots are under ignored `tests-output/ui-3-final/D/`, captur
 
 Focused verification: mobile list, master-data, detail and localization checks pass. The full isolated SQLite suite now passes: 338 tests, 10,753 assertions, 0 failures, 6 existing PHPUnit deprecations.
 
-Remaining list inventory still needs mobile coverage for audits, barcode management, admin user management, and the admin missing-service data list. Account Ledger remains uncovered. Super Admin lists are phase F. This is a checkpoint, not full inventory completion.
+Remaining list inventory still needs mobile coverage for audits, barcode management, admin user management, and the admin missing-service data list. Account Ledger has mobile markup but was not included in the phase D screenshot batch. Super Admin lists are phase F. This is a checkpoint, not full inventory completion.
+
+## UI-3.R — Reports and finance reporting screens (phase E)
+
+Added shared responsive report-table behavior: report headings are attached to cells as data labels and wide rows render as cards on phones. Existing summary values, filters, pagination, row content, and print actions remain controller-driven. Added compact mobile KPI treatment, responsive chart bounds, and a light expense chart. Replaced legacy Expense Reports Blade content, which contained hardcoded example customer/transaction details and did not display controller data, with a page based on the existing `$data`, `$totalExpense`, `$groupBy`, and date values. No controller or calculation logic changed.
+
+Mobile screenshots at 390×844 are in ignored `tests-output/ui-3-final/E/`; capture details and comparisons are in `capture-notes.md`. Sales, purchases, top customers, receivables/payables, stock, account reports, expense reports, and the report dashboard returned 200 with no horizontal overflow or browser page errors. Business Overview returns a SQLite QueryException because its existing query calls MySQL-only `YEAR()` / `MONTH()` SQL functions; its screenshot shows the exception, so visual acceptance is unverified. The legacy `/balance/sheet` view still supplies static example data rather than controller-backed financial values and is not visually accepted as a real report.
+
+Focused `MobileReportCardsTest`: 2 tests, 12 assertions. Full isolated SQLite feature suite: 340 tests, 10,766 assertions, 0 failures, 6 PHPUnit deprecations. Blade cache compilation passed. Mockup 07 comparison is partial: report rows and compact KPIs are responsive, but separate reports retain their existing filters and headers rather than becoming a single consolidated overview panel; see capture notes.
+
+Next: close remaining mobile-list coverage and implement the Super Admin list patterns. The two report data-source blockers remain open.

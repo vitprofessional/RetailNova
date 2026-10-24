@@ -6,7 +6,7 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<div class="card">
+<div class="card rn-report-page">
     <div class="card-body">
         <h4 class="mb-4">{{ __('reports.financial_reports') }}</h4>
 
@@ -46,7 +46,7 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <h6>{{ __('reports.assets') }}</h6>
-                                        <table class="table table-sm">
+<table class="table rn-report-table table-sm">
                                             @foreach($data['assets'] as $asset)
                                                 <tr>
                                                 <td>{{ $asset->account_name }}</td>
@@ -62,7 +62,7 @@
 
                                     <div class="col-md-6">
                                         <h6>{{ __('reports.liabilities') }}</h6>
-                                        <table class="table table-sm">
+                                        <table class="table rn-report-table table-sm">
                                             @foreach($data['liabilities'] as $liability)
                                                 <tr>
                                                 <td>{{ $liability->account_name }}</td>
@@ -76,7 +76,7 @@
                                         </table>
 
                                         <h6 class="mt-3">{{ __('reports.equity') }}</h6>
-                                        <table class="table table-sm">
+                                        <table class="table rn-report-table table-sm">
                                             @foreach($data['equity'] as $eq)
                                                 <tr>
                                                 <td>{{ $eq->account_name }}</td>
@@ -89,7 +89,7 @@
                                             </tr>
                                         </table>
 
-                                        <table class="table table-sm">
+                                        <table class="table rn-report-table table-sm">
                                             <tr class="font-weight-bold bg-light">
                                                 <td>{{ __('reports.total_liabilities_equity') }}</td>
                                                 <td class="text-right">{{ number_format($data['total_liabilities'] + $data['total_equity'], 2) }}</td>
@@ -104,7 +104,7 @@
                                 <p class="text-center">{{ __('common.for_the_period') }} {{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} {{ __('common.to') }} {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}</p>
 
                                 <h6>{{ __('reports.revenue') }}</h6>
-                                <table class="table table-sm">
+                                <table class="table rn-report-table table-sm">
                                     @foreach($data['revenue'] as $rev)
                                         <tr>
                                         <td>{{ $rev->account_name }}</td>
@@ -118,7 +118,7 @@
                                 </table>
 
                                 <h6>{{ __('reports.expenses') }}</h6>
-                                <table class="table table-sm">
+                                <table class="table rn-report-table table-sm">
                                     @foreach($data['expenses'] as $expense)
                                         <tr>
                                         <td>{{ $expense->account_name }}</td>
@@ -131,7 +131,7 @@
                                     </tr>
                                 </table>
 
-                                <table class="table table-sm">
+                                <table class="table rn-report-table table-sm">
                                     <tr class="font-weight-bold bg-{{ $data['net_income'] >= 0 ? 'success' : 'danger' }} text-white">
                                         <td>{{ __('reports.net_income_loss') }}</td>
                                         <td class="text-right">{{ number_format($data['net_income'], 2) }}</td>
@@ -143,7 +143,7 @@
                                 <h5 class="text-center mb-3">{{ __('reports.trial_balance') }}</h5>
                                 <p class="text-center">{{ __('common.as_of') }} {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}</p>
 
-                                    <table class="table table-bordered rn-table-pro">
+<table class="table rn-report-table table-bordered rn-table-pro">
                                     <thead class="thead-dark">
                                         <tr>
                                             <th>{{ __('reports.account_code') }}</th>
@@ -188,4 +188,7 @@
         </div>
     </div>
 </div>
+@section('scripts')
+    @include('components.mobile.report-card-script')
+@endsection
 @endsection
