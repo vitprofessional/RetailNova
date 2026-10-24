@@ -633,6 +633,20 @@
         .rn-m-service-form #saveButton.rn-m-service-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
         .rn-m-service-actions .rn-m-btn { min-height: 48px; }
     }
+    @media (max-width: 992px) {
+        .rn-m-expense-form { padding-bottom: calc(var(--rn-m-tabbar-h) + 82px + var(--rn-safe-bottom)); }
+        .rn-m-expense-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; margin: 0 0 12px; padding: 14px; }
+        .rn-m-expense-fields > [class*="col-"] { width: auto; max-width: none; padding: 0; }
+        .rn-m-expense-fields > .col-md-12 { grid-column: 1 / -1; }
+        .rn-m-expense-form .form-group { min-width: 0; margin-bottom: 14px; }
+        .rn-m-expense-form .form-control { width: 100%; min-width: 0; min-height: 48px; border-color: var(--rn-color-border); border-radius: var(--rn-radius-md); }
+        .rn-m-expense-form input[type="file"].form-control { height: auto; min-height: 48px; padding: 8px; }
+        .rn-m-expense-form textarea.form-control { min-height: 96px; padding-top: 10px; }
+        .rn-m-expense-form .text-danger { display: block; margin-top: 4px; font-size: 13px; }
+        .rn-m-expense-form .rn-m-expense-help { margin: 0 0 12px; }
+        .rn-m-expense-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+        .rn-m-expense-actions .rn-m-btn { min-height: 48px; }
+    }
     @media (max-width: 359px) {
         .rn-m-form-grid--2 { grid-template-columns: minmax(0, 1fr); }
     }

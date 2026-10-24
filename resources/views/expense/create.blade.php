@@ -15,9 +15,9 @@
             </a>
         </div>
 
-        <form action="{{ route('expense.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('expense.store') }}" method="POST" enctype="multipart/form-data" class="rn-m-form rn-m-expense-form">
             @csrf
-            <div class="row">
+            <div class="row rn-m-form-section rn-m-expense-fields">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="expense_date">{{ __('common.expense_date') }} <span class="text-danger">*</span></label>
@@ -146,17 +146,15 @@
                                     </div>
                                 </div>
 
-                                <div class="alert alert-info">
+                                <div class="alert alert-info rn-m-expense-help">
                                     <strong>{{ __('common.accounting_integration') }}:</strong> {{ __('common.accounting_integration_explanation') }}
                                 </div>
 
-                                <div class="form-group">
-                                    <button type="submit" class="btn btn-primary">
+                                <div class="rn-m-sticky-actions rn-m-expense-actions">
+                                    <a href="{{ route('expense.list') }}" class="rn-m-btn rn-m-btn--outline">{{ __('common.cancel') }}</a>
+                                    <button type="submit" class="rn-m-btn rn-m-btn--primary">
                                         <i class="las la-save"></i> {{ __('common.save_expense') }}
                                     </button>
-                                    <a href="{{ route('expense.list') }}" class="btn btn-secondary">
-                                        <i class="las la-times"></i> {{ __('common.cancel') }}
-                                    </a>
                                 </div>
                     </form>
                 </div>
