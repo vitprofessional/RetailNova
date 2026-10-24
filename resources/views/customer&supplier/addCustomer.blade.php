@@ -1,5 +1,5 @@
 @extends('include')
-@section('backTitle'){{ __('common.heading_addcoustomer') }}@endsection @section('container')
+@section('backTitle'){{ app(\App\Support\MobileView::class)->isMobile() ? (request()->boolean('new') ? __('mobile.new_customer') : __('mobile.summary_customers')) : __('common.heading_addcoustomer') }}@endsection @section('container')
 {{-- UI-2: the mobile version is cards (App\Services\MobileLists); the desktop markup below is unchanged. --}}
 @mobile
 @if(isset($profile) || request()->boolean('new'))

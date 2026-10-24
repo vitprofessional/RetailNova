@@ -35,6 +35,11 @@ class CustomersList extends ContactsList
             .'FROM sale_products WHERE sale_products.customerId = customers.id AND sale_products.deleted_at IS NULL)';
     }
 
+    protected function lastTransactionSql(): string
+    {
+        return '(SELECT MAX(sale_products.created_at) FROM sale_products WHERE sale_products.customerId = customers.id AND sale_products.deleted_at IS NULL)';
+    }
+
     protected function lang(): string
     {
         return 'customers';

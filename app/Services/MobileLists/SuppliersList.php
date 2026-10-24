@@ -37,6 +37,14 @@ class SuppliersList extends ContactsList
             .' WHERE purchase_products.supplier = suppliers.id AND purchase_products.purchase_invoice_id IS NULL))';
     }
 
+    protected function lastTransactionSql(): string
+    {
+        $invoice = '(SELECT MAX(purchase_invoices.created_at) FROM purchase_invoices WHERE purchase_invoices.supplier_id = suppliers.id)';
+        $legacy = '(SELECT MAX(purchase_products.created_at) FROM purchase_products WHERE purchase_products.supplier = suppliers.id)';
+        return '(CASE WHEN '.$invoice.' IS NULL THEN '.$legacy.' WHEN '.$legacy.' IS NULL THEN '.$invoice.' '
+            .'WHEN '.$invoice.' >= '.$legacy.' THEN '.$invoice.' ELSE '.$legacy.' END)';
+    }
+
     protected function lang(): string
     {
         return 'suppliers';

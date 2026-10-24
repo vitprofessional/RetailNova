@@ -41,6 +41,13 @@
             </div>
           </div>
 
+          <section class="rn-m-quote-picker" aria-label="{{ __('common.product') }}">
+            <label class="sr-only" for="quoteProductSearch">{{ __('mobile.list_search') }}</label>
+            <input id="quoteProductSearch" class="form-control rn-m-quote-picker-search" type="search" placeholder="{{ __('mobile.list_search') }}" autocomplete="off">
+            <div class="rn-m-quote-product-cards" role="listbox" aria-label="{{ __('common.product') }}">
+              @foreach($products as $p)<button type="button" class="rn-m-quote-product" data-product-id="{{ $p->id }}" data-product-name="{{ $p->name }}"><span>{{ $p->name }}</span><i class="ri-add-line" aria-hidden="true"></i></button>@endforeach
+            </div>
+          </section>
           <div class="mb-3 table-responsive product-table rn-m-form-section rn-m-quotation-items">
             <table class="table mb-0 table-bordered rounded-0 rn-table-pro rn-m-quote-items" id="itemsTable">
               <thead>
@@ -120,7 +127,7 @@
 (function(){
   var products = @json($products->map(function($p){ return ['id'=>$p->id,'name'=>$p->name]; }));
   function fmt(n){ return (Math.round(n*100)/100).toFixed(2); }
-  function addRow(){
+  function addRow(productId){
     var opts = '<option value="">{{ addslashes(__('common.select_product')) }}</option>' + products.map(function(p){ return '<option value="'+p.id+'">'+p.name+'</option>'; }).join('');
     var tr = document.createElement('tr');
     tr.innerHTML = `
@@ -134,6 +141,16 @@
       <td data-label="{{ __('common.remove') }}"><button type="button" class="btn btn-sm btn-danger del rn-m-quote-remove" aria-label="{{ __('common.remove') }}" title="{{ __('common.remove') }}"><i class="ri-delete-bin-line" aria-hidden="true"></i></button></td>
     `;
     document.getElementById('quoteItems').appendChild(tr);
+    if(productId) tr.querySelector('select[name="items[product_id][]"]').value = String(productId);
+    wrapStepper(tr.querySelector('.qty'));
+    recalc();
+  }
+  function wrapStepper(input){
+    if(!input || input.parentElement.classList.contains('rn-m-stepper')) return;
+    var wrap=document.createElement('div');wrap.className='rn-m-stepper';
+    var minus=document.createElement('button');minus.type='button';minus.dataset.step='-1';minus.setAttribute('aria-label','−');minus.textContent='−';
+    var plus=document.createElement('button');plus.type='button';plus.dataset.step='1';plus.setAttribute('aria-label','+');plus.textContent='+';
+    input.before(wrap);wrap.append(minus,input,plus);
   }
   function recalc(){
     var rows = document.querySelectorAll('#quoteItems tr');
@@ -157,8 +174,17 @@
     document.getElementById('grandTotal').textContent = fmt(Math.max(0, sub-dsum));
   }
   document.getElementById('addItemRow').addEventListener('click', function(){ addRow(); });
+  document.querySelectorAll('#quoteItems .qty').forEach(wrapStepper);
+  var picker=document.querySelector('.rn-m-quote-picker');
+  if(picker){
+    picker.addEventListener('input',function(e){if(e.target.id==='quoteProductSearch'){var q=e.target.value.trim().toLocaleLowerCase();picker.querySelectorAll('.rn-m-quote-product').forEach(function(card){card.hidden=!card.dataset.productName.toLocaleLowerCase().includes(q);});}});
+    picker.addEventListener('click',function(e){var card=e.target.closest('.rn-m-quote-product');if(card)addRow(card.dataset.productId);});
+  }
+  document.getElementById('quoteItems').addEventListener('click',function(e){var step=e.target.closest('[data-step]');if(step){var input=step.parentElement.querySelector('input.qty');input.value=String(Math.max(1,(parseInt(input.value||'1',10)||1)+parseInt(step.dataset.step,10)));input.dispatchEvent(new Event('input',{bubbles:true}));}});
+  document.getElementById('quoteItems').addEventListener('change',function(e){if(e.target.matches('select[name="items[product_id][]"]'))recalc();});
   document.getElementById('quoteItems').addEventListener('input', function(e){ if(['qty','price','dperc','damt'].some(c=> e.target.classList.contains(c))) recalc(); });
   document.getElementById('quoteItems').addEventListener('click', function(e){ if(e.target.classList.contains('del')){ e.target.closest('tr').remove(); recalc(); }});
+  recalc();
 })();
 </script>
 @endsection

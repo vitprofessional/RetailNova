@@ -1,5 +1,5 @@
 @extends('include')
-@section('backTitle'){{ __('common.heading_addsupplier') }}@endsection
+@section('backTitle'){{ app(\App\Support\MobileView::class)->isMobile() ? (request()->boolean('new') ? __('mobile.new_supplier') : __('mobile.summary_suppliers')) : __('common.heading_addsupplier') }}@endsection
 @section('container')
 {{-- UI-2: the mobile version is cards (App\Services\MobileLists); the desktop markup below is unchanged. --}}
 @mobile

@@ -7,7 +7,7 @@
                                 <th>{{ __('purchases.product_name') }}</th>
                                 <th>{{ __('purchases.serial') }}</th>
                                 <th>{{ __('purchases.purchase_qty') }}</th>
-                                <th>{{ __('purchases.current_stock') }}</th>
+                                <th>@mobile{{ __('mobile.stock') }}@else{{ __('purchases.current_stock') }}@endmobile</th>
                                 <th>{{ __('common.buy_price') }} ({{ $currencySymbol }})</th>
                                 <th>{{ __('common.sale_price_ex_vat') }} ({{ $currencySymbol }})</th>
                                 <th>{{ __('purchases.vat_include') }}</th>

@@ -42,7 +42,7 @@ class MobileFormRulesTest extends TestCase
 
         $this->assertIsString($css);
         $this->assertStringContainsString('body.rn-app:has(.rn-m-form) .rn-m-tabbar { display: none !important; }', $css);
-        $this->assertStringContainsString('.rn-m-sale-mobile-table tbody td:nth-child(3) { display: none !important; }', $css);
+        $this->assertStringContainsString('.rn-m-sale-mobile-table .rn-m-sale-purchase-id { display: none !important; }', $css);
         $this->assertStringContainsString('.rn-m-sale-mobile-table tbody td:first-child { display: none !important; }', $css);
     }
 
@@ -57,6 +57,8 @@ class MobileFormRulesTest extends TestCase
         $this->assertStringNotContainsString('Select Product', $edit);
         $this->assertStringContainsString("__('common.select_product')", $create);
         $this->assertStringContainsString("__('common.select_product')", $edit);
+        $this->assertStringContainsString('rn-m-quote-picker', $create);
+        $this->assertStringContainsString('rn-m-quote-product', $edit);
     }
 
     public function test_secondary_admin_and_catalog_forms_use_the_shared_mobile_form_contract(): void

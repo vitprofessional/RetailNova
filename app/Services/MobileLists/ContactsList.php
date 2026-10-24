@@ -5,6 +5,7 @@ namespace App\Services\MobileLists;
 use App\Models\AdminUser;
 use App\Services\PurchaseWorkflow;
 use App\Support\LocalizedNumber;
+use App\Support\MobileDateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -61,8 +62,11 @@ abstract class ContactsList extends MobileList
     {
         $table = $this->model()->getModel()->getTable();
 
-        return $this->base($filters)->select($table.'.*')->selectRaw($this->dueSql().' AS amount_due')->orderByDesc($table.'.id');
+        return $this->base($filters)->select($table.'.*')->selectRaw($this->dueSql().' AS amount_due')
+            ->selectRaw($this->lastTransactionSql().' AS last_transaction_at')->orderByDesc($table.'.id');
     }
+
+    abstract protected function lastTransactionSql(): string;
 
     protected function summary(Builder $query, array $filters): array
     {
@@ -81,7 +85,6 @@ abstract class ContactsList extends MobileList
     public function card(Model $contact): array
     {
         $due = (float) $contact->amount_due;
-        $opening = (int) ($contact->openingBalance ?? 0);
         $actor = auth('admin')->user();
         $lang = $this->lang();
 
@@ -102,15 +105,15 @@ abstract class ContactsList extends MobileList
             'url' => route($this->editRoute(), ['id' => $contact->id]),
             'avatar' => $this->initial($contact->name),
             'title' => $contact->name,
-            'subtitle' => $contact->mobile ?: ($contact->mail ?: ''),
-            'amount' => $due > 0 ? $this->money($due) : __('mobile.no_due'),
+            'subtitle' => '',
+            'amount' => $this->money($due),
             'amount_tone' => $due > 0 ? 'warning' : 'muted',
-            'note' => $due > 0 ? __('mobile.due_label_'.$this->key()) : null,
+            'note' => null,
             'note_tone' => 'muted',
-            'badge' => null,
+            'badge' => ['label' => $due > 0 ? __('mobile.due_label_'.$this->key()) : __('mobile.no_due'), 'tone' => $due > 0 ? 'warning' : 'muted'],
             'meta' => array_values(array_filter([
-                $contact->area ?: $contact->city,
-                $opening !== 0 ? __($lang.'.opening_balance').': '.$this->money($opening) : null,
+                $contact->mobile ?: null,
+                $contact->last_transaction_at ? __('common.last_transaction').': '.MobileDateTime::date($contact->last_transaction_at) : null,
             ])),
             'actions' => $actions,
         ];

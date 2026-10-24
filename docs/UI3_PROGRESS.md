@@ -56,3 +56,14 @@ Refreshed 390px screenshots: all six lists and their filters returned HTTP 200 w
 The prior checkpoint's remaining setup/admin/settings/catalog forms have now been adapted to the shared mobile form rules: business setup, admin profile/user, one-time Super Admin, language/sales settings, brand/category/unit, and service create/edit. They were captured at 390×844 and compared with the shared form pattern; screenshots and details are in ignored `tests-output/ui-3R/forms/secondary/` and `tests-output/ui-3R/capture-notes.md`. The normal local scratchpad correctly keeps first-run Super Admin provisioning closed; the screenshot was taken from an empty isolated SQLite fixture without submitting it. Master-data forms preserve their existing legacy tables below the mobile form, which remain visually dense at narrow widths.
 
 The secondary-form focused mobile rules/list tests pass (15 tests, 338 assertions). The latest full isolated SQLite suite passes (329 tests, 10,465 assertions, 0 failures, six PHPUnit deprecations). Blade view cache compilation and `git diff --check` pass. Final secondary-form code and test changes are grouped in a separate reviewable follow-up commit. The `docs/AGENT_NOTES.md` file remains untracked and is not part of any commit.
+
+## UI-3 remaining refinements — Phase A (pending commit)
+
+Resumed at `2a7477c` on `ui-2-mobile-pages`. Phase A changes cover sale-item editor summary and mobile add-row behavior, POS-style purchase/quotation item pickers, customer/supplier transaction metadata, localized mobile date/time helpers, and filter/stock labels. Browser captures from the authenticated local Laravel app (390×844, Android mobile user agent, `networkidle` plus 500 ms) are in ignored `tests-output/ui-3-final/A/`; the visual comparison is in that directory's `capture-notes.md`.
+
+- Latest full isolated SQLite suite: 330 tests, 10,499 assertions, 0 failures, 6 PHPUnit deprecations.
+- Focused mobile lists/forms/purchase tests: previously 18 tests, 456 assertions, passing. Re-run for final phase gate.
+- Browser pages captured: sale item editor, customer/supplier list and filter sheets, new purchase, quotation create/edit. See capture results for individual HTTP status and overflow checks.
+- Remaining known visual/behavior details are recorded in capture notes; no phase A commit is created yet.
+
+Next: finish and commit UI-3R.5, then work through master-data forms (UI-3.4b), details (UI-3.D), remaining lists (UI-3.L), reports (UI-3.R), and Super Admin lists (UI-3.S) in separate reviewed increments. The untracked `docs/AGENT_NOTES.md` remains preserved and unstaged.

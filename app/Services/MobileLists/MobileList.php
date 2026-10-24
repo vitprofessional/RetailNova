@@ -3,6 +3,7 @@
 namespace App\Services\MobileLists;
 
 use App\Support\LocalizedNumber;
+use App\Support\MobileDateTime;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -172,7 +173,7 @@ abstract class MobileList
             return '';
         }
         try {
-            return LocalizedNumber::digits(Carbon::parse($value)->format('d/m/Y'));
+            return MobileDateTime::date($value);
         } catch (\Throwable) {
             return (string) $value;
         }
@@ -208,7 +209,7 @@ abstract class MobileList
         }
 
         try {
-            return LocalizedNumber::digits(Carbon::parse($value)->format('h:i A'));
+            return MobileDateTime::time($value);
         } catch (\Throwable) {
             return '';
         }

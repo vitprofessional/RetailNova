@@ -25,6 +25,8 @@ class Sprint04PurchaseUiTest extends TestCase
             $this->assertSame(1,$xpath->query('//*[@id="'.$id.'" and contains(@class,"rn-m-form-section-title")]')->length,'Missing shared section heading '.$id);
         }
         $this->assertSame(4,$xpath->query('//*[@id="savePurchase"]//section[contains(@class,"rn-m-form-section")]')->length);
+        $this->assertSame(1,$xpath->query('//*[@id="purchaseProductSearch" and @type="search"]')->length);
+        $this->assertSame(1,$xpath->query('//*[@class="rn-m-purchase-product-cards"]')->length);
         $this->assertSame(1,$xpath->query('//*[@id="saveButton" and contains(@class,"rn-m-sticky-actions")]')->length);
         $this->assertSame(1,$xpath->query('//*[@id="purchaseSaveButton" and contains(@class,"rn-m-btn--primary")]')->length);
         $this->assertSame(1,$xpath->query('//*[@id="saveButton"]//a[contains(@class,"rn-m-btn--outline") and @data-purchase-leave]')->length);

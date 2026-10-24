@@ -11,6 +11,7 @@ use App\Models\SaleProduct;
 use App\Models\Supplier;
 use App\Services\MobileLists\MobileList;
 use App\Support\MobileView;
+use App\Support\MobileDateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\BuildsSaleFixtures;
 use Tests\TestCase;
@@ -346,5 +347,26 @@ class MobileListPagesTest extends TestCase
         foreach (['list-card', 'summary-bar', 'period-chips', 'filter-sheet', 'empty-state', 'load-more', 'fab', 'form-section', 'field', 'sticky-actions'] as $component) {
             $this->assertFileExists(resource_path('views/components/m/'.$component.'.blade.php'));
         }
+    }
+
+    public function test_contact_cards_show_phone_last_transaction_and_localized_date_time(): void
+    {
+        $admin = $this->actor('admin');
+        $rows = $this->seedLists(1, 'Own', $admin);
+        $this->actingAs($admin, 'admin');
+
+        foreach ([['addCustomer', $rows['customer'], 'customers'], ['addSupplier', $rows['supplier'], 'suppliers']] as [$route, $contact, $list]) {
+            $html = $this->onPhone()->get(route($route))->assertOk()->getContent();
+            $this->assertStringContainsString((string) $contact->mobile, $html);
+            $this->assertStringContainsString(__('common.last_transaction'), $html);
+            $this->assertStringContainsString(now()->format('d/m/Y'), $html);
+            $this->assertStringContainsString(__('mobile.due_label_'.$list), $html);
+        }
+
+        app()->setLocale('bn');
+        $this->assertSame('২৪/১০/২০২৬', MobileDateTime::date('2026-10-24'));
+        $this->assertSame('রাত ১০:৫৮', MobileDateTime::time('2026-10-24 22:58:00'));
+        app()->setLocale('en');
+        $this->assertSame('10:58 PM', MobileDateTime::time('2026-10-24 22:58:00'));
     }
 }

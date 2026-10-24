@@ -24,13 +24,14 @@
         @endif
         <form method="POST" action="{{ route('sale.items.update', ['id' => $sale->id]) }}" class="rn-m-form rn-m-sale-items-edit-form">
           @csrf
+          <button type="button" class="rn-m-sale-add-item-toggle" id="toggleAddSaleItem" aria-expanded="false">{{ __('sales.add_new_item_optional') }}</button>
           <div class="table-responsive rn-m-form-section rn-m-sale-items-edit-list">
             <table class="table table-bordered rn-table-pro rn-m-sale-mobile-table">
               <thead class="thead-light">
                 <tr>
                   <th style="width:6%">#</th>
                   <th style="width:20%">{{ __('sales.product') }}</th>
-                  <th style="width:10%">{{ __('sales.purchase_id') }}</th>
+                  <th style="width:10%" class="rn-m-sale-purchase-id">{{ __('sales.purchase_id') }}</th>
                   <th style="width:12%" class="text-end">{{ __('sales.current_stock') }}</th>
                   <th style="width:12%" class="text-end">{{ __('sales.qty') }}</th>
                   <th style="width:12%" class="text-end">{{ __('sales.warranty_days') }}</th>
@@ -55,8 +56,8 @@
                         <div class="small text-danger mt-1" data-role="serial-error" style="display:none;">{{ __('sales.please_select_the_required_number_of_serials') }}</div>
                       </div>
                     </td>
-                    <td data-label="{{ __('sales.purchase_id') }}">{{ $it->purchaseId }}</td>
-                    <td class="text-end" data-label="{{ __('sales.current_stock') }}">{{ $it->currentStock }}</td>
+                    <td class="rn-m-sale-purchase-id" data-label="{{ __('sales.purchase_id') }}">{{ $it->purchaseId }}</td>
+                    <td class="text-end" data-label="{{ __('mobile.stock') }}">{{ $it->currentStock }}</td>
                     <td data-label="{{ __('sales.quantity') }}">
                       <input type="number" name="items[{{ $it->id }}][qty]" min="0" class="form-control form-control-sm text-end" value="{{ old('items.'.$it->id.'.qty', $it->qty) }}" data-purchase-id="{{ $it->purchaseId }}" data-role="qty">
                     </td>
@@ -71,9 +72,6 @@
                 @empty
                   <tr><td colspan="8" class="text-center">{{ __('sales.no_items_found') }}</td></tr>
                 @endforelse
-                <tr class="table-secondary rn-m-sale-items-add-heading">
-                  <td colspan="8"><strong>{{ __('sales.add_new_item_optional') }}</strong></td>
-                </tr>
                 <tr class="rn-m-sale-items-add-row">
                   <td colspan="3" data-label="{{ __('sales.select_product_purchase') }}">
                     <small class="text-muted">{{ __('sales.select_product_purchase') }}</small>
@@ -84,8 +82,8 @@
                     <div class="small text-muted mt-1" id="addPurchaseMeta" style="display:none;"></div>
                   </td>
                   <td data-label="{{ __('sales.available_stock') }}">
-                    <small class="text-muted">{{ __('sales.available_stock') }}</small>
-                    <input type="text" id="addCurrentStock" class="form-control form-control-sm" value="" placeholder="{{ __('sales.stock') }}" readonly>
+                    <small class="text-muted">{{ __('mobile.stock') }}</small>
+                    <input type="text" id="addCurrentStock" class="form-control form-control-sm" value="" placeholder="{{ __('mobile.stock') }}" readonly>
                   </td>
                   <td data-label="{{ __('sales.quantity') }}">
                     <small class="text-muted">{{ __('sales.quantity') }}</small>
@@ -122,15 +120,14 @@
                 $paid = (float)($sale->paidAmount ?? 0);
                 $initialDue = max(0, $initialGrand - $paid);
               @endphp
-              <div class="d-flex flex-wrap gap-3 align-items-center">
-                <div><strong>{{ __('common.total') }}:</strong> <span id="calcTotal">৳ {{ number_format($initialTotal,2) }}</span></div>
-                <div class="d-flex align-items-center" style="gap:6px;">
-                  <strong>{{ __('common.discount') }}:</strong>
+              <div class="rn-m-sale-items-summary-rows">
+                <div class="rn-m-sale-items-summary-row"><strong>{{ __('common.total') }}</strong><span id="calcTotal">@money($initialTotal)</span></div>
+                <div class="rn-m-sale-items-summary-row rn-m-sale-items-summary-discount"><label for="discountInput"><strong>{{ __('common.discount') }}</strong></label>
                   <input type="number" step="0.01" min="0" name="discountAmount" id="discountInput" class="form-control form-control-sm" style="max-width:120px;" value="{{ number_format($discount,2,'.','') }}" />
                 </div>
-                <div><strong>{{ __('common.grand_total') }}:</strong> <span id="calcGrand">৳ {{ number_format($initialGrand,2) }}</span></div>
-                <div><strong>{{ __('common.paid') }}:</strong> <span id="calcPaid">৳ {{ number_format($paid,2) }}</span></div>
-                <div><strong>{{ __('sales.remaining_due') }}:</strong> <span id="calcDue">৳ {{ number_format($initialDue,2) }}</span></div>
+                <div class="rn-m-sale-items-summary-row"><strong>{{ __('common.grand_total') }}</strong><span id="calcGrand">@money($initialGrand)</span></div>
+                <div class="rn-m-sale-items-summary-row"><strong>{{ __('common.paid') }}</strong><span id="calcPaid">@money($paid)</span></div>
+                <div class="rn-m-sale-items-summary-row"><strong>{{ __('sales.remaining_due') }}</strong><span id="calcDue">@money($initialDue)</span></div>
               </div>
             </div>
           </div>
@@ -149,6 +146,14 @@
 <script>
   (function(){
     var select = document.getElementById('addPurchaseSelect');
+    var addRow = document.querySelector('.rn-m-sale-items-add-row');
+    var addRowToggle = document.getElementById('toggleAddSaleItem');
+    if(addRowToggle && addRow){
+      addRowToggle.addEventListener('click', function(){
+        addRow.classList.toggle('is-open');
+        addRowToggle.setAttribute('aria-expanded', addRow.classList.contains('is-open') ? 'true' : 'false');
+      });
+    }
     var hidPid = document.getElementById('addPurchaseId');
     var stockEl = document.getElementById('addCurrentStock');
     var qtyEl   = document.getElementById('addQty');
@@ -168,13 +173,6 @@
         .then(function(j){
           if(!j || !j.data){ return; }
           select.innerHTML = j.data;
-          // Add a note about out-of-stock (if any)
-          if(j.outOfStock && j.outOfStock.length > 0){
-            var note = document.createElement('div');
-            note.className = 'small text-danger mt-1';
-            note.textContent = j.outOfStock.length + ' product(s) currently out of stock are hidden.';
-            select.parentElement.appendChild(note);
-          }
         })
         .catch(function(e){ console.warn('Failed to load options', e); });
     }
@@ -190,7 +188,7 @@
         metaEl.textContent = '';
         addSerialsWrap.style.display = 'none';
         addSerialsList.innerHTML = '';
-        addSerialsHidden.value = '';
+        addSerialsHiddenContainer.innerHTML = '';
         return;
       }
       var purchaseId = opt.getAttribute('data-purchase-id') || '';
@@ -372,7 +370,16 @@
     window.__soldSerials = {!! json_encode($soldSerialsByPurchase ?? []) !!};
 
     // Auto calculation: update line totals and summary when qty/price change
-    function fmt(n){ try{ return new Intl.NumberFormat('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}).format(n); }catch(e){ return parseFloat(n).toFixed(2); } }
+    var moneySymbol = @json(\App\Support\Currency::symbol());
+    var moneyPosition = @json(\App\Support\Currency::position());
+    var useBanglaDigits = @json(str_starts_with(app()->getLocale(), 'bn'));
+    function fmt(n){
+      var value;
+      try{ value = new Intl.NumberFormat('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}).format(n); }
+      catch(e){ value = parseFloat(n).toFixed(2); }
+      if(useBanglaDigits){ value = value.replace(/[0-9]/g, function(d){ return '০১২৩৪৫৬৭৮৯'[Number(d)]; }); }
+      return moneyPosition === 'right' ? value + moneySymbol : moneySymbol + value;
+    }
     function recalcTotals(){
       var rows = qsa('tr[data-item-id]');
       var total = 0;
@@ -384,7 +391,7 @@
         var price = parseFloat(priceInput && priceInput.value ? priceInput.value : '0') || 0;
         var line = qty * price;
         total += line;
-        if(lineEl){ lineEl.textContent = '৳ ' + fmt(line); }
+        if(lineEl){ lineEl.textContent = fmt(line); }
         // Update required serial count if wrap visible
         var pid = tr.getAttribute('data-purchase-id');
         var wrap = qs('.serials-wrap', tr);
@@ -421,10 +428,10 @@
       var gEl = document.getElementById('calcGrand');
       var dEl = document.getElementById('calcDue');
       var discOut = document.getElementById('calcDiscount');
-      if(tEl){ tEl.textContent = '৳ ' + fmt(total); }
-      if(gEl){ gEl.textContent = '৳ ' + fmt(grand); }
-      if(dEl){ dEl.textContent = '৳ ' + fmt(due); }
-      if(discOut){ discOut.textContent = '৳ ' + fmt(discount); }
+      if(tEl){ tEl.textContent = fmt(total); }
+      if(gEl){ gEl.textContent = fmt(grand); }
+      if(dEl){ dEl.textContent = fmt(due); }
+      if(discOut){ discOut.textContent = fmt(discount); }
     }
     // Bind inputs in existing rows
     qsa('input[data-role="qty"]').forEach(function(el){ el.addEventListener('input', recalcTotals); });
