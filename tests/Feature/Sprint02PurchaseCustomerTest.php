@@ -185,6 +185,10 @@ class Sprint02PurchaseCustomerTest extends TestCase
     public function test_returned_serials_and_stock_remain_consistent_and_original_invoice_is_preserved(): void
     {
         $invoice=$this->createInvoice([2=>['RETURN-A','REMAIN-A']]);$line=$invoice->items->first();$serial=$line->serials->first();
+        $mobileReturn=$this->withHeader('User-Agent','Mozilla/5.0 (Linux; Android 13) Mobile')->get(route('returnPurchase',$line->id))->assertOk();
+        $this->assertStringContainsString('rn-m-return-form',$mobileReturn->getContent());
+        $this->assertStringContainsString('data-label="'.__('purchases.return_qty').'"',$mobileReturn->getContent());
+        $this->assertSame(1,substr_count($mobileReturn->getContent(),'rn-m-return-actions'),'Purchase return actions must share one sticky row.');
         $payload=['purchaseId'=>$line->id,'supplierId'=>$line->supplier,'productId'=>$line->productName,'returnQty'=>1,'adjustAmount'=>10,'serialIds'=>[$serial->id]];
         $this->post(route('purchaseReturnSave'),$payload)->assertRedirect()->assertSessionHasNoErrors();
         $this->assertDatabaseHas('product_serials',['id'=>$serial->id,'status'=>'returned']);

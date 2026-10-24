@@ -46,6 +46,21 @@ class SaleCancellationTest extends TestCase
         $this->assertSame($soldSerials, ProductSerial::where('saleId', $sale->id)->where('status', 'sold')->count());
     }
 
+    public function test_sale_return_page_exposes_shared_mobile_form_and_labeled_product_fields(): void
+    {
+        $inventory = $this->inventory();
+        $this->actingAs($this->actor('admin'), 'admin');
+        $sale = $this->sell($inventory);
+
+        $response = $this->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 13) Mobile')
+            ->get(route('returnSale', $sale->id))->assertOk();
+
+        $this->assertStringContainsString('rn-m-return-form', $response->getContent());
+        $this->assertStringContainsString('data-label="'.__('sales.return_qty').'"', $response->getContent());
+        $this->assertStringContainsString('rn-m-return-actions', $response->getContent());
+        $this->assertSame(1, substr_count($response->getContent(), 'rn-m-return-actions'), 'Sale return actions must share one sticky row.');
+    }
+
     // a) salesmanager and gm get 403 on cancel; sale, stock and serials unchanged
     public function test_non_admin_roles_cannot_cancel_single_or_bulk(): void
     {

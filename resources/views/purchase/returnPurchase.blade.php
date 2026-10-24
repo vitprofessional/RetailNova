@@ -2,22 +2,22 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<form class="card form" action="{{ route('purchaseReturnSave') }}" method="POST">
+<form class="card form rn-m-form rn-m-return-form" action="{{ route('purchaseReturnSave') }}" method="POST">
     @csrf
     <input type="hidden" name="supplierId" value="{{ $supplier->id ?? '' }}">
     <input type="hidden" name="purchaseId" value="{{ $purchase->id ?? '' }}">
     <input type="hidden" name="productId" value="{{ $product->id ?? '' }}">
-    <div class="card-header text-center" style="color: #c20c0cff;">
+    <div class="card-header text-center rn-m-form-section-title" style="color: #c20c0cff;">
         <h4>{{ __('purchases.purchase_return') }}</h4>
     </div>
     <div class="card-body">
         @if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif
-        @if($purchase->serials()->exists())<fieldset class="mb-3"><legend>{{ __('purchases.return_serials_required') }}</legend>
+        @if($purchase->serials()->exists())<fieldset class="mb-3 rn-m-form-section"><legend>{{ __('purchases.return_serials_required') }}</legend>
         @foreach($purchase->serials as $serial)@if($serial->saleId===null && in_array($serial->status,[null,'available'],true))
         <label class="mr-3"><input type="checkbox" name="serialIds[]" value="{{ $serial->id }}"> {{ $serial->serialNumber }}</label>
         @endif @endforeach</fieldset>@endif
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-4 rn-m-form-section">
                 <h5>{{ __('purchases.supplier_details') }}</h5>
                 <hr />
                 <p><strong>{{ __('common.name') }}:</strong> {{ $supplier->name ?? 'N/A' }}</p>
@@ -25,13 +25,13 @@
                 <p><strong>{{ __('common.email') }}:</strong> {{ $supplier->mail ?? 'N/A' }}</p>
                 <p><strong>{{ __('purchases.location') }}:</strong> {{ $supplier->city ?? 'N/A' }}@if($supplier->area), {{ $supplier->area }}@endif</p>
             </div>
-            <div class="col-md-4 mt-5">
+            <div class="col-md-4 mt-5 rn-m-form-section">
                 <p class="mt-1"><strong>{{ __('common.date') }}:</strong> {{ \Carbon\Carbon::parse($purchase->purchase_date ?? now())->format('d-m-Y') }}</p>
                 <p><strong>{{ __('common.invoice') }}:</strong> {{ $purchase->invoice ?? 'N/A' }}</p>
                 <p><strong>{{ __('common.reference') }}:</strong> {{ $purchase->reference ?? 'N/A' }}</p>
             </div>
             <div class="col-md-4 text-md-end">
-                <div class="card">
+                <div class="card rn-m-form-section rn-m-return-summary">
                     <div class="card-body">
                         <h6>{{ __('purchases.purchase_summary') }}</h6>
                         <div class="row">
@@ -58,7 +58,7 @@
         <div class="row product-table">
             <div class="col-md-12">
                 <h4>{{ __('purchases.products_for_return') }}</h4>
-                <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
+                <table class="table mb-0 table-bordered rounded-0 rn-table-pro rn-m-return-table rn-m-purchase-return-table">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -74,14 +74,14 @@
                     <tbody>
                         @if($product && $stock)
                         <tr class="product-row">
-                            <td>1</td>
-                            <td>{{ $product->name }}</td>
-                            <td><input type="number" id="purchaseQty" class="form-control form-control-sm" value="{{ $purchase->qty ?? 0 }}" readonly /></td>
-                            <td><input type="number" id="currentStock" class="form-control form-control-sm" value="{{ $stock->currentStock ?? 0 }}" readonly /></td>
-                            <td><input type="number" step="0.01" id="buyPrice" class="form-control form-control-sm price" value="{{ $purchase->buyPrice ?? 0 }}" readonly /></td>
-                            <td>{{ number_format(($purchase->buyPrice ?? 0) * ($purchase->qty ?? 0), 2, '.', ',') }}</td>
-                            <td><input type="number" name="returnQty" id="returnQty" class="form-control form-control-sm quantity" data-onkeyup="calculateReturnAmount()" value="" max="{{ $stock->currentStock ?? 0 }}" min="1" step="1" /></td>
-                            <td><input type="number" class="form-control form-control-sm" value="0" id="returnAmount" readonly /></td>
+                            <td data-label="#">1</td>
+                            <td data-label="{{ __('purchases.name') }}">{{ $product->name }}</td>
+                            <td data-label="{{ __('purchases.purchase_quantity') }}"><input type="number" id="purchaseQty" class="form-control form-control-sm" value="{{ $purchase->qty ?? 0 }}" readonly /></td>
+                            <td data-label="{{ __('purchases.current_stock') }}"><input type="number" id="currentStock" class="form-control form-control-sm" value="{{ $stock->currentStock ?? 0 }}" readonly /></td>
+                            <td data-label="{{ __('purchases.price') }}"><input type="number" step="0.01" id="buyPrice" class="form-control form-control-sm price" value="{{ $purchase->buyPrice ?? 0 }}" readonly /></td>
+                            <td data-label="{{ __('purchases.total') }}">{{ number_format(($purchase->buyPrice ?? 0) * ($purchase->qty ?? 0), 2, '.', ',') }}</td>
+                            <td data-label="{{ __('purchases.return_qty') }}"><input type="number" name="returnQty" id="returnQty" class="form-control form-control-sm quantity" data-onkeyup="calculateReturnAmount()" value="" max="{{ $stock->currentStock ?? 0 }}" min="1" step="1" /></td>
+                            <td data-label="{{ __('purchases.return_amount') }}"><input type="number" class="form-control form-control-sm" value="0" id="returnAmount" readonly /></td>
                         </tr>
                         @else
                         <tr>
@@ -92,7 +92,7 @@
                 </table>
             </div>
         </div>
-        <div class="row">
+        <div class="row rn-m-form-section rn-m-return-totals">
             <div class="col-6">
                 <div class="input-group mb-3">
                     <span class="input-group-text rounded-0 p-0 px-2 bg-light">{{ __('purchases.total_return') }}:</span>
@@ -107,7 +107,7 @@
             </div>
         </div>
 
-        <div class="row shadow p-3">
+        <div class="row shadow p-3 rn-m-form-section">
             <div class="col-12">
                 <h5 class="card-title">{{ __('purchases.return_details_optional') }}</h5>
                 <div class="row">
@@ -115,16 +115,9 @@
                         <label class="form-label">{{ __('purchases.return_note') }}:</label>
                         <textarea class="form-control" name="returnNote" placeholder="{{ __('common.enter_return_note_if_any') }}" rows="2"></textarea>
                     </div>
-                    <div class="col-md-3 d-flex align-items-center">
-                        <div class="d-flex gap-4 w-100">
-                            <button type="submit" class="btn btn-success w-100">{{ __('purchases.submit_return') }}</button>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3 d-flex align-items-center">
-                        <div class="d-flex gap-4 w-100">
-                            <button type="button" class="btn btn-info w-100">{{ __('purchases.return_and_refund') }}</button>
-                        </div>
+                    <div class="col-md-6 d-flex align-items-center rn-m-sticky-actions rn-m-return-actions">
+                        <button type="submit" class="btn btn-success">{{ __('purchases.submit_return') }}</button>
+                        <button type="button" class="btn btn-info">{{ __('purchases.return_and_refund') }}</button>
                     </div>
                 </div>
             </div>

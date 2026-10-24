@@ -9,7 +9,7 @@
     </div>
 </div>
 @endif
-<form class="card form" action="{{ route('saleReturnSave') }}" method="POST">
+<form class="card form rn-m-form rn-m-return-form" action="{{ route('saleReturnSave') }}" method="POST">
     @csrf
     <input type="hidden" name="customerId" value="{{ $customer->id }}">
     <input type="hidden" name="invoiceId" value="{{ $invoice->invoice }}">
@@ -18,20 +18,20 @@
     </div>
     <div class="card-body">
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-4 rn-m-form-section">
                 <h5>{{ __('sales.customer_details') }}</h5>
                 <hr />
                 <p><strong>{{ __('common.name') }}:</strong> {{ \App\Models\Customer::displayLabel($customer, $invoice->customerId ?? null, $invoice->businessId ?? null) }}</p>
                 <p><strong>{{ __('common.mobile') }}:</strong> {{ $customer->mobile }}</p>
                 <p><strong>{{ __('common.address') }}:</strong> {{ $customer->city }},{{ $customer->area }}</p>
             </div>
-            <div class="col-md-4 mt-5">
+            <div class="col-md-4 mt-5 rn-m-form-section">
                 <p class="mt-1"><strong>{{ __('common.date') }}:</strong> {{ \Carbon\Carbon::parse($invoice->date)->format('d-m-Y') }}</p>
                 <p><strong>{{ __('common.reference') }}:</strong> {{ $invoice->reference }}</p>
                 <p><strong>{{ __('common.note') }}:</strong>{{ $invoice->note }}</p>
             </div>
             <div class="col-md-4 text-md-end">
-                <div class="card">
+                <div class="card rn-m-form-section rn-m-return-summary">
                     <div class="card-body">
                         <h6>{{ __('sales.sale_summary') }}</h6>
                         <div class="row">
@@ -58,7 +58,7 @@
         <div class="row  product-table">
             <div class="col-md-12">
                 <h4>{{ __('sales.products_for_return') }}</h4>
-                <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
+                <table class="table mb-0 table-bordered rounded-0 rn-table-pro rn-m-return-table rn-m-sale-return-table">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -83,15 +83,15 @@
                         <input type="hidden" name="purchaseId[]" value="{{ $item->purchaseId }}">
                         <input type="hidden" name="saleId[]" value="{{ $item->saleId }}">
                         <tr class="product-row">
-                            <td>{{ $sl }}</td>
-                            <td>{{ $item->productName }}</td>
-                            <td><input type="number" id="avlQty{{$sl}}" class="form-control form-control-sm" value="{{ $item->qty }}" readonly /></td>
-                            <td><input type="number" step="0.01" id="salePrice{{$sl}}" class="form-control form-control-sm price" value="{{ $item->salePrice }}" readonly /></td>
-                            <td>{{ number_format($item->totalSale ?? 0, 2, '.', ',') }}</td>
-                            <td><input type="checkbox" class="return-checkbox" data-row="{{ $sl }}" @if($historyOnly) disabled @endif /></td>
-                            <td><input type="number" name="totalQty[]" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" value="0" min="0" max="{{ (int)($item->qty ?? 0) }}" step="1" disabled @if($historyOnly) readonly disabled @endif /></td>
-                            <td><input type="number" class="form-control form-control-sm return-amount" value="0" id="returnAmount{{$sl}}" readonly /></td>
-                            <td></td>
+                            <td data-label="#">{{ $sl }}</td>
+                            <td data-label="{{ __('sales.name') }}">{{ $item->productName }}</td>
+                            <td data-label="{{ __('sales.sale_quantity') }}"><input type="number" id="avlQty{{$sl}}" class="form-control form-control-sm" value="{{ $item->qty }}" readonly /></td>
+                            <td data-label="{{ __('sales.price') }}"><input type="number" step="0.01" id="salePrice{{$sl}}" class="form-control form-control-sm price" value="{{ $item->salePrice }}" readonly /></td>
+                            <td data-label="{{ __('sales.total') }}">{{ number_format($item->totalSale ?? 0, 2, '.', ',') }}</td>
+                            <td data-label="{{ __('sales.select') }}"><input type="checkbox" class="return-checkbox" data-row="{{ $sl }}" @if($historyOnly) disabled @endif /></td>
+                            <td data-label="{{ __('sales.return_qty') }}"><input type="number" name="totalQty[]" id="rtnqty{{$sl}}" class="form-control form-control-sm quantity" value="0" min="0" max="{{ (int)($item->qty ?? 0) }}" step="1" disabled @if($historyOnly) readonly disabled @endif /></td>
+                            <td data-label="{{ __('sales.return_amount') }}"><input type="number" class="form-control form-control-sm return-amount" value="0" id="returnAmount{{$sl}}" readonly /></td>
+                            <td data-label="{{ __('sales.serial_nos_if_any') }}"></td>
                         </tr>
 
                         @php
@@ -115,7 +115,7 @@
                 </table>
             </div>
         </div>
-        <div class="row">
+        <div class="row rn-m-form-section rn-m-return-totals">
             <div class="col-6">
                 <div class="input-group mb-3">
                     <span class="input-group-text rounded-0 p-0 px-2 bg-light">{{ __('sales.total_return') }}:</span>
@@ -130,7 +130,7 @@
             </div>
         </div>
 
-        <div class="row shadow p-3">
+        <div class="row shadow p-3 rn-m-form-section">
             <div class="col-12">
                 <h5 class="card-title">{{ __('sales.return_details_optional') }}</h5>
                 <div class="row">
@@ -138,15 +138,13 @@
                         <label class="form-label">{{ __('sales.return_note') }}</label>
                         <textarea class="form-control" name="returnNote" placeholder="{{ __('common.enter_return_note_if_any') }}" rows="2"></textarea>
                     </div>
-                    <div class="col-md-6 d-flex align-items-end">
-                        <div class="d-flex gap-2 w-100">
-                            @if(empty($readOnlyReturnHistory))
-                                <button type="submit" class="btn btn-success flex-grow-1">{{ __('sales.submit_return') }}</button>
-                                <button type="button" class="btn btn-primary flex-grow-1" id="returnAndRefundBtn">{{ __('sales.return_refund') }}</button>
-                            @else
-                                <button type="button" class="btn btn-secondary flex-grow-1" disabled>{{ __('sales.return_already_recorded') }}</button>
-                            @endif
-                        </div>
+                    <div class="col-md-6 d-flex align-items-end rn-m-sticky-actions rn-m-return-actions">
+                        @if(empty($readOnlyReturnHistory))
+                            <button type="submit" class="btn btn-success flex-grow-1">{{ __('sales.submit_return') }}</button>
+                            <button type="button" class="btn btn-primary flex-grow-1" id="returnAndRefundBtn">{{ __('sales.return_refund') }}</button>
+                        @else
+                            <button type="button" class="btn btn-secondary flex-grow-1" disabled>{{ __('sales.return_already_recorded') }}</button>
+                        @endif
                     </div>
                 </div>
             </div>
