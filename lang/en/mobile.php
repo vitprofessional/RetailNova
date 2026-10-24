@@ -11,9 +11,19 @@ return [
     'reports' => 'Reports',
     'more' => 'More',
     'close' => 'Close',
-    'settings' => 'Settings',
     'language' => 'Language',
     'sign_out' => 'Sign out',
+    'notifications' => 'Notifications',
+    'no_notifications' => 'No new notifications.',
+
+    // "More" page sections
+    'section_sale' => 'Sales',
+    'section_purchase' => 'Purchases',
+    'section_inventory' => 'Products & stock',
+    'section_people' => 'Customers & suppliers',
+    'section_finance' => 'Accounts & expenses',
+    'section_reports' => 'Reports',
+    'section_settings' => 'Settings',
 
     // App vocabulary
     'purchase' => 'Purchase',
@@ -62,16 +72,11 @@ return [
     'subtotal' => 'Total',
     'discount' => 'Discount',
     'grand_total' => 'Grand total',
-    'payment_method' => 'Payment method',
-    'cash' => 'Cash',
-    'bkash' => 'bKash',
-    'nagad' => 'Nagad',
     'due' => 'Due',
     'customer_gave' => 'Customer gave',
     'exact_amount' => 'Exact',
     'give_change' => 'Give change',
     'remains_due' => 'Will remain due',
-    'payment_method_note' => 'The payment method is for reference only and is not saved yet.',
     'decrease' => 'Decrease quantity',
     'increase' => 'Increase quantity',
 

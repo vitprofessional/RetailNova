@@ -53,7 +53,16 @@ trait BuildsSaleFixtures
     }
 
     /** Records a sale through the real sale form as the signed-in user. */
-    private function sell(array $inventory, int $qty = 2, bool $backorder = false, ?Customer $customer = null): SaleProduct
+    private function sell(array $inventory, int $qty = 2, bool $backorder = false, ?Customer $customer = null, array $overrides = []): SaleProduct
+    {
+        $this->post(route('saveSale'), $this->salePayload($inventory, $qty, $backorder, $customer, $overrides))
+            ->assertSessionHasNoErrors()->assertRedirect();
+
+        return SaleProduct::query()->latest('id')->firstOrFail();
+    }
+
+    /** The sale form's POST fields for $qty units of the fixture lot; $overrides replace or add fields. */
+    private function salePayload(array $inventory, int $qty = 2, bool $backorder = false, ?Customer $customer = null, array $overrides = []): array
     {
         $customer ??= Customer::create(['name' => 'Fixture Customer', 'businessId' => 1]);
         $payload = [
@@ -69,9 +78,8 @@ trait BuildsSaleFixtures
         } else {
             $payload['serialId'] = [array_map(fn ($s) => $s->id, array_slice($inventory['serials'], 0, $qty))];
         }
-        $this->post(route('saveSale'), $payload)->assertSessionHasNoErrors()->assertRedirect();
 
-        return SaleProduct::query()->latest('id')->firstOrFail();
+        return array_merge($payload, $overrides);
     }
 
     private function alertText(): string

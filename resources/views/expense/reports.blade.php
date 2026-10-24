@@ -96,7 +96,7 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ \App\Support\VendorAsset::url('chartjs/chart.umd.min.js', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js') }}"></script>
 <script>
     const ctx = document.getElementById('expenseChart').getContext('2d');
     const expenseChart = new Chart(ctx, {

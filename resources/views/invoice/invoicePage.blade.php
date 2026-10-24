@@ -159,7 +159,7 @@
           <h6 class="party-label">{{ __('invoices.payment_information') }}:</h6>
           <div class="party-content">
             <div class="party-detail">{{ __('common.previous_due') }}: <strong>@money($invoice->prevDue ?? 0)</strong></div>
-            <div class="party-detail">{{ __('invoices.payment_mode') }}: <strong>{{ ucfirst($invoice->paymentMode ?? 'Cash') }}</strong></div>
+            <div class="party-detail">{{ __('invoices.payment_mode') }}: <strong>{{ $invoice->paymentMethodLabel() ?? '—' }}</strong></div>
             @php
               $billBy = null;
               try{
@@ -280,7 +280,7 @@
             </tr>
             <tr>
               <td class="label">{{ __('invoices.payment_mode') }}</td>
-              <td class="value">{{ ucfirst($invoice->paymentMode ?? 'Cash') }}</td>
+              <td class="value">{{ $invoice->paymentMethodLabel() ?? '—' }}</td>
             </tr>
             <tr>
               <td class="label">{{ __('invoices.received_amount') }}</td>
@@ -512,6 +512,12 @@
             <td>{{ __('invoices.paid') }}</td>
             <td class="text-end">@money($invoice->paidAmount ?? 0)</td>
           </tr>
+          @if($invoice->paymentMethodLabel())
+            <tr>
+              <td>{{ __('invoices.payment_mode') }}</td>
+              <td class="text-end">{{ $invoice->paymentMethodLabel() }}</td>
+            </tr>
+          @endif
           <tr class="thermal-due-row">
             <td>{{ __('invoices.due') }}</td>
             <td class="text-end">@money($invoice->curDue ?? 0)</td>

@@ -447,6 +447,13 @@
                     <span class="total-value">@money($paidAmount)</span>
                 </div>
 
+                @if($invoice->paymentMethodLabel())
+                    <div class="total-row paid-row">
+                        <span class="total-label">{{ __('invoices.payment_mode') }}</span>
+                        <span class="total-value">{{ $invoice->paymentMethodLabel() }}</span>
+                    </div>
+                @endif
+
                 <div class="total-row due-row">
                     <span class="total-label">{{ __('invoices.due') }}</span>
                     <span class="total-value">@money($currentDue)</span>

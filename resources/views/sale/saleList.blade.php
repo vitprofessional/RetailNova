@@ -42,7 +42,7 @@
     .rn-sales-history-table-card .dataTables_length select { width: auto; min-width: 60px; height: 38px; min-height: 38px; margin: 0 3px; padding: 6px 24px 6px 9px; border: 1px solid #d0dbea; border-radius: 7px; color: #24364f; }
     .rn-sales-history-table-wrap { width: 100%; min-width: 0; overflow-x: auto; border: 1px solid #dce5f0; border-radius: 9px; -webkit-overflow-scrolling: touch; }
     .rn-sales-history-table-wrap:focus { outline: 3px solid rgb(52 120 246 / 22%); outline-offset: 2px; }
-    .rn-sales-history-table { width: 100%; min-width: 1040px; margin: 0 !important; table-layout: fixed; border-collapse: separate; border-spacing: 0; color: #26374f; font-size: 12px; }
+    .rn-sales-history-table { width: 100%; min-width: 1130px; margin: 0 !important; table-layout: fixed; border-collapse: separate; border-spacing: 0; color: #26374f; font-size: 12px; }
     .rn-sales-history-table thead th { position: relative; padding: 12px 22px 12px 10px !important; border: 0 !important; border-bottom: 1px solid #dce5f0 !important; color: #3b506d; background: #eff4fb; font-size: 11px !important; font-weight: 750; letter-spacing: .02em; line-height: 1.35; text-align: left; vertical-align: middle; white-space: nowrap; }
     .rn-sales-history-table thead th.sorting, .rn-sales-history-table thead th.sorting_asc, .rn-sales-history-table thead th.sorting_desc { background-color: #eff4fb; }
     .rn-sales-history-table tbody td { height: 48px; padding: 8px 9px !important; border-top: 1px solid #e9eef5 !important; color: #34465f; font-size: 12px; line-height: 1.45; vertical-align: middle; }
@@ -56,8 +56,9 @@
     .rn-sales-history-table th:nth-child(7), .rn-sales-history-table td:nth-child(7),
     .rn-sales-history-table th:nth-child(8), .rn-sales-history-table td:nth-child(8) { width: 88px; }
     .rn-sales-history-table th:nth-child(9), .rn-sales-history-table td:nth-child(9) { width: 80px; }
-    .rn-sales-history-table th:nth-child(10), .rn-sales-history-table td:nth-child(10) { width: 96px; }
-    .rn-sales-history-table th:nth-child(11), .rn-sales-history-table td:nth-child(11) { width: 164px; }
+    .rn-sales-history-table th:nth-child(10), .rn-sales-history-table td:nth-child(10) { width: 90px; }
+    .rn-sales-history-table th:nth-child(11), .rn-sales-history-table td:nth-child(11) { width: 96px; }
+    .rn-sales-history-table th:nth-child(12), .rn-sales-history-table td:nth-child(12) { width: 164px; }
     .rn-sales-history-table tbody tr:first-child td { border-top: 0 !important; }
     .rn-sales-history-table tbody tr:nth-child(even) { background: #f9fbfe; }
     .rn-sales-history-table tbody tr:hover { background: #f1f6ff; }
@@ -196,6 +197,7 @@
                         <th class="rn-amount-cell">{{ __('sales.paid') }}</th>
                         <th class="rn-amount-cell">{{ __('sales.due') }}</th>
                         <th class="rn-status-cell">{{ __('sales.status') }}</th>
+                        <th class="rn-payment-method-cell">{{ __('sales.payment_method') }}</th>
                         <th>{{ __('sales.date') }}</th>
                         <th class="rn-actions-cell" data-export="false">{{ __('sales.actions') }}</th>
                     </tr>
@@ -240,6 +242,7 @@
                                     <span class="rn-status-badge rn-status-due">{{ __('sales.due') }}</span>
                                 @endif
                             </td>
+                            <td class="rn-payment-method-cell">{{ $sl->paymentMethodLabel() ?? '—' }}</td>
                             <td class="rn-date-cell" data-order="{{ $dateSort }}">{{ $dateFormatted }}</td>
                             <td class="rn-actions-cell" data-export="false">
                                 <div class="rn-actions">
@@ -289,7 +292,7 @@
             responsive: false,
             order: [[1, 'desc']],
             columnDefs: [
-                { orderable: false, targets: [0, 1, 10] },
+                { orderable: false, targets: [0, 1, 11] },
                 { className: 'text-right', targets: [5, 6, 7] }
             ],
             dom: '<"rn-dt-toolbar"l>t<"rn-dt-footer"ip>',

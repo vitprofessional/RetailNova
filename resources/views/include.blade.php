@@ -18,11 +18,16 @@
     {{-- Mobile app shell (≤1023px); loaded last so it can adapt page styles on small screens. --}}
     <link rel="stylesheet" href="{{ asset('css/rn-mobile.css') }}?v={{ filemtime(public_path('css/rn-mobile.css')) }}">
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
-    <link rel= "stylesheet" href= "https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css" >
+    {{-- Libraries load from public/vendor/ (App\Support\VendorAsset); a missing local copy falls back to its CDN. --}}
+    <link rel="stylesheet" href="{{ \App\Support\VendorAsset::url('line-awesome/css/line-awesome.min.css', 'https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css') }}">
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/remixicon/fonts/remixicon.css">
-    <script src="https://kit.fontawesome.com/7001e2ea29.js" crossorigin="anonymous"></script>
+    @if($rnFontAwesome = \App\Support\VendorAsset::local('fontawesome/css/all.min.css'))
+        <link rel="stylesheet" href="{{ $rnFontAwesome }}">
+    @else
+        <script src="https://kit.fontawesome.com/7001e2ea29.js" crossorigin="anonymous"></script>
+    @endif
     <!-- Ensure jQuery is available early for inline scripts -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="{{ \App\Support\VendorAsset::url('jquery/jquery-3.6.0.min.js', 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js') }}"></script>
     <script>
         // Defensive shim: make sure window.$ and window.jQuery are consistent
         try{
@@ -1097,7 +1102,7 @@
     </script>
     <script src="{{ asset('js/confirm-item-removal.js') }}?v={{ filemtime(public_path('js/confirm-item-removal.js')) }}"></script>
     <!-- SweetAlert2 for nicer confirmations -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ \App\Support\VendorAsset::url('sweetalert/sweetalert.all.js', 'https://cdn.jsdelivr.net/npm/sweetalert2@11.7.20') }}"></script>
     <script>
         (function(){
             function isDeleteLink(href){
@@ -1199,7 +1204,6 @@
             }, true);
         })();
     </script>
-    <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
     <!-- Backend Bundle JavaScript -->
     <script src="{{asset('eshop')}}/assets/js/backend-bundle.min.js"></script>
     <script>

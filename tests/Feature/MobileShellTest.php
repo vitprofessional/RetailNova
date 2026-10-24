@@ -57,14 +57,97 @@ class MobileShellTest extends TestCase
         $grid = $this->hrefs($xpath, '//*[@id="rn-more"]//ul[contains(@class,"rn-m-grid")]//a');
         $this->assertNotEmpty($grid);
         $this->assertNotContains(route('newsale'), $grid, 'Destinations in the tab bar are not repeated on the More page.');
+        $this->assertCount(count(array_unique($grid)), $grid, 'Each destination appears once.');
         $this->assertCount(2, $xpath->query('//*[@id="rn-more"]//form[@action="'.route('language.preference').'"]//button[@name="preferred_locale"]'));
         $this->assertCount(1, $xpath->query('//*[@id="rn-more"]//a[@href="'.route('logout').'"]'));
 
         // Only destinations that exist in this installation are offered.
-        foreach (array_merge($grid, $this->hrefs($xpath, '//*[@id="rn-more"]//ul[contains(@class,"rn-m-list")]//a')) as $href) {
+        foreach ($grid as $href) {
             $route = Route::getRoutes()->match(Request::create($href, 'GET'));
             $this->assertNotNull($route->getName(), $href);
         }
+    }
+
+    public function test_more_page_is_grouped_into_sections(): void
+    {
+        $this->inventory();
+        $admin = $this->actor('admin');
+        $admin->update(['preferred_locale' => 'bn']);
+        $this->actingAs($admin, 'admin');
+        $xpath = $this->xpath($this->get(route('dashboard'))->assertOk()->getContent());
+
+        $sections = iterator_to_array($xpath->query('//*[@id="rn-more"]//section[@data-rn-more-section]'));
+        $this->assertSame(['sale', 'purchase', 'inventory', 'people', 'finance', 'reports', 'settings'], array_map(fn ($s) => $s->getAttribute('data-rn-more-section'), $sections));
+        $this->assertSame(
+            ['বিক্রি', 'কেনা', 'পণ্য ও স্টক', 'কাস্টমার ও মহাজন', 'হিসাব ও খরচ', 'রিপোর্ট', 'সেটিংস'],
+            array_map(fn ($s) => trim($xpath->query('.//h3', $s)->item(0)->textContent), $sections),
+        );
+        foreach ($sections as $section) {
+            $this->assertCount(1, $xpath->query('./ul[contains(@class,"rn-m-grid")]', $section), 'Each section is a title and one grid.');
+            $this->assertGreaterThan(0, $xpath->query('./ul/li/a', $section)->length);
+        }
+
+        $in = fn (string $key, string $route) => $xpath->query('//section[@data-rn-more-section="'.$key.'"]//a[@href="'.route($route).'"]')->length;
+        foreach ([
+            'sale' => ['saleList', 'returnSaleList'], 'purchase' => ['addPurchase', 'purchaseList', 'returnPurchaseList'],
+            'inventory' => ['productlist', 'addCategory', 'damageProductList'], 'people' => ['addCustomer', 'addSupplier'],
+            'finance' => ['account.chart', 'expense.list'], 'reports' => ['reports.sales', 'reports.payableReceivable'],
+            'settings' => ['addBusinessSetupPage'],
+        ] as $key => $routes) {
+            foreach ($routes as $route) {
+                $this->assertSame(1, $in($key, $route), "$route belongs under $key");
+            }
+        }
+    }
+
+    public function test_home_header_shows_brand_date_and_notifications(): void
+    {
+        $inventory = $this->inventory();
+        $admin = $this->actor('admin');
+        $admin->update(['preferred_locale' => 'bn']);
+        $this->actingAs($admin, 'admin');
+
+        $header = function () {
+            $xpath = $this->xpath($this->get(route('dashboard'))->assertOk()->getContent());
+
+            return [$xpath, $xpath->query('//header[@data-rn-mobile-header]')->item(0)];
+        };
+
+        // No logo uploaded: the first letter of the shop name stands in.
+        [$xpath, $head] = $header();
+        $this->assertSame('T', trim($xpath->query('.//*[contains(@class,"rn-m-brand")]', $head)->item(0)->textContent));
+        $this->assertSame('Test Business 1', trim($xpath->query('.//h1', $head)->item(0)->textContent));
+        $date = $xpath->query('.//*[@data-rn-header-date]', $head)->item(0)->textContent;
+        $this->assertStringContainsString(\App\Support\LocalizedNumber::digits(now()->format('Y'), 'bn'), $date);
+        $this->assertStringContainsString(now()->locale('bn')->translatedFormat('F'), $date);
+        $bell = $xpath->query('.//button[@data-rn-notifications-toggle]', $head)->item(0);
+        $this->assertSame('rnNotifications', $bell->getAttribute('aria-controls'));
+        $this->assertSame(0, $xpath->query('.//*[contains(@class,"rn-m-bell-badge")]', $head)->length);
+        $this->assertStringContainsString(__('mobile.no_notifications', [], 'bn'), $xpath->query('//*[@id="rnNotifications"]')->item(0)->textContent);
+        $this->assertCount(0, $xpath->query('.//a[@data-rn-back]', $head), 'Home has no back button.');
+
+        // A stock warning shows up behind the bell.
+        $inventory['product']->forceFill(['quantity' => 5])->save();
+        [$xpath, $head] = $header();
+        $this->assertSame('১', trim($xpath->query('.//*[contains(@class,"rn-m-bell-badge")]', $head)->item(0)->textContent));
+        $this->assertCount(1, $xpath->query('//*[@id="rnNotifications"]//a[@href="'.route('stockProduct').'"]'));
+
+        // An uploaded logo replaces the letter.
+        $logo = 'rn-test-logo-'.uniqid().'.png';
+        @mkdir(public_path('uploads/business'), 0777, true);
+        file_put_contents(public_path('uploads/business/'.$logo), base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='));
+        try {
+            \App\Models\BusinessSetup::query()->whereKey(1)->update(['businessLogo' => $logo]);
+            [$xpath, $head] = $header();
+            $this->assertStringEndsWith($logo, strtok($xpath->query('.//img[contains(@class,"rn-m-brand-logo")]', $head)->item(0)->getAttribute('src'), '?'));
+        } finally {
+            @unlink(public_path('uploads/business/'.$logo));
+        }
+
+        // Other pages keep the back button and page title.
+        $page = $this->xpath($this->get(route('saleList'))->getContent());
+        $this->assertCount(1, $page->query('//header[@data-rn-mobile-header]//a[@data-rn-back]'));
+        $this->assertCount(0, $page->query('//*[@data-rn-notifications-toggle]'));
     }
 
     public function test_menus_follow_the_users_permissions(): void
@@ -162,6 +245,77 @@ class MobileShellTest extends TestCase
         $this->assertCount(1, $xpath->query('//*[@data-rn-pos-bar]//button[@data-rn-pos-checkout]'));
         $this->assertCount(4, $xpath->query('//*[@data-rn-checkout]//input[@data-rn-checkout-method]'));
         $this->assertCount(1, $xpath->query('//*[@data-rn-checkout]//button[@data-rn-checkout-complete]'));
+    }
+
+    public function test_sale_bar_is_one_button_and_payment_method_goes_through_the_form(): void
+    {
+        $this->inventory();
+        $admin = $this->actor('admin');
+        $admin->update(['preferred_locale' => 'bn']);
+        $this->actingAs($admin, 'admin');
+        $xpath = $this->xpath($this->get(route('newsale'))->assertOk()->getContent());
+
+        // "Nটি · ৳মোট · টাকা নিন →": the whole bar is the button, disabled while the cart is empty.
+        $bar = $xpath->query('//*[@data-rn-pos-bar]')->item(0);
+        $this->assertSame(1, $xpath->query('./*', $bar)->length);
+        $button = $xpath->query('./button[@data-rn-pos-checkout]', $bar)->item(0);
+        $this->assertTrue($button->hasAttribute('disabled'));
+        foreach (['data-rn-pos-count', 'data-rn-pos-total'] as $part) {
+            $this->assertCount(1, $xpath->query('.//*[@'.$part.']', $button));
+        }
+        $this->assertStringContainsString('০টি', $button->textContent);
+        $this->assertStringContainsString('টাকা নিন', $button->textContent);
+        $this->assertCount(1, $xpath->query('.//i[contains(@class,"ri-arrow-right-line")]', $button));
+
+        // One hidden payment_method field (default cash), written by the desktop select and the mobile segment.
+        $this->assertCount(1, $xpath->query('//*[@name="payment_method"]'));
+        $this->assertCount(1, $xpath->query('//form[@id="saveSaleForm"]//input[@type="hidden" and @id="paymentMethod" and @name="payment_method" and @value="cash"]'));
+        $select = $xpath->query('//form[@id="saveSaleForm"]//select[@id="paymentMethodSelect"]')->item(0);
+        $this->assertFalse($select->hasAttribute('name'), 'The select only mirrors into the hidden field.');
+        $this->assertSame(['cash', 'bkash', 'nagad', 'due'], array_map(fn ($o) => $o->getAttribute('value'), iterator_to_array($xpath->query('./option', $select))));
+        $this->assertSame('cash', $xpath->query('./option[@selected]', $select)->item(0)->getAttribute('value'));
+        $this->assertSame(['ক্যাশ', 'বিকাশ', 'নগদ', 'বাকি'], array_map(fn ($l) => trim($l->textContent), iterator_to_array($xpath->query('//*[@data-rn-checkout]//label[contains(@class,"rn-m-segment-btn")]'))));
+        $this->assertStringContainsString('পুরো টাকা', $xpath->query('//*[@data-rn-checkout]//button[@data-rn-quick="exact"]')->item(0)->textContent);
+    }
+
+    public function test_bangla_wording_is_consistent(): void
+    {
+        // One word per concept: কাস্টমার, কোটেশন, ক্যাটাগরি, নষ্ট পণ্য, পুরো টাকা, পেমেন্টের ধরন.
+        $retired = ['/(?<!বি)ক্রেতা/u', '/গ্রাহক/u', '/মূল্যপ্রস্তাব/u', '/বিভাগ/u', '/ক্ষতির নথি/u', '/ক্ষতিগ্রস্ত/u', '/ঠিক টাকা/u', '/পরিশোধ পদ্ধতি/u'];
+        foreach (glob(lang_path('bn/*.php')) as $file) {
+            $text = file_get_contents($file);
+            foreach ($retired as $pattern) {
+                $this->assertDoesNotMatchRegularExpression($pattern, $text, basename($file));
+            }
+        }
+        $this->assertSame('বিক্রেতা', __('sales.salesperson', [], 'bn'), 'Salesperson keeps its own word.');
+        $this->assertSame('নষ্ট পণ্য যোগ করুন', __('navigation.record_damage', [], 'bn'));
+        $this->assertSame('কোটেশন', __('common.quotation', [], 'bn'));
+        $this->assertSame('ক্যাটাগরি', __('common.category', [], 'bn'));
+    }
+
+    public function test_fonts_and_libraries_are_served_locally(): void
+    {
+        // Every @font-face source in the tokens resolves to a file in public/fonts.
+        $tokens = file_get_contents(public_path('css/rn-tokens.css'));
+        preg_match_all('~url\("\.\./(fonts/[^"]+)"\)~', $tokens, $fonts);
+        $this->assertNotEmpty($fonts[1]);
+        foreach ($fonts[1] as $font) {
+            $this->assertFileExists(public_path($font));
+        }
+        foreach (['Regular', 'Medium', 'SemiBold', 'Bold'] as $weight) {
+            $this->assertContains('fonts/hind-siliguri/HindSiliguri-'.$weight.'.woff2', $fonts[1]);
+        }
+        $this->assertFileExists(public_path('fonts/hind-siliguri/OFL.txt'));
+
+        $this->inventory();
+        $this->actingAs($this->actor('admin'), 'admin');
+        $html = $this->get(route('dashboard'))->assertOk()->getContent();
+        $this->assertStringContainsString(asset('vendor/jquery/jquery-3.6.0.min.js').'?v=', $html);
+        $this->assertStringContainsString(asset('vendor/sweetalert/sweetalert.all.js').'?v=', $html);
+        foreach (['ajax.googleapis.com', 'cdn.jsdelivr.net/npm/sweetalert2', 'unpkg.com'] as $cdn) {
+            $this->assertStringNotContainsString($cdn, $html);
+        }
     }
 
     public function test_tokens_and_manifest_use_the_new_palette(): void

@@ -115,7 +115,7 @@ class LocalizationTest extends TestCase
         $validator=Validator::make(['qty'=>[0]],['qty.*'=>'required|integer|min:1','customerId'=>'required']);
         $this->assertTrue($validator->fails());
         $this->assertStringContainsString('অন্তত 1',$validator->errors()->first('qty.0'));
-        $this->assertSame('ক্রেতা আবশ্যক।',$validator->errors()->first('customerId'));
+        $this->assertSame('কাস্টমার আবশ্যক।',$validator->errors()->first('customerId'));
     }
 
     public function test_catalogs_have_matching_keys_and_valid_blade_references(): void

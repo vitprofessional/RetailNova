@@ -11,9 +11,19 @@ return [
     'reports' => 'রিপোর্ট',
     'more' => 'আরও',
     'close' => 'বন্ধ করুন',
-    'settings' => 'সেটিংস',
     'language' => 'ভাষা',
     'sign_out' => 'বের হন',
+    'notifications' => 'নোটিফিকেশন',
+    'no_notifications' => 'নতুন কোনো নোটিফিকেশন নেই।',
+
+    // "আরও" পাতার ভাগ
+    'section_sale' => 'বিক্রি',
+    'section_purchase' => 'কেনা',
+    'section_inventory' => 'পণ্য ও স্টক',
+    'section_people' => 'কাস্টমার ও মহাজন',
+    'section_finance' => 'হিসাব ও খরচ',
+    'section_reports' => 'রিপোর্ট',
+    'section_settings' => 'সেটিংস',
 
     // অ্যাপের শব্দভান্ডার
     'purchase' => 'পণ্য কেনা',
@@ -62,16 +72,11 @@ return [
     'subtotal' => 'মোট',
     'discount' => 'ছাড়',
     'grand_total' => 'সর্বমোট',
-    'payment_method' => 'পেমেন্টের ধরন',
-    'cash' => 'ক্যাশ',
-    'bkash' => 'বিকাশ',
-    'nagad' => 'নগদ',
     'due' => 'বাকি',
     'customer_gave' => 'কাস্টমার দিলেন',
-    'exact_amount' => 'ঠিক টাকা',
+    'exact_amount' => 'পুরো টাকা',
     'give_change' => 'ফেরত দিন',
     'remains_due' => 'বাকি থাকবে',
-    'payment_method_note' => 'পেমেন্টের ধরন এখন শুধু দেখার জন্য, এখনো সেভ হয় না।',
     'decrease' => 'পরিমাণ কমান',
     'increase' => 'পরিমাণ বাড়ান',
 

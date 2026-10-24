@@ -46,6 +46,18 @@ class MobileNavigation
         'returnSaleList', 'addSupplier', 'purchaseList', 'damageProductList', 'saleList', 'addCustomer', 'productlist',
     ];
 
+    /** "More" page sections, in display order. */
+    private const SECTIONS = ['sale', 'purchase', 'inventory', 'people', 'finance', 'reports', 'settings'];
+
+    /** Section of each desktop menu group; groups not listed go under settings. */
+    private const GROUP_SECTIONS = [
+        'sale' => 'sale', 'service' => 'sale', 'warranty' => 'sale', 'parchase' => 'purchase', 'category' => 'inventory',
+        'product' => 'people', 'account' => 'finance', 'reports' => 'reports',
+    ];
+
+    /** Items filed under a different section than their menu group. */
+    private const ROUTE_SECTIONS = ['returnPurchaseList' => 'purchase', 'serialList' => 'inventory'];
+
     private ?array $items = null;
 
     public function __construct(private readonly BusinessNavigation $navigation)
@@ -68,18 +80,26 @@ class MobileNavigation
         ]));
     }
 
-    /** Everything else from the user's menu, for the 4-column grid on the "More" page. */
-    public function moreItems(): array
+    /**
+     * Everything else from the user's menu, grouped for the "More" page (a title and a
+     * 4-column grid per section). Empty sections are left out.
+     */
+    public function moreSections(): array
     {
         $inTabs = array_column($this->tabs(), 'route');
+        $sections = array_fill_keys(self::SECTIONS, []);
+        foreach ($this->items() as $item) {
+            if (!in_array($item['route'], $inTabs, true)) {
+                $sections[$item['section']][] = $item;
+            }
+        }
 
-        return array_values(array_filter($this->items(), fn ($item) => !in_array($item['route'], $inTabs, true) && !$item['settings']));
-    }
+        $result = [];
+        foreach (array_filter($sections) as $key => $items) {
+            $result[] = ['key' => $key, 'title' => __('mobile.section_'.$key), 'items' => $items];
+        }
 
-    /** Settings entries of the user's menu, listed under the grid. */
-    public function settingsItems(): array
-    {
-        return array_values(array_filter($this->items(), fn ($item) => $item['settings']));
+        return $result;
     }
 
     public function shortcuts(int $limit = 8): array
@@ -130,7 +150,8 @@ class MobileNavigation
                     'url' => route($route),
                     'icon' => self::ICONS[$route] ?? 'ri-apps-2-line',
                     'label' => __(self::LABELS[$route] ?? 'navigation.'.$item['key']),
-                    'settings' => $group['id'] === 'settings',
+                    // The dashboard is always a tab, so its section is never shown.
+                    'section' => self::ROUTE_SECTIONS[$route] ?? self::GROUP_SECTIONS[$group['id']] ?? 'settings',
                 ];
             }
         }

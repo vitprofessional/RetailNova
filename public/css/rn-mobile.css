@@ -1,10 +1,11 @@
 /*
- * RetailNova mobile app shell (UI-1). Everything here applies at ≤1023px only; the desktop
+ * RetailNova mobile app shell (UI-1, UI-1b). Everything here applies at ≤1023px only; the desktop
  * layout (≥1024px) is untouched. Colors and sizes come from rn-tokens.css.
  */
 .rn-m-header,
 .rn-m-tabbar,
 .rn-m-more,
+.rn-m-notifications,
 .rn-m-home,
 .rn-m-pos { display: none; }
 
@@ -56,7 +57,77 @@
         background: var(--rn-color-primary);
         color: var(--rn-color-on-primary);
     }
-    .rn-m-header--home { padding-left: 16px; }
+    .rn-m-header--home { gap: 10px; padding-left: 12px; }
+    .rn-m-brand {
+        display: grid;
+        place-items: center;
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+        overflow: hidden;
+        border-radius: 50%;
+        background: var(--rn-color-surface);
+        color: var(--rn-color-primary);
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .rn-m-brand .rn-m-brand-logo { width: 100%; max-width: none; height: 100%; object-fit: cover; }
+    .rn-m-header-text { flex: 1 1 auto; min-width: 0; }
+    .rn-m-header-text .rn-m-title { font-size: 17px; line-height: 1.25; }
+    .rn-m-header-date { margin: 0; overflow: hidden; color: inherit; font-size: 12px; line-height: 1.3; white-space: nowrap; text-overflow: ellipsis; opacity: .9; }
+    .rn-m-bell { position: relative; }
+    .rn-m-bell-badge {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        border-radius: var(--rn-radius-pill);
+        background: var(--rn-color-danger);
+        color: var(--rn-color-on-primary);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 18px;
+        text-align: center;
+    }
+
+    /* ---------- Home alerts (bell) ---------- */
+    .rn-m-notifications {
+        position: fixed;
+        top: calc(var(--rn-m-header-h) + env(safe-area-inset-top, 0px) + 6px);
+        right: 8px;
+        left: 8px;
+        z-index: 1050;
+        display: block;
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 8px;
+        border-radius: var(--rn-radius-md);
+        background: var(--rn-color-surface);
+        box-shadow: var(--rn-shadow-card);
+    }
+    .rn-m-notifications[hidden] { display: none; }
+    .rn-m-notifications-title { margin: 4px 8px 6px; font-size: 15px; font-weight: 600; }
+    .rn-m-notification {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        min-height: 52px;
+        padding: 10px 8px;
+        border-radius: var(--rn-radius-sm);
+        color: var(--rn-color-ink);
+        text-decoration: none;
+    }
+    .rn-m-notification + .rn-m-notification { border-top: 1px solid var(--rn-color-border); }
+    .rn-m-notification > i { color: var(--rn-color-warning); font-size: 20px; line-height: 1.2; }
+    .rn-m-notification strong,
+    .rn-m-notification span span { display: block; }
+    .rn-m-notification span span { color: var(--rn-color-muted); font-size: 13px; overflow-wrap: anywhere; }
+    a.rn-m-notification:hover,
+    a.rn-m-notification:focus-visible { color: var(--rn-color-ink); background: var(--rn-color-bg); text-decoration: none; }
+    .rn-m-notifications .rn-m-empty { margin: 8px; text-align: left; }
     .rn-m-title {
         flex: 1 1 auto;
         min-width: 0;
@@ -189,28 +260,14 @@
         font-weight: 600;
         letter-spacing: .02em;
     }
-    .rn-m-list {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        list-style: none;
-        border: 1px solid var(--rn-color-border);
-        border-radius: var(--rn-radius-md);
+    .rn-m-more-section .rn-m-section-title { margin: 0 4px 8px; color: var(--rn-color-ink); font-size: 14px; }
+    .rn-m-more-section .rn-m-grid {
+        margin-bottom: 20px;
+        padding: 12px 6px 4px;
+        border-radius: var(--rn-radius-lg);
         background: var(--rn-color-surface);
+        box-shadow: var(--rn-shadow-card);
     }
-    .rn-m-list li + li { border-top: 1px solid var(--rn-color-border); }
-    .rn-m-list-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        min-height: 52px;
-        padding: 0 14px;
-        color: var(--rn-color-ink);
-        text-decoration: none;
-    }
-    .rn-m-list-item > i:first-child { color: var(--rn-color-primary); font-size: 20px; }
-    .rn-m-list-item span { flex: 1 1 auto; min-width: 0; }
-    .rn-m-list-chevron { color: var(--rn-color-muted); }
     .rn-m-signout {
         display: flex;
         align-items: center;
@@ -312,7 +369,6 @@
     .rn-m-input--amount { text-align: right; font-variant-numeric: tabular-nums; }
     .rn-m-field { display: grid; gap: 6px; margin-bottom: 16px; }
     .rn-m-field label { margin: 0; color: var(--rn-color-muted); font-size: 13px; font-weight: 600; }
-    .rn-m-hint { margin: 6px 0 0; color: var(--rn-color-muted); font-size: 12px; }
     .rn-m-empty { margin: 16px 0; color: var(--rn-color-muted); text-align: center; }
 
     /* ---------- Home ---------- */
@@ -383,7 +439,7 @@
     body.rn-app:has(.rn-m-pos) .rn-sale-product-entry,
     body.rn-app:has(.rn-m-pos) .rn-sale-billing { display: none !important; }
     body.rn-app:has(.rn-m-pos) .rn-sale-layout { display: block; }
-    body.rn-app:has(.rn-m-pos) .content-page { padding-bottom: calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 96px) !important; }
+    body.rn-app:has(.rn-m-pos) .content-page { padding-bottom: calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 112px) !important; }
     .rn-m-pos-search {
         display: flex;
         align-items: center;
@@ -449,7 +505,7 @@
     .rn-m-product-stock.is-out { color: var(--rn-color-danger); font-weight: 600; }
     .rn-m-toast {
         position: fixed;
-        inset: auto 12px calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 80px) 12px;
+        inset: auto 12px calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 96px) 12px;
         z-index: 1050;
         margin: 0;
         padding: 12px 14px;
@@ -461,22 +517,36 @@
     .rn-m-toast[hidden] { display: none; }
     .rn-m-pos-bar {
         position: fixed;
-        inset: auto 8px calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 8px) 8px;
+        /* Clears the raised sale button of the tab bar. */
+        inset: auto 8px calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 24px) 8px;
         z-index: 1035;
+    }
+    .rn-m-pos-bar-btn {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
-        min-height: 60px;
-        padding: 8px 8px 8px 14px;
+        width: 100%;
+        min-height: 56px;
+        padding: 8px 16px;
+        border: 0;
         border-radius: var(--rn-radius-lg);
-        background: var(--rn-color-ink);
-        color: var(--rn-color-surface);
-        box-shadow: var(--rn-shadow-card);
+        background: var(--rn-color-primary);
+        color: var(--rn-color-on-primary);
+        box-shadow: var(--rn-shadow-raised);
+        font-family: var(--rn-font-family);
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.2;
     }
-    .rn-m-pos-bar-count { white-space: nowrap; }
-    .rn-m-pos-bar-dot { opacity: .6; }
-    .rn-m-pos-bar-total { flex: 1 1 auto; min-width: 0; overflow: hidden; font-size: 17px; white-space: nowrap; text-overflow: ellipsis; }
-    .rn-m-pos-bar-btn { flex: 0 0 auto; }
+    .rn-m-pos-bar-btn:disabled { background: var(--rn-color-primary-tint); color: var(--rn-color-primary); box-shadow: none; cursor: not-allowed; }
+    .rn-m-pos-bar-btn:focus-visible { outline: 3px solid var(--rn-color-ink); outline-offset: 2px; }
+    .rn-m-pos-bar-count,
+    .rn-m-pos-bar-action { flex: 0 0 auto; white-space: nowrap; }
+    .rn-m-pos-bar-dot { opacity: .7; }
+    .rn-m-pos-bar-total { min-width: 0; overflow: hidden; font-size: 18px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+    .rn-m-pos-bar-action { display: inline-flex; align-items: center; gap: 4px; }
+    .rn-m-pos-bar-action i { font-size: 20px; }
 
     /* Checkout sheet */
     .rn-m-sheet {

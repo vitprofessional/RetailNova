@@ -756,6 +756,7 @@ class JqueryController extends Controller
                 }catch(\Throwable $_){ /* ignore */ }
                 $sales->grandTotal      = 0;
                 $sales->paidAmount      = 0;
+                $sales->payment_method  = $requ->validated('payment_method');
                 $sales->invoiceDue      = 0;
                 $sales->prevDue         = 0;
                 $sales->curDue          = 0;

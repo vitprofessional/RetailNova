@@ -17,6 +17,10 @@ use App\Models\Concerns\ScopesByBusiness;
 class SaleProduct extends Model implements AuditableContract
 {
     use Auditable, ScopesByBusiness, SoftDeletes;
+
+    /** Accepted values of payment_method; older sales have NULL (method not recorded). */
+    public const PAYMENT_METHODS = ['cash', 'bkash', 'nagad', 'due'];
+
     protected $fillable = [
         'customerId', 'invoiceNo', 'totalAmount', 'paidAmount', 'dueAmount', 'saleDate', 'businessId', 'salespersonId', 'totalVat'
     ];
@@ -53,5 +57,13 @@ class SaleProduct extends Model implements AuditableContract
     public function returns()
     {
         return $this->hasMany(SaleReturn::class, 'saleId');
+    }
+
+    /** Translated payment method, or null when the sale predates the column. */
+    public function paymentMethodLabel(): ?string
+    {
+        return in_array($this->payment_method, self::PAYMENT_METHODS, true)
+            ? __('sales.payment_method_'.$this->payment_method)
+            : null;
     }
 }

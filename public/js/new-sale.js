@@ -91,6 +91,17 @@
     } catch (_) { message.textContent = t('sale_search_error'); }
     finally { barcodeButton.disabled = customer.dataset.customerReady !== '1'; }
   };
+  // Payment method: the select mirrors into the hidden field; "due" means nothing is paid now.
+  const paymentMethod = document.getElementById('paymentMethod');
+  const paymentSelect = document.getElementById('paymentMethodSelect');
+  paymentSelect.addEventListener('change', () => {
+    paymentMethod.value = paymentSelect.value;
+    if (paymentSelect.value !== 'due') return;
+    const paid = document.getElementById('paidAmount');
+    paid.value = '0';
+    paid.dispatchEvent(new Event('input', {bubbles: true}));
+  });
+
   barcodeButton.addEventListener('click', scan);
   barcode.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); scan(); } });
   search.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); product.focus(); } });

@@ -1,5 +1,5 @@
 /*
- * RetailNova mobile app shell (UI-1): back button, "More" page and the mobile sale screen.
+ * RetailNova mobile app shell (UI-1): back button, "More" page, home alerts and the mobile sale screen.
  * The sale screen never posts anything itself; it drives the existing sale form controls.
  */
 (function () {
@@ -50,6 +50,23 @@
                 var close = more.querySelector('[data-rn-more-close]');
                 if (close) { close.click(); }
             }
+        });
+    }
+
+    // Home header bell: a small panel with the current alerts.
+    var bell = document.querySelector('[data-rn-notifications-toggle]');
+    var alerts = document.querySelector('[data-rn-notifications]');
+    if (bell && alerts) {
+        var setAlertsOpen = function (open) {
+            alerts.hidden = !open;
+            bell.setAttribute('aria-expanded', open ? 'true' : 'false');
+        };
+        bell.addEventListener('click', function () { setAlertsOpen(alerts.hidden); });
+        document.addEventListener('click', function (event) {
+            if (!alerts.hidden && !alerts.contains(event.target) && !bell.contains(event.target)) { setAlertsOpen(false); }
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !alerts.hidden) { setAlertsOpen(false); bell.focus(); }
         });
     }
 
@@ -257,6 +274,9 @@
         function applyPayment() {
             var paid = el('paidAmount');
             if (!paid) { return; }
+            // The chosen method is posted through the sale form's hidden payment_method field.
+            if (el('paymentMethod')) { el('paymentMethod').value = method(); }
+            if (el('paymentMethodSelect')) { el('paymentMethodSelect').value = method(); }
             var total = grand();
             var gave = method() === 'due' ? 0 : number(given.value);
             paid.value = String(Math.min(Math.max(gave, 0), total));

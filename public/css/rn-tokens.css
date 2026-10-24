@@ -1,40 +1,36 @@
 /*
  * RetailNova design tokens (UI-1). Components use these variables, never raw hex values.
  *
- * Font: Hind Siliguri, served from public/fonts/hind-siliguri/. Until those files are added
- * the stack falls back to the bundled Noto Sans Bengali, then system fonts.
+ * Font: Hind Siliguri (SIL OFL 1.1, see public/fonts/hind-siliguri/OFL.txt), served locally as
+ * woff2; Noto Sans Bengali and system fonts remain as fallbacks.
  */
 @font-face {
     font-family: "Hind Siliguri";
     font-style: normal;
     font-weight: 400;
     font-display: swap;
-    src: url("../fonts/hind-siliguri/HindSiliguri-Regular.woff2") format("woff2"),
-         url("../fonts/hind-siliguri/HindSiliguri-Regular.ttf") format("truetype");
+    src: url("../fonts/hind-siliguri/HindSiliguri-Regular.woff2") format("woff2");
 }
 @font-face {
     font-family: "Hind Siliguri";
     font-style: normal;
     font-weight: 500;
     font-display: swap;
-    src: url("../fonts/hind-siliguri/HindSiliguri-Medium.woff2") format("woff2"),
-         url("../fonts/hind-siliguri/HindSiliguri-Medium.ttf") format("truetype");
+    src: url("../fonts/hind-siliguri/HindSiliguri-Medium.woff2") format("woff2");
 }
 @font-face {
     font-family: "Hind Siliguri";
     font-style: normal;
     font-weight: 600;
     font-display: swap;
-    src: url("../fonts/hind-siliguri/HindSiliguri-SemiBold.woff2") format("woff2"),
-         url("../fonts/hind-siliguri/HindSiliguri-SemiBold.ttf") format("truetype");
+    src: url("../fonts/hind-siliguri/HindSiliguri-SemiBold.woff2") format("woff2");
 }
 @font-face {
     font-family: "Hind Siliguri";
     font-style: normal;
     font-weight: 700;
     font-display: swap;
-    src: url("../fonts/hind-siliguri/HindSiliguri-Bold.woff2") format("woff2"),
-         url("../fonts/hind-siliguri/HindSiliguri-Bold.ttf") format("truetype");
+    src: url("../fonts/hind-siliguri/HindSiliguri-Bold.woff2") format("woff2");
 }
 @font-face {
     font-family: "Noto Sans Bengali";

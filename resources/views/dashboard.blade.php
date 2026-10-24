@@ -146,7 +146,7 @@
 @endsection
 
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{{ \App\Support\VendorAsset::url('chartjs/chart.umd.min.js', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js') }}"></script>
 <script>
     (function(){
         var dashboard = document.querySelector('.rn-dashboard');

@@ -1,8 +1,8 @@
 {{--
     Mobile sale screen (≤1023px). It sits outside #saveSaleForm and its controls have no name,
     so nothing here is submitted: every action drives the existing sale form (customer, product
-    selector, quantity buttons, discount, paid amount and save button), which keeps all sale
-    rules and POST fields unchanged.
+    selector, quantity buttons, discount, paid amount, payment method and save button), which
+    keeps all sale rules and POST fields unchanged.
 --}}
 @php
     $pos = app(\App\Services\PosCatalog::class)->cards($productList ?? []);
@@ -46,11 +46,15 @@
     <p class="rn-m-empty" data-rn-pos-none @if($pos['cards'] !== []) hidden @endif>{{ __('mobile.no_products') }}</p>
     <p class="rn-m-toast" role="status" aria-live="polite" data-rn-pos-toast hidden></p>
 
+    {{-- The whole bar is one button: "N items · total · Take payment →"; disabled (light) while the cart is empty. --}}
     <div class="rn-m-pos-bar" data-rn-pos-bar>
-        <span class="rn-m-pos-bar-count" data-rn-pos-count>{{ __('mobile.items_count', ['count' => \App\Support\LocalizedNumber::digits(0)]) }}</span>
-        <span class="rn-m-pos-bar-dot" aria-hidden="true">·</span>
-        <strong class="rn-m-pos-bar-total" data-rn-pos-total>{{ $money(0) }}</strong>
-        <button type="button" class="rn-m-btn rn-m-btn--primary rn-m-pos-bar-btn" data-rn-pos-checkout aria-haspopup="dialog" aria-controls="rnCheckout" disabled>{{ __('mobile.take_payment') }}</button>
+        <button type="button" class="rn-m-pos-bar-btn" data-rn-pos-checkout aria-haspopup="dialog" aria-controls="rnCheckout" disabled>
+            <span class="rn-m-pos-bar-count" data-rn-pos-count>{{ __('mobile.items_count', ['count' => \App\Support\LocalizedNumber::digits(0)]) }}</span>
+            <span class="rn-m-pos-bar-dot" aria-hidden="true">·</span>
+            <strong class="rn-m-pos-bar-total" data-rn-pos-total>{{ $money(0) }}</strong>
+            <span class="rn-m-pos-bar-dot" aria-hidden="true">·</span>
+            <span class="rn-m-pos-bar-action">{{ __('mobile.take_payment') }}<i class="ri-arrow-right-line" aria-hidden="true"></i></span>
+        </button>
     </div>
 
     <div id="rnCheckout" class="rn-m-sheet" role="dialog" aria-modal="true" aria-labelledby="rnCheckoutTitle" data-rn-checkout hidden>
@@ -74,13 +78,12 @@
             </dl>
 
             <fieldset class="rn-m-fieldset">
-                <legend class="rn-m-section-title">{{ __('mobile.payment_method') }}</legend>
+                <legend class="rn-m-section-title">{{ __('sales.payment_method') }}</legend>
                 <div class="rn-m-segment rn-m-segment--4">
-                    @foreach(['cash', 'bkash', 'nagad', 'due'] as $method)
-                        <label class="rn-m-segment-btn"><input type="radio" class="sr-only" name="rnPaymentMethod" value="{{ $method }}" @checked($method === 'cash') data-rn-checkout-method>{{ __('mobile.'.$method) }}</label>
+                    @foreach(\App\Models\SaleProduct::PAYMENT_METHODS as $method)
+                        <label class="rn-m-segment-btn"><input type="radio" class="sr-only" name="rnPaymentMethod" value="{{ $method }}" @checked($method === 'cash') data-rn-checkout-method>{{ __('sales.payment_method_'.$method) }}</label>
                     @endforeach
                 </div>
-                <p class="rn-m-hint">{{ __('mobile.payment_method_note') }}</p>
             </fieldset>
 
             <div class="rn-m-field" data-rn-checkout-given-field>

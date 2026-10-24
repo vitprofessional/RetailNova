@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\SaleProduct;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class SaleStoreRequest extends FormRequest
 {
@@ -57,6 +59,7 @@ class SaleStoreRequest extends FormRequest
             'additionalChargeAmount' => ['nullable','numeric','decimal:0,2','min:0','max:9999999999.99'],
             'grandTotal'      => ['required','numeric','decimal:0,2','min:0','max:9999999999.99'],
             'paidAmount'      => ['nullable','numeric','decimal:0,2','min:0','max:9999999999.99'],
+            'payment_method'  => ['nullable','string',Rule::in(SaleProduct::PAYMENT_METHODS)],
             'dueAmount'       => ['nullable','numeric','decimal:0,2','min:0','max:9999999999.99'],
             'prevDue'         => ['nullable','numeric','decimal:0,2','min:0','max:9999999999.99'],
             'curDue'          => ['nullable','numeric','decimal:0,2','min:0','max:9999999999.99'],

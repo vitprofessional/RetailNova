@@ -7,13 +7,65 @@
     $mobileIsHome = request()->routeIs('dashboard');
     $mobileUser = auth('admin')->user();
     $mobileLocale = app()->getLocale();
+    if ($mobileIsHome) {
+        $mobileBusinessName = $rnBusinessName ?? config('app.name');
+        $mobileBusiness = ($config ?? collect())->first();
+        $mobileLogo = $mobileBusiness instanceof \App\Models\BusinessSetup ? $mobileBusiness->invoiceLogoUrl() : null;
+        $mobileInitial = preg_match('/\p{L}/u', (string) $mobileBusinessName, $letter) ? mb_strtoupper($letter[0]) : '#';
+        $mobileDate = \App\Support\LocalizedNumber::digits(now()->locale($mobileLocale)->translatedFormat('l, j F Y'));
+        // Alerts come from the home figures (DashboardToday); only stock warnings exist so far.
+        $mobileAlerts = [];
+        if (($today['low_stock_count'] ?? 0) > 0) {
+            $mobileAlerts[] = [
+                'icon' => 'ri-alert-line',
+                'title' => __('mobile.low_stock_alert', ['count' => \App\Support\LocalizedNumber::count($today['low_stock_count'])]),
+                'text' => collect($today['low_stock'])->pluck('name')->implode(', '),
+                'url' => $mobileNav->allows('stockProduct') ? route('stockProduct') : null,
+            ];
+        }
+        if (($today['out_of_stock_count'] ?? 0) > 0) {
+            $mobileAlerts[] = [
+                'icon' => 'ri-error-warning-line',
+                'title' => __('mobile.out_of_stock_alert', ['count' => \App\Support\LocalizedNumber::count($today['out_of_stock_count'])]),
+                'text' => null,
+                'url' => $mobileNav->allows('stockProduct') ? route('stockProduct') : null,
+            ];
+        }
+    }
 @endphp
 <header class="rn-m-header{{ $mobileIsHome ? ' rn-m-header--home' : '' }}" data-rn-mobile-header>
-    @unless($mobileIsHome)
+    @if($mobileIsHome)
+        <span class="rn-m-brand" aria-hidden="true">
+            @if($mobileLogo)<img src="{{ $mobileLogo }}" alt="" class="rn-m-brand-logo">@else{{ $mobileInitial }}@endif
+        </span>
+        <div class="rn-m-header-text">
+            <h1 class="rn-m-title">{{ $mobileBusinessName }}</h1>
+            <p class="rn-m-header-date" data-rn-header-date>{{ $mobileDate }}</p>
+        </div>
+        <button type="button" class="rn-m-header-btn rn-m-bell" data-rn-notifications-toggle aria-expanded="false" aria-controls="rnNotifications"
+                aria-label="{{ __('mobile.notifications') }}{{ $mobileAlerts ? ' ('.\App\Support\LocalizedNumber::count(count($mobileAlerts)).')' : '' }}">
+            <i class="ri-notification-3-line" aria-hidden="true"></i>
+            @if($mobileAlerts)<span class="rn-m-bell-badge" aria-hidden="true">{{ \App\Support\LocalizedNumber::count(count($mobileAlerts)) }}</span>@endif
+        </button>
+    @else
         <a href="{{ route('dashboard') }}" class="rn-m-header-btn" data-rn-back aria-label="{{ __('mobile.back') }}"><i class="ri-arrow-left-line" aria-hidden="true"></i></a>
-    @endunless
-    <h1 class="rn-m-title">{{ $mobileIsHome ? ($rnBusinessName ?? config('app.name')) : $mobileTitle }}</h1>
+        <h1 class="rn-m-title">{{ $mobileTitle }}</h1>
+    @endif
 </header>
+@if($mobileIsHome)
+    <section id="rnNotifications" class="rn-m-notifications" aria-labelledby="rnNotificationsTitle" data-rn-notifications hidden>
+        <h2 id="rnNotificationsTitle" class="rn-m-notifications-title">{{ __('mobile.notifications') }}</h2>
+        @forelse($mobileAlerts as $alert)
+            @php $alertTag = $alert['url'] ? 'a' : 'div'; @endphp
+            <{{ $alertTag }} @if($alert['url']) href="{{ $alert['url'] }}" @endif class="rn-m-notification">
+                <i class="{{ $alert['icon'] }}" aria-hidden="true"></i>
+                <span><strong>{{ $alert['title'] }}</strong>@if($alert['text'])<span>{{ $alert['text'] }}</span>@endif</span>
+            </{{ $alertTag }}>
+        @empty
+            <p class="rn-m-empty">{{ __('mobile.no_notifications') }}</p>
+        @endforelse
+    </section>
+@endif
 
 <nav class="rn-m-tabbar" aria-label="{{ __('mobile.navigation') }}" data-rn-tabbar>
     @foreach(['home', 'stock', 'sale', 'reports'] as $key)
@@ -36,20 +88,16 @@
         <h2 id="rn-more-title" class="rn-m-title">{{ __('mobile.more') }}</h2>
     </header>
     <div class="rn-m-more-body">
-        <ul class="rn-m-grid" role="list">
-            @foreach($mobileNav->moreItems() as $item)
-                <li><a href="{{ $item['url'] }}" class="rn-m-grid-item"><span class="rn-m-grid-icon" aria-hidden="true"><i class="{{ $item['icon'] }}"></i></span><span class="rn-m-grid-label">{{ $item['label'] }}</span></a></li>
-            @endforeach
-        </ul>
-
-        @if($settings = $mobileNav->settingsItems())
-            <h3 class="rn-m-section-title">{{ __('mobile.settings') }}</h3>
-            <ul class="rn-m-list" role="list">
-                @foreach($settings as $item)
-                    <li><a href="{{ $item['url'] }}" class="rn-m-list-item"><i class="{{ $item['icon'] }}" aria-hidden="true"></i><span>{{ $item['label'] }}</span><i class="ri-arrow-right-s-line rn-m-list-chevron" aria-hidden="true"></i></a></li>
-                @endforeach
-            </ul>
-        @endif
+        @foreach($mobileNav->moreSections() as $section)
+            <section class="rn-m-more-section" aria-labelledby="rnMore-{{ $section['key'] }}" data-rn-more-section="{{ $section['key'] }}">
+                <h3 id="rnMore-{{ $section['key'] }}" class="rn-m-section-title">{{ $section['title'] }}</h3>
+                <ul class="rn-m-grid" role="list">
+                    @foreach($section['items'] as $item)
+                        <li><a href="{{ $item['url'] }}" class="rn-m-grid-item"><span class="rn-m-grid-icon" aria-hidden="true"><i class="{{ $item['icon'] }}"></i></span><span class="rn-m-grid-label">{{ $item['label'] }}</span></a></li>
+                    @endforeach
+                </ul>
+            </section>
+        @endforeach
 
         <h3 class="rn-m-section-title">{{ __('mobile.language') }}</h3>
         <form method="POST" action="{{ route('language.preference') }}" class="rn-m-segment" data-rn-language>
