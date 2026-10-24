@@ -9,6 +9,7 @@ use App\Models\ProvideService;
 use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\SaleProduct;
+use App\Models\Service;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -142,6 +143,22 @@ class CustomerDisplayRegressionTest extends TestCase
             ->assertSee('class="rn-m-form rn-m-quotation-form"', false)
             ->assertSee('rn-m-quotation-items', false)
             ->assertSee('rn-m-quotation-actions', false);
+    }
+
+    public function test_provide_service_page_renders_mobile_form_and_item_action_contracts(): void
+    {
+        $business = $this->business('Service Mobile Shop');
+        $actor = $this->actor((int) $business->id);
+        Customer::forceCreate(['name' => 'Service Customer', 'businessId' => $business->id]);
+        Service::forceCreate(['businessId' => $business->id, 'serviceName' => 'Screen Repair', 'rate' => 250]);
+        $this->actingAs($actor, 'admin');
+
+        $this->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 13) Mobile')
+            ->get(route('provideService'))->assertOk()
+            ->assertSee('class="rn-m-form rn-m-service-form"', false)
+            ->assertSee('rn-m-service-items', false)
+            ->assertSee('rn-m-service-actions', false)
+            ->assertSee('serviceType', false);
     }
 
     public function test_tenant_presence_validation_rejects_foreign_customers_and_suppliers(): void

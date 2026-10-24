@@ -608,6 +608,31 @@
         .rn-m-quotation-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
         .rn-m-quotation-actions .rn-m-btn { min-height: 48px; }
     }
+    @media (max-width: 992px) {
+        .rn-m-service-form { padding-bottom: calc(var(--rn-m-tabbar-h) + 82px + var(--rn-safe-bottom)); }
+        .rn-m-service-meta { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin: 0 0 12px; padding: 14px; }
+        .rn-m-service-meta > [class*="col-"] { width: 100%; max-width: 100%; padding: 0; }
+        .rn-m-service-form .form-control { min-width: 0; min-height: 48px; border-color: var(--rn-color-border); border-radius: var(--rn-radius-md); }
+        .rn-m-service-form .form-check { display: flex; align-items: center; gap: 8px; min-height: 44px; padding-left: 0; }
+        .rn-m-service-form .form-check-input { position: static; flex: 0 0 auto; width: 20px; height: 20px; margin: 0; }
+        .rn-m-service-items { min-width: 0; margin: 0 0 12px !important; padding: 14px; overflow: visible !important; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); }
+        .rn-m-service-items table { width: 100%; min-width: 0 !important; max-width: 100%; table-layout: fixed; }
+        .rn-m-service-items thead { display: none; }
+        .rn-m-service-items tbody { display: block; }
+        .rn-m-service-items tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0 0 10px; padding: 12px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); }
+        .rn-m-service-items tbody td { display: block; width: auto; min-width: 0; padding: 0 !important; border: 0; overflow-wrap: anywhere; }
+        .rn-m-service-items tbody td::before { content: attr(data-label); display: block; margin-bottom: 5px; color: var(--rn-color-muted); font-size: 12px; font-weight: 600; line-height: 1.5; }
+        .rn-m-service-items tbody td:first-child,
+        .rn-m-service-items tbody td:last-child { grid-column: 1 / -1; }
+        .rn-m-service-items tfoot { display: block; }
+        .rn-m-service-items tfoot tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+        .rn-m-service-items tfoot td { padding: 10px 4px !important; border: 0; }
+        .rn-m-service-items tfoot td:last-child { text-align: right; }
+        .rn-m-service-items tfoot strong { overflow-wrap: anywhere; }
+        .rn-m-service-items tfoot input { min-height: 0; }
+        .rn-m-service-form #saveButton.rn-m-service-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+        .rn-m-service-actions .rn-m-btn { min-height: 48px; }
+    }
     @media (max-width: 359px) {
         .rn-m-form-grid--2 { grid-template-columns: minmax(0, 1fr); }
     }

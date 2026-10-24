@@ -13,9 +13,9 @@
                 @endif
             </div>
         </div>
-        <form action="{{ route('saveProvideService') }}" method="POST">
+        <form action="{{ route('saveProvideService') }}" method="POST" class="rn-m-form rn-m-service-form">
             @csrf
-            <div class="row">
+            <div class="row rn-m-form-section rn-m-service-meta">
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="customerName" class="form-label">{{ __('common.customer_name') }}</label>
@@ -59,7 +59,7 @@
                 </div>
             </div>
                 <div class="row">
-                    <div class="mb-3 table-responsive product-table">
+                    <div class="mb-3 table-responsive product-table rn-m-form-section rn-m-service-items">
                         <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
                             <thead class="bg-white text-uppercase">
                                 <tr>
@@ -83,8 +83,9 @@
                             </tfoot>
                         </table>
                     </div>
-                    <div id="saveButton" class="d-none mt-2">
-                        <button class="btn btn-primary btn-sm" type="submit">{{ __('common.save') }}</button>
+                    <div id="saveButton" class="d-none mt-2 rn-m-sticky-actions rn-m-service-actions">
+                        <a class="rn-m-btn rn-m-btn--outline" href="{{ route('serviceProvideList') }}">{{ __('common.cancel') }}</a>
+                        <button class="rn-m-btn rn-m-btn--primary" type="submit">{{ __('common.save') }}</button>
                     </div>
                 </div>
             </div>
@@ -121,11 +122,11 @@
                             var svcName = result.serviceName ? String(result.serviceName).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
                             var rateVal = (typeof result.rate !== 'undefined' && result.rate !== null) ? parseFloat(result.rate).toFixed(2) : '0.00';
                             var field = '<tr data-service-id="'+result.id+'">'
-                                +'<td><input type="text" class="form-control" name="serviceName[]" value="'+svcName+'" readonly/></td>'
-                                +'<td><input type="number" step="0.01" class="form-control rate-input" value="'+rateVal+'" name="rate[]" /></td>'
-                                +'<td><input type="number" min="1" class="form-control qty-input" value="1" name="qty[]" /></td>'
-                                +'<td><input type="text" readonly class="form-control line-total-input" value="'+rateVal+'" /></td>'
-                                +'<td><button type="button" class="btn btn-sm btn-outline-danger remove-service" title="{{ __('common.delete') }}" data-service-id="'+result.id+'"><i class="ri-delete-bin-line mr-0"></i></button></td>'
+                                +'<td data-label="{{ __('common.service_type') }}"><input type="text" class="form-control" name="serviceName[]" value="'+svcName+'" readonly/></td>'
+                                +'<td data-label="{{ __('common.rate') }}"><input type="number" step="0.01" class="form-control rate-input" value="'+rateVal+'" name="rate[]" /></td>'
+                                +'<td data-label="{{ __('common.qty') }}"><input type="number" min="1" class="form-control qty-input" value="1" name="qty[]" /></td>'
+                                +'<td data-label="{{ __('common.line_total') }}"><input type="text" readonly class="form-control line-total-input" value="'+rateVal+'" /></td>'
+                                +'<td data-label="{{ __('common.action') }}"><button type="button" class="btn btn-sm btn-outline-danger remove-service" title="{{ __('common.delete') }}" data-service-id="'+result.id+'"><i class="ri-delete-bin-line mr-0"></i></button></td>'
                                 +'</tr>';
 
                             $('#serviceBox').append(field);
