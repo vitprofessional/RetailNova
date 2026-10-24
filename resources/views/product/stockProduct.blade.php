@@ -1,4 +1,8 @@
 @extends('include') @section('backTitle'){{ __('common.heading_stock_product') }}@endsection @section('container')
+{{-- UI-2: the mobile version is cards (App\Services\MobileLists); the desktop markup below is unchanged. --}}
+@mobile
+@include('mobile.lists.page', ['list' => new \App\Services\MobileLists\ProductsList('stockProduct')])
+@else
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -60,4 +64,5 @@
 
             </div>
         </div>
+@endmobile
 @endsection

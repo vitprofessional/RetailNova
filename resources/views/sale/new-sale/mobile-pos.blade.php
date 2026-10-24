@@ -1,5 +1,5 @@
 {{--
-    Mobile sale screen (≤1023px). It sits outside #saveSaleForm and its controls have no name,
+    Mobile sale screen (mobile version only). It sits outside #saveSaleForm and its controls have no name,
     so nothing here is submitted: every action drives the existing sale form (customer, product
     selector, quantity buttons, discount, paid amount, payment method and save button), which
     keeps all sale rules and POST fields unchanged.

@@ -1,4 +1,4 @@
-{{-- Mobile app shell (≤1023px only; hidden on desktop by rn-mobile.css): header, bottom tabs and the "More" page. --}}
+{{-- Mobile app shell (mobile version only, see App\Support\MobileView): header, bottom tabs and the "More" page. --}}
 @auth('admin')
 @php
     $mobileNav = app(\App\Support\MobileNavigation::class);
@@ -104,6 +104,13 @@
             @csrf
             <button type="submit" name="preferred_locale" value="bn" class="rn-m-segment-btn{{ $mobileLocale === 'bn' ? ' is-active' : '' }}" @if($mobileLocale === 'bn') aria-pressed="true" @endif lang="bn">বাংলা</button>
             <button type="submit" name="preferred_locale" value="en" class="rn-m-segment-btn{{ $mobileLocale === 'en' ? ' is-active' : '' }}" @if($mobileLocale === 'en') aria-pressed="true" @endif lang="en">English</button>
+        </form>
+
+        <h3 class="rn-m-section-title">{{ __('mobile.view_version') }}</h3>
+        <form method="POST" action="{{ route('view.mode') }}" class="rn-m-segment" data-rn-view-mode>
+            @csrf
+            <button type="submit" name="mode" value="mobile" class="rn-m-segment-btn is-active" aria-pressed="true">{{ __('mobile.view_mobile') }}</button>
+            <button type="submit" name="mode" value="desktop" class="rn-m-segment-btn">{{ __('mobile.view_desktop') }}</button>
         </form>
 
         <a href="{{ route('logout') }}" class="rn-m-signout"><i class="ri-logout-box-r-line" aria-hidden="true"></i><span>{{ __('mobile.sign_out') }}</span></a>

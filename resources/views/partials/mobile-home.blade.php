@@ -1,4 +1,4 @@
-{{-- Mobile home (≤1023px): today's figures, shortcuts, low-stock warning and the latest sales. --}}
+{{-- Mobile home (mobile version only): today's figures, shortcuts, low-stock warning and the latest sales. --}}
 @php
     $mobileNav = app(\App\Support\MobileNavigation::class);
     $money = fn ($amount) => \App\Support\LocalizedNumber::money($amount);

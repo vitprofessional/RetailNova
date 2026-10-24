@@ -27,6 +27,13 @@ class MobileShellTest extends TestCase
         $this->refreshIsolatedDatabase();
     }
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // UI-2: the mobile shell is only sent to phones and tablets (App\Support\MobileView).
+        $this->withHeader('User-Agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1');
+    }
+
     private function xpath(string $html): \DOMXPath
     {
         $document = new \DOMDocument();

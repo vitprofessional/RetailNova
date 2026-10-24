@@ -1,6 +1,14 @@
 @extends('include')
 @section('backTitle'){{ __('common.heading_addsupplier') }}@endsection
 @section('container')
+{{-- UI-2: the mobile version is cards (App\Services\MobileLists); the desktop markup below is unchanged. --}}
+@mobile
+@if(isset($profile) || request()->boolean('new'))
+@include('mobile.contacts.form', ['type' => 'suppliers', 'profile' => $profile ?? null, 'businesses' => $businesses ?? null])
+@else
+@include('mobile.lists.page', ['list' => app(\App\Services\MobileLists\SuppliersList::class)])
+@endif
+@else
 @php $canDeleteAllData = auth('admin')->user()?->canDeleteAllRelatedData() ?? false; @endphp
 <div class="col-12">@include('sweetalert::alert')</div>
 <div class="row">
@@ -299,5 +307,8 @@
     }
 </script>
 
+@endmobile
 @endsection
+@desktop
 @include('partials.bulk-actions-script')
+@enddesktop

@@ -1,6 +1,7 @@
 /*
- * RetailNova mobile app shell (UI-1, UI-1b). Everything here applies at ≤1023px only; the desktop
- * layout (≥1024px) is untouched. Colors and sizes come from rn-tokens.css.
+ * RetailNova mobile app shell (UI-1, UI-1b). The layout links this file only for the mobile version
+ * (App\Support\MobileView decides by device or the user's choice), so it never reaches desktop pages.
+ * The rules are screen-only: printed receipts keep their own layout. Colors and sizes come from rn-tokens.css.
  */
 .rn-m-header,
 .rn-m-tabbar,
@@ -9,7 +10,7 @@
 .rn-m-home,
 .rn-m-pos { display: none; }
 
-@media (max-width: 1023.98px) {
+@media screen {
     /* ---------- Base ---------- */
     html { -webkit-text-size-adjust: 100%; }
     body.rn-app {
@@ -600,7 +601,7 @@
     body.rn-app .table-responsive { max-width: 100%; }
 }
 
-@media (max-width: 1023.98px) and (prefers-reduced-motion: no-preference) {
+@media screen and (prefers-reduced-motion: no-preference) {
     .rn-m-product,
     .rn-m-tab,
     .rn-m-grid-item { transition: background-color .15s ease, color .15s ease, border-color .15s ease; }

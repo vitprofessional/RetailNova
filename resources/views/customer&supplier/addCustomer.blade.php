@@ -1,5 +1,13 @@
 @extends('include')
 @section('backTitle'){{ __('common.heading_addcoustomer') }}@endsection @section('container')
+{{-- UI-2: the mobile version is cards (App\Services\MobileLists); the desktop markup below is unchanged. --}}
+@mobile
+@if(isset($profile) || request()->boolean('new'))
+@include('mobile.contacts.form', ['type' => 'customers', 'profile' => $profile ?? null, 'businesses' => $businesses ?? null])
+@else
+@include('mobile.lists.page', ['list' => app(\App\Services\MobileLists\CustomersList::class)])
+@endif
+@else
 @php $canDeleteAllData = auth('admin')->user()?->canDeleteAllRelatedData() ?? false; @endphp
 
 <div class="col-12">
@@ -357,4 +365,5 @@
     }
 </script>
 @include('partials.bulk-actions-script')
+@endmobile
 @endsection

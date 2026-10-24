@@ -3,6 +3,10 @@
 @section('backTitle'){{ __('common.heading_expense_management') }}@endsection
 
 @section('container')
+{{-- UI-2: the mobile version is cards (App\Services\MobileLists); the desktop markup below is unchanged. --}}
+@mobile
+@include('mobile.lists.page', ['list' => app(\App\Services\MobileLists\ExpensesList::class)])
+@else
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
@@ -172,4 +176,5 @@
         </div>
     </div>
 </div>
+@endmobile
 @endsection

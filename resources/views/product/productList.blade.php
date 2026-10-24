@@ -1,6 +1,10 @@
 @extends('include')
 @section('backTitle'){{ __('common.heading_product_list') }}@endsection
 @section('container')
+{{-- UI-2: the mobile version is cards (App\Services\MobileLists); the desktop markup below is unchanged. --}}
+@mobile
+@include('mobile.lists.page', ['list' => new \App\Services\MobileLists\ProductsList('productlist')])
+@else
 <link rel="stylesheet" href="{{ asset('css/inventory-products.css') }}?v={{ filemtime(public_path('css/inventory-products.css')) }}">
 <div class="col-12">@include('sweetalert::alert')</div>
 
@@ -138,9 +142,11 @@
         </div>
     </section>
 </main>
+@endmobile
 @endsection
 
 @section('scripts')
+@desktop
     @parent
     @include('partials.bulk-actions-script')
     <script>
@@ -181,4 +187,6 @@
         }
     })();
     </script>
+
+@enddesktop
 @endsection

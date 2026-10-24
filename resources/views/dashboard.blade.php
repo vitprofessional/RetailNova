@@ -22,7 +22,9 @@
             : $value;
     };
 @endphp
+@mobile
 @include('partials.mobile-home')
+@else
 <main class="rn-dashboard" data-currency-symbol="{{ $dashboardCurrencySymbol }}" data-currency-position="{{ $dashboardCurrencyPosition }}" data-currency-negative-parentheses="{{ $dashboardCurrencyNegParentheses ? 'true' : 'false' }}">
     <section class="rn-dashboard-intro" aria-labelledby="rn-dashboard-title">
         <div class="rn-dashboard-welcome">
@@ -143,9 +145,11 @@
         </article>
     </section>
 </main>
+@endmobile
 @endsection
 
 @section('scripts')
+@desktop
 <script src="{{ \App\Support\VendorAsset::url('chartjs/chart.umd.min.js', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js') }}"></script>
 <script>
     (function(){
@@ -243,4 +247,5 @@
         loadMetrics();
     })();
 </script>
+@enddesktop
 @endsection

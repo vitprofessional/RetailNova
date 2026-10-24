@@ -15,8 +15,11 @@
     <link rel="stylesheet" href="{{ asset('css/rn-tokens.css') }}?v={{ filemtime(public_path('css/rn-tokens.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/retailnova-shell.css') }}?v={{ filemtime(public_path('css/retailnova-shell.css')) }}">
     @stack('styles')
-    {{-- Mobile app shell (≤1023px); loaded last so it can adapt page styles on small screens. --}}
-    <link rel="stylesheet" href="{{ asset('css/rn-mobile.css') }}?v={{ filemtime(public_path('css/rn-mobile.css')) }}">
+    @mobile
+        {{-- Mobile version only (App\Support\MobileView); loaded last so it can adapt page styles. --}}
+        <link rel="stylesheet" href="{{ asset('css/rn-mobile.css') }}?v={{ filemtime(public_path('css/rn-mobile.css')) }}">
+        <link rel="stylesheet" href="{{ asset('css/rn-m-components.css') }}?v={{ filemtime(public_path('css/rn-m-components.css')) }}">
+    @endmobile
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
     {{-- Libraries load from public/vendor/ (App\Support\VendorAsset); a missing local copy falls back to its CDN. --}}
     <link rel="stylesheet" href="{{ \App\Support\VendorAsset::url('line-awesome/css/line-awesome.min.css', 'https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css') }}">
@@ -759,7 +762,9 @@
               ? asset('uploads/business/' . $config[0]->businessLogo)
               : asset('logo.png');
       @endphp
+      @mobile
       @include('partials.mobile-shell')
+      @else
       <div class="iq-sidebar sidebar-default rn-sidebar" id="rn-sidebar">
           <div class="iq-sidebar-logo rn-sidebar-brand">
               <a href="{{ route('dashboard') }}" class="header-logo rn-sidebar-brand-link" title="{{ $rnBusinessName }}" aria-label="{{ $rnBusinessName }} — {{ __('navigation.dashboard') }}">
@@ -1030,6 +1035,7 @@
           </div>
       </div>
       <button type="button" id="rn-sidebar-backdrop" aria-label="{{ __('navigation.toggle_navigation') }}" tabindex="-1"></button>
+      @endmobile
       <div class="content-page">
         <div class="container-fluid">
             @yield('container')
@@ -1061,6 +1067,8 @@
       </div>
     </div>
     <!-- Wrapper End-->
+    @desktop
+    @include('partials.view-mode-return')
     <footer class="iq-footer rn-footer">
         <div class="container-fluid">
             <div class="rn-footer-inner">
@@ -1078,6 +1086,7 @@
             </div>
         </div>
     </footer>
+    @enddesktop
 
     <script>
         $(document).ready(function() {
@@ -1422,6 +1431,9 @@
             </div>
         </div>
     </div>
-    <script src="{{ asset('js/rn-mobile.js') }}?v={{ filemtime(public_path('js/rn-mobile.js')) }}" defer></script>
+    @mobile
+        <script src="{{ asset('js/rn-mobile.js') }}?v={{ filemtime(public_path('js/rn-mobile.js')) }}" defer></script>
+        <script src="{{ asset('js/rn-m-components.js') }}?v={{ filemtime(public_path('js/rn-m-components.js')) }}" defer></script>
+    @endmobile
   </body>
 </html>

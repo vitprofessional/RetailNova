@@ -1,6 +1,14 @@
+@php use Carbon\Carbon; @endphp
 @extends('include')
 @section('backTitle') {{ __('navigation.sales_history') }} @endsection
 @section('container')
+{{-- UI-2: the mobile version is cards (App\Services\MobileLists); the desktop markup below is unchanged. --}}
+@mobile
+@include('mobile.lists.page', ['list' => app(\App\Services\MobileLists\SalesList::class)])
+@if(!empty($canCancelSales))
+@include('partials.sale-cancel-script')
+@endif
+@else
 <style>
     .rn-sales-history { min-width: 0; color: #172b4d; }
     .rn-sales-history * { box-sizing: border-box; }
@@ -184,7 +192,6 @@
             'reasonRequired' => true,
         ])
         <div class="rn-sales-history-table-wrap" tabindex="0" role="region" aria-label="{{ __('sales.sales_history_table_scroll') }}">
-            @php use Carbon\Carbon; @endphp
             <table id="salesTable" class="table rn-sales-history-table">
                 <thead>
                     <tr>
@@ -268,9 +275,11 @@
         </div>
     </section>
 </main>
+@endmobile
 @endsection
 
 @section('scripts')
+@desktop
 @if(!empty($canCancelSales))
 @include('partials.sale-cancel-script')
 @endif
@@ -388,4 +397,6 @@
     else initializeSalesHistory();
 })();
 </script>
+
+@enddesktop
 @endsection

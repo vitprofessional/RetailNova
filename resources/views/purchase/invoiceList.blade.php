@@ -1,6 +1,11 @@
 @extends('include')
 @section('backTitle'){{ __('navigation.purchase_history') }}@endsection
 @section('container')
+{{-- UI-2: the mobile version is cards (App\Services\MobileLists); the desktop markup below is unchanged. --}}
+@mobile
+@include('mobile.lists.page', ['list' => app(\App\Services\MobileLists\PurchasesList::class)])
+@include('mobile.lists.section', ['list' => app(\App\Services\MobileLists\PurchaseLinesList::class), 'title' => __('purchases.legacy_records')])
+@else
 <link rel="stylesheet" href="{{ asset('css/purchase-list.css') }}">
 <div class="col-12 rn-purchase-shell"><div class="card rn-purchase-list"><div class="card-body">
 <div id="purchaseListPrint">
@@ -50,5 +55,10 @@
 <td><a href="{{ route('purchaseView',$line->id) }}">{{ __('common.view') }}</a></td></tr>@endforeach
 </tbody></table></div>{{ $legacy->links() }}</div></details>@endif
 </div></div></div></div>
+@endmobile
 @endsection
-@section('scripts')<script src="{{ asset('js/purchase-list.js') }}" defer></script>@endsection
+@section('scripts')
+@desktop
+<script src="{{ asset('js/purchase-list.js') }}" defer></script>
+@enddesktop
+@endsection

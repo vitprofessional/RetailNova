@@ -34,6 +34,8 @@ Route::post('/guest/language', [
     \App\Http\Controllers\LanguageSettingsController::class,
     'guestPreference',
 ])->name('locale.guest');
+// "Desktop version / Mobile version" switch (cookie only; see App\Support\MobileView).
+Route::post('/view-mode', [\App\Http\Controllers\ViewModeController::class, 'update'])->name('view.mode');
 
 // Backward-compatible named route expected by Laravel auth middleware
 // Some middleware or packages expect a route named `login`. Provide a
@@ -159,6 +161,9 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
     Route::get('/business/language-settings', [\App\Http\Controllers\LanguageSettingsController::class, 'edit'])->name('language.settings.edit');
     Route::post('/business/language-settings', [\App\Http\Controllers\LanguageSettingsController::class, 'update'])->name('language.settings.update');
     Route::post('/language/preference', [\App\Http\Controllers\LanguageSettingsController::class, 'preference'])->name('language.preference');
+
+    // Mobile list pages: read-only JSON for "load more" (same scope and permissions as each page).
+    Route::get('/m/lists/{list}', [\App\Http\Controllers\MobileListController::class, 'page'])->name('m.lists')->where('list', '[a-z-]+');
 
     // Admin profile management
     Route::get('/admin/profile', [

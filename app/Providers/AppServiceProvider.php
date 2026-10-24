@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\RateLimiter;
 use App\Support\Currency;
+use App\Support\MobileView;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -145,6 +146,10 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Throwable $e) {
             // if anything fails during boot (migrations, tests) do not crash
         }
+
+        // @mobile … @endmobile / @desktop … @enddesktop: the version this request gets (see MobileView).
+        Blade::if('mobile', fn () => app(MobileView::class)->isMobile());
+        Blade::if('desktop', fn () => !app(MobileView::class)->isMobile());
 
         // Blade conditional: @canEdit(true) ... @endcanEdit
         Blade::if('canEdit', function ($isSale = false) {

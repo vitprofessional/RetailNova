@@ -26,7 +26,7 @@
 @include('sale.new-sale.search')
 @include('sale.new-sale.items')
 </div><aside class="rn-sale-billing" aria-label="{{ __('sales.billing_summary') }}">@include('sale.new-sale.billing')</aside></div>
-</form>@include('sale.new-sale.mobile-pos')</div>
+</form>@mobile @include('sale.new-sale.mobile-pos') @endmobile</div>
 <!-- Serial selection modal for sale rows -->
 <div class="modal fade" id="saleSerialModal" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="saleSerialModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
