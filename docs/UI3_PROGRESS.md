@@ -68,12 +68,22 @@ Resumed at `2a7477c` on `ui-2-mobile-pages`; committed as `90f749c` (`UI-3R.5: p
 
 Next: finish and commit UI-3R.5, then work through master-data forms (UI-3.4b), details (UI-3.D), remaining lists (UI-3.L), reports (UI-3.R), and Super Admin lists (UI-3.S) in separate reviewed increments. The untracked `docs/AGENT_NOTES.md` remains preserved and unstaged.
 
-## UI-3.4b — Master-data mobile lists and forms (current phase)
+## UI-3.4b — Master-data mobile lists and forms
 
 Implemented mobile card lists with compact action menus and a “new” FAB/form transition for brand, category, unit, and service. Expense-category listing now has matching mobile cards with its existing create/edit/delete routes. Desktop tables remain the desktop markup. Screenshots and visual notes are in ignored `tests-output/ui-3-final/B/`.
 
 - Browser: all five list routes returned HTTP 200 at 390×844, no viewport overflow; real screenshots were reviewed against mockups 09/10.
 - The first expense-category capture tried a wrong URI and got 404; route:list confirmed `/expenses/categories`, and the corrected recapture passed.
 - Focused `MobileMasterDataListsTest`: 3 tests, 31 assertions, passing before the final full-suite gate.
-- Full suite: 333 tests, 10,556 assertions, 0 failures, 6 PHPUnit deprecations. Focused master-data/tenant tests: 23 tests, 150 assertions. Blade cache compilation and `git diff --check` pass.
-- Next: commit this phase, then begin details. Remaining lists, reports, and Super Admin lists are still not started.
+- Commit: `2149dc7` (`UI-3.4b: mobile master-data lists`). Full suite at the phase gate: 333 tests, 10,556 assertions, 0 failures, 6 PHPUnit deprecations. Focused master-data/tenant tests: 23 tests, 150 assertions. Blade cache compilation and `git diff --check` passed.
+- Remaining lists, reports, and Super Admin lists are still not started.
+
+## UI-3.D — Mobile detail screens (current phase)
+
+Added screen-only mobile summary blocks and labeled line cards to sale invoice, purchase invoice, quotation detail, service invoice, and sale-return detail. Mobile transaction dates use `MobileDateTime`; existing printer stylesheet/print media behavior is untouched. The mobile bottom navigation no longer overlays these detail screens. Capture and comparison notes are in ignored `tests-output/ui-3-final/C/`.
+
+- Five available authenticated GET detail routes returned HTTP 200 at 390×844 with no horizontal overflow or page exceptions after adding local-only fixture rows to the isolated screenshot database. Final screenshots were opened and visually reviewed against mockup 04.
+- Focused `MobileDetailLayoutTest` and `InvoiceCodeUnitTest`: 3 tests, 28 assertions, passing. The initial full suite found one brittle assertion expecting `<td class="text-center">` exactly; the new accessible `data-label` attribute changed tag attribute order. Updated the assertion to verify the warranty label and value together without weakening the check.
+- Latest complete isolated SQLite suite: 335 tests, 10,620 assertions, 0 failures, 6 PHPUnit deprecations. Blade cache compilation and `git diff --check` pass.
+- Mockup 04 comparison remains partial: sale invoice retains its full print-oriented A4/thermal structure, unsupported SMS/share/PDF actions were not invented, and no separate customer/supplier detail routes exist. See capture notes.
+- Next: commit this detail increment with these differences recorded; then proceed to remaining lists, reports, and Super Admin lists.

@@ -52,6 +52,9 @@
   <div class="col-12">
     <div class="card" id="rn-invoice-root">
       <div class="card-body">
+        @mobile
+        <div class="rn-m-detail-summary"><span class="rn-m-detail-summary__status">{{ __('common.status') }} · {{ ucfirst($quote->status) }}</span><strong>{{ $currencySymbol }}{{ number_format($quote->grand_total, 2) }}</strong><small>{{ __('common.quotation_no') }} · {{ $quote->quote_number }}</small></div>
+        @endmobile
         <div class="invoice-header">
           <div class="row align-items-start">
             <div class="col-md-8">
@@ -67,7 +70,7 @@
               <h2 class="invoice-title">{{ __('common.quotation') }}</h2>
               <table class="invoice-info-table">
                 <tr><td><strong>{{ __('common.quotation_no') }}:</strong></td><td>{{ $quote->quote_number }}</td></tr>
-                <tr><td><strong>{{ __('common.date') }}:</strong></td><td>{{ optional($quote->date)->format('d-M-Y') }}</td></tr>
+                <tr><td><strong>{{ __('common.date') }}:</strong></td><td>@mobile{{ \App\Support\MobileDateTime::date($quote->date) }}@else{{ optional($quote->date)->format('d-M-Y') }}@endmobile</td></tr>
                 <tr><td><strong>{{ __('common.validity') }}:</strong></td><td>{{ $quote->validity_days }} {{ __('common.days') }}</td></tr>
                 <tr><td><strong>{{ __('common.status') }}:</strong></td><td>{{ ucfirst($quote->status) }}</td></tr>
               </table>
@@ -107,8 +110,8 @@
           </div>
         </div>
 
-        <div class="invoice-items table-responsive">
-          <table class="table invoice-items-table">
+        <div class="invoice-items table-responsive rn-m-detail-page">
+          <table class="table invoice-items-table rn-m-detail-lines">
             <thead>
               <tr>
                 <th>#</th>
@@ -122,12 +125,12 @@
             <tbody>
               @foreach($quote->items as $i => $it)
               <tr>
-                <td>{{ $i+1 }}</td>
-                <td>{{ optional($it->product)->name ?? '' }}@if($it->description) - {{ $it->description }}@endif</td>
-                <td class="text-end">{{ $it->qty }}</td>
-                <td class="text-end">{{ number_format($it->unit_price,2) }}</td>
-                <td class="text-end">@if($it->discount_percent>0){{ number_format($it->discount_percent,2) }}%@else{{ number_format($it->discount_amount,2) }}@endif</td>
-                <td class="text-end">{{ number_format($it->line_total,2) }}</td>
+                <td class="rn-m-detail-index">{{ $i+1 }}</td>
+                <td data-label="{{ __('common.product_description') }}">{{ optional($it->product)->name ?? '' }}@if($it->description) - {{ $it->description }}@endif</td>
+                <td data-label="{{ __('common.qty') }}" class="text-end">{{ $it->qty }}</td>
+                <td data-label="{{ __('common.unit_price') }}" class="text-end">{{ number_format($it->unit_price,2) }}</td>
+                <td data-label="{{ __('common.discount') }}" class="text-end">@if($it->discount_percent>0){{ number_format($it->discount_percent,2) }}%@else{{ number_format($it->discount_amount,2) }}@endif</td>
+                <td data-label="{{ __('common.line_total') }}" class="text-end">{{ number_format($it->line_total,2) }}</td>
               </tr>
               @endforeach
             </tbody>
@@ -185,7 +188,7 @@
 
         <div class="d-flex justify-content-between align-items-center no-print mt-3">
           <div></div>
-          <div class="action-buttons">
+          <div class="action-buttons rn-detail-actions">
             @if($quote->status === 'draft')
             <a class="btn btn-warning btn-sm" href="{{ route('quotation.edit', ['id'=>$quote->id]) }}"><i class="las la-pen"></i> {{ __('common.edit') }}</a>
             @endif

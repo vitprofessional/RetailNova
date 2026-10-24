@@ -72,8 +72,15 @@
   $isThermal = in_array($printVariant, ['thermal80', 'thermal58'], true);
 @endphp
 
-<div class="card printer-shell" id="rn-invoice-root" data-printer-variant="{{ $printVariant }}">
+<div class="card printer-shell rn-m-sale-invoice" id="rn-invoice-root" data-printer-variant="{{ $printVariant }}">
   <div class="card-body">
+    @mobile
+    <div class="rn-m-detail-summary">
+      <span class="rn-m-detail-summary__status rn-invoice-status--{{ strtolower($paymentStatus) }}">{{ __('common.status') }} · {{ __($paymentBadge === 'success' ? 'purchases.paid' : ($paymentBadge === 'warning' ? 'purchases.partial' : 'purchases.due')) }}</span>
+      <strong>@money($grandTotal)</strong>
+      <small>{{ __('common.invoice') }} · {{ $invoice->invoice }}</small>
+    </div>
+    @endmobile
     <div id="invoiceBodyA4" class="invoice-body-block {{ $isThermal ? 'd-none' : '' }}">
     <!-- Professional Header -->
     <div class="invoice-header">
@@ -103,7 +110,7 @@
                 </tr>
                 <tr>
                   <td><strong>{{ __('common.date') }}:</strong></td>
-                  <td>{{ \Carbon\Carbon::parse($invoice->date)->format('d-M-Y') }}</td>
+                  <td>@mobile{{ \App\Support\MobileDateTime::date($invoice->date) }}@else{{ \Carbon\Carbon::parse($invoice->date)->format('d-M-Y') }}@endmobile</td>
                 </tr>
                 <tr>
                   <td><strong>{{ __('common.status') }}:</strong></td>
@@ -178,7 +185,7 @@
 
     <!-- Professional Items Table -->
     <div class="table-responsive mb-2">
-      <table class="table invoice-items-table">
+      <table class="table invoice-items-table rn-m-detail-lines">
         <thead>
           <tr>
             <th style="width:5%;">#</th>
@@ -195,9 +202,9 @@
           @forelse($items as $item)
             @php $line = (float)($item->totalSale ?? ($item->salePrice * $item->qty)); $subtotal += $line; @endphp
             <tr>
-              <td>{{ $sl++ }}</td>
-              <td>{{ $item->productCode ?? '-' }}</td>
-              <td>
+              <td class="rn-m-detail-index">{{ $sl++ }}</td>
+              <td data-label="{{ __('invoices.code') }}">{{ $item->productCode ?? '-' }}</td>
+              <td data-label="{{ __('invoices.product_name') }}">
                 <span class="product-name">{{ $item->productName }}</span>
                 @php
                   $serials = isset($serialsByPurchase) ? ($serialsByPurchase[$item->purchaseId] ?? collect()) : collect();
@@ -206,10 +213,10 @@
                   <div class="serial-info">{{ __('common.s_n') }}: {{ $serials->pluck('serialNumber')->join(', ') }}</div>
                 @endif
               </td>
-              <td class="text-center">{{ $item->qty }}</td>
-              <td class="text-center">{{ $item->warranty_days ?? '-' }}</td>
-              <td class="text-end">@money($item->salePrice ?? 0)</td>
-              <td class="text-end fw-normal">@money($line)</td>
+              <td data-label="{{ __('invoices.qty') }}" class="text-center">{{ $item->qty }}</td>
+              <td data-label="{{ __('invoices.warranty_days') }}" class="text-center">{{ $item->warranty_days ?? '-' }}</td>
+              <td data-label="{{ __('invoices.price_unit') }}" class="text-end">@money($item->salePrice ?? 0)</td>
+              <td data-label="{{ __('invoices.total') }}" class="text-end fw-normal">@money($line)</td>
             </tr>
           @empty
             <tr><td colspan="7" class="text-center">{{ __('invoices.no_items_found') }}</td></tr>
@@ -544,7 +551,7 @@
 
     <div class="d-flex justify-content-between align-items-center no-print mt-3">
       <div></div>
-      <div class="action-buttons">
+      <div class="action-buttons rn-detail-actions">
         <div class="invoice-action-panel">
           <label for="invoicePrinterProfile" class="mb-0">{{ __('invoices.printer_profile') }}</label>
           <select id="invoicePrinterProfile" class="form-control form-control-sm printer-select">

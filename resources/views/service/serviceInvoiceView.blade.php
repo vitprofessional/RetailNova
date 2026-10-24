@@ -4,10 +4,10 @@
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <div>
+            <div class="card-header d-flex justify-content-between align-items-center rn-m-service-invoice-header">
+                <div class="rn-m-service-invoice-actions">
                     <h4>{{ __('common.service_invoice') }} {{ $invoice->invoice_number }}</h4>
-                    <small class="text-muted">{{ __('common.created') }}: {{ $invoice->created_at->format('Y-m-d H:i') }}</small>
+                    <small class="text-muted">{{ __('common.created') }}: @mobile{{ \App\Support\MobileDateTime::date($invoice->created_at) }} {{ \App\Support\MobileDateTime::time($invoice->created_at) }}@else{{ $invoice->created_at->format('Y-m-d H:i') }}@endmobile</small>
                 </div>
                 <div>
                     <a href="{{ route('serviceInvoicePrint',['id'=>$invoice->id]) }}" class="btn btn-outline-secondary" target="_blank"><i class="fa-solid fa-print"></i> {{ __('invoices.print') }}</a>
@@ -15,6 +15,9 @@
                 </div>
             </div>
             <div class="card-body">
+                @mobile
+                <div class="rn-m-detail-summary"><span class="rn-m-detail-summary__status">{{ __('common.service_invoice') }}</span><strong>{{ \App\Support\Currency::format($invoice->total_amount) }}</strong><small>{{ __('common.invoice') }} · {{ $invoice->invoice_number }}</small></div>
+                @endmobile
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <h6>{{ __('invoices.bill_to') }}</h6>
@@ -42,8 +45,8 @@
                     </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-bordered rn-table-pro">
+                <div class="table-responsive rn-m-detail-page">
+                    <table class="table table-bordered rn-table-pro rn-m-detail-lines">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -56,11 +59,11 @@
                         <tbody>
                             @foreach($invoice->items as $idx => $item)
                             <tr>
-                                <td>{{ $idx+1 }}</td>
-                                <td>{{ $item->service_name }}</td>
-                                <td class="text-end">{{ number_format($item->rate,2) }}</td>
-                                <td class="text-end">{{ $item->qty }}</td>
-                                <td class="text-end">{{ number_format($item->line_total,2) }}</td>
+                                <td class="rn-m-detail-index">{{ $idx+1 }}</td>
+                                <td data-label="{{ __('invoices.service') }}">{{ $item->service_name }}</td>
+                                <td data-label="{{ __('invoices.rate') }}" class="text-end">{{ number_format($item->rate,2) }}</td>
+                                <td data-label="{{ __('invoices.qty') }}" class="text-end">{{ $item->qty }}</td>
+                                <td data-label="{{ __('invoices.line_total') }}" class="text-end">{{ number_format($item->line_total,2) }}</td>
                             </tr>
                             @endforeach
                         </tbody>

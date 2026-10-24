@@ -2,7 +2,7 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<div class="card">
+<div class="card rn-m-detail-page">
     <div class="card-header text-center" style="color: #c20c0cff;"><h4>{{ __('sales.view_sale') }}</h4></div>
     <div class="card-body">
         <div class="row">
@@ -46,7 +46,7 @@
         <div class="row  product-table">
             <div class="col-md-12">
                 <h4>{{ __('sales.products_for_return') }}</h4>
-                <table class="table mb-0 table-bordered rounded-0 rn-table-pro">
+                <table class="table mb-0 table-bordered rounded-0 rn-table-pro rn-m-detail-lines">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -66,14 +66,14 @@
                         @endphp
                         @foreach($items as $item)
                         <tr class="product-row">
-                            <td>{{ $sl }}</td>
-                            <td>{{ $item->productName }}</td>
-                            <td>{{ $item->qty }}</td>
-                            <td>{{ $item->salePrice }}</td>
-                            <td>{{ number_format($item->totalSale ?? 0, 2, '.', ',') }}</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
+                            <td class="rn-m-detail-index">{{ $sl }}</td>
+                            <td data-label="{{ __('sales.name') }}">{{ $item->productName }}</td>
+                            <td data-label="{{ __('sales.sale_quantity') }}">{{ $item->qty }}</td>
+                            <td data-label="{{ __('sales.price') }}">{{ $item->salePrice }}</td>
+                            <td data-label="{{ __('sales.total') }}">{{ number_format($item->totalSale ?? 0, 2, '.', ',') }}</td>
+                            <td data-label="{{ __('sales.return_qty') }}"></td>
+                            <td data-label="{{ __('sales.return_amount') }}"></td>
+                            <td data-label="{{ __('sales.serial_nos_if_any') }}"></td>
                         </tr>
 
                         @php

@@ -94,6 +94,6 @@ class InvoiceCodeUnitTest extends TestCase
         });
         $response->assertSee('SKU-123ABC');
         $response->assertSee('Warranty (days)');
-        $response->assertSee('<td class="text-center">365</td>', false);
+        $response->assertSee('data-label="Warranty (days)" class="text-center">365</td>', false);
     }
 }

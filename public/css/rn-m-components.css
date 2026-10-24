@@ -1005,6 +1005,54 @@
     .rn-m-master-fab { position: fixed; z-index: 1035; right: 16px; bottom: calc(84px + var(--rn-safe-bottom)); display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 24px; background: var(--rn-color-primary); box-shadow: var(--rn-shadow-md); color: var(--rn-color-on-primary); font-weight: 700; text-decoration: none; }
     .rn-m-master-fab span { font-size: 22px; line-height: 1; }
     .rn-m-master-cards .rn-m-empty-state { padding: 24px 16px; border: 1px dashed var(--rn-color-border); border-radius: var(--rn-radius-lg); color: var(--rn-color-muted); text-align: center; }
+
+    @media (max-width: 767px) {
+        .rn-m-detail-page table.rn-m-detail-lines,
+        .rn-invoice-shell .rn-m-detail-page table.rn-m-detail-lines,
+        .rn-m-sale-invoice .invoice-items-table.rn-m-detail-lines { display: block !important; width: 100% !important; min-width: 0 !important; border: 0; }
+        .rn-m-detail-page .rn-m-detail-lines thead,
+        .rn-m-sale-invoice .invoice-items-table.rn-m-detail-lines thead { display: none !important; }
+        .rn-m-detail-page .rn-m-detail-lines tbody,
+        .rn-m-sale-invoice .invoice-items-table.rn-m-detail-lines tbody { display: grid; gap: 10px; }
+        .rn-m-detail-page .rn-m-detail-lines tbody tr,
+        .rn-m-sale-invoice .invoice-items-table.rn-m-detail-lines tbody tr { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; margin: 0 0 10px; padding: 8px 12px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); }
+        .rn-m-detail-page .rn-m-detail-lines tbody td,
+        .rn-m-sale-invoice .invoice-items-table.rn-m-detail-lines tbody td { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; min-width: 0; padding: 8px 0 !important; border: 0 !important; border-bottom: 1px solid var(--rn-color-line) !important; text-align: right !important; overflow-wrap: anywhere; }
+        .rn-m-detail-page .rn-m-detail-lines tbody td::before,
+        .rn-m-sale-invoice .invoice-items-table.rn-m-detail-lines tbody td::before { flex: 0 0 38%; color: var(--rn-color-muted); content: attr(data-label); text-align: left; font-size: 12px; font-weight: 600; }
+        .rn-m-detail-page .rn-m-detail-lines tbody td:last-child,
+        .rn-m-sale-invoice .invoice-items-table.rn-m-detail-lines tbody td:last-child { border-bottom: 0 !important; }
+        .rn-m-detail-page .rn-m-detail-lines tbody .rn-m-detail-index,
+        .rn-m-sale-invoice .invoice-items-table.rn-m-detail-lines tbody .rn-m-detail-index { display: none !important; }
+        .rn-m-detail-page .rn-m-detail-lines tfoot,
+        .rn-m-sale-invoice .invoice-items-table.rn-m-detail-lines tfoot { display: table-footer-group; }
+        .rn-m-detail-page .rn-m-detail-lines tfoot tr,
+        .rn-m-sale-invoice .invoice-items-table.rn-m-detail-lines tfoot tr { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; }
+        .rn-m-detail-page .rn-detail-actions,
+        .rn-m-sale-invoice .rn-detail-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+        .rn-m-detail-page .rn-detail-actions a,
+        .rn-m-detail-page .rn-detail-actions button,
+        .rn-m-sale-invoice .rn-detail-actions a,
+        .rn-m-sale-invoice .rn-detail-actions button { display: grid; min-width: 0; min-height: 48px; place-items: center; padding: 6px; font-size: 12px; }
+        .rn-m-service-invoice-header { align-items: flex-start !important; flex-direction: column; gap: 12px; }
+        .rn-m-service-invoice-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .card:has(.rn-m-service-invoice-header) { display: flex; flex-direction: column; }
+        .rn-m-service-invoice-header { order: 2; }
+        .rn-m-service-invoice-header + .card-body { order: 1; }
+        .rn-m-service-invoice-header h4,
+        .rn-m-service-invoice-header small { display: none; }
+        .rn-m-detail-summary { display: grid; gap: 6px; margin: 0 0 12px; padding: 16px; border-radius: var(--rn-radius-lg); background: var(--rn-color-primary); color: var(--rn-color-on-primary); }
+        .rn-m-detail-summary__status { width: fit-content; max-width: 100%; padding: 4px 9px; border: 1px solid color-mix(in srgb, var(--rn-color-on-primary) 36%, transparent); border-radius: 999px; font-size: 12px; font-weight: 700; overflow-wrap: anywhere; }
+        .rn-m-detail-summary strong { font-size: 24px; font-weight: 700; line-height: 1.2; }
+        .rn-m-detail-summary small { color: color-mix(in srgb, var(--rn-color-on-primary) 82%, transparent); overflow-wrap: anywhere; }
+        .rn-m-detail-summary .rn-invoice-status--paid { background: var(--rn-color-success-tint); color: var(--rn-color-success); }
+        .rn-m-detail-summary .rn-invoice-status--due { background: var(--rn-color-warning-tint); color: var(--rn-color-warning); }
+        .rn-m-detail-summary .rn-invoice-status--partial { background: var(--rn-color-warning-tint); color: var(--rn-color-warning); }
+        body.rn-app:has(.rn-m-detail-page) .rn-m-tabbar,
+        body.rn-app:has(.rn-m-sale-invoice) .rn-m-tabbar { display: none !important; }
+        body.rn-app:has(.rn-m-detail-page) .content-page,
+        body.rn-app:has(.rn-m-sale-invoice) .content-page { padding-bottom: calc(20px + var(--rn-safe-bottom)) !important; }
+    }
     .rn-m-admin-form .rn-m-file-picker { position: relative; }
     body.rn-app:has(.rn-m-admin-form) .rn-m-tabbar { display: none !important; }
     body.rn-app:has(.rn-m-admin-form) .content-page { padding-bottom: calc(84px + var(--rn-safe-bottom)) !important; }
