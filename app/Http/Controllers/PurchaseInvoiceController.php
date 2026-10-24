@@ -35,7 +35,34 @@ class PurchaseInvoiceController extends Controller
     public function show(int $id, PurchaseWorkflow $workflow)
     {
         $invoice=$workflow->header($id)->load(['supplier','items.product','items.serials','items.stock','items.returns']);
-        return view('purchase.invoiceView',compact('invoice'));
+        $items=$invoice->items;
+
+        // Older purchases predate purchase_invoice_id. Only attach those legacy
+        // lines when the full tenant/supplier/invoice/date identity resolves to
+        // exactly this one header; invoice text alone is not a safe identifier.
+        if ($items->isEmpty() && filled($invoice->invoice)) {
+            $purchaseDate=$invoice->purchase_date->toDateString();
+            $matchingHeaders=PurchaseInvoice::withoutGlobalScopes()
+                ->where('businessId',$invoice->businessId)
+                ->where('supplier_id',$invoice->supplier_id)
+                ->where('invoice',$invoice->invoice)
+                ->whereDate('purchase_date',$purchaseDate)
+                ->get(['id']);
+
+            if ($matchingHeaders->count()===1 && (int)$matchingHeaders->first()->id===(int)$invoice->id) {
+                $items=PurchaseProduct::withoutGlobalScopes()
+                    ->where('businessId',$invoice->businessId)
+                    ->where('supplier',(string)$invoice->supplier_id)
+                    ->where('invoice',$invoice->invoice)
+                    ->where('purchase_date',$purchaseDate)
+                    ->whereNull('purchase_invoice_id')
+                    ->with(['product','serials','stock','returns'])
+                    ->orderBy('id')
+                    ->get();
+            }
+        }
+
+        return view('purchase.invoiceView',compact('invoice','items'));
     }
 
     public function edit(int $id, PurchaseWorkflow $workflow)
