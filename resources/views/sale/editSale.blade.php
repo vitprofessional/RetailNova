@@ -15,7 +15,7 @@
         @php $grand = (float)($sale->grandTotal ?? $sale->totalAmount ?? 0); @endphp
         <div class="mb-2 text-muted">
           <div><strong>{{ __('common.invoice') }}:</strong> {{ $sale->invoice ?? $sale->invoiceNo ?? '-' }}</div>
-          <div><strong>{{ __('common.customer') }}:</strong> {{ $customer->name ?? '-' }}</div>
+          <div><strong>{{ __('common.customer') }}:</strong> {{ \App\Models\Customer::displayLabel($customer, $sale->customerId, $sale->businessId) }}</div>
           <div><strong>{{ __('common.grand_total') }}:</strong> @money($grand)</div>
         </div>
         <form method="POST" action="{{ route('sale.update', ['id' => $sale->id]) }}">
@@ -36,16 +36,14 @@
             @error('date')<div class="text-danger small">{{ $message }}</div>@enderror
           </div>
           <div class="form-group mb-3">
-            <label for="paymentMode">{{ __('sales.payment_mode') }}</label>
-            <select id="paymentMode" name="paymentMode" class="form-control">
-              @php $pm = old('paymentMode', $sale->paymentMode ?? 'Cash'); @endphp
-              <option value="Cash" {{ $pm==='Cash' ? 'selected' : '' }}>{{ __('sales.cash') }}</option>
-              <option value="Card" {{ $pm==='Card' ? 'selected' : '' }}>{{ __('sales.card') }}</option>
-              <option value="Mobile" {{ $pm==='Mobile' ? 'selected' : '' }}>{{ __('sales.mobile') }}</option>
-              <option value="Bank" {{ $pm==='Bank' ? 'selected' : '' }}>{{ __('sales.bank_transfer') }}</option>
-              <option value="Other" {{ $pm==='Other' ? 'selected' : '' }}>{{ __('sales.other') }}</option>
+            <label for="payment_method">{{ __('sales.payment_method') }}</label>
+            <select id="payment_method" name="payment_method" class="form-control">
+              @php $pm = old('payment_method', $sale->payment_method ?? 'cash'); @endphp
+              @foreach(\App\Models\SaleProduct::PAYMENT_METHODS as $method)
+                <option value="{{ $method }}" @selected($pm === $method)>{{ __('sales.payment_method_'.$method) }}</option>
+              @endforeach
             </select>
-            @error('paymentMode')<div class="text-danger small">{{ $message }}</div>@enderror
+            @error('payment_method')<div class="text-danger small">{{ $message }}</div>@enderror
           </div>
           <div class="form-group mb-3">
             <label for="note">{{ __('sales.remarks') }}</label>

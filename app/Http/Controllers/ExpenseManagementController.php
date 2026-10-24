@@ -124,7 +124,7 @@ class ExpenseManagementController extends Controller
      */
     public function expenseList(Request $request)
     {
-        $query = ExpenseEntry::with(['category', 'creator', 'businessLocation'])
+        $query = ExpenseEntry::with(['category', 'creator', 'adminCreator', 'businessLocation'])
             ->orderBy('expense_date', 'desc')
             ->orderBy('created_at', 'desc');
 

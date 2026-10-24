@@ -16,7 +16,7 @@
         @endphp
         <div class="mb-2 text-muted">
           <div><strong>{{ __('common.invoice') }}:</strong> {{ $sale->invoice ?? $sale->invoiceNo ?? '-' }}</div>
-          <div><strong>{{ __('common.customer') }}:</strong> {{ $customer->name ?? '-' }}</div>
+          <div><strong>{{ __('common.customer') }}:</strong> {{ \App\Models\Customer::displayLabel($customer, $sale->customerId, $sale->businessId) }}</div>
           <div><strong>{{ __('common.grand_total') }}:</strong> @money($grand) &nbsp;|&nbsp; <strong>{{ __('common.paid') }}:</strong> @money($paid) &nbsp;|&nbsp; <strong>{{ __('common.due') }}:</strong> @money($due)</div>
         </div>
         @if($errors->any())

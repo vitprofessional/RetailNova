@@ -134,7 +134,7 @@
                                         <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td>{{ $expense->creator->name ?? 'Unknown' }}</td>
+                                    <td>{{ $expense->creatorLabel() }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{{ route('expense.edit', $expense->id) }}"

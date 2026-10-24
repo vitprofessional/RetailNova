@@ -218,7 +218,7 @@
                                             <input type="checkbox" class="form-check-input" id="hideAckWalkin" name="hideAckWalkin" value="1" {{ $hideAckWalkin ? 'checked' : '' }}>
                                             <label class="form-check-label" for="hideAckWalkin">
                                                 <span class="font-weight-600">{{ __('settings.hide_acknowledgement_on_walk_in_invoices') }}</span>
-                                                <small class="d-block text-muted">When enabled, the acknowledgement section is hidden for invoices with customer name "Walking Customer".</small>
+                                                <small class="d-block text-muted">When enabled, the acknowledgement section is hidden for invoices with customer name "{{ \App\Models\Customer::walkInLabel() }}".</small>
                                             </label>
                                         </div>
 
@@ -226,7 +226,7 @@
                                             <input type="checkbox" class="form-check-input" id="hideSignaturesWalkin" name="hideSignaturesWalkin" value="1" {{ $hideSigWalkin ? 'checked' : '' }}>
                                             <label class="form-check-label" for="hideSignaturesWalkin">
                                                 <span class="font-weight-600">{{ __('settings.hide_signature_boxes_on_walk_in_invoices') }}</span>
-                                                <small class="d-block text-muted">When enabled, signature areas are hidden for invoices with customer name "Walking Customer".</small>
+                                                <small class="d-block text-muted">When enabled, signature areas are hidden for invoices with customer name "{{ \App\Models\Customer::walkInLabel() }}".</small>
                                             </label>
                                         </div>
                                     @endif

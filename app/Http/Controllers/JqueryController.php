@@ -696,14 +696,16 @@ class JqueryController extends Controller
     }
 
     public function getServiceDetails($id){
-        $getData = Service::find($id);
+        abort_unless(auth('admin')->check(), 401);
+        // Service applies the tenant business scope; never return a foreign service's name or rate.
+        $getData = Service::query()->whereKey($id)->first();
 
         if($getData):
             $serviceName = $getData->serviceName;
             $rate = $getData->rate;
             return ['serviceName' => $serviceName, 'rate' => $rate, 'message'=>__('common.api_success_form_successfully_subjmit'),'id'=> $getData->id];
         else:
-            return ['serviceName' => "",'rate' => "", 'message'=>__('common.api_error_there_is_an_error_please_try_agin'),'id'=>''];
+            abort(404);
         endif;    
     }
 

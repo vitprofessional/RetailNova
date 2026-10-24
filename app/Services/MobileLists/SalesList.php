@@ -108,7 +108,7 @@ class SalesList extends MobileList
         $due = (float) ($sale->curDue ?? 0);
         $status = $sale->curDue !== null && $due <= 0 ? 'paid' : ((float) $sale->paidAmount > 0 ? 'partial' : 'due');
         $actor = auth('admin')->user();
-        $name = $sale->customer?->name ?? '-';
+        $name = Customer::displayLabel($sale->customer, $sale->customerId, $sale->businessId);
 
         $actions = [
             $this->link(__('mobile.action_view'), route('invoiceGenerate', ['id' => $sale->id]), 'ri-file-text-line'),

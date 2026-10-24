@@ -213,7 +213,7 @@
                     @foreach(($saleList ?? collect()) as $sl)
                         @php
                             $customer = \App\Models\Customer::find($sl->customerId);
-                            $customerName = $customer ? $customer->name : '-';
+                            $customerName = \App\Models\Customer::displayLabel($customer, $sl->customerId, $sl->businessId);
                             $grand = \App\Support\Currency::format($sl->grandTotal ?? 0);
                             $paid = \App\Support\Currency::format($sl->paidAmount ?? 0);
                             $due = \App\Support\Currency::format($sl->curDue ?? 0);
@@ -259,7 +259,7 @@
                                         <a class="rn-action-btn" href="{{ route('sale.edit', ['id' => $sl->id]) }}" title="{{ __('sales.edit') }}" aria-label="{{ __('sales.edit') }}"><i class="las la-edit" aria-hidden="true"></i></a>
                                     @endcanEdit
                                     @if(!empty($canCancelSales))
-                                        <form method="POST" action="{{ route('delSale', ['id' => $sl->id]) }}" class="d-inline" data-cancel-sale-form>
+                                        <form method="POST" action="{{ route('delSale', ['id' => $sl->id]) }}" class="d-inline" data-cancel-sale-form data-confirm="false">
                                             @csrf
                                             @method('DELETE')
                                             <input type="hidden" name="reason" value="">

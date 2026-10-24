@@ -179,6 +179,7 @@ class saleController extends Controller
             'paidAmount'  => 'required|numeric|min:0',
             'date'        => 'nullable|date',
             'note'        => 'nullable|string|max:1000',
+            'payment_method' => ['sometimes', 'nullable', \Illuminate\Validation\Rule::in(SaleProduct::PAYMENT_METHODS)],
         ]);
 
         $grand = (float)($sale->grandTotal ?? $sale->totalAmount ?? 0);
@@ -208,6 +209,10 @@ class saleController extends Controller
 
         if(array_key_exists('note', $data)){
             $sale->note = $data['note'];
+        }
+
+        if (array_key_exists('payment_method', $data)) {
+            $sale->payment_method = $data['payment_method'];
         }
 
         if($sale->save()){

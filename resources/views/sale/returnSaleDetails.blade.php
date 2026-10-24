@@ -14,7 +14,7 @@
             <div class="col-md-4">
                 <h5>{{ __('sales.customer_details') }}</h5>
                 <hr />
-                <p><strong>{{ __('common.name') }}:</strong> {{ $customer->name ?? '-' }}</p>
+                <p><strong>{{ __('common.name') }}:</strong> {{ \App\Models\Customer::displayLabel($customer, $invoice->customerId ?? null, $invoice->businessId ?? null) }}</p>
                 <p><strong>{{ __('common.mobile') }}:</strong> {{ $customer->mobile ?? '-' }}</p>
                 <p><strong>{{ __('common.address') }}:</strong> {{ trim(($customer->city ?? '') . ',' . ($customer->area ?? '')) ?: '-' }}</p>
             </div>

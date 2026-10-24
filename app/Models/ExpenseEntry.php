@@ -66,6 +66,29 @@ class ExpenseEntry extends Model implements Auditable
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function adminCreator(): BelongsTo
+    {
+        return $this->belongsTo(AdminUser::class, 'created_by');
+    }
+
+    /** Resolve the creator from the table identified when the expense was saved. */
+    public function creatorLabel(): string
+    {
+        if ($this->created_by_type === 'admin') {
+            $creator = $this->relationLoaded('adminCreator') ? $this->getRelation('adminCreator') : $this->adminCreator()->first();
+            return $creator && (int) $creator->businessId === (int) $this->businessId
+                ? ((string) $creator->fullName ?: '—')
+                : '—';
+        }
+
+        if ($this->created_by_type === 'user') {
+            $creator = $this->relationLoaded('creator') ? $this->getRelation('creator') : $this->creator()->first();
+            return $creator?->name ?: '—';
+        }
+
+        return '—';
+    }
+
     /**
      * Get the business location
      */

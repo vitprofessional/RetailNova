@@ -35,7 +35,7 @@
                                     @php
                                         $sale = $return->sale;
                                         $customer = $sale ? \App\Models\Customer::find($sale->customerId) : null;
-                                        $customerName = $customer ? $customer->name : '-';
+                                        $customerName = \App\Models\Customer::displayLabel($customer, $sale?->customerId, $sale?->businessId);
                                         $totalQtyReturned = 0;
                                         if ($return->items) {
                                             $totalQtyReturned = $return->items->sum('qty');
