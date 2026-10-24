@@ -22,4 +22,17 @@ class ProvideService extends Model
         'rate' => 'decimal:2',
         'qty' => 'integer',
     ];
+
+    /**
+     * Customer shown for this row. Reads customer_name from the usual
+     * "customers.name AS customer_name" join; walk-in services store no customer.
+     */
+    public function customerLabel(): string
+    {
+        if ($this->customer_name !== null && $this->customer_name !== '') {
+            return Customer::displayName($this->customer_name);
+        }
+
+        return Customer::displayLabel(null, $this->customerName, $this->businessId);
+    }
 }

@@ -112,7 +112,7 @@
       <div style="width:48.333%;">
         <div class="party-box">
           <div class="row invoice-parties" style="gap:3.333%;">
-          <div><strong>{{ $customer->name ?? 'Walking Customer' }}</strong></div>
+          <div><strong>{{ \App\Models\Customer::displayLabel($customer ?? null, $quote->customer_id, $quote->businessId) }}</strong></div>
           @php
                 <h6 class="party-label">BILL TO:</h6>
             if(!empty($customer)){

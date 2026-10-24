@@ -189,7 +189,6 @@
                         <td class="d-none d-xl-table-cell">{{ __('suppliers.not_entry') }}</td>
                         <td>
                                 <div class="d-flex align-items-center justify-content-center list-action">
-                                    <a class="badge badge-info mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="{{ __('suppliers.view') }}" href="{{route('supplierbalancesheet')}}"><i class="ri-eye-line mr-0 "></i></a>
                                     <a href="{{route('editSupplier',['id'=>$supplierList->id])}}" class="badge bg-success mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" data-original-title="{{ __('suppliers.edit') }}"><i class="ri-pencil-line mr-0"></i></a>
                                     <button type="button" class="badge bg-warning mr-2" data-toggle="tooltip" data-bs-toggle="tooltip" data-placement="top" title="{{ __('suppliers.delete') }}" style="border:none;background:transparent;padding:0;"
                                         data-delete-id="{{ $supplierList->id }}" data-delete-name="{{ $supplierList->name }}" onclick="showDeleteModal(this, '{{ route('delSupplier', ['id' => $supplierList->id]) }}')">

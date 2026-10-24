@@ -137,7 +137,7 @@
         <div class="party-box">
           <h6 class="party-label">{{ __('invoices.bill_to') }}:</h6>
           <div class="party-content">
-            <div class="party-name">{{ $customer->name ?? '-' }}</div>
+            <div class="party-name">{{ \App\Models\Customer::displayLabel($customer ?? null, $invoice->customerId, $invoice->businessId) }}</div>
             @php
               $custAddress = '';
               if(!empty($customer)){
@@ -297,7 +297,10 @@
 
     @php
       // Walk-in and config-driven display toggles for signatures and acknowledgement
-      $isWalking = isset($customer) && is_string($customer->name ?? null) && strcasecmp(trim($customer->name), 'Walking Customer') === 0;
+      $isWalking = isset($customer) && $customer && $customer->isWalkIn();
+      if (!$isWalking && empty($customer) && !empty($invoice->customerId)) {
+        $isWalking = \App\Models\Customer::isWalkInIdForBusiness($invoice->customerId, $invoice->businessId);
+      }
       $hideAckByBusiness = $b && isset($b->hide_invoice_acknowledgement) ? (bool) $b->hide_invoice_acknowledgement : false;
       $hideAck = $hideAckByBusiness || ($isWalking && config('pos.hide_ack_walkin', true));
       $hideSignatures = $isWalking && config('pos.hide_signatures_walkin', true);
@@ -366,7 +369,7 @@
           <div class="col-md-4">
             <div class="ack-card">
               <h4 class="fw-bold">{{ __('invoices.bill_to') }}:</h4>
-              <div class="ack-customer-name">{{ $customer->name ?? '-' }}</div>
+              <div class="ack-customer-name">{{ \App\Models\Customer::displayLabel($customer ?? null, $invoice->customerId, $invoice->businessId) }}</div>
               @php
                 $ackAddress = '';
                 if(!empty($customer)){
@@ -427,7 +430,7 @@
       <div class="thermal-meta">
         <div><span>{{ __('common.invoice') }}:</span><strong>{{ $invoice->invoice }}</strong></div>
         <div><span>{{ __('common.date') }}:</span><strong>{{ \Carbon\Carbon::parse($invoice->date)->format('d-M-Y h:i A') }}</strong></div>
-        <div><span>{{ __('common.customer') }}:</span><strong>{{ $customer->name ?? '-' }}</strong></div>
+        <div><span>{{ __('common.customer') }}:</span><strong>{{ \App\Models\Customer::displayLabel($customer ?? null, $invoice->customerId, $invoice->businessId) }}</strong></div>
         @if(!empty($customer) && !empty($customer->mobile))
           <div><span>{{ __('common.mobile') }}:</span><strong>{{ $customer->mobile }}</strong></div>
         @endif

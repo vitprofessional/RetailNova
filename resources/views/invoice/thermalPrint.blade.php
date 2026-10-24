@@ -356,7 +356,7 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">{{ __('common.customer') }}:</span>
-                    <span class="info-value"><strong>{{ $customer->name ?? '-' }}</strong></span>
+                    <span class="info-value"><strong>{{ \App\Models\Customer::displayLabel($customer ?? null, $invoice->customerId, $invoice->businessId) }}</strong></span>
                 </div>
                 @if(!empty($customer) && !empty($customer->mobile))
                     <div class="info-row">

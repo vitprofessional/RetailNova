@@ -605,13 +605,6 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
     // end_balancesheet
 
 
-    // supplierbalance
-     Route::get('supplier/balance/sheet',[
-        coustomerSupplier::class,
-        'supplierbalancesheet'
-    ])->name('supplierbalancesheet');
-
-
     // jquery routes are goes here
     Route::get('product/details/{id}',[
         JqueryController::class,

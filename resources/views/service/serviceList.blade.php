@@ -63,14 +63,14 @@
                         </thead>
                         <tbody class="ligth-body text-center">
                             @forelse(($provideList ?? []) as $row)
-                            <tr data-date="{{ optional($row->created_at)->format('Y-m-d') }}" data-customer="{{ $row->customer_name ?? 'Customer #'.$row->customerName }}">
+                            <tr data-date="{{ optional($row->created_at)->format('Y-m-d') }}" data-customer="{{ $row->customerLabel() }}">
                                 <td>
                                     <div class="checkbox d-inline-block">
                                         <input type="checkbox" class="checkbox-input bulk-select" id="bulk-select-{{ $row->id }}" value="{{ $row->id }}" />
                                         <label for="bulk-select-{{ $row->id }}" class="mb-0"></label>
                                     </div>
                                 </td>
-                                <td class="text-left">{{ $row->customer_name ?? 'Customer #'.$row->customerName }}</td>
+                                <td class="text-left">{{ $row->customerLabel() }}</td>
                                 <td class="text-left">{{ $row->serviceName }}</td>
                                 <td>{{ number_format($row->amount ?? (($row->rate ?? 0)*($row->qty ?? 1)),2) }}</td>
                                 <td>{{ optional($row->created_at)->format('Y-m-d') }}</td>

@@ -48,7 +48,10 @@ class coustomerSupplier extends Controller
         $businessId=$workflow->resolveBusinessId($requestedBusinessId);
         abort_if($req->profileId && (int)$data->businessId !== $businessId,403,'Customers cannot be moved between businesses through edit.');
 
-        $data->name          = trim($req->fullName);
+        // The walk-in customer keeps its stored name (the form shows the translated one).
+        if(!$data->isWalkIn()){
+            $data->name      = trim($req->fullName);
+        }
         $data->openingBalance= (int)$req->openingBalance;
         $data->mail          = filled($req->mail) ? strtolower(trim((string)$req->mail)) : null;
         $data->mobile        = filled($req->mobile) ? trim((string)$req->mobile) : null;
@@ -258,9 +261,10 @@ class coustomerSupplier extends Controller
     // add supplier
     public function addSupplier(){
         $workflow=app(\App\Services\PurchaseWorkflow::class);
-        $data = $workflow->scoped(Supplier::withoutGlobalScopes())->orderBy('id','DESC')->get();
-        $trashed = $workflow->scoped(Supplier::withoutGlobalScopes()->onlyTrashed())->orderBy('id','DESC')->get();
-        $openingTotal = $workflow->scoped(Supplier::withoutGlobalScopes())->sum('openingBalance');
+        // Only the business scope is swapped for $workflow->scoped(); deleted suppliers stay out of the list.
+        $data = $workflow->scoped(Supplier::withoutGlobalScope('business'))->orderBy('id','DESC')->get();
+        $trashed = $workflow->scoped(Supplier::withoutGlobalScope('business')->onlyTrashed())->orderBy('id','DESC')->get();
+        $openingTotal = $workflow->scoped(Supplier::withoutGlobalScope('business'))->sum('openingBalance');
         $businesses = \App\Models\BusinessSetup::when(!$workflow->platform(),fn($q)=>$q->whereKey($workflow->resolveBusinessId()))->orderBy('id','asc')->get();
         return view('customer&supplier.addSupplier',[
             'listItem'=>$data,
@@ -542,7 +546,7 @@ class coustomerSupplier extends Controller
         }
 
         if($saved){
-            $getData = $workflow->scoped(Supplier::withoutGlobalScopes())->orderBy('id','DESC')->get();
+            $getData = $workflow->scoped(Supplier::withoutGlobalScope('business'))->orderBy('id','DESC')->get();
             if(!empty($getData)){
                 foreach($getData as $d){
                     $option .= '<option value="'.$d->id.'">'.$d->name.'</option>';

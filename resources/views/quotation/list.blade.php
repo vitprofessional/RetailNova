@@ -30,7 +30,7 @@
                 <td>{{ $q->id }}</td>
                 <td>{{ $q->quote_number }}</td>
                 <td>{{ optional($q->date)->format('Y-m-d') }}</td>
-                <td>{{ optional($q->customer)->name ?? 'Walking Customer' }}</td>
+                <td>{{ \App\Models\Customer::displayLabel($q->customer, $q->customer_id, $q->businessId) }}</td>
                 <td class="text-end">{{ number_format($q->grand_total,2) }}</td>
                 <td><span class="badge badge-secondary">{{ ucfirst($q->status) }}</span></td>
                 <td>

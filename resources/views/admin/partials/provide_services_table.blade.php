@@ -17,7 +17,7 @@
                 @forelse($rows as $r)
                     <tr>
                         <td>{{ $r->id }}</td>
-                        <td>{{ $r->customer_name ?? $r->customerName }}</td>
+                        <td>{{ $r->customerLabel() }}</td>
                         <td>{{ $r->serviceName }}</td>
                         <td>@currency($r->amount)</td>
                         <td>{{ $r->qty ?? '' }}</td>

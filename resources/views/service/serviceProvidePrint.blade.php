@@ -91,7 +91,7 @@
         </div>
 
         <table>
-            <tr><th>{{ __('common.customer') }}</th><td>{{ $row->customer_name ?? 'Customer #'.$row->customerName }}</td></tr>
+            <tr><th>{{ __('common.customer') }}</th><td>{{ $row->customerLabel() }}</td></tr>
             <tr><th>{{ __('common.service') }}</th><td>{{ $row->serviceName }}</td></tr>
             <tr><th>{{ __('common.quantity') }}</th><td>{{ $row->qty ?? '-' }}</td></tr>
             <tr><th>{{ __('common.rate') }}</th><td>{{ isset($row->rate) ? '$' . number_format($row->rate, 2) : '-' }}</td></tr>

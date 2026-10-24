@@ -16,6 +16,21 @@ class serviceController extends Controller
 {
     use Concerns\DeletesUnusedRecords;
 
+    /** Join only a service's own customer, with the explicit shared walk-in exception. */
+    private function joinServiceCustomers($query)
+    {
+        return $query->leftJoin('customers', function ($join) {
+            $join->on('customers.id', '=', 'provide_services.customerName')
+                ->where(function ($scope) {
+                    $scope->whereColumn('customers.businessId', 'provide_services.businessId')
+                        ->orWhere(function ($legacy) {
+                            $legacy->whereNull('customers.businessId')
+                                ->where('customers.name', Customer::WALK_IN_NAME);
+                        });
+                });
+        });
+    }
+
     // List service profiles and show create form
     public function addServiceName()
     {
@@ -102,7 +117,7 @@ class serviceController extends Controller
 
         try {
             // Use the same leftJoin approach as other list methods to ensure customer names are available
-            $services = ProvideService::leftJoin('customers', 'customers.id', '=', 'provide_services.customerName')
+            $services = $this->joinServiceCustomers(ProvideService::query())
                 ->select('provide_services.*', 'customers.name as customer_name')
                 ->whereIn('provide_services.id', $ids)
                 ->orderBy('customer_name')
@@ -116,7 +131,7 @@ class serviceController extends Controller
             // Group services by customer name and then by date (Y-m-d)
             $grouped = [];
             foreach ($services as $s) {
-                $cust = $s->customer_name ?? 'Walking Customer';
+                $cust = $s->customerLabel();
                 $date = isset($s->created_at) ? (\Carbon\Carbon::parse($s->created_at)->format('Y-m-d')) : date('Y-m-d');
                 $grouped[$cust][$date][] = $s;
             }
@@ -164,7 +179,7 @@ class serviceController extends Controller
         }
 
         try {
-            $services = ProvideService::leftJoin('customers', 'customers.id', '=', 'provide_services.customerName')
+            $services = $this->joinServiceCustomers(ProvideService::query())
                 ->select('provide_services.*', 'customers.name as customer_name')
                 ->whereIn('provide_services.id', $ids)
                 ->orderBy('customer_name')
@@ -177,7 +192,7 @@ class serviceController extends Controller
 
             $grouped = [];
             foreach ($services as $s) {
-                $cust = $s->customer_name ?? 'Walking Customer';
+                $cust = $s->customerLabel();
                 $date = isset($s->created_at) ? (\Carbon\Carbon::parse($s->created_at)->format('Y-m-d')) : date('Y-m-d');
                 $grouped[$cust][$date][] = $s;
             }
@@ -438,7 +453,7 @@ class serviceController extends Controller
     public function serviceProvideList()
     {
         // Load provided services with customer names
-        $provideList = ProvideService::leftJoin('customers','customers.id','=','provide_services.customerName')
+        $provideList = $this->joinServiceCustomers(ProvideService::query())
             ->select('provide_services.*','customers.name as customer_name')
             ->orderBy('provide_services.id','DESC')
             ->get();
@@ -455,7 +470,7 @@ class serviceController extends Controller
     // View single provided service
     public function provideServiceView($id)
     {
-        $row = ProvideService::leftJoin('customers','customers.id','=','provide_services.customerName')
+        $row = $this->joinServiceCustomers(ProvideService::query())
             ->select('provide_services.*','customers.name as customer_name')
             ->where('provide_services.id',$id)
             ->first();
@@ -469,7 +484,7 @@ class serviceController extends Controller
     // Printable view
     public function provideServicePrint($id)
     {
-        $row = ProvideService::leftJoin('customers','customers.id','=','provide_services.customerName')
+        $row = $this->joinServiceCustomers(ProvideService::query())
             ->select('provide_services.*','customers.name as customer_name')
             ->where('provide_services.id',$id)
             ->first();
@@ -506,8 +521,8 @@ class serviceController extends Controller
     // Admin report: show provide_services rows where rate is null/0 or qty is null/0
     public function provideServicesMissingData(\Illuminate\Http\Request $request)
     {
-        $query = \App\Models\ProvideService::select('provide_services.*', 'customers.name as customer_name')
-            ->leftJoin('customers', 'provide_services.customerName', '=', 'customers.id')
+        $query = $this->joinServiceCustomers(\App\Models\ProvideService::query())
+            ->select('provide_services.*', 'customers.name as customer_name')
             ->where(function($q){
                 $q->whereNull('provide_services.rate')
                   ->orWhere('provide_services.rate', 0)
@@ -545,8 +560,8 @@ class serviceController extends Controller
     // Export CSV for the missing-data report (respects same filters)
     public function exportProvideServicesMissing(\Illuminate\Http\Request $request)
     {
-        $query = \App\Models\ProvideService::select('provide_services.*')
-            ->leftJoin('customers', 'provide_services.customerName', '=', 'customers.id')
+        $query = $this->joinServiceCustomers(\App\Models\ProvideService::query())
+            ->select('provide_services.*', 'customers.name as customer_name')
             ->where(function($q){
                 $q->whereNull('provide_services.rate')
                   ->orWhere('provide_services.rate', 0)
@@ -578,7 +593,7 @@ class serviceController extends Controller
             $out = fopen('php://output', 'w');
             fputcsv($out, $columns);
             foreach ($rows as $row) {
-                $customerName = $row->customer_name ?? $row->customerName;
+                $customerName = $row->customerLabel();
 
                 $data = [
                     $row->id,

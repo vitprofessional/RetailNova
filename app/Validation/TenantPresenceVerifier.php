@@ -25,7 +25,7 @@ class TenantPresenceVerifier extends DatabasePresenceVerifier
             // The legacy shared "Walking Customer" (no business) stays selectable everywhere.
             return $query->where(function ($q) use ($businessId) {
                 $q->where('businessId', $businessId)
-                    ->orWhere(fn ($legacy) => $legacy->whereNull('businessId')->where('name', 'Walking Customer'));
+                    ->orWhere(fn ($legacy) => $legacy->whereNull('businessId')->where('name', \App\Models\Customer::WALK_IN_NAME));
             });
         }
 

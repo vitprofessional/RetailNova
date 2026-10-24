@@ -43,7 +43,7 @@ class JqueryController extends Controller
         $customer = \App\Models\Customer::withoutGlobalScope('business')->find($customerId);
         // The one intentionally shared legacy customer is virtual at tenant level;
         // its product and due data are still constrained by the resolved business.
-        $legacyWalking = $customer && $customer->businessId === null && $customer->name === 'Walking Customer';
+        $legacyWalking = $customer && $customer->businessId === null && $customer->isWalkIn();
         abort_if(!$customer || (!$legacyWalking && (int)$customer->businessId !== $businessId), 404);
         return $customer;
     }
@@ -695,7 +695,7 @@ class JqueryController extends Controller
         return redirect()->route('purchase.invoice.show',$header->id)->with('status',__('purchases.invoice_saved'));
     }
 
-    public function getserviceDetails($id){
+    public function getServiceDetails($id){
         $getData = Service::find($id);
 
         if($getData):
@@ -774,7 +774,7 @@ class JqueryController extends Controller
                     $sales->businessId = PurchaseProduct::withoutGlobalScopes()->find($requ->purchaseData[0] ?? 0)?->businessId;
                 }
                 $customer = \App\Models\Customer::withoutGlobalScope('business')->lockForUpdate()->find($requ->customerId);
-                $legacyWalking = $customer && $customer->businessId === null && $customer->name === 'Walking Customer';
+                $legacyWalking = $customer && $customer->businessId === null && $customer->isWalkIn();
                 if (!$customer || (!$legacyWalking && (int)$customer->businessId !== (int)$sales->businessId)) {
                     throw \Illuminate\Validation\ValidationException::withMessages(['customerId' => __('sales.customer_unavailable_for_business')]);
                 }

@@ -106,7 +106,7 @@
                                 <tr>
                                     <td>{{ \Carbon\Carbon::parse($sale->date)->format('d M Y') }}</td>
                                     <td>{{ $sale->invoice ?? 'N/A' }}</td>
-                                    <td>{{ $sale->customer->name ?? 'Walk-in Customer' }}</td>
+                                    <td>{{ \App\Models\Customer::displayLabel($sale->customer, $sale->customerId, $sale->businessId) }}</td>
                                     <td class="text-right">@money($sale->totalSale ?? 0)</td>
                                     <td class="text-right">@money($sale->discountAmount ?? 0)</td>
                                     <td class="text-right"><strong>@money($sale->grandTotal)</strong></td>

@@ -82,7 +82,7 @@
             <div class="party-box">
               <h6 class="party-label">{{ __('common.bill_to') }}:</h6>
               <div class="party-content">
-                <div class="party-name">{{ $customer->name ?? 'Walking Customer' }}</div>
+                <div class="party-name">{{ \App\Models\Customer::displayLabel($customer ?? null, $quote->customer_id, $quote->businessId) }}</div>
                 @php
                   $addr = '';
                   if(!empty($customer)){
