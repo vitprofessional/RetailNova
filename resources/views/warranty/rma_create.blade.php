@@ -3,17 +3,17 @@
 @section('title','New RMA')
 @section('backTitle'){{ __('common.heading_new_rma') }}@endsection
 @section('container')
-<div class="col-12">
-    <h4>{{ __('common.create_rma') }}</h4>
-    <div class="card">
+<div class="col-12 rn-m-rma-page">
+    <h4 class="rn-m-rma-title">{{ __('common.create_rma') }}</h4>
+    <div class="card rn-m-rma-card">
         <div class="card-body">
-            <form method="POST" action="{{ route('rma.store') }}">
+            <form method="POST" action="{{ route('rma.store') }}" class="rn-m-form rn-m-rma-form">
                 @csrf
-                <div class="row g-2">
+                <div class="row g-2 rn-m-form-section rn-m-rma-fields">
                     <div class="col-md-4">
                         <label class="form-label">{{ __('common.customer') }}</label>
                         <select name="customer_id" class="form-control form-control-sm">
-                            <option value="">(none)</option>
+                            <option value="">{{ __('common.none') }}</option>
                             @foreach($customers as $c)
                                 <option value="{{ $c->id }}">{{ $c->name }}</option>
                             @endforeach
@@ -49,9 +49,9 @@
                         <textarea name="notes" class="form-control form-control-sm" rows="4"></textarea>
                         @error('notes')<small class="text-danger">{{ $message }}</small>@enderror
                     </div>
-                    <div class="col-12 mt-3">
-                        <button class="btn btn-primary">{{ __('common.create') }}</button>
-                        <a href="{{ route('rma.index') }}" class="btn btn-secondary">{{ __('common.cancel') }}</a>
+                    <div class="rn-m-sticky-actions rn-m-rma-actions">
+                        <a href="{{ route('rma.index') }}" class="rn-m-btn rn-m-btn--outline">{{ __('common.cancel') }}</a>
+                        <button type="submit" class="rn-m-btn rn-m-btn--primary">{{ __('common.create') }}</button>
                     </div>
                 </div>
             </form>
