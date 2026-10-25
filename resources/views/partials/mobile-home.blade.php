@@ -20,6 +20,12 @@
     </div>
 
     <div class="rn-m-home-section">
+        @if($mobileNav->allows('newsale'))
+            <a class="rn-m-home-sale-cta" href="{{ route('newsale') }}" data-rn-home-sale>
+                <i class="ri-scan-2-line" aria-hidden="true"></i>
+                <span>{{ __('mobile.start_sale') }}</span>
+            </a>
+        @endif
         <h2 class="sr-only">{{ __('mobile.shortcuts') }}</h2>
         <ul class="rn-m-grid" role="list">
             @foreach($mobileNav->shortcuts() as $item)

@@ -74,6 +74,7 @@ return [
     'today_due' => "Today's due",
     'profit' => 'Profit',
     'shortcuts' => 'Shortcuts',
+    'start_sale' => 'Start sale',
     'low_stock_alert' => ':count products are running low',
     'out_of_stock_alert' => ':count are out of stock',
     'view_stock' => 'View stock',

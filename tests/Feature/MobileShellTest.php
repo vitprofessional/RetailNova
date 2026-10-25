@@ -69,6 +69,11 @@ class MobileShellTest extends TestCase
         $this->assertCount(count(array_unique($grid)), $grid, 'Each destination appears once.');
         $tabHrefs = $this->hrefs($xpath, '//nav[@data-rn-tabbar]//a[@data-rn-tab and @href!="#rn-more"]');
         $shortcutHrefs = $this->hrefs($xpath, '//*[@data-rn-home]//a[contains(@class,"rn-m-grid-item")]');
+        $saleCta = $xpath->query('//*[@data-rn-home-sale]');
+        $this->assertCount(1, $saleCta);
+        $this->assertSame(route('newsale'), $saleCta->item(0)->getAttribute('href'));
+        $this->assertSame(__('mobile.start_sale'), trim($saleCta->item(0)->textContent));
+        $this->assertGreaterThan(0, $xpath->query('//*[@data-rn-home-sale]/following::a[contains(@class,"rn-m-grid-item")]')->length);
         foreach ($tabHrefs as $href) {
             $this->assertNotContains($href, $grid, 'Bottom-tab destinations are not repeated in More.');
             $this->assertNotContains($href, $shortcutHrefs, 'Bottom-tab destinations are not repeated in Home shortcuts.');

@@ -74,6 +74,7 @@ return [
     'today_due' => 'আজকের বাকি',
     'profit' => 'লাভ',
     'shortcuts' => 'শর্টকাট',
+    'start_sale' => 'বিক্রি শুরু করুন',
     'low_stock_alert' => ':countটি পণ্যের স্টক কম',
     'out_of_stock_alert' => ':countটি শেষ হয়ে গেছে',
     'view_stock' => 'স্টক দেখুন',

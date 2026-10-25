@@ -4,6 +4,30 @@
  * Linked only for the mobile version, after rn-mobile.css. Colors come from rn-tokens.css only.
  */
 @media screen {
+    .rn-m-home-sale-cta {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 62px;
+        margin: 0 0 12px;
+        padding: 10px 16px;
+        border: 0;
+        border-radius: 18px;
+        background: var(--rn-color-primary);
+        box-shadow: var(--rn-shadow-raised);
+        color: var(--rn-color-on-primary);
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.2;
+        text-decoration: none;
+    }
+    .rn-m-home-sale-cta > i { flex: 0 0 auto; font-size: 30px; line-height: 1; }
+    .rn-m-home-sale-cta:hover,
+    .rn-m-home-sale-cta:focus-visible { background: var(--rn-color-primary); color: var(--rn-color-on-primary); text-decoration: none; }
+    .rn-m-home-sale-cta:focus-visible { outline: 3px solid var(--rn-color-primary-soft); outline-offset: 3px; }
+
     /* ---------- List page ---------- */
     .rn-m-list-page { margin: -12px -12px 0; padding: 0 12px 72px; }
     .rn-m-list-header { margin: 0 -12px; padding: 12px; background: var(--rn-color-primary); }
