@@ -53,11 +53,12 @@
                 </div>
             </div>
             <div class="card-body">
-                <form action="{{route('saveSupplier')}}" method="POST">
+                <form action="{{route('saveSupplier')}}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="profileId" value="{{ $profileId }}">
                     <div class="row">
                         @include('partials.business_selector', ['businesses' => $businesses ?? [] , 'selectedBusinessId' => $profile->businessId ?? null])
+                        <div class="col-md-4">@include('partials.business-image-field', ['imageRecord' => $profile ?? null, 'imageType' => 'suppliers', 'imageFieldId' => 'supplierImageDesktop'])</div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>{{ __('common.name') }} *</label>
@@ -189,7 +190,7 @@
                                 <label class="mb-0"></label>
                             </div>
                         </td>
-                        <td class="text-left"><div class="font-weight-600">{{$supplierList->name}}</div><div class="text-muted small">{{$supplierList->mail}}</div></td>
+                        <td class="text-left"><div class="rn-entity-image-line">@if($supplierList->image_thumbnail_url)<img src="{{ $supplierList->image_thumbnail_url }}" alt="" class="rn-entity-thumbnail" loading="lazy">@endif<div><div class="font-weight-600">{{$supplierList->name}}</div><div class="text-muted small">{{$supplierList->mail}}</div></div></div></td>
                         <td>
                             @php $ob = (int)($supplierList->openingBalance ?? 0); @endphp
                             <span class="badge {{ $ob < 0 ? 'bg-danger' : 'bg-success' }}">@money($ob)</span>

@@ -104,6 +104,7 @@ abstract class ContactsList extends MobileList
             'id' => $contact->id,
             'url' => route('contact.ledger', ['type' => $this->key() === 'customers' ? 'customer' : 'supplier', 'id' => $contact->id]),
             'avatar' => $this->initial($contact->name),
+            'avatar_url' => $contact->image_thumbnail_url,
             'title' => $contact->name,
             'subtitle' => '',
             'amount' => $this->money($due),

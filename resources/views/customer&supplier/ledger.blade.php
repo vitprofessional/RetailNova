@@ -9,6 +9,7 @@
 @mobile
 <main class="rn-m-detail-page rn-m-contact-ledger" data-contact-ledger="{{ $type }}">
     <header class="rn-m-list-header">
+        @if($contact->image_thumbnail_url)<img src="{{ $contact->image_thumbnail_url }}" alt="" class="rn-m-ledger-avatar">@else<span class="rn-m-ledger-avatar rn-m-ledger-avatar--fallback" aria-hidden="true">{{ mb_substr($contact->name, 0, 1) }}</span>@endif
         <h2>{{ $contact->name }}</h2>
         @if($contact->mobile)<p class="rn-m-detail-contact">{{ $contact->mobile }}</p>@endif
     </header>

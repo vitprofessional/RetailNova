@@ -13,7 +13,7 @@ class Product extends Model implements AuditableContract
 {
     use Auditable, ScopesByBusiness;
     protected $fillable = [
-        'name', 'brand', 'category', 'unitName', 'quantity', 'details', 'barCode', 'businessId'
+        'name', 'brand', 'category', 'unitName', 'quantity', 'details', 'barCode', 'businessId', 'image'
     ];
 
     protected $auditExclude = [
@@ -26,6 +26,16 @@ class Product extends Model implements AuditableContract
     public function stocks()
     {
         return $this->hasMany(ProductStock::class, 'productId', 'id');
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return app(\App\Support\BusinessUploads::class)->url($this->attributes['image'] ?? null);
+    }
+
+    public function getImageThumbnailUrlAttribute(): ?string
+    {
+        return app(\App\Support\BusinessUploads::class)->url($this->attributes['image'] ?? null, true);
     }
 
     // Eager-loadable relationships for brand, category, and unit

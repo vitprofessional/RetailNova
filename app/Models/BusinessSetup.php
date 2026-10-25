@@ -35,9 +35,12 @@ class BusinessSetup extends Model
             return in_array($scheme, ['http', 'https'], true) ? $logo : null;
         }
 
-        // Uploads are stored as public/uploads/business/<filename>. Accept a legacy
-        // prefixed value but never let a configured path escape that directory.
         $relative = ltrim(str_replace('\\', '/', $logo), '/');
+        if (preg_match('~^uploads/'.(int) $this->id.'/logo/[a-zA-Z0-9._-]+$~', $relative)) {
+            return app(\App\Support\BusinessUploads::class)->url($relative);
+        }
+
+        // Legacy uploads remain supported until the explicit migration command is run.
         $relative = preg_replace('~^uploads/business/~i', '', $relative);
         $filename = basename((string) $relative);
         if ($filename === '' || $filename === '.' || $filename === '..') {
@@ -54,5 +57,19 @@ class BusinessSetup extends Model
         }
 
         return asset('uploads/business/' . rawurlencode($filename));
+    }
+
+    public function invoiceLogoFilesystemPath(): ?string
+    {
+        $url = $this->invoiceLogoUrl();
+        if ($url === null) {
+            return null;
+        }
+        $logo = ltrim(str_replace('\\', '/', (string) $this->businessLogo), '/');
+        if (preg_match('~^uploads/[1-9][0-9]*/logo/[a-zA-Z0-9._-]+$~', $logo)) {
+            return public_path($logo);
+        }
+        $filename = basename(preg_replace('~^uploads/business/~i', '', $logo));
+        return public_path('uploads/business/'.$filename);
     }
 }

@@ -36,6 +36,7 @@
         @foreach($pos['cards'] as $card)
             <li data-rn-pos-item data-category="{{ $card['category'] }}" data-search="{{ \Illuminate\Support\Str::lower($card['name'].' '.$card['barcode']) }}">
                 <button type="button" class="rn-m-product{{ $card['stock'] <= 0 ? ' is-out' : '' }}" data-product-id="{{ $card['id'] }}" @disabled($card['stock'] <= 0)>
+                    @if($card['image'])<img class="rn-m-product-image" src="{{ $card['image'] }}" alt="" loading="lazy">@else<span class="rn-m-product-image rn-m-product-image--fallback" aria-hidden="true">{{ mb_substr($card['name'], 0, 1) }}</span>@endif
                     <span class="rn-m-product-name">{{ $card['name'] }}</span>
                     <span class="rn-m-product-price">{{ $card['price'] !== null ? $money($card['price']) : '—' }}</span>
                     <span class="rn-m-product-stock{{ $card['stock'] <= 0 ? ' is-out' : '' }}">{{ $card['stock'] > 0 ? __('mobile.in_stock', ['count' => \App\Support\LocalizedNumber::count($card['stock'])]) : __('mobile.out_of_stock') }}</span>

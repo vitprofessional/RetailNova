@@ -48,12 +48,7 @@
     $customer = $quote->customer;
     $business = $business ?? null;
     $currencySymbol = optional($business)->currencySymbol ?: '৳';
-    $logoUrl = null;
-    if($business && !empty($business->businessLogo)){
-      $logoUrl = (strpos($business->businessLogo, 'http') === 0)
-        ? $business->businessLogo
-        : asset('uploads/business/' . ltrim($business->businessLogo, '/'));
-    }
+    $logoUrl = $business?->invoiceLogoUrl();
     $currencyName = null;
     switch($currencySymbol){
       case '৳': $currencyName = 'Taka'; break;

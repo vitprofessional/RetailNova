@@ -54,7 +54,7 @@
                         <ul class="mb-0 mt-2">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
                     </div>
                 @endif
-                <form action="{{ route('saveProduct') }}" method="POST">
+                <form action="{{ route('saveProduct') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="profileId" value="{{ $profileId }}" />
 
@@ -62,6 +62,9 @@
                         <div class="rn-product-section-heading"><i class="las la-store" aria-hidden="true"></i><h2 id="rn-product-basic-heading">{{ __('inventory.product_basic_information') }}</h2></div>
                         <div class="rn-product-section-body rn-product-form-grid">
                         @include('partials.business_selector', ['businesses' => $businesses ?? [], 'selectedBusinessId' => $profile->businessId ?? old('businessId'), 'businessSelectionAllowed' => $businessSelectionAllowed ?? false, 'businessSelectorClass' => 'rn-product-business-field', 'businessSelectorIcon' => true])
+                        <div class="rn-product-field rn-product-field-image">
+                            @include('partials.business-image-field', ['imageRecord' => $profile, 'imageType' => 'products', 'imageFieldId' => 'productImageDesktop'])
+                        </div>
                         <div class="rn-product-field rn-product-field-name">
                             <div class="form-group">
                                 <label for="name" class="form-label">{{ __('inventory.product_name') }} <span class="text-danger">*</span></label>

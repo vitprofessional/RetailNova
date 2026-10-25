@@ -403,6 +403,12 @@ window.addPurchaseRow = function(productId){
                 var row = document.querySelector('tr.product-row[data-idx="'+idx+'"]');
                 if(!row) return;
                 var nameInput = row.querySelector('input[name^="selectProductName["]'); if(nameInput) nameInput.value = data.productName || data.name || '';
+                var imageBox = row.querySelector('[data-product-image]');
+                if(imageBox){
+                    imageBox.replaceChildren();
+                    if(data.image){ var productImage=document.createElement('img'); productImage.src=data.image; productImage.alt=''; productImage.loading='lazy'; imageBox.appendChild(productImage); }
+                    else { imageBox.textContent=String(data.productName || data.name || '').trim().slice(0,1); imageBox.classList.add('is-fallback'); }
+                }
                 var cur = row.querySelector('#currentStock'+idx) || row.querySelector('#currentStock__IDX__'.replace('__IDX__', idx)); if(cur) cur.value = (data.currentStock || 0);
                 var buy = row.querySelector('#buyPrice'+idx) || row.querySelector('#buyPrice__IDX__'.replace('__IDX__', idx));
                 var sale = row.querySelector('#salePriceExVat'+idx) || row.querySelector('#salePriceExVat__IDX__'.replace('__IDX__', idx));

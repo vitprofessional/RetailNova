@@ -814,6 +814,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
         Route::get('/list', [ExpenseManagementController::class, 'expenseList'])->name('list');
         Route::get('/create', [ExpenseManagementController::class, 'createExpense'])->name('create');
         Route::post('/store', [ExpenseManagementController::class, 'storeExpense'])->name('store');
+        Route::get('/{id}/receipt', [ExpenseManagementController::class, 'showReceipt'])->whereNumber('id')->name('receipt');
         Route::get('/edit/{id}', [ExpenseManagementController::class, 'editExpense'])->name('edit');
         Route::post('/update/{id}', [ExpenseManagementController::class, 'updateExpense'])->name('update');
         Route::match(['get','post','delete'],'/delete/{id}', [ExpenseManagementController::class, 'deleteExpense'])->name('delete');

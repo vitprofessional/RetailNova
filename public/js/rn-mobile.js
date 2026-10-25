@@ -239,6 +239,11 @@
                 var item = document.createElement('li');
                 item.className = 'rn-m-line';
                 item.dataset.productGroup = row.dataset.productGroup || '';
+                var image = row.dataset.productImage ? document.createElement('img') : document.createElement('span');
+                image.className = 'rn-m-line-image' + (row.dataset.productImage ? '' : ' is-fallback');
+                if (row.dataset.productImage) { image.src = row.dataset.productImage; image.alt = ''; image.loading = 'lazy'; }
+                else image.textContent = String((row.querySelector('.rn-sale-product-name') || {}).textContent || '').trim().slice(0, 1);
+                item.appendChild(image);
                 var body = document.createElement('div');
                 body.className = 'rn-m-line-body';
                 var name = document.createElement('strong');

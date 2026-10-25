@@ -5,13 +5,7 @@
   $currencySymbol = optional($business)->currencySymbol ?: '৳';
   $customer = $quote->customer;
   $b = $business ?? null;
-  // Build logo URL similar to sale invoice
-  $logoUrl = null;
-  if($b && !empty($b->businessLogo)){
-    $logoUrl = (strpos($b->businessLogo, 'http') === 0)
-      ? $b->businessLogo
-      : asset('uploads/business/' . ltrim($b->businessLogo, '/'));
-  }
+  $logoUrl = $b?->invoiceLogoUrl();
   // Map currency symbol to name
   $currencyName = null;
   switch($currencySymbol){

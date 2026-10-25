@@ -196,7 +196,8 @@ class JqueryController extends Controller
                 'salePrice'    => $salePrice,
                 'vatStatus'    => $vatStatus,
                 'message'      => __('common.api_success'),
-                'id'           => $getData->id
+                'id'           => $getData->id,
+                'image'        => $getData->image_thumbnail_url,
             ];
         }
 
@@ -345,6 +346,7 @@ class JqueryController extends Controller
                 'products.name as productName',
                 'products.brand as brandId',
                 'products.category as categoryId',
+                'products.image as productImage',
                 'purchase_products.purchase_date as purchaseDate',
                 'purchase_products.created_at as purchaseCreatedAt',
                 'suppliers.name as supplierName',
@@ -440,8 +442,10 @@ class JqueryController extends Controller
                 continue;
             }
             $label = htmlspecialchars((string)$product->productName, ENT_QUOTES, 'UTF-8');
+            $image = app(\App\Support\BusinessUploads::class)->url($product->productImage, true);
+            $imageAttribute = $image ? ' data-image="'.htmlspecialchars($image, ENT_QUOTES, 'UTF-8').'"' : '';
             $stockLabel = htmlspecialchars(__('common.stock'), ENT_QUOTES, 'UTF-8');
-            $options .= '<option value="'.(int)$productId.'" data-product-id="'.(int)$productId.'" data-current-stock="'.$totalStock.'" title="'.$stockLabel.': '.$totalStock.'">'.$label.' — '.$stockLabel.': '.$totalStock.'</option>';
+            $options .= '<option value="'.(int)$productId.'" data-product-id="'.(int)$productId.'" data-current-stock="'.$totalStock.'"'.$imageAttribute.' title="'.$stockLabel.': '.$totalStock.'">'.$label.' — '.$stockLabel.': '.$totalStock.'</option>';
         }
 
         return response()->json([

@@ -22,7 +22,9 @@ class ProductSaveRequest extends FormRequest
             'quantity' => ['nullable','integer','min:0'],
             'details'  => ['nullable','string','max:1000'],
             'barCode'  => ['nullable','string','max:190'],
-            'profileId'=> ['nullable','integer','exists:products,id']
+            'profileId'=> ['nullable','integer','exists:products,id'],
+            'image' => ['nullable','image','mimes:jpg,jpeg,png,webp','max:4096'],
+            'remove_image' => ['nullable','boolean'],
         ];
     }
 }

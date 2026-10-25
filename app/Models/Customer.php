@@ -19,6 +19,7 @@ class Customer extends Model
         'state',
         'city',
         'area',
+        'image',
     ];
 
     protected $casts = [
@@ -128,6 +129,16 @@ class Customer extends Model
     {
         $parts = array_filter([$this->area, $this->city, $this->state, $this->country]);
         return implode(', ', $parts);
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return app(\App\Support\BusinessUploads::class)->url($this->attributes['image'] ?? null);
+    }
+
+    public function getImageThumbnailUrlAttribute(): ?string
+    {
+        return app(\App\Support\BusinessUploads::class)->url($this->attributes['image'] ?? null, true);
     }
 
     /**

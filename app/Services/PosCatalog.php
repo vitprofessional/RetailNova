@@ -48,6 +48,7 @@ class PosCatalog
             'stock' => (int) ($stock[$product->id] ?? 0),
             'price' => isset($prices[$product->id]) ? (float) $prices[$product->id] : null,
             'barcode' => (string) ($product->barCode ?? ''),
+            'image' => $product->image_thumbnail_url,
         ])->sortByDesc(fn ($card) => $card['stock'] > 0)->values();
 
         $categories = $cards->pluck('category')->filter()->unique()

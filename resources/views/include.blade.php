@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/rn-custom.css">
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/css/rn-table-pro.css">
     <link rel="stylesheet" href="{{ asset('css/rn-tokens.css') }}?v={{ filemtime(public_path('css/rn-tokens.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/business-images.css') }}?v={{ filemtime(public_path('css/business-images.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/retailnova-shell.css') }}?v={{ filemtime(public_path('css/retailnova-shell.css')) }}">
     @stack('styles')
     @mobile
@@ -758,8 +759,8 @@
           $rnBusinessName = $config->count() > 0 && !empty($config[0]->businessName)
               ? $config[0]->businessName
               : 'Retail Nova';
-          $rnBusinessLogo = $config->count() > 0 && !empty($config[0]->businessLogo)
-              ? asset('uploads/business/' . $config[0]->businessLogo)
+          $rnBusinessLogo = $config->count() > 0 && $config[0] instanceof \App\Models\BusinessSetup
+              ? ($config[0]->invoiceLogoUrl() ?? asset('logo.png'))
               : asset('logo.png');
       @endphp
       @mobile

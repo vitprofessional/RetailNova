@@ -11,7 +11,7 @@
         + collect($businesses ?? \App\Models\BusinessSetup::orderBy('id')->get())->pluck('businessName', 'id')->all();
 @endphp
 @include('sweetalert::alert')
-<form method="POST" action="{{ route($isCustomer ? 'saveCustomer' : 'saveSupplier') }}" class="rn-m-form" data-rn-contact-form="{{ $type }}">
+<form method="POST" enctype="multipart/form-data" action="{{ route($isCustomer ? 'saveCustomer' : 'saveSupplier') }}" class="rn-m-form" data-rn-contact-form="{{ $type }}">
     @csrf
     <input type="hidden" name="profileId" value="{{ $profile->id ?? '' }}">
     <x-m.form-section :title="$profile ? __('mobile.edit_'.rtrim($type, 's')) : __('mobile.new_'.rtrim($type, 's'))">
@@ -20,6 +20,7 @@
                        :value="$profile->businessId ?? (count($businessOptions) === 2 ? array_key_last($businessOptions) : '')"
                        :hint="__('settings.choose_target_business_for_this_record')" />
         @endif
+        @include('partials.business-image-field', ['imageRecord' => $profile, 'imageType' => $type, 'imageFieldId' => $type.'Image'])
         <x-m.field name="fullName" :label="__('common.name')" :value="$profile->name ?? ''" required autocomplete="name" maxlength="150" />
         <x-m.field name="mobile" type="tel" :label="__($lang.'.phone_number')" :value="$profile->mobile ?? ''" inputmode="tel" autocomplete="tel" />
         <x-m.field name="mail" type="email" :label="__($lang.'.email')" :value="$profile->mail ?? ''" inputmode="email" autocomplete="email" />

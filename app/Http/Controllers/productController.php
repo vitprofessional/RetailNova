@@ -66,10 +66,25 @@ class productController extends Controller
 
         $data->businessId = $businessId;
 
+        $oldImage = $data->image;
+        $newImage = null;
+        if ($req->hasFile('image')) {
+            $newImage = app(\App\Support\BusinessUploads::class)->store($req->file('image'), (int) $businessId, 'products');
+            $data->image = $newImage;
+        } elseif ($req->boolean('remove_image')) {
+            $data->image = null;
+        }
+
         if($data->save()){
+            if ($oldImage && $oldImage !== $data->image) {
+                app(\App\Support\BusinessUploads::class)->delete($oldImage);
+            }
             $msg = $req->profileId ? __('common.product_updated') : __('common.product_created');
             Alert::success(__('common.notification_success'), $msg);
             return redirect(route('addProduct'));
+        }
+        if ($newImage) {
+            app(\App\Support\BusinessUploads::class)->delete($newImage);
         }
         Alert::error(__('common.notification_failed'),__('common.notification_product_save_failed'));
         return back();

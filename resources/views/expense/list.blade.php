@@ -125,7 +125,7 @@
                                     <td>{{ Str::limit($expense->description, 50) ?? '-' }}</td>
                                     <td class="text-center">
                                         @if($expense->receipt_file)
-                                        <a href="{{ Storage::url($expense->receipt_file) }}"
+                                        <a href="{{ route('expense.receipt', $expense->id) }}"
                                            target="_blank"
                                            class="btn btn-sm btn-success">
                                             <i class="fas fa-file-download"></i> {{ __('common.view') }}

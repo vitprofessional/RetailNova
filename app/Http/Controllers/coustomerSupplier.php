@@ -62,11 +62,24 @@ class coustomerSupplier extends Controller
 
         $data->businessId=$businessId;
 
+        $oldImage = $data->image;
+        $newImage = null;
+        if ($req->hasFile('image')) {
+            $newImage = app(\App\Support\BusinessUploads::class)->store($req->file('image'), (int) $businessId, 'customers');
+            $data->image = $newImage;
+        } elseif ($req->boolean('remove_image')) {
+            $data->image = null;
+        }
+
         if($data->save()):
+            if ($oldImage && $oldImage !== $data->image) {
+                app(\App\Support\BusinessUploads::class)->delete($oldImage);
+            }
             $message = $req->profileId ? __('common.customer_updated') : __('common.customer_created');
             Alert::success(__('common.notification_success'), $message);
             return redirect(route('addCustomer'));
         else:
+            if ($newImage) app(\App\Support\BusinessUploads::class)->delete($newImage);
             Alert::error(__('common.notification_failed'),__('common.notification_customer_profile_save_failed'));
             return back();
         endif;
@@ -294,6 +307,8 @@ class coustomerSupplier extends Controller
             'city'          => ['nullable','string','max:100'],
             'area'          => ['nullable','string','max:150'],
             'openingBalance'=> ['nullable','integer'],
+            'image'         => ['nullable','image','mimes:jpg,jpeg,png,webp','max:4096'],
+            'remove_image'  => ['nullable','boolean'],
         ]);
         $data = $isUpdate ? $workflow->scoped(Supplier::withoutGlobalScopes())->findOrFail($req->profileId) : new Supplier();
         $requestedBusinessId=$req->input('businessId');
@@ -313,11 +328,24 @@ class coustomerSupplier extends Controller
 
         $data->businessId = $businessId;
 
+        $oldImage = $data->image;
+        $newImage = null;
+        if ($req->hasFile('image')) {
+            $newImage = app(\App\Support\BusinessUploads::class)->store($req->file('image'), (int) $businessId, 'suppliers');
+            $data->image = $newImage;
+        } elseif ($req->boolean('remove_image')) {
+            $data->image = null;
+        }
+
         if($data->save()){
+            if ($oldImage && $oldImage !== $data->image) {
+                app(\App\Support\BusinessUploads::class)->delete($oldImage);
+            }
             $msg = $isUpdate ? __('common.supplier_updated') : __('common.supplier_created');
             Alert::success(__('common.notification_success'), $msg);
             return redirect(route('addSupplier'));
         }
+        if ($newImage) app(\App\Support\BusinessUploads::class)->delete($newImage);
         Alert::error(__('common.notification_failed'),__('common.notification_supplier_profile_save_failed'));
         return back();
     }

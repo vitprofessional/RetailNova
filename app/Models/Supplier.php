@@ -11,7 +11,7 @@ class Supplier extends Model
 {
     use SoftDeletes, ScopesByBusiness;
     protected $fillable = [
-        'name', 'mobile', 'mail', 'city', 'area', 'country', 'state', 'openingBalance', 'businessId'
+        'name', 'mobile', 'mail', 'city', 'area', 'country', 'state', 'openingBalance', 'businessId', 'image'
     ];
 
     protected $casts = [
@@ -24,6 +24,16 @@ class Supplier extends Model
     public function purchases()
     {
         return $this->hasMany(PurchaseProduct::class, 'supplier');
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return app(\App\Support\BusinessUploads::class)->url($this->attributes['image'] ?? null);
+    }
+
+    public function getImageThumbnailUrlAttribute(): ?string
+    {
+        return app(\App\Support\BusinessUploads::class)->url($this->attributes['image'] ?? null, true);
     }
 
     /**

@@ -14,7 +14,8 @@
                                             @php
                                                 $brand = \App\Models\Brand::find($productData->brand);
                                                 $brandName = $brand ? ' - ' . $brand->name : '';
-                                                $productOptions .= '<option value="'. $productData->id .'">'. htmlspecialchars($productData->name . $brandName) .'</option>';
+                                                $imageAttr = $productData->image_thumbnail_url ? ' data-image="'.htmlspecialchars($productData->image_thumbnail_url, ENT_QUOTES, 'UTF-8').'"' : '';
+                                                $productOptions .= '<option value="'. $productData->id .'"'.$imageAttr.'>'. htmlspecialchars($productData->name . $brandName) .'</option>';
                                             @endphp
                                         @endforeach
                                         {!! $productOptions !!}

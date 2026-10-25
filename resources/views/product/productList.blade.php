@@ -116,7 +116,7 @@
                         @endphp
                         <tr>
                             <td><div class="checkbox d-inline-block"><input type="checkbox" class="checkbox-input bulk-select" value="{{ $productList->id }}"><label class="mb-0"></label></div></td>
-                            <td class="rn-product-name-cell">{{ $productList->name }}</td>
+                            <td class="rn-product-name-cell"><span class="rn-entity-image-line">@if($productList->image_thumbnail_url)<img src="{{ $productList->image_thumbnail_url }}" alt="" class="rn-entity-thumbnail" loading="lazy">@endif<span>{{ $productList->name }}</span></span></td>
                             <td>{{ $productList->brandModel->name ?? '-' }}</td>
                             <td>{{ $productList->categoryModel->name ?? '-' }}</td>
                             <td>{{ $productList->unitModel->name ?? '-' }}</td>

@@ -13,9 +13,13 @@
   productCards.replaceChildren();
   [...product.options].filter(option => option.value && option.textContent.toLocaleLowerCase().includes(filter)).forEach(option => {
    const button = document.createElement('button'); button.type='button'; button.className='rn-m-purchase-product'; button.dataset.productId=option.value;
-   const name=document.createElement('span'); name.textContent=option.textContent.trim();
+   const image=option.dataset.image ? document.createElement('img') : document.createElement('span');
+   image.className='rn-m-purchase-product-image'+(option.dataset.image ? '' : ' is-fallback');
+   if(option.dataset.image){ image.src=option.dataset.image; image.alt=''; image.loading='lazy'; }
+   else image.textContent=option.textContent.trim().slice(0,1);
+   const name=document.createElement('span'); name.className='rn-m-purchase-product-name'; name.textContent=option.textContent.trim();
    const icon=document.createElement('i'); icon.className='ri-add-line'; icon.setAttribute('aria-hidden','true');
-   button.append(name,icon); productCards.append(button);
+   button.append(image,name,icon); productCards.append(button);
   });
  };
  productSearch?.addEventListener('input', refreshProductCards);

@@ -87,7 +87,7 @@
                                             <label for="receipt_file">{{ __('common.upload_new_receipt') }}</label>
                                             @if($expense->receipt_file)
                                                 <div class="mb-2">
-                                                    <a href="{{ Storage::url($expense->receipt_file) }}" target="_blank" class="btn btn-sm btn-info">
+                                                    <a href="{{ route('expense.receipt', $expense->id) }}" target="_blank" class="btn btn-sm btn-info">
                                                         <i class="las la-file"></i> {{ __('common.view_current_receipt') }}
                                                     </a>
                                                 </div>

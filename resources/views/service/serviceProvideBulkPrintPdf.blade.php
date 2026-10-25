@@ -36,8 +36,8 @@
 <body>
     <div class="header">
         <div class="logo">
-            @if(!empty($business->businessLogo) && file_exists(public_path('uploads/business/' . $business->businessLogo)))
-                <img src="{{ public_path('uploads/business/' . $business->businessLogo) }}" alt="Logo" style="height:48px; width:auto;" />
+            @if($business->invoiceLogoFilesystemPath() && file_exists($business->invoiceLogoFilesystemPath()))
+                <img src="{{ $business->invoiceLogoFilesystemPath() }}" alt="Logo" style="height:48px; width:auto; object-fit:contain;" />
             @endif
         </div>
         <div class="meta">

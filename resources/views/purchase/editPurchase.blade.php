@@ -127,20 +127,11 @@
                                         }
                                     @endphp
                                     <div class="d-flex align-items-center">
-                                        <div class="mr-3" style="width:64px;height:64px;flex:0 0 64px;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f6f6f6;">
-                                            @php
-                                                $img = '';
-                                                if(!empty($selectedProduct) && isset($selectedProduct->image) && $selectedProduct->image){
-                                                    $img = asset('storage/'.$selectedProduct->image);
-                                                }
-                                            @endphp
-                                            @if($img)
-                                                <img src="{{ $img }}" alt="{{ $productDisplay }}" style="max-width:100%;max-height:100%;object-fit:cover;" />
-                                            @else
-                                                {{-- inline SVG placeholder --}}
-                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="4" fill="#e9ecef"/><path d="M7 9h10v6H7z" fill="#ced4da"/><path d="M9 11h2v2H9zM13 11h2v2h-2z" fill="#adb5bd"/></svg>
-                                            @endif
-                                        </div>
+                                        @if($selectedProduct?->image_thumbnail_url)
+                                            <img src="{{ $selectedProduct->image_thumbnail_url }}" alt="" class="rn-entity-thumbnail mr-3" loading="lazy" />
+                                        @else
+                                            <span class="rn-entity-thumbnail rn-entity-thumbnail--fallback mr-3" aria-hidden="true">{{ mb_substr($productDisplay, 0, 1) }}</span>
+                                        @endif
                                         <div>
                                             <div class="font-weight-bold">{{ $productDisplay }}</div>
                                             <div class="small text-muted">{{ __('common.invoice') }}: {{ $purchaseData->invoice ?? $generatedInvoice ?? '-' }} | Ref: {{ $purchaseData->reference ?? '-' }}</div>

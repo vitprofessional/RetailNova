@@ -39,6 +39,8 @@ class SaveCustomerRequest extends FormRequest
             'state'         => ['nullable','string','max:100'],
             'city'          => ['nullable','string','max:100'],
             'area'          => ['nullable','string','max:150'],
+            'image'         => ['nullable','image','mimes:jpg,jpeg,png,webp','max:4096'],
+            'remove_image'  => ['nullable','boolean'],
         ];
     }
 }

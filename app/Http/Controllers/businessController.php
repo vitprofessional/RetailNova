@@ -312,7 +312,7 @@ class businessController extends Controller
         $actor = $this->settingsActor();
         $requ->validate(['businessId' => ['required', 'integer']]);
         $business = $this->authorizedBusinessTarget($actor, $requ->input('businessId'), false);
-        $requ->validate(['businessLogo' => 'required|image|mimes:jpeg,jpg,png,gif,webp,svg|max:2048']);
+        $requ->validate(['businessLogo' => 'required|image|mimes:jpeg,jpg,png,webp|max:4096']);
 
         if(!$requ->hasFile('businessLogo')):
             Alert::error(__('common.notification_error'),__('common.notification_please_choose_a_valid_logo_file_to_upload'));
@@ -321,25 +321,16 @@ class businessController extends Controller
 
         try {
             $file = $requ->file('businessLogo');
-            $upFile = $file->hashName();
-            $destinationPath = public_path('uploads/business');
-
-            if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
-            }
-
-            // Replace previous file (if any) to avoid orphan logo files.
-            if (!empty($business->businessLogo)) {
-                $oldPath = public_path('uploads/business/' . $business->businessLogo);
-                if (file_exists($oldPath)) {
-                    @unlink($oldPath);
-                }
-            }
-
-            $file->move($destinationPath, $upFile);
-            $business->businessLogo = $upFile;
+            $oldLogo = $business->businessLogo;
+            $business->businessLogo = app(\App\Support\BusinessUploads::class)
+                ->store($file, (int) $business->id, 'logo');
 
             if($business->save()):
+                app(\App\Support\BusinessUploads::class)->delete($oldLogo);
+                if ($oldLogo && !str_starts_with((string) $oldLogo, 'uploads/')) {
+                    $legacyLogo = public_path('uploads/business/'.basename((string) $oldLogo));
+                    if (is_file($legacyLogo)) @unlink($legacyLogo);
+                }
                 Alert::success(__('common.notification_success'),__('common.notification_business_logo_updated_successfully'));
                 return back();
             endif;
@@ -361,10 +352,11 @@ class businessController extends Controller
         $business = $this->authorizedBusinessTarget($actor, $id, false);
         try {
             if($business && $business->businessLogo):
-                $logoPath = public_path('uploads/business/' . $business->businessLogo);
-                if (file_exists($logoPath)) {
+                $logoPath = $business->invoiceLogoFilesystemPath();
+                if ($logoPath && file_exists($logoPath)) {
                     @unlink($logoPath);
                 }
+                app(\App\Support\BusinessUploads::class)->delete($business->businessLogo);
                 $business->businessLogo = null;
                 $business->save();
                 Alert::success(__('common.notification_success'),__('common.notification_business_logo_deleted_successfully'));

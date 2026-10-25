@@ -442,6 +442,7 @@
             <td data-label="${window.RNTranslate('remove')}"><button type="button" class="btn btn-sm btn-outline-danger remove-product-row" aria-label="${window.RNTranslate('remove')}">${window.RNTranslate('remove')}</button></td>`;
         var name = product.productName || product.name || (byId('productName') && byId('productName').selectedOptions[0] || {}).textContent || '';
         row.querySelector('.rn-sale-product-name').textContent = String(name).trim();
+        row.dataset.productImage = (byId('productName') && byId('productName').selectedOptions[0] && byId('productName').selectedOptions[0].dataset.image) || product.image || '';
         row.querySelector('.open-sale-serials').dataset.productId = String(productId);
         tbody.appendChild(row);
         row.querySelector('.qty').addEventListener('input', function(){

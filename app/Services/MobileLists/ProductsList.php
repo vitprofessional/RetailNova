@@ -129,6 +129,7 @@ class ProductsList extends MobileList
             'id' => $product->id,
             'url' => $canEdit ? route('editProduct', ['id' => $product->id]) : null,
             'avatar' => $this->initial($product->name),
+            'avatar_url' => $product->image_thumbnail_url,
             'title' => $product->name,
             'subtitle' => implode(' · ', array_filter([$product->categoryModel?->name, $product->brandModel?->name])),
             'amount' => $product->latest_sale_price !== null ? $this->money($product->latest_sale_price) : '—',

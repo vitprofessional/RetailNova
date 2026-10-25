@@ -57,10 +57,11 @@
                 </div>
             </div>
             <div class="card-body">
-                <form action="{{route('saveCustomer')}}" method="POST" >
+                <form action="{{route('saveCustomer')}}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="row">
                         @include('partials.business_selector', ['businessSelectionAllowed'=>app(\App\Services\PurchaseWorkflow::class)->platform(), 'businesses' => $businesses ?? [] , 'selectedBusinessId' => $profile->businessId ?? null])
+                        <div class="col-md-4">@include('partials.business-image-field', ['imageRecord' => $profile ?? null, 'imageType' => 'customers', 'imageFieldId' => 'customerImageDesktop'])</div>
                         <input type="hidden" name="profileId" value="{{ $profileId }}">
                         <div class="col-md-4">
                             <div class="form-group">
@@ -197,7 +198,7 @@
                             </div>
                         </td>
                         <td class="text-left">
-                            <div class="font-weight-600">{{$customerList->name}}</div>
+                            <div class="rn-entity-image-line">@if($customerList->image_thumbnail_url)<img src="{{ $customerList->image_thumbnail_url }}" alt="" class="rn-entity-thumbnail" loading="lazy">@endif<div class="font-weight-600">{{$customerList->name}}</div></div>
                             <div class="text-muted small">{{$customerList->mail}}</div>
                         </td>
                         <td>

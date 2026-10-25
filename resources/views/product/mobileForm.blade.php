@@ -12,7 +12,7 @@
 
 <main class="rn-m-page rn-m-product-form-page">
     @include('sweetalert::alert')
-    <form action="{{ route('saveProduct') }}" method="POST" class="rn-m-form" data-rn-product-form>
+    <form action="{{ route('saveProduct') }}" method="POST" enctype="multipart/form-data" class="rn-m-form" data-rn-product-form>
         @csrf
         <input type="hidden" name="profileId" value="{{ old('profileId', $profile->id ?? '') }}">
 
@@ -30,6 +30,8 @@
                 'businessSelectionAllowed' => $businessSelectionAllowed,
                 'businessSelectorClass' => 'rn-m-form-business-field',
             ])
+
+            @include('partials.business-image-field', ['imageRecord' => $profile, 'imageType' => 'products', 'imageFieldId' => 'productImage'])
 
             <x-m.field name="name" id="name" :label="__('inventory.product_name')"
                        :value="$profile->name ?? ''" :required="true" autocomplete="off" maxlength="200" />

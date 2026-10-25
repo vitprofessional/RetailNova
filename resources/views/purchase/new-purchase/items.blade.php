@@ -26,6 +26,7 @@
                         <tr class="product-row" data-idx="__IDX__">
                             <td width="20%" data-label="{{ __('purchases.product_name') }}">
                                 <input type="hidden" name="productName[__IDX__]" value="__PRODUCT_ID__" />
+                                <span class="rn-purchase-row-image" data-product-image aria-hidden="true"></span>
                                 <input type="text" class="form-control" name="selectProductName[__IDX__]" value="__PRODUCT_NAME__" readonly />
                             </td>
                             <td width="8%" data-label="{{ __('purchases.serial') }}">

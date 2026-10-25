@@ -186,6 +186,7 @@ class ExpenseManagementController extends Controller
         ]);
 
         DB::beginTransaction();
+        $storedReceipt = null;
         try {
             $userId = Auth::id();
             $userType = 'user';
@@ -202,13 +203,8 @@ class ExpenseManagementController extends Controller
             $validated['created_by'] = $userId;
             $validated['created_by_type'] = $userType;
 
-            // Handle file upload
-            if ($request->hasFile('receipt_file')) {
-                $file = $request->file('receipt_file');
-                $filename = time() . '_' . $file->getClientOriginalName();
-                $path = $file->storeAs('expense_receipts', $filename, 'public');
-                $validated['receipt_file'] = $path;
-            }
+            $receiptUpload = $request->file('receipt_file');
+            unset($validated['receipt_file']);
 
             // Create accounting transaction if accounts are specified
             if ($request->filled('expense_account_id') && $request->filled('payment_account_id')) {
@@ -242,6 +238,11 @@ class ExpenseManagementController extends Controller
             unset($validated['expense_account_id'], $validated['payment_account_id']);
             $validated['created_by'] = $userId;
             $expense = ExpenseEntry::create($validated);
+            if ($receiptUpload) {
+                $storedReceipt = $this->storePrivateReceipt($receiptUpload, (int) $expense->businessId);
+                $expense->receipt_file = $storedReceipt;
+                $expense->save();
+            }
 
             DB::commit();
 
@@ -249,6 +250,7 @@ class ExpenseManagementController extends Controller
             return redirect()->route('expense.list');
         } catch (\Exception $e) {
             DB::rollBack();
+            if ($storedReceipt) Storage::disk('local')->delete($storedReceipt);
             Alert::error(__('common.notification_failed'), __('common.notification_expense_recording_failed') . $e->getMessage());
             return back()->withInput();
         }
@@ -288,32 +290,28 @@ class ExpenseManagementController extends Controller
         ]);
 
         DB::beginTransaction();
+        $newReceipt = null;
+        $oldReceipt = $expense->receipt_file;
         try {
             // Handle file upload
-            if ($request->hasFile('receipt_file')) {
-                // Delete old file if exists
-                if ($expense->receipt_file) {
-                    Storage::disk('public')->delete($expense->receipt_file);
-                }
-
-                $file = $request->file('receipt_file');
-                $filename = time() . '_' . $file->getClientOriginalName();
-                $path = $file->storeAs('expense_receipts', $filename, 'public');
-                $validated['receipt_file'] = $path;
-            }
+            $receiptUpload = $request->file('receipt_file');
+            unset($validated['receipt_file']);
+            $newReceipt = $receiptUpload ? $this->storePrivateReceipt($receiptUpload, (int) $expense->businessId) : null;
+            if ($newReceipt) $validated['receipt_file'] = $newReceipt;
 
             // Note: Updating related accounting transactions should be done carefully
             // For simplicity, we're not updating the accounting transaction here
             // In production, you might want to reverse the old transaction and create a new one
 
             $expense->update($validated);
-
             DB::commit();
+            if ($newReceipt && $oldReceipt) Storage::disk('local')->delete($oldReceipt);
 
             Alert::success(__('common.notification_success'), __('common.notification_expense_updated_successfully'));
             return redirect()->route('expense.list');
         } catch (\Exception $e) {
             DB::rollBack();
+            if ($newReceipt) Storage::disk('local')->delete($newReceipt);
             Alert::error(__('common.notification_failed'), __('common.notification_expense_update_failed') . $e->getMessage());
             return back()->withInput();
         }
@@ -325,8 +323,10 @@ class ExpenseManagementController extends Controller
     public function deleteExpense($id)
     {
         DB::beginTransaction();
+        $receiptPath = null;
         try {
             $expense = ExpenseEntry::findOrFail($id);
+            $receiptPath = $expense->receipt_file;
             
             // Delete related accounting transaction if exists
             if ($expense->account_transaction_id) {
@@ -351,13 +351,10 @@ class ExpenseManagementController extends Controller
             }
 
             // Delete receipt file if exists
-            if ($expense->receipt_file) {
-                Storage::disk('public')->delete($expense->receipt_file);
-            }
-
             $expense->delete();
 
             DB::commit();
+            if ($receiptPath) Storage::disk('local')->delete($receiptPath);
 
             Alert::success(__('common.notification_success'), __('common.notification_expense_deleted_successfully'));
             return redirect()->route('expense.list');
@@ -366,6 +363,35 @@ class ExpenseManagementController extends Controller
             Alert::error(__('common.notification_failed'), __('common.notification_expense_deletion_failed') . $e->getMessage());
             return back();
         }
+    }
+
+    /** Stream only a receipt that belongs to the scoped expense's owning business. */
+    public function showReceipt(int $id)
+    {
+        $expense = ExpenseEntry::query()->findOrFail($id);
+        $businessId = (int) $expense->businessId;
+        abort_if($businessId < 1 || !preg_match('~^'.preg_quote((string) $businessId, '~').'/receipts/[A-Za-z0-9._-]+$~', (string) $expense->receipt_file), 404);
+
+        $disk = Storage::disk('local');
+        abort_unless($disk->exists($expense->receipt_file), 404);
+        $mimeType = $disk->mimeType($expense->receipt_file) ?: 'application/octet-stream';
+        abort_if(!in_array($mimeType, ['image/jpeg', 'image/png', 'application/pdf'], true), 404);
+        return response()->file($disk->path($expense->receipt_file), [
+            'Content-Type' => $mimeType,
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
+    }
+
+    private function storePrivateReceipt(\Illuminate\Http\UploadedFile $file, int $businessId): string
+    {
+        abort_if($businessId < 1, 403, 'An owning business is required for receipt storage.');
+        $extension = strtolower($file->getClientOriginalExtension());
+        $extension = in_array($extension, ['jpg', 'jpeg', 'png', 'pdf'], true) ? $extension : 'bin';
+        $directory = $businessId.'/receipts';
+        $path = $file->storeAs($directory, \Illuminate\Support\Str::random(40).'.'.$extension, 'local');
+        if (!$path) throw new \RuntimeException('The private expense receipt could not be stored.');
+        return $path;
     }
 
     /**
