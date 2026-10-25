@@ -5,6 +5,7 @@ return [
     'actions' => 'Actions',
     'add' => 'Add',
     'address' => 'Address',
+    'admin_account_not_linked_to_business' => 'Your account is not linked to a store. Please contact an administrator.',
     'all' => 'All',
     'amount' => 'Amount',
     'authorized_signature' => 'Authorized Signature',

@@ -6,6 +6,9 @@
 @endpush
 
 @section('container')
+@if(session('business_context_warning'))
+    <div class="alert alert-warning mx-3 mt-3" role="alert">{{ session('business_context_warning') }}</div>
+@endif
 @php
     $hour = (int) \Carbon\Carbon::now()->format('H');
     $greeting = $hour >= 5 && $hour < 12 ? __('dashboard.good_morning')

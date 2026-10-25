@@ -5,6 +5,7 @@ return [
     'actions' => 'কার্যক্রম',
     'add' => 'যোগ করুন',
     'address' => 'ঠিকানা',
+    'admin_account_not_linked_to_business' => 'আপনার অ্যাকাউন্ট কোনো দোকানের সঙ্গে যুক্ত নয় — অ্যাডমিনের সঙ্গে যোগাযোগ করুন',
     'all' => 'সব',
     'amount' => 'পরিমাণ',
     'authorized_signature' => 'অনুমোদিত স্বাক্ষর',
