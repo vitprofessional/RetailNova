@@ -54,6 +54,7 @@
     --rn-color-ink: #1B1F27;
     --rn-color-muted: #667085;
     --rn-color-helper: #475467;
+    --rn-color-tab-label: #344054;
     --rn-color-border: #D0D5DD;
     --rn-color-surface: #FFFFFF;
     --rn-color-on-primary: #FFFFFF;
@@ -89,6 +90,7 @@
     --rn-shadow-card: 0 1px 2px rgba(16, 24, 40, .06), 0 4px 12px rgba(16, 24, 40, .08);
     --rn-shadow-sm: var(--rn-shadow-card);
     --rn-shadow-raised: 0 6px 16px rgba(20, 115, 111, .35);
+    --rn-shadow-tabbar: 0 -4px 14px rgba(16, 24, 40, .08);
 
     --rn-touch: 44px;
     --rn-m-header-h: 56px;

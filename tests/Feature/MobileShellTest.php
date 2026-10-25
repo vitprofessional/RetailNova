@@ -60,6 +60,8 @@ class MobileShellTest extends TestCase
         $this->assertSame(route('newsale'), $xpath->query('//a[@data-rn-tab="sale" and contains(@class,"rn-m-tab--sale")]')->item(0)->getAttribute('href'));
         $this->assertSame(route('reports.index'), $xpath->query('//a[@data-rn-tab="reports"]')->item(0)->getAttribute('href'));
         $this->assertSame('page', $xpath->query('//a[@data-rn-tab="home"]')->item(0)->getAttribute('aria-current'));
+        $saleXpath = $this->xpath($this->get(route('newsale'))->assertOk()->getContent());
+        $this->assertSame('page', $saleXpath->query('//a[@data-rn-tab="sale" and @aria-current="page"]')->item(0)->getAttribute('aria-current'));
         $this->assertSame('#rn-more', $xpath->query('//a[@data-rn-tab="more"]')->item(0)->getAttribute('href'));
 
         $this->assertCount(1, $xpath->query('//*[@id="rn-more" and @role="dialog"]'));
