@@ -48,6 +48,29 @@
   $amountFrac = (int)round(($quote->grand_total - $amountInt) * 100);
   $amountWords = rn_number_to_words($amountInt);
 @endphp
+@mobile
+@include('partials.mobile-document-receipt', ['receipt' => [
+  'status' => __('common.status').' · '.(\Illuminate\Support\Facades\Lang::has('common.'.$quote->status) ? __('common.'.$quote->status) : ucfirst($quote->status)),
+  'amount' => \App\Support\LocalizedNumber::money($quote->grand_total), 'document_label' => __('common.quotation'), 'document_number' => $quote->quote_number,
+  'party_label' => __('common.bill_to'), 'party_name' => \App\Models\Customer::displayLabel($customer, $quote->customer_id, $quote->businessId), 'party_meta' => $customer?->mobile,
+  'items' => $quote->items->map(fn ($item) => ['title' => trim((optional($item->product)->name ?: __('common.product')).($item->description ? ' · '.$item->description : '')), 'detail' => \App\Support\LocalizedNumber::count($item->qty).' × '.\App\Support\LocalizedNumber::money($item->unit_price), 'amount' => \App\Support\LocalizedNumber::money($item->line_total)]),
+  'empty_label' => __('invoices.no_items_found'),
+  'totals' => [
+    ['label' => __('common.subtotal'), 'amount' => \App\Support\LocalizedNumber::money($quote->subtotal)],
+    ['label' => __('common.discount_total'), 'amount' => \App\Support\LocalizedNumber::money($quote->discount_total)],
+    ['label' => __('common.grand_total'), 'amount' => \App\Support\LocalizedNumber::money($quote->grand_total), 'is_total' => true],
+  ],
+  'actions' => [
+    ['url' => route('quotation.print', ['id' => $quote->id]), 'label' => __('common.print'), 'icon' => 'ri-printer-line'],
+    ['type' => 'share', 'label' => __('common.share'), 'icon' => 'ri-share-line'],
+    ['type' => 'copy', 'label' => __('common.copy'), 'icon' => 'ri-file-copy-line'],
+    ['type' => 'pdf', 'label' => __('common.pdf'), 'icon' => 'ri-file-pdf-line'],
+  ],
+  'primary_url' => route('quotation.create'), 'primary_label' => __('common.new_quotation'),
+  'secondary_url' => route('quotation.list'), 'secondary_label' => __('common.back_to_quotations'),
+]])
+@endmobile
+@desktop
 <div class="row">
   <div class="col-12">
     <div class="card" id="rn-invoice-root">
@@ -200,6 +223,7 @@
     </div>
   </div>
 </div>
+@enddesktop
 
 <style>
 #rn-invoice-root { background:#fff; max-width:980px; margin:0 auto; box-shadow: 0 0 20px rgba(0,0,0,.1); border:1px solid #e5e7eb; border-radius:8px; }

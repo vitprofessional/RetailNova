@@ -35,7 +35,7 @@
                             __('mobile.ledger_paid').': '.$money($row['paid']),
                             $row['due'] > 0 ? __('mobile.ledger_due').': '.$money($row['due']) : null,
                         ])),
-                        'badge' => ['label' => __('mobile.ledger_'.$type), 'tone' => 'muted'],
+                        'badge' => null,
                         'actions' => [],
                         ]" />
                     @endforeach

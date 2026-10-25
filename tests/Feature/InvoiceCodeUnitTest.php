@@ -83,7 +83,8 @@ class InvoiceCodeUnitTest extends TestCase
         $admin = \App\Models\AdminUser::find($adminId);
         $this->actingAs($admin, 'admin');
 
-        $response = $this->get(route('invoiceGenerate', ['id' => $saleId]));
+        $response = $this->withHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36')
+            ->get(route('invoiceGenerate', ['id' => $saleId]));
         $response->assertStatus(200);
 
         // ae81261 replaced the printed Unit column with Warranty (days).
@@ -92,6 +93,7 @@ class InvoiceCodeUnitTest extends TestCase
             return $items->count() === 1 && $items->first()->unit === 'UnitX'
                 && (string)$items->first()->warranty_days === '365';
         });
+        $this->assertSame('SKU-123ABC', $response->viewData('items')->first()->productCode);
         $response->assertSee('SKU-123ABC');
         $response->assertSee('Warranty (days)');
         $response->assertSee('data-label="Warranty (days)" class="text-center">365</td>', false);

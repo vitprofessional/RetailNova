@@ -1053,7 +1053,7 @@
         .rn-m-detail-summary .rn-invoice-status--partial { background: var(--rn-color-warning-tint); color: var(--rn-color-warning); }
         #rn-invoice-root.rn-m-sale-invoice { max-width: none; margin: 0; border: 0; border-radius: 0; box-shadow: none; overflow: visible; background: transparent; }
         #rn-invoice-root.rn-m-sale-invoice > .card-body { padding: 0; }
-        .rn-m-sale-invoice-receipt { display: grid; gap: 12px; }
+        .rn-m-sale-invoice-receipt, .rn-m-document-receipt { display: grid; gap: 12px; }
         .rn-m-invoice-receipt-card { overflow: hidden; padding: 16px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); box-shadow: var(--rn-shadow-card); }
         .rn-m-invoice-customer { display: grid; gap: 3px; padding-bottom: 12px; border-bottom: 1px solid var(--rn-color-border); }
         .rn-m-invoice-customer > span, .rn-m-invoice-line small { color: var(--rn-color-muted); font-size: var(--rn-type-helper); }
@@ -1071,9 +1071,13 @@
         .rn-m-invoice-totals .is-total { margin-top: 4px; padding-top: 10px; border-top: 1px dashed var(--rn-color-border); color: var(--rn-color-primary); font-weight: 700; }
         .rn-m-invoice-totals .is-total dd { color: var(--rn-color-primary); font-size: var(--rn-type-card-amount); }
         .rn-m-invoice-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-        .rn-m-invoice-actions > a, .rn-m-invoice-actions > button { display: grid; min-height: var(--rn-touch); place-items: center; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); background: var(--rn-color-surface); color: var(--rn-color-primary); font-size: var(--rn-icon-header); text-decoration: none; }
+        .rn-m-invoice-actions > a, .rn-m-invoice-actions > button { display: grid; min-height: var(--rn-touch); align-content: center; justify-items: center; gap: 2px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); background: var(--rn-color-surface); color: var(--rn-color-primary); font-size: var(--rn-icon-header); text-decoration: none; }
+        .rn-m-invoice-actions i { font-size: var(--rn-icon-header); line-height: 1; }
+        .rn-m-invoice-actions small { color: var(--rn-color-muted); font-size: var(--rn-type-helper); font-weight: 600; }
         .rn-m-invoice-primary { display: flex; min-height: 54px; align-items: center; justify-content: space-between; padding: 0 16px; border-radius: 14px; background: var(--rn-color-primary); color: var(--rn-color-on-primary); font-size: var(--rn-type-button); font-weight: 700; text-decoration: none; }
         .rn-m-invoice-primary:hover, .rn-m-invoice-primary:focus { color: var(--rn-color-on-primary); }
+        .rn-m-invoice-secondary { display: block; padding: 10px 16px; color: var(--rn-color-primary); font-size: var(--rn-type-body); font-weight: 600; text-align: center; text-decoration: none; }
+        .rn-m-document-receipt-ctas { display: grid; gap: 4px; }
         body.rn-app:has(.rn-m-detail-page) .rn-m-tabbar,
         body.rn-app:has(.rn-m-sale-invoice) .rn-m-tabbar { display: none !important; }
         body.rn-app:has(.rn-m-detail-page) .content-page,

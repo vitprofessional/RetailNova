@@ -1,6 +1,27 @@
 @extends('include')
 @section('backTitle'){{ __('common.heading_service_invoice') }}@endsection
 @section('container')
+@mobile
+@include('partials.mobile-document-receipt', ['receipt' => [
+    'status' => __('common.status').' · '.__('common.service_invoice'),
+    'amount' => \App\Support\LocalizedNumber::money($invoice->total_amount), 'document_label' => __('common.service_invoice'), 'document_number' => $invoice->invoice_number,
+    'party_label' => __('invoices.bill_to'),
+    'party_name' => $customer ? \App\Models\Customer::displayLabel($customer, $invoice->customer_id, $invoice->businessId) : __('invoices.walking_customer'),
+    'party_meta' => $customer?->mobile,
+    'items' => $invoice->items->map(fn ($item) => ['title' => $item->service_name, 'detail' => \App\Support\LocalizedNumber::count($item->qty).' × '.\App\Support\LocalizedNumber::money($item->rate), 'amount' => \App\Support\LocalizedNumber::money($item->line_total)]),
+    'empty_label' => __('invoices.no_items_found'),
+    'totals' => [['label' => __('invoices.total'), 'amount' => \App\Support\LocalizedNumber::money($invoice->total_amount), 'is_total' => true]],
+    'actions' => [
+        ['url' => route('serviceInvoicePrint',['id'=>$invoice->id]), 'label' => __('common.print'), 'icon' => 'ri-printer-line'],
+        ['type' => 'share', 'label' => __('common.share'), 'icon' => 'ri-share-line'],
+        ['type' => 'copy', 'label' => __('common.copy'), 'icon' => 'ri-file-copy-line'],
+        ['type' => 'pdf', 'label' => __('common.pdf'), 'icon' => 'ri-file-pdf-line'],
+    ],
+    'primary_url' => route('provideService'), 'primary_label' => __('navigation.new_service'),
+    'secondary_url' => route('serviceProvideList'), 'secondary_label' => __('navigation.service_history'),
+]])
+@endmobile
+@desktop
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -86,6 +107,7 @@
         </div>
     </div>
 </div>
+@enddesktop
 @endsection
 
 @section('scripts')

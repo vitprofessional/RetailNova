@@ -41,9 +41,10 @@ class MobileInvoiceVariantsTest extends TestCase
         $this->actingAs($actor, 'admin')
             ->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 14) Mobile')
             ->get(route('purchase.invoice.show', $invoice->id))
-            ->assertOk()->assertSee('rn-m-detail-summary', false)
+            ->assertOk()->assertSee('data-mobile-document-receipt', false)
             ->assertSee('Mobile Purchase Cable')->assertDontSee(__('purchases.no_items'))
-            ->assertDontSee('invoice-qr-section')->assertDontSee('data-invoice-qr');
+            ->assertDontSee('invoice-qr-section')->assertDontSee('data-invoice-qr')
+            ->assertDontSee('id="purchaseInvoicePrint"', false)->assertDontSee('<div class="invoice-header">', false);
     }
 
     public function test_mobile_quotation_and_service_invoice_render_their_lines_without_qr_markup(): void
@@ -74,11 +75,13 @@ class MobileInvoiceVariantsTest extends TestCase
 
         $this->actingAs($actor, 'admin')->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 14) Mobile');
         $this->get(route('quotation.show', $quote->id))->assertOk()
-            ->assertSee('rn-m-detail-summary', false)->assertSee('Mobile Quote Product')
-            ->assertSee('Mobile quote line')->assertDontSee('invoice-qr-section')->assertDontSee('data-invoice-qr');
+            ->assertSee('data-mobile-document-receipt', false)->assertSee('Mobile Quote Product')
+            ->assertSee('Mobile quote line')->assertDontSee('invoice-qr-section')->assertDontSee('data-invoice-qr')
+            ->assertDontSee('<div class="invoice-header">', false);
         $this->get(route('serviceInvoiceView', $serviceInvoice->id))->assertOk()
-            ->assertSee('rn-m-detail-summary', false)->assertSee('Mobile Screen Repair')
-            ->assertDontSee('invoice-qr-section')->assertDontSee('data-invoice-qr');
+            ->assertSee('data-mobile-document-receipt', false)->assertSee('Mobile Screen Repair')
+            ->assertDontSee('invoice-qr-section')->assertDontSee('data-invoice-qr')
+            ->assertDontSee('rn-m-service-invoice-header', false);
     }
 
     private function businessAndActor(): array

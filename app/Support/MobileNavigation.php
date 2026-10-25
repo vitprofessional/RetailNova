@@ -40,6 +40,9 @@ class MobileNavigation
         'productlist' => 'mobile.stock_management', 'addCustomer' => 'mobile.customer_and_due',
         'quotation.list' => 'mobile.quotation',
         'returnSaleList' => 'mobile.returns', 'damageProductList' => 'mobile.damaged_items',
+        'provideService' => 'mobile.service', 'serviceProvideList' => 'mobile.service_list',
+        'addServiceName' => 'mobile.service_types', 'addProductUnit' => 'mobile.unit',
+        'serialList' => 'mobile.serial', 'rma.index' => 'mobile.warranty',
     ];
 
     /** Home shortcuts in order of preference; the first eight the user may open are shown. */

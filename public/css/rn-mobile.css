@@ -241,21 +241,20 @@
         line-height: 1.2;
         text-align: center;
         text-decoration: none;
-        white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis;
     }
     .rn-m-grid-item:hover,
     .rn-m-grid-item:focus-visible { color: var(--rn-color-primary); text-decoration: none; }
     .rn-m-grid-label {
         display: block;
         max-width: 100%;
+        display: -webkit-box;
         overflow: hidden;
         font-size: var(--rn-type-menu-label);
         font-weight: 600;
         line-height: 1.2;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
     }
     .rn-m-grid-icon {
         display: grid;

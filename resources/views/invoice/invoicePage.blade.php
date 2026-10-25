@@ -74,50 +74,36 @@
 
 <div class="card printer-shell rn-m-sale-invoice" id="rn-invoice-root" data-printer-variant="{{ $printVariant }}">
   <div class="card-body">
-    @mobile
-    <main class="rn-m-detail-page rn-m-sale-invoice-receipt" data-mobile-sale-invoice>
-      <header class="rn-m-detail-summary">
-        <span class="rn-m-detail-summary__status rn-invoice-status--{{ strtolower($paymentStatus) }}">{{ __('common.status') }} · {{ __($paymentBadge === 'success' ? 'purchases.paid' : ($paymentBadge === 'warning' ? 'purchases.partial' : 'purchases.due')) }}</span>
-        <strong>{{ \App\Support\LocalizedNumber::money($grandTotal) }}</strong>
-        <small>{{ __('common.invoice') }} · {{ $invoice->invoice }}</small>
-      </header>
-      <section class="rn-m-invoice-receipt-card" aria-label="{{ __('invoices.invoice') }}">
-        <div class="rn-m-invoice-customer"><span>{{ __('invoices.bill_to') }}</span><strong>{{ \App\Models\Customer::displayLabel($customer ?? null, $invoice->customerId, $invoice->businessId) }}</strong>@if($customer?->mobile)<small>{{ $customer->mobile }}</small>@endif</div>
-        <div class="rn-m-invoice-lines" data-invoice-lines>
-          @forelse($items as $item)
-            @php $line = (float)($item->totalSale ?? (($item->salePrice ?? 0) * ($item->qty ?? 0))); @endphp
-            @php $lineSerials = isset($serialsByPurchase) ? ($serialsByPurchase[$item->purchaseId] ?? collect()) : collect(); @endphp
-            <article class="rn-m-invoice-line" data-invoice-product><div><strong>{{ $item->productName }}</strong><small>{{ \App\Support\LocalizedNumber::count($item->qty ?? 0) }} × {{ \App\Support\LocalizedNumber::money($item->salePrice ?? 0) }}</small>@if($lineSerials->isNotEmpty())<small>{{ __('common.s_n') }}: {{ $lineSerials->pluck('serialNumber')->join(', ') }}</small>@endif</div><strong>{{ \App\Support\LocalizedNumber::money($line) }}</strong></article>
-          @empty
-            <p class="rn-m-invoice-empty">{{ __('invoices.no_items_found') }}</p>
-          @endforelse
-        </div>
-        <dl class="rn-m-invoice-totals">
-          <div><dt>{{ __('invoices.subtotal') }}</dt><dd>{{ \App\Support\LocalizedNumber::money($items->sum(fn ($item) => (float)($item->totalSale ?? (($item->salePrice ?? 0) * ($item->qty ?? 0))))) }}</dd></div>
-          @if((float)($invoice->additionalChargeAmount ?? 0) > 0)<div><dt>{{ $invoice->additionalChargeName ?: __('common.additional_charge') }}</dt><dd>{{ \App\Support\LocalizedNumber::money($invoice->additionalChargeAmount) }}</dd></div>@endif
-          @if((float)($invoice->discountAmount ?? 0) > 0)<div><dt>{{ __('invoices.discount') }}</dt><dd>− {{ \App\Support\LocalizedNumber::money($invoice->discountAmount) }}</dd></div>@endif
-          <div class="is-total"><dt>{{ __('invoices.grand_total') }}</dt><dd>{{ \App\Support\LocalizedNumber::money($grandTotal) }}</dd></div>
-          <div><dt>{{ __('invoices.paid') }}</dt><dd>{{ \App\Support\LocalizedNumber::money($paidAmount) }}</dd></div>
-          <div><dt>{{ __('invoices.due') }}</dt><dd>{{ \App\Support\LocalizedNumber::money($currentDue) }}</dd></div>
-        </dl>
-      </section>
-      <nav class="rn-m-invoice-actions" aria-label="{{ __('common.actions') }}">
-        <a href="{{ route('invoiceThermalPrint', ['id' => $invoice->id, 'printer' => 'thermal80']) }}" aria-label="{{ __('invoices.print_selected') }}"><i class="ri-printer-line" aria-hidden="true"></i></a>
-        <button type="button" data-invoice-share aria-label="{{ __('common.share') }}"><i class="ri-share-line" aria-hidden="true"></i></button>
-        <button type="button" data-invoice-copy aria-label="{{ __('common.copy') }}"><i class="ri-file-copy-line" aria-hidden="true"></i></button>
-        <button type="button" data-invoice-print aria-label="{{ __('invoices.a4_invoice') }}"><i class="ri-file-pdf-line" aria-hidden="true"></i></button>
-      </nav>
-      <a class="rn-m-invoice-primary" href="{{ route('saleList') }}">{{ __('invoices.back_to_sales') }}<i class="ri-arrow-right-line" aria-hidden="true"></i></a>
-    </main>
-    <script>
-      (() => {
-        const receipt = document.querySelector('[data-mobile-sale-invoice]');
-        const copy = receipt?.querySelector('[data-invoice-copy]');
-        copy?.addEventListener('click', async () => { try { await navigator.clipboard.writeText(window.location.href); } catch (_) { window.prompt(@json(__('common.copy')), window.location.href); } });
-        receipt?.querySelector('[data-invoice-share]')?.addEventListener('click', async () => { if (navigator.share) await navigator.share({title: document.title, url: window.location.href}); else { try { await navigator.clipboard.writeText(window.location.href); } catch (_) {} } });
-        receipt?.querySelector('[data-invoice-print]')?.addEventListener('click', () => window.print());
-      })();
-    </script>
+    @if(app(\App\Support\MobileView::class)->isMobile())
+    @php $serialsByPurchase = $serialsByPurchase ?? []; @endphp
+    @include('partials.mobile-document-receipt', ['receipt' => [
+      'status' => __('common.status').' · '.__($paymentBadge === 'success' ? 'purchases.paid' : ($paymentBadge === 'warning' ? 'purchases.partial' : 'purchases.due')),
+      'amount' => \App\Support\LocalizedNumber::money($grandTotal), 'document_label' => __('common.invoice'), 'document_number' => $invoice->invoice,
+      'party_label' => __('invoices.bill_to'), 'party_name' => \App\Models\Customer::displayLabel($customer ?? null, $invoice->customerId, $invoice->businessId),
+      'party_meta' => $customer?->mobile,
+      'items' => $items->map(function ($item) use ($serialsByPurchase) {
+        $lineSerials = ($serialsByPurchase ?? [])[$item->purchaseId] ?? collect();
+        return ['title' => $item->productName, 'detail' => \App\Support\LocalizedNumber::count($item->qty ?? 0).' × '.\App\Support\LocalizedNumber::money($item->salePrice ?? 0).($lineSerials->isNotEmpty() ? ' · '.__('common.s_n').': '.$lineSerials->pluck('serialNumber')->join(', ') : ''), 'amount' => \App\Support\LocalizedNumber::money($item->totalSale ?? (($item->salePrice ?? 0) * ($item->qty ?? 0)))];
+      }),
+      'empty_label' => __('invoices.no_items_found'),
+      'totals' => array_filter([
+        ['label' => __('invoices.subtotal'), 'amount' => \App\Support\LocalizedNumber::money($items->sum(fn ($item) => (float)($item->totalSale ?? (($item->salePrice ?? 0) * ($item->qty ?? 0)))))],
+        (float)($invoice->additionalChargeAmount ?? 0) > 0 ? ['label' => $invoice->additionalChargeName ?: __('common.additional_charge'), 'amount' => \App\Support\LocalizedNumber::money($invoice->additionalChargeAmount)] : null,
+        (float)($invoice->discountAmount ?? 0) > 0 ? ['label' => __('invoices.discount'), 'amount' => '− '.\App\Support\LocalizedNumber::money($invoice->discountAmount)] : null,
+        ['label' => __('invoices.grand_total'), 'amount' => \App\Support\LocalizedNumber::money($grandTotal), 'is_total' => true],
+        ['label' => __('invoices.paid'), 'amount' => \App\Support\LocalizedNumber::money($paidAmount)],
+        ['label' => __('invoices.due'), 'amount' => \App\Support\LocalizedNumber::money($currentDue)],
+      ]),
+      'actions' => [
+        ['url' => route('invoiceThermalPrint', ['id' => $invoice->id, 'printer' => 'thermal80']), 'label' => __('common.print'), 'icon' => 'ri-printer-line'],
+        ['type' => 'share', 'label' => __('common.share'), 'icon' => 'ri-share-line'],
+        ['type' => 'copy', 'label' => __('common.copy'), 'icon' => 'ri-file-copy-line'],
+        ['type' => 'pdf', 'label' => __('common.pdf'), 'icon' => 'ri-file-pdf-line'],
+      ],
+      'primary_url' => route('newsale'), 'primary_label' => __('mobile.new_sale'),
+      'secondary_url' => route('saleList'), 'secondary_label' => __('navigation.sale_list'),
+      'sale' => true,
+    ]])
     @else
     <div id="invoiceBodyA4" class="invoice-body-block {{ $isThermal ? 'd-none' : '' }}">
     <!-- Professional Header -->
@@ -604,7 +590,7 @@
         <a class="btn btn-primary btn-sm" href="{{ route('saleList') }}"><i class="las la-arrow-left"></i> {{ __('invoices.back_to_sales') }}</a>
       </div>
     </div>
-    @endmobile
+    @endif
   </div>
 </div>
 
@@ -1784,5 +1770,5 @@
   }
   // Apply on beforeprint for direct window.print
   try{ window.addEventListener('beforeprint', setAckBreakClass); }catch(e){}
-</script>
+    </script>
 @endsection

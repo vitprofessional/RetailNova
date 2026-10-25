@@ -44,6 +44,7 @@ return [
     'please_login_to_continue' => 'Please login to continue',
     'price' => 'Price',
     'print' => 'Print',
+    'pdf' => 'PDF',
     'product' => 'Product',
     'product_name' => 'Product Name',
     'qty' => 'Qty',

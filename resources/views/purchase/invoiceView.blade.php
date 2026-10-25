@@ -4,11 +4,34 @@
 <link rel="stylesheet" href="{{ asset('css/purchase-invoice.css') }}">
 @endpush
 @section('container')
-<div class="col-12 rn-invoice-shell"><div class="card"><div class="card-body" id="purchaseInvoicePrint">
+<div class="col-12 rn-invoice-shell">
 @php $paymentStatus=$invoice->due_amount<=0 ? 'paid' : ($invoice->paid_amount>0 ? 'partial' : 'due'); @endphp
 @mobile
-<div class="rn-m-detail-summary"><span class="rn-m-detail-summary__status rn-invoice-status--{{ $paymentStatus }}">{{ __('purchases.payment_status') }} · {{ __('purchases.'.$paymentStatus) }}</span><strong>{{ \App\Support\LocalizedNumber::money($invoice->grand_total) }}</strong><small>{{ __('purchases.invoice') }} · {{ $invoice->invoice }}</small></div>
+@include('partials.mobile-document-receipt', ['receipt' => [
+    'status' => __('purchases.payment_status').' · '.__('purchases.'.$paymentStatus),
+    'amount' => \App\Support\LocalizedNumber::money($invoice->grand_total), 'document_label' => __('purchases.invoice'), 'document_number' => $invoice->invoice,
+    'party_label' => __('purchases.supplier'), 'party_name' => $invoice->supplier?->name ?: __('mobile.suppliers'), 'party_meta' => null,
+    'items' => $items->map(fn ($line) => ['title' => $line->product?->name ?: __('common.product').' #'.$line->productName, 'detail' => \App\Support\LocalizedNumber::count($line->qty).' × '.\App\Support\LocalizedNumber::money($line->buyPrice), 'amount' => \App\Support\LocalizedNumber::money($line->totalAmount)]),
+    'empty_label' => __('purchases.no_items'),
+    'totals' => [
+        ['label' => __('common.subtotal'), 'amount' => \App\Support\LocalizedNumber::money($invoice->total_amount)],
+        ['label' => __('purchases.discount'), 'amount' => \App\Support\LocalizedNumber::money($invoice->discount_amount)],
+        ['label' => __('purchases.grand_total'), 'amount' => \App\Support\LocalizedNumber::money($invoice->grand_total), 'is_total' => true],
+        ['label' => __('purchases.paid_amount'), 'amount' => \App\Support\LocalizedNumber::money($invoice->paid_amount)],
+        ['label' => __('purchases.due_amount'), 'amount' => \App\Support\LocalizedNumber::money($invoice->due_amount)],
+    ],
+    'actions' => [
+        ['type' => 'print', 'label' => __('common.print'), 'icon' => 'ri-printer-line'],
+        ['type' => 'share', 'label' => __('common.share'), 'icon' => 'ri-share-line'],
+        ['type' => 'copy', 'label' => __('common.copy'), 'icon' => 'ri-file-copy-line'],
+        ['type' => 'pdf', 'label' => __('common.pdf'), 'icon' => 'ri-file-pdf-line'],
+    ],
+    'primary_url' => route('addPurchase'), 'primary_label' => __('mobile.purchase'),
+    'secondary_url' => route('purchaseList'), 'secondary_label' => __('purchases.purchased_items'),
+]])
 @endmobile
+@desktop
+<div class="card"><div class="card-body" id="purchaseInvoicePrint">
 @include('purchase.invoiceHeader',['editing'=>false])
 @if(session('status'))<p class="alert alert-success rn-purchase-no-print" role="status">{{ session('status') }}</p>@endif
 @if($errors->any())<div class="alert alert-danger rn-purchase-no-print" role="alert">{{ $errors->first() }}</div>@endif
@@ -26,5 +49,7 @@
 <section class="rn-invoice-section"><h2>{{ __('purchases.financial_summary') }}</h2><dl class="rn-invoice-summary">
 <div><dt>{{ __('common.subtotal') }}</dt><dd>@mobile{{ \App\Support\LocalizedNumber::money($invoice->total_amount) }}@else@money($invoice->total_amount)@endmobile</dd></div><div><dt>{{ __('purchases.discount') }}</dt><dd>@mobile{{ \App\Support\LocalizedNumber::money($invoice->discount_amount) }}@else@money($invoice->discount_amount)@endmobile</dd></div><div class="rn-invoice-grand"><dt>{{ __('purchases.grand_total') }}</dt><dd>@mobile{{ \App\Support\LocalizedNumber::money($invoice->grand_total) }}@else@money($invoice->grand_total)@endmobile</dd></div><div><dt>{{ __('purchases.paid_amount') }}</dt><dd>@mobile{{ \App\Support\LocalizedNumber::money($invoice->paid_amount) }}@else@money($invoice->paid_amount)@endmobile</dd></div><div class="rn-invoice-due"><dt>{{ __('purchases.due_amount') }}</dt><dd>@mobile{{ \App\Support\LocalizedNumber::money($invoice->due_amount) }}@else@money($invoice->due_amount)@endmobile</dd></div></dl></section></div>
 <div class="rn-purchase-no-print rn-invoice-footer"><form method="POST" action="{{ route('purchase.invoice.destroy',$invoice->id) }}">@csrf @method('DELETE')<button type="submit" data-confirm="delete" class="btn btn-outline-danger">{{ __('common.delete') }}</button></form></div>
-</div></div></div><script src="{{ asset('js/purchase-invoice.js') }}" defer></script>
+</div></div><script src="{{ asset('js/purchase-invoice.js') }}" defer></script>
+@enddesktop
+</div>
 @endsection

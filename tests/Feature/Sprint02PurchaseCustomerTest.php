@@ -355,11 +355,12 @@ class Sprint02PurchaseCustomerTest extends TestCase
         $invoice=$this->createInvoice([2=>['VIEW-A1','VIEW-A2'],7=>['VIEW-B1']]);
         foreach (['en','bn'] as $locale) {
             auth('admin')->user()->forceFill(['preferred_locale'=>$locale])->save();
-            $view=$this->get(route('purchase.invoice.show',$invoice->id))->assertOk();
+            $desktopAgent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/129.0 Safari/537.36';
+            $view=$this->withHeader('User-Agent',$desktopAgent)->get(route('purchase.invoice.show',$invoice->id))->assertOk();
             $view->assertSee(__('purchases.invoice_overview'))->assertSee(__('purchases.financial_summary'))
                 ->assertSee('VIEW-A1')->assertSee('VIEW-B1')->assertSee('data-invoice-serials',false)
                 ->assertSee(route('purchaseList'),false)->assertSee('purchaseInvoicePrintButton',false);
-            $edit=$this->get(route('purchase.invoice.edit',$invoice->id))->assertOk();
+            $edit=$this->withHeader('User-Agent',$desktopAgent)->get(route('purchase.invoice.edit',$invoice->id))->assertOk();
             $edit->assertSee('data-invoice-back',false)->assertSee('data-invoice-cancel',false)
                 ->assertSee('id="purchaseInvoiceSaveButton" type="submit"',false)
                 ->assertSee('id="purchaseInvoiceEditTable"',false)->assertSee('id="serialModal"',false)

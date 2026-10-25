@@ -1,5 +1,5 @@
 @extends('include')
-@section('backTitle'){{ __('common.heading_reports_dashboard') }}@endsection
+@section('backTitle'){{ request()->routeIs('reports.index') ? __('mobile.reports') : __('common.heading_reports_dashboard') }}@endsection
 @section('container')
 @mobile
 @php

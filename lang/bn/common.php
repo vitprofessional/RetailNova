@@ -44,6 +44,7 @@ return [
     'please_login_to_continue' => 'এগিয়ে যেতে লগইন করুন',
     'price' => 'মূল্য',
     'print' => 'প্রিন্ট',
+    'pdf' => 'PDF',
     'product' => 'পণ্য',
     'product_name' => 'পণ্যের নাম',
     'qty' => 'পরিমাণ',
