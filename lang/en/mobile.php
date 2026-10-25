@@ -174,6 +174,8 @@ return [
     'no_image_selected' => 'No image selected',
     'remove_image' => 'Remove image',
     'image_file_rules' => 'JPG, PNG or WebP · up to 4MB',
+    'image_too_large' => 'The image is too large.',
+    'image_invalid' => 'The image could not be read.',
     'no_file_selected' => 'No file selected',
     'summary_sales' => 'Sales',
     'summary_received' => 'Received',

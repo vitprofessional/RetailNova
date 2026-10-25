@@ -5,6 +5,7 @@ namespace App\Support;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 /** Stores public, tenant-owned catalog and branding images. */
@@ -23,6 +24,22 @@ class BusinessUploads
     /** Store a random, optimized image and a 160px thumbnail; return its public-relative path. */
     public function store(UploadedFile $file, int $businessId, string $type): string
     {
+        // Inspect the image header before decoding it. GD can allocate a large
+        // amount of memory while decoding decompression-bomb-sized images.
+        $dimensions = @getimagesize($file->getRealPath());
+        if ($dimensions === false) {
+            throw ValidationException::withMessages([
+                'image' => __('mobile.image_invalid'),
+            ]);
+        }
+
+        [$width, $height] = $dimensions;
+        if ($width > 6000 || $height > 6000 || ($width * $height) > 30_000_000) {
+            throw ValidationException::withMessages([
+                'image' => __('mobile.image_too_large'),
+            ]);
+        }
+
         $directory = $this->path($businessId, $type);
         File::ensureDirectoryExists($directory, 0755, true);
 
@@ -39,6 +56,8 @@ class BusinessUploads
         if ($image === false) {
             throw new InvalidArgumentException('The uploaded file is not a supported image.');
         }
+
+        $image = $this->applyExifOrientation($image, $file->getRealPath(), $dimensions['mime'] ?? '');
 
         $image = $this->resize($image, 800, 800);
         $extension = function_exists('imagewebp') ? 'webp' : 'jpg';
@@ -57,6 +76,44 @@ class BusinessUploads
         }
 
         return 'uploads/'.$businessId.'/'.$type.'/'.$name;
+    }
+
+    /** Apply JPEG EXIF orientation when the optional EXIF extension is installed. */
+    private function applyExifOrientation(\GdImage $image, string $path, string $mime): \GdImage
+    {
+        if ($mime !== 'image/jpeg' || !function_exists('exif_read_data')) {
+            return $image;
+        }
+
+        $metadata = @exif_read_data($path);
+        $orientation = (int) ($metadata['Orientation'] ?? 1);
+        $flip = null;
+        $rotation = 0;
+
+        switch ($orientation) {
+            case 2: $flip = IMG_FLIP_HORIZONTAL; break;
+            case 3: $rotation = 180; break;
+            case 4: $flip = IMG_FLIP_VERTICAL; break;
+            case 5: $flip = IMG_FLIP_HORIZONTAL; $rotation = 90; break;
+            case 6: $rotation = -90; break;
+            case 7: $flip = IMG_FLIP_HORIZONTAL; $rotation = -90; break;
+            case 8: $rotation = 90; break;
+            default: return $image;
+        }
+
+        if ($flip !== null && function_exists('imageflip')) {
+            imageflip($image, $flip);
+        }
+        if ($rotation === 0 || !function_exists('imagerotate')) {
+            return $image;
+        }
+
+        $rotated = imagerotate($image, $rotation, 0);
+        if ($rotated === false) {
+            return $image;
+        }
+        imagedestroy($image);
+        return $rotated;
     }
 
     public function thumbnail(string|null $relativePath): ?string

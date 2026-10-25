@@ -154,4 +154,52 @@ class BusinessImageUploadsTest extends TestCase
 
         $this->get(route('expense.receipt', $expense->id))->assertNotFound();
     }
+
+    public function test_images_over_dimension_limits_return_a_validation_error_before_gd_decode(): void
+    {
+        $this->app->setLocale('bn');
+        $this->withSession(['locale' => 'bn']);
+        $admin = AdminUser::query()->firstOrFail();
+        $admin->forceFill(['preferred_locale' => 'bn'])->save();
+        auth('admin')->setUser($admin->fresh());
+        $this->postJson(route('saveProduct'), [
+            'name' => 'Oversized Photo Product',
+            'image' => UploadedFile::fake()->image('oversized.png', 6001, 1),
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('image')
+            ->assertJsonPath('errors.image.0', 'ছবিটা অনেক বড়');
+
+        $this->assertDatabaseMissing('products', ['name' => 'Oversized Photo Product']);
+    }
+
+    public function test_jpeg_exif_orientation_six_is_applied_when_exif_is_available(): void
+    {
+        if (!function_exists('exif_read_data') || !function_exists('imagecreatetruecolor')) {
+            $this->markTestSkipped('JPEG EXIF orientation requires the optional EXIF extension and GD.');
+        }
+
+        $source = imagecreatetruecolor(20, 40);
+        $color = imagecolorallocate($source, 20, 130, 120);
+        imagefill($source, 0, 0, $color);
+        ob_start();
+        imagejpeg($source, null, 90);
+        $jpeg = (string) ob_get_clean();
+        imagedestroy($source);
+
+        // A minimal little-endian EXIF IFD containing Orientation=6.
+        $tiff = 'II'.pack('v', 42).pack('V', 8).pack('v', 1)
+            .pack('v', 0x0112).pack('v', 3).pack('V', 1).pack('v', 6).pack('v', 0)
+            .pack('V', 0);
+        $payload = "Exif\0\0".$tiff;
+        $app1 = "\xFF\xE1".pack('n', strlen($payload) + 2).$payload;
+        $orientedJpeg = substr($jpeg, 0, 2).$app1.substr($jpeg, 2);
+
+        $upload = UploadedFile::fake()->createWithContent('portrait.jpg', $orientedJpeg);
+        $stored = app(BusinessUploads::class)->store($upload, 1, 'products');
+        $this->storedTestPaths[] = $stored;
+
+        $dimensions = getimagesize(public_path($stored));
+        $this->assertSame(40, $dimensions[0]);
+        $this->assertSame(20, $dimensions[1]);
+    }
 }

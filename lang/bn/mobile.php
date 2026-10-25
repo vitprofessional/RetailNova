@@ -174,6 +174,8 @@ return [
     'no_image_selected' => 'কোনো ছবি নির্বাচন করা হয়নি',
     'remove_image' => 'ছবি সরান',
     'image_file_rules' => 'JPG, PNG বা WebP · সর্বোচ্চ ৪MB',
+    'image_too_large' => 'ছবিটা অনেক বড়',
+    'image_invalid' => 'ছবিটি পড়া যাচ্ছে না।',
     'no_file_selected' => 'কোনো ফাইল বাছাই করা হয়নি',
     'summary_sales' => 'মোট বিক্রি',
     'summary_received' => 'পেয়েছি',
