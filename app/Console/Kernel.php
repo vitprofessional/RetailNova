@@ -21,7 +21,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Keep a small file-based heartbeat so `retailnova:preflight` can verify cron.
+        $schedule->call(fn () => app(\App\Support\SchedulerHeartbeat::class)->record())
+            ->everyMinute()
+            ->name('retailnova:preflight-heartbeat');
     }
 
     /**
