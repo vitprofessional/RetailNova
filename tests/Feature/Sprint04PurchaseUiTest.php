@@ -57,7 +57,7 @@ class Sprint04PurchaseUiTest extends TestCase
             $this->assertSame('post',strtolower($xpath->query('//*[@id="savePurchase"]')->item(0)->getAttribute('method')));
             $this->assertSame(route('savePurchase'),$xpath->query('//*[@id="savePurchase"]')->item(0)->getAttribute('action'));
             $this->assertSame(1,$xpath->query('//*[@id="savePurchase"]//*[@name="_token"]')->length);
-            $this->assertSame(2,$xpath->query('//*[@id="savePurchase"]//a[@data-purchase-leave]')->length);
+            $this->assertSame(3,$xpath->query('//*[@id="savePurchase"]//a[@data-purchase-leave]')->length);
             foreach($xpath->query('//*[@id="savePurchase"]//a[@data-purchase-leave]') as $link){$this->assertSame(route('purchaseList'),$link->getAttribute('href'));}
             $this->assertSame(1,$xpath->query('//*[@data-purchase-debug and @hidden]')->length);
             foreach(['purchaseInformationTitle','purchaseAddProductsTitle','purchaseItemsTitle','purchaseSummaryTitle','serialModal','serialNumberBox','saveSerials','add-serial','autoGenerateSerials','purchase-row-template'] as $id){$this->assertSame(1,$xpath->query('//*[@id="'.$id.'"]')->length,'Lost UI contract '.$id);}

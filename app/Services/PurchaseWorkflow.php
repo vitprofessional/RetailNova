@@ -90,6 +90,7 @@ class PurchaseWorkflow
             $rows[$key]=['id'=>$get('purchaseId'),'product_id'=>$product,'qty'=>$get('quantity'),
                 'buy_price'=>$get('buyPrice',0),'sale_price'=>$get('salePriceExVat',0),
                 'vat_percent'=>$get('vatPercent',0),'vat_included'=>$get('vatStatus',0),
+                'warranty_days'=>$get('warranty_days'),
                 'serials'=>$input['serialNumber'][$key]??[]];
         }
         return $rows;
@@ -128,6 +129,8 @@ class PurchaseWorkflow
                 if(!isset($seen[$id])) {$this->removeLine($line);}
             }
             $type=(string)($input['discountStatus']??$header->discount_type??'');
+            $paymentMethod=$input['payment_method']??$header->payment_method;
+            if($paymentMethod!==null && !in_array($paymentMethod,['cash','bkash','nagad','bank','due'],true)) {$this->fail('invalid_payment_method','payment_method');}
             $percent=(float)($input['discountPercent']??$header->discount_percent??0);
             $discount=$type==='2' ? round($base*$percent/100,2) : (float)($input['discountAmount']??$header->discount_amount??0);
             if($percent<0 || $percent>100 || $discount<0 || $discount>$base) {$this->fail('invalid_discount');}
@@ -136,7 +139,8 @@ class PurchaseWorkflow
             if($old->isNotEmpty() && isset($input['paidAmount']) && abs((float)$input['paidAmount']-$paid)>0.001) {$this->fail('payment_immutable','paidAmount');}
             if($paid<0 || $paid>$grand) {$this->fail('paid_exceeds','paidAmount');}
             $header->fill(['total_amount'=>round($base,2),'discount_type'=>$type,'discount_percent'=>$percent,
-                'discount_amount'=>$discount,'grand_total'=>$grand,'paid_amount'=>$paid,'due_amount'=>round($grand-$paid,2)])->save();
+                'discount_amount'=>$discount,'grand_total'=>$grand,'paid_amount'=>$paid,'due_amount'=>round($grand-$paid,2),
+                'payment_method'=>$paymentMethod])->save();
             // Allocate invoice amounts once across lines so legacy supplier reports that sum
             // purchase_products do not multiply payments or balances by item count.
             $leftGrand=(int)round($grand*100);$leftPaid=(int)round($paid*100);$leftDiscount=(int)round($discount*100);
@@ -146,6 +150,7 @@ class PurchaseWorkflow
                 $p=$last?$leftPaid:min($leftPaid,$g,($leftGrand>0 ? (int)round($leftPaid*$g/$leftGrand) : 0));
                 $d=$last?$leftDiscount:min($leftDiscount,(int)round($discount*100*$weight));
                 $line->grandTotal=$g/100;$line->paidAmount=$p/100;$line->dueAmount=($g-$p)/100;
+                $line->payment_method=$paymentMethod;
                 $line->disAmount=$d/100;$line->disType=$type;$line->disParcent=$percent;$line->save();
                 $leftGrand-=$g;$leftPaid-=$p;$leftDiscount-=$d;
             }
@@ -170,6 +175,10 @@ class PurchaseWorkflow
         $line->qty=$qty;$line->buyPrice=round((float)$price,2);$line->salePriceExVat=round((float)$sale,2);
         $line->profit=$line->buyPrice>0 ? round(($line->salePriceExVat-$line->buyPrice)/$line->buyPrice*100,2) : 0;
         $line->vatPercent=$vat;$line->vatStatus=!empty($row['vat_included']);
+        $warranty=$row['warranty_days']??$line->warranty_days;
+        $validatedWarranty=$warranty===null || $warranty==='' ? null : filter_var($warranty,FILTER_VALIDATE_INT);
+        if($warranty!==null && $warranty!=='' && ($validatedWarranty===false || (int)$validatedWarranty<0 || (int)$validatedWarranty>36500)) {$this->fail('invalid_line');}
+        $line->warranty_days=$warranty!==null && $warranty!=='' ? (string)(int)$warranty : null;
         $line->salePriceInVat=round($line->salePriceExVat*($line->vatStatus ? 1+$vat/100 : 1),2);
         $line->totalAmount=round($qty*(float)$line->buyPrice,2);
         if($header) {$line->purchase_invoice_id=$header->id;$line->invoice=$header->invoice;$line->purchase_date=$header->purchase_date->format('Y-m-d');$line->reference=$header->reference;$line->specialNote=$header->special_note;}

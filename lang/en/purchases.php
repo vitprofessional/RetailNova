@@ -162,6 +162,7 @@ return [
     'items_required' => 'Add at least one purchase item.',
     'foreign_line' => 'The purchase item does not belong to this invoice.',
     'invalid_discount' => 'The discount must be within the invoice subtotal.',
+    'invalid_payment_method' => 'Select a valid payment method.',
     'payment_immutable' => 'Recorded payments cannot be changed here.',
     'paid_exceeds' => 'Paid amount must not exceed the invoice total.',
     'foreign_product' => 'The product does not belong to this business.',

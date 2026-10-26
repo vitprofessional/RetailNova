@@ -371,7 +371,7 @@ class Sprint02PurchaseCustomerTest extends TestCase
             $dom=new \DOMDocument();$previous=libxml_use_internal_errors(true);$dom->loadHTML('<?xml encoding="UTF-8">'.$mobileEdit->getContent());libxml_clear_errors();libxml_use_internal_errors($previous);$xpath=new \DOMXPath($dom);
             $this->assertSame(1,$xpath->query('//*[@id="purchaseInvoiceEdit" and contains(@class,"rn-m-form")]')->length);
             $this->assertSame(1,$xpath->query('//*[@class and contains(@class,"rn-invoice-footer") and contains(@class,"rn-m-sticky-actions")]')->length);
-            $this->assertSame(9,$xpath->query('//*[@id="purchaseInvoiceNewRow"]//td[@data-label]')->length,'Dynamic invoice rows must carry all mobile field labels.');
+            $this->assertSame(10,$xpath->query('//*[@id="purchaseInvoiceNewRow"]//td[@data-label]')->length,'Dynamic invoice rows must carry all mobile field labels, including warranty days.');
             $this->assertStringNotContainsString('history.back', $edit->getContent());
         }
         $this->assertDatabaseCount('product_serials',3);

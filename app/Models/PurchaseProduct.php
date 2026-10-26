@@ -15,7 +15,7 @@ class PurchaseProduct extends Model implements AuditableContract
     protected $fillable = [
         'productName', 'supplier', 'invoice', 'qty', 'buyPrice', 'salePriceExVat', 
         'salePriceInVat', 'vatStatus', 'vatPercent', 'totalAmount', 'grandTotal', 'paidAmount', 
-        'dueAmount', 'purchase_date', 'reference', 'businessId', 'purchase_invoice_id'
+        'dueAmount', 'purchase_date', 'reference', 'businessId', 'purchase_invoice_id', 'warranty_days'
     ];
 
     protected $casts = [

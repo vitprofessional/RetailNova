@@ -2,13 +2,9 @@
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/new-purchase.css') }}?v={{ filemtime(public_path('css/new-purchase.css')) }}">
 <link rel="stylesheet" href="{{ asset('css/inventory-products.css') }}?v={{ filemtime(public_path('css/inventory-products.css')) }}">
+<link rel="stylesheet" href="{{ asset('css/q6-purchase.css') }}?v={{ filemtime(public_path('css/q6-purchase.css')) }}">
 @endpush
 @section('container')
-@php
-    // Load currency symbol from BusinessSetup or default to BDT '৳'
-    $__businessSetup = \App\Models\BusinessSetup::orderBy('id','desc')->first();
-    $currencySymbol = ($__businessSetup && $__businessSetup->currencySymbol) ? $__businessSetup->currencySymbol : '৳';
-@endphp
 <style>
     /* Visual highlight when VAT is enabled for a row */
     tr.product-row.vat-enabled{ background-color: #fffbe6; }
@@ -22,6 +18,7 @@
  @csrf
  @include('purchase.new-purchase.header')
  @if($errors->any())<div class="alert alert-danger" role="alert">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
+ @include('purchase.new-purchase.mobile-flow')
  <div class="rn-purchase-layout"><div class="rn-purchase-workspace">
  @include('purchase.new-purchase.information')
  @include('purchase.new-purchase.products')
@@ -29,6 +26,7 @@
  </div><aside class="rn-purchase-billing" aria-label="{{ __('purchases.purchase_summary') }}">@include('purchase.new-purchase.summary')</aside></div>
  @include('purchase.serialModal')
 </form></div>
+<script src="{{ asset('js/rn-q6-purchase.js') }}?v={{ filemtime(public_path('js/rn-q6-purchase.js')) }}" defer></script>
 
 
 <!-- Page end  -->

@@ -7,6 +7,8 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\ProductUnit;
 use App\Models\PurchaseProduct;
+use App\Models\PurchaseInvoice;
+use App\Models\BusinessSetup;
 use App\Models\PurchaseReturn;
 use App\Models\ReturnPurchaseItem;
 use App\Models\ProductStock;
@@ -30,6 +32,17 @@ class purchase extends Controller
    public function addPurchase(){
        $workflow=app(\App\Services\PurchaseWorkflow::class);
        $supplier = $workflow->scoped(Supplier::query())->orderBy('id','DESC')->get();
+       $supplierIds = $supplier->modelKeys();
+       $invoiceDue = $supplierIds ? $workflow->scoped(PurchaseInvoice::query())
+           ->whereIn('supplier_id', $supplierIds)->selectRaw('supplier_id, SUM(due_amount) as balance')
+           ->groupBy('supplier_id')->pluck('balance', 'supplier_id') : collect();
+       $legacyDue = $supplierIds ? $workflow->scoped(PurchaseProduct::query())->whereNull('purchase_invoice_id')
+           ->whereIn('supplier', $supplierIds)->selectRaw('supplier, SUM(dueAmount) as balance')
+           ->groupBy('supplier')->pluck('balance', 'supplier') : collect();
+       $supplier->each(function ($row) use ($invoiceDue, $legacyDue) {
+           $row->q6PreviousDue = (float) ($row->openingBalance ?? 0)
+               + (float) ($invoiceDue[$row->id] ?? 0) + (float) ($legacyDue[$row->id] ?? 0);
+       });
        $product = $workflow->scoped(Product::query())->orderBy('id','DESC')->get();
        $productUnit = ProductUnit::orderBy('id','DESC')->get();
        $category = Category::orderBy('id','DESC')->get();
@@ -37,6 +50,8 @@ class purchase extends Controller
        // robust invoice generation using sequence table
        $generatedInvoice = app(InvoiceService::class)->generatePurchaseInvoice();
                 $businesses = \App\Models\BusinessSetup::when(!$workflow->platform(),fn($q)=>$q->whereKey(auth('admin')->user()->businessId))->orderBy('id','asc')->get();
+         $currencyBusinessId = $supplier->first()?->businessId ?? \App\Support\BusinessContext::validId(auth('admin')->user()?->businessId) ?? \App\Support\BusinessContext::soleBusinessId();
+         $currencySymbol = BusinessSetup::whereKey($currencyBusinessId)->value('currencySymbol') ?: '৳';
 
          return view('purchase.addPurchase',[
              'brandList'=>$brand,
@@ -46,6 +61,7 @@ class purchase extends Controller
              'productList'=>$product,
                          'generatedInvoice' => $generatedInvoice,
                          'businesses' => $businesses,
+                         'currencySymbol' => $currencySymbol,
          ]);
    }
 

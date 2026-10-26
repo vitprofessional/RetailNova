@@ -78,11 +78,13 @@ class PurchaseInvoiceController extends Controller
             'rows.*.product_id'=>['required','integer'],'rows.*.qty'=>['required','integer','min:1'],
             'rows.*.buy_price'=>['required','numeric','min:0'],'rows.*.sale_price'=>['nullable','numeric','min:0'],
             'rows.*.vat_percent'=>['nullable','numeric','between:0,100'],'rows.*.vat_included'=>['nullable','boolean'],
+            'rows.*.warranty_days'=>['nullable','integer','min:0','max:36500'],
             'rows.*.serials'=>['nullable',function($attribute,$value,$fail){if(!is_string($value) && !is_array($value)) {$fail(__('validation.array',['attribute'=>$attribute]));} elseif(is_array($value)){foreach($value as $serial){if(!is_string($serial) || strlen($serial)>255){$fail(__('validation.string',['attribute'=>$attribute]));break;}}}}],'rows.*.serial_updates'=>['sometimes','array'],
             'rows.*.serial_updates.*'=>['required','string'],'rows.*.remove_serials'=>['sometimes','array'],
             'rows.*.remove_serials.*'=>['integer'],'purchaseDate'=>['required','date'],'discountStatus'=>['nullable','in:1,2'],
             'discountAmount'=>['nullable','numeric','min:0'],'discountPercent'=>['nullable','numeric','between:0,100'],
-            'paidAmount'=>['nullable','numeric','min:0'],'specialNote'=>['nullable','string','max:1000']]);
+            'paidAmount'=>['nullable','numeric','min:0'],'payment_method'=>['nullable','in:cash,bkash,nagad,bank,due'],
+            'specialNote'=>['nullable','string','max:1000']]);
         $invoice=$workflow->save($data,$workflow->header($id));
         return redirect()->route('purchase.invoice.show',$invoice->id)->with('status',__('purchases.invoice_saved'));
     }
