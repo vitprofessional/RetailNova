@@ -6,7 +6,9 @@
   pending.add(row);
   try {
    const t = key => window.RNTranslate('common.' + key);
-   const accepted = window.Swal?.fire
+   const accepted = window.RNConfirmSheet?.ask
+    ? await window.RNConfirmSheet.ask(t('confirm_remove_row'), { title:t('remove_row'), accept:t('remove') })
+    : window.Swal?.fire
     ? (await window.Swal.fire({title:t('remove_row'), text:t('confirm_remove_row'), icon:'warning', showCancelButton:true, confirmButtonText:t('remove'), cancelButtonText:t('cancel')})).isConfirmed === true
     : window.confirm(t('client_remove_this_row'));
    if (accepted && row.isConnected) remove();

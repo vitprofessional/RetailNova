@@ -2,6 +2,8 @@
 
 // Mobile app shell (UI-1): bottom navigation, "More" page, home and POS.
 return [
+    'saving' => 'Saving',
+    'save_retry' => 'Could not save. Please try again.',
     'sale_price_short' => 'Sale',
     'serials_short' => 'Serials',
     // Navigation

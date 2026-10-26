@@ -4,6 +4,43 @@
  * Linked only for the mobile version, after rn-mobile.css. Colors come from rn-tokens.css only.
  */
 @media screen {
+    .rn-m-feedback { position: relative; z-index: 1100; }
+    .rn-m-error-banner {
+        position: relative; display: flex; align-items: flex-start; gap: 12px;
+        margin: 0 0 12px; padding: 12px 14px; border: 1px solid var(--rn-color-danger);
+        border-radius: var(--rn-radius-md); background: var(--rn-color-danger-tint);
+        color: var(--rn-color-danger); font-size: var(--rn-fs-body); font-weight: 600;
+    }
+    .rn-m-error-banner[hidden], .rn-m-toast[hidden], .rn-m-confirm-sheet[hidden] { display: none !important; }
+    .rn-m-error-banner [data-rn-error-message] { flex: 1; min-width: 0; }
+    .rn-m-error-banner [data-rn-error-close] {
+        flex: 0 0 44px; width: 44px; min-height: 44px; margin: -6px -8px -6px 0;
+        border: 0; border-radius: var(--rn-radius-sm); background: transparent;
+        color: inherit; font-size: 26px; line-height: 1;
+    }
+    .rn-m-toast {
+        position: fixed; z-index: 1500; left: 16px; right: 16px;
+        bottom: calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 12px);
+        display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 10px 16px;
+        border-radius: var(--rn-radius-md); background: var(--rn-color-primary); color: var(--rn-color-on-primary);
+        box-shadow: var(--rn-shadow-raised); font-size: var(--rn-fs-body); font-weight: 600;
+    }
+    .rn-m-toast.is-info { background: var(--rn-color-ink); }
+    .rn-m-toast-icon { display: grid; flex: 0 0 28px; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: color-mix(in srgb, white 20%, transparent); font-size: 18px; font-weight: 700; }
+    .rn-m-field-error { margin: 4px 0 0; color: var(--rn-color-danger); font-size: var(--rn-fs-label); font-weight: 600; }
+    [aria-invalid="true"] { border-color: var(--rn-color-danger) !important; box-shadow: 0 0 0 2px var(--rn-color-danger-tint) !important; }
+    .rn-m-confirm-sheet { position: fixed; z-index: 1800; inset: 0; }
+    .rn-m-confirm-scrim { position: absolute; inset: 0; width: 100%; border: 0; background: rgb(16 24 40 / .45); }
+    .rn-m-confirm-panel { position: absolute; right: 0; bottom: 0; left: 0; padding: 14px 20px calc(20px + var(--rn-safe-bottom)); border-radius: 20px 20px 0 0; background: var(--rn-color-surface); box-shadow: var(--rn-shadow-card); }
+    .rn-m-confirm-handle { display: block; width: 40px; height: 4px; margin: 0 auto 16px; border-radius: 4px; background: var(--rn-color-border); }
+    .rn-m-confirm-panel h2 { margin: 0 0 8px; font-size: var(--rn-fs-heading); }
+    .rn-m-confirm-panel p { margin: 0 0 16px; color: var(--rn-color-helper); font-size: var(--rn-fs-body); }
+    .rn-m-confirm-panel footer { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .rn-m-confirm-panel footer button { min-height: var(--rn-touch); border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); background: var(--rn-color-surface); color: var(--rn-color-ink); font-size: var(--rn-fs-body); font-weight: 700; }
+    .rn-m-confirm-panel footer button.is-danger { border-color: var(--rn-color-danger); background: var(--rn-color-danger); color: white; }
+    body.rn-m-confirm-open { overflow: hidden; }
+    .rn-m-submit-spinner { display: inline-block; width: 16px; height: 16px; margin-left: 8px; vertical-align: middle; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: rn-submit-spin .7s linear infinite; }
+    @keyframes rn-submit-spin { to { transform: rotate(360deg); } }
     .rn-m-home-sale-cta {
         display: flex;
         align-items: center;
