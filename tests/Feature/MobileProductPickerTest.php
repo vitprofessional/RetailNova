@@ -113,9 +113,11 @@ class MobileProductPickerTest extends TestCase
         ]);
         $this->actingAs($actor, 'admin')->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 14) Mobile');
         $this->get(route('newsale'))->assertOk()->assertSee('data-rn-product-picker', false)->assertSee('data-mode="sale"', false);
+        $this->get(route('newsale'))->assertSee('data-cart-key="rn-cart-sale-'.$actor->id.'-'.$business->id.'"', false);
         $this->get(route('addPurchase'))->assertOk()->assertSee('data-mode="purchase"', false)
             ->assertSee('name="productAdd"', false)->assertSee('name="productName[__IDX__]"', false)
-            ->assertSee('data-picker-sheet', false)->assertSee('data-picker-qty', false)->assertSee('data-picker-buy', false)->assertSee('data-picker-sale', false);
+            ->assertDontSee('data-picker-sheet', false)->assertDontSee('data-picker-qty', false)
+            ->assertSee('data-q6-sheet="line"', false);
         $this->get(route('quotation.create'))->assertOk()->assertSee('data-mode="quotation"', false);
         $this->get(route('quotation.edit', $quote->id))->assertOk()->assertSee('data-mode="quotation"', false);
         $this->get(route('editPurchase', $purchase->id))->assertOk()->assertSee('data-mode="purchase"', false)

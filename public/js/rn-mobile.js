@@ -14,6 +14,14 @@
     }
     window.RNLocalDigits = digits;
 
+    // Successful invoice navigation ends the prior checkout; incomplete form navigation keeps it.
+    try {
+        if (!document.querySelector('[data-rn-pos]') && /(?:\/generate\/invoice\/|\/purchase\/invoices\/)/.test(location.pathname)
+            && document.querySelector('[data-rn-toast]:not([hidden])')) {
+            Object.keys(localStorage).filter(function (key) { return key.indexOf('rn-cart-sale-') === 0 || key.indexOf('rn-cart-purchase-') === 0; }).forEach(function (key) { localStorage.removeItem(key); });
+        }
+    } catch (_) {}
+
     // Fitted monetary values shrink only as far as their semantic role permits.
     function fitMobileMoney(root) {
         (root || document).querySelectorAll('[data-rn-fit]').forEach(function (node) {
@@ -155,8 +163,8 @@
                 })();
             });
         }
-        function addProduct(id, button) {
-            ensureCustomer()
+        function addProduct(id, button, requestedQuantity) {
+            return ensureCustomer()
                 .then(function () {
                     return waitFor(function () {
                         return product && !product.disabled && product.querySelector('option[value="' + id + '"]');
@@ -165,16 +173,23 @@
                 .then(function () {
                     product.value = id;
                     fire(product, 'change');
+                    return waitFor(function () { return rows && rows.querySelector('tr[data-product-group="' + id + '"][data-product-summary]'); }, 7000);
+                })
+                .then(function (summaryRow) {
+                    if (requestedQuantity && Number(requestedQuantity) > 1) {
+                        var quantity = summaryRow.querySelector('.qty');
+                        if (quantity) { quantity.value = String(requestedQuantity); fire(quantity); }
+                    }
                     if (button) {
                         button.classList.add('is-added');
                         setTimeout(function () { button.classList.remove('is-added'); }, 900);
                     }
                 })
-                .catch(function () { toast(pos.dataset.i18nUnavailable); });
+                .catch(function () { window.RNToast?.error(pos.dataset.i18nUnavailable); });
         }
         pos.addEventListener('rn:product-picker:selected', function (event) {
             var selected = event.detail;
-            if (selected && selected.product_id) { addProduct(String(selected.product_id)); }
+            if (selected && selected.product_id) { addProduct(String(selected.product_id), null, selected.quantity || 1); }
         });
 
         // Barcode: hand the code to the existing barcode lookup.
@@ -208,11 +223,30 @@
 
         // ---- Bottom bar: "N items · total · Take Payment" ----
         function saleRows() { return rows ? Array.prototype.slice.call(rows.querySelectorAll('tr[data-product-summary]')) : []; }
+        var lastBarSnapshot = '';
+        var picker = pos.querySelector('[data-rn-product-picker]');
+        var cartKey = picker && picker.dataset.cartKey ? picker.dataset.cartKey + '-lines' : '';
+        var restoringCart = false;
+        function saveCart() {
+            if (!cartKey || restoringCart) return;
+            try {
+                var lines = saleRows().map(function (row) {
+                    return { product_id: row.dataset.productGroup, quantity: Number(row.querySelector('.qty')?.value || 1), sale_price: row.querySelector('.salePrice')?.value || '', warranty: row.querySelector('.warrantyDays')?.value || '' };
+                });
+                localStorage.setItem(cartKey, JSON.stringify({ customer_id: customer?.value || '', lines: lines }));
+            } catch (_) {}
+        }
         function refreshBar(withSheet) {
             var count = saleRows().length;
             bar.count.textContent = template(pos.dataset.i18nItems, count);
             bar.total.textContent = money(el('grandTotal') ? el('grandTotal').value : 0);
             bar.button.disabled = count === 0;
+            var snapshot = String(count) + '|' + String(bar.total.textContent);
+            if (lastBarSnapshot && snapshot !== lastBarSnapshot) {
+                bar.button.classList.remove('is-pulsing'); void bar.button.offsetWidth; bar.button.classList.add('is-pulsing');
+            }
+            lastBarSnapshot = snapshot;
+            saveCart();
             if (withSheet !== false && !sheet.hidden) { refreshSheet(); }
         }
         if (rows) { new MutationObserver(refreshBar).observe(rows, {childList: true, subtree: true}); }
@@ -347,6 +381,28 @@
             var save = el('saleSavePrintButton') || el('saleSaveButton');
             if (save) { save.click(); }
         });
+
+        if (cartKey) {
+            try {
+                var savedCart = JSON.parse(localStorage.getItem(cartKey) || 'null');
+                if (savedCart && Array.isArray(savedCart.lines) && savedCart.lines.length) {
+                    restoringCart = true;
+                    (async function () {
+                        if (savedCart.customer_id && customer) { customer.value = savedCart.customer_id; fire(customer, 'change'); }
+                        await ensureCustomer();
+                        for (var savedLine of savedCart.lines) {
+                            await addProduct(String(savedLine.product_id), null, Number(savedLine.quantity) || 1);
+                            var row = rows?.querySelector('tr[data-product-group="' + savedLine.product_id + '"][data-product-summary]');
+                            if (row) {
+                                var price = row.querySelector('.salePrice'); if (price && savedLine.sale_price !== '') { price.value = savedLine.sale_price; fire(price); }
+                                var warranty = row.querySelector('.warrantyDays'); if (warranty) { warranty.value = savedLine.warranty || ''; fire(warranty); }
+                            }
+                        }
+                        restoringCart = false; saveCart(); refreshBar();
+                    })().catch(function () { restoringCart = false; });
+                }
+            } catch (_) { restoringCart = false; }
+        }
 
     }
 })();

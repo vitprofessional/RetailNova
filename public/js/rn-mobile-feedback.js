@@ -30,6 +30,10 @@
     error: message => showToast('error', message || root.dataset.labelError),
     info: message => showToast('info', message)
   };
+  window.showToast = (title, message, icon) => {
+    const kind = icon === 'error' ? 'error' : icon === 'success' ? 'success' : 'info';
+    window.RNToast[kind](message || title || root.dataset.labelError);
+  };
   if (toastMessage.textContent.trim()) {
     toast.classList.add('is-success');
     window.setTimeout(() => { toast.hidden = true; }, 2500);

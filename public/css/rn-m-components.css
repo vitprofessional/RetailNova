@@ -730,6 +730,12 @@
         .rn-m-product-picker__chips .rn-m-chip { flex: 0 0 auto; min-height: 40px; white-space: nowrap; }
         .rn-m-product-picker__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; min-width: 0; }
         .rn-m-picker-card { display: grid; grid-template-rows: 76px auto auto auto; align-content: start; gap: 6px; position: relative; min-width: 0; min-height: 176px; padding: 10px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); color: var(--rn-color-ink); text-align: start; }
+        .rn-m-picker-card__count { position: absolute; z-index: 1; inset-block-start: 8px; inset-inline-end: 8px; display: grid; min-width: 30px; height: 30px; padding: 0 7px; place-items: center; border: 2px solid var(--rn-color-surface); border-radius: var(--rn-radius-pill); background: var(--rn-color-primary); color: var(--rn-color-on-primary); font: var(--rn-type-tag); font-weight: 700; }
+        .rn-m-picker-card__count[hidden] { display: none; }
+        .rn-m-picker-card.is-bumping .rn-m-picker-card__count, .rn-m-picker-card__count.is-bumping { animation: rn-picker-bump 220ms ease-out; }
+        @keyframes rn-picker-bump { 50% { transform: scale(1.2); } }
+        .rn-m-pos-bar-btn.is-pulsing { animation: rn-pos-bar-pulse 320ms ease-out; }
+        @keyframes rn-pos-bar-pulse { 50% { filter: brightness(1.12); transform: scale(.99); } }
         body.rn-app .rn-m-picker-card__image { display: grid; width: 100%; min-height: 0; height: 76px; place-items: center; border-radius: var(--rn-radius-sm); background: var(--rn-color-bg); object-fit: cover; }
         .rn-m-picker-card__fallback { color: var(--rn-color-primary); font-size: var(--rn-type-card-name); font-weight: 700; }
         .rn-m-picker-card__name { display: -webkit-box; min-width: 0; overflow: hidden; color: var(--rn-color-ink); font: var(--rn-type-card-name); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }

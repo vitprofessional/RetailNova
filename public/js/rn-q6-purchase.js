@@ -5,6 +5,8 @@
  const $ = selector => root.querySelector(selector);
  const rows = form.querySelector('#productDetails');
  const picker = form.querySelector('[data-rn-product-picker][data-mode="purchase"]');
+ const cartKey = picker?.dataset.cartKey ? picker.dataset.cartKey + '-lines' : '';
+ let restoringCart = true;
  const pickerSlot = $('[data-q6-picker-slot]');
  const pickerAnchor = document.createComment('purchase picker desktop location');
  picker?.parentNode.insertBefore(pickerAnchor, picker);
@@ -166,6 +168,21 @@
   $('[data-q6-grand]').textContent=money(computedGrand);
   $('[data-q6-total]').textContent=money(computedGrand);
   updateDue(computedGrand);
+  if (cartKey && !restoringCart) {
+   try {
+    const lines = actual.map(row => ({
+     product_id: row.querySelector('input[name^="productName["]')?.value || '',
+     name: row.querySelector('input[name^="selectProductName["]')?.value || '',
+     quantity: row.querySelector('.quantity')?.value || '1',
+     buy_price: row.querySelector('input[id^="buyPrice"]')?.value || '',
+     sale_price: row.querySelector('input.sale-price')?.value || '',
+    })).filter(line => line.product_id);
+    localStorage.setItem(cartKey, JSON.stringify({ supplier_id: supplierSelect?.value || '', lines,
+     discount_status: discountStatus?.value || '1', discount_amount: discountAmount?.value || '0',
+     discount_percent: discountPercent?.value || '0', paid_amount: paidInput?.value || '0',
+     payment_method: mobileMethod?.value || 'cash', note: noteInput?.value || '' }));
+   } catch (_) {}
+  }
  };
  const updateDue = grand => {
   const paid=numeric($('[data-q6-paid]'));
@@ -266,4 +283,34 @@
   const add=event.target.closest('[data-q6-open-picker]'); if(add){if(!supplierSelect.value){showSheet('supplier');return;} showSheet('products');}
  });
  document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeSheets();if(!payment.hidden)closePayment();}});
+ if (cartKey) {
+  try {
+   const saved = JSON.parse(localStorage.getItem(cartKey) || 'null');
+   if (saved && Array.isArray(saved.lines) && saved.lines.length) {
+    if (saved.supplier_id && supplierSelect) { supplierSelect.value = saved.supplier_id; supplierSelect.dispatchEvent(new Event('change', {bubbles:true})); }
+    (async () => {
+     for (const line of saved.lines) {
+      const before = rows.querySelectorAll('tr.product-row').length;
+      picker.dispatchEvent(new CustomEvent('rn:product-picker:selected', {bubbles:true, detail:{product_id:line.product_id,name:line.name,buy_price:line.buy_price,sale_price:line.sale_price,quantity:1,mode:'purchase'}}));
+      const started = Date.now();
+      while (rows.querySelectorAll('tr.product-row').length === before && Date.now()-started < 5000) await new Promise(resolve => setTimeout(resolve, 50));
+      const row = [...rows.querySelectorAll('tr.product-row')].at(-1);
+      if (row) {
+       for (const [selector,value] of [['.quantity',line.quantity],['input[id^="buyPrice"]',line.buy_price],['input.sale-price',line.sale_price]]) {
+        const field = row.querySelector(selector); if (field && value !== '') { field.value = value; field.dispatchEvent(new Event('input',{bubbles:true})); field.dispatchEvent(new Event('change',{bubbles:true})); }
+       }
+      }
+     }
+     if (saved.discount_status) discountStatus.value = saved.discount_status;
+     if (saved.discount_amount !== undefined) discountAmount.value = saved.discount_amount;
+     if (saved.discount_percent !== undefined) discountPercent.value = saved.discount_percent;
+     if (saved.paid_amount !== undefined) paidInput.value = saved.paid_amount;
+     if (saved.payment_method) { mobileMethod.value = saved.payment_method; if (desktopMethod) desktopMethod.value = saved.payment_method; }
+     if (saved.note !== undefined) noteInput.value = saved.note;
+     [discountStatus, discountAmount, discountPercent, paidInput, noteInput].forEach(field => poke(field));
+     restoringCart = false; renderRows();
+    })().catch(() => { restoringCart = false; });
+   } else restoringCart = false;
+  } catch (_) { restoringCart = false; }
+ }
 })();

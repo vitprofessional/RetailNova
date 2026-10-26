@@ -14,6 +14,17 @@
    refreshSupplierHelp();
    return;
   }
+  const existing = [...(rows?.querySelectorAll('tr.product-row') || [])].find(row =>
+   row.querySelector('input[name^="productName["]')?.value === String(selected.product_id));
+  if (existing) {
+   const quantity = existing.querySelector('.quantity');
+   if (quantity) {
+    quantity.value = String((parseInt(quantity.value || '0', 10) || 0) + (Number(selected.quantity) || 1));
+    quantity.dispatchEvent(new Event('input', { bubbles:true }));
+    quantity.dispatchEvent(new Event('change', { bubbles:true }));
+   }
+   return;
+  }
   let option = [...product.options].find(item => item.value === String(selected.product_id));
   if (!option) {
    option = new Option(selected.name, String(selected.product_id));

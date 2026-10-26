@@ -9,9 +9,9 @@
     const more = root.querySelector('[data-picker-more]');
     const error = root.querySelector('[data-picker-error]');
     const sheet = root.querySelector('[data-picker-sheet]');
-    let selectedPurchaseItem = null;
-    let updateLineTotal = () => {};
     let mode = 'category', category = '', brand = '', page = 1, hasMore = false, waiting = false, activeRequest = null;
+    let selectedCounts = {};
+    try { selectedCounts = JSON.parse(localStorage.getItem(root.dataset.cartKey) || '{}') || {}; } catch (_) {}
     let timer;
     const label = key => root.dataset[`label${key}`] || '';
     const localized = (template, count) => template.replace('__COUNT__', count.toLocaleString(document.documentElement.lang?.startsWith('bn') ? 'bn-BD' : 'en-US'));
@@ -44,6 +44,12 @@
       } else {
         const fallback = document.createElement('span'); fallback.className = 'rn-m-picker-card__image rn-m-picker-card__fallback'; fallback.textContent = item.name.slice(0, 1); button.append(fallback);
       }
+      const badge = document.createElement('span');
+      badge.className = 'rn-m-picker-card__count';
+      badge.dataset.pickerCount = String(item.product_id);
+      badge.textContent = selectedCounts[item.product_id] ? localized('__COUNT__', selectedCounts[item.product_id]) : '';
+      badge.hidden = !selectedCounts[item.product_id];
+      button.append(badge);
       const name = document.createElement('strong'); name.className = 'rn-m-picker-card__name'; name.textContent = item.name; button.append(name);
       const meta = [item.brand, item.unit].filter(Boolean).join(' · ');
       if (meta) { const line = document.createElement('span'); line.className = 'rn-m-picker-card__meta'; line.textContent = meta; button.append(line); }
@@ -65,26 +71,21 @@
           const template = root.dataset.returnUrlTemplate;
           if (template) { window.location.assign(template.replace('__ID__', String(item.item_id))); return; }
         }
-        if (root.dataset.mode === 'purchase' && sheet) {
-          selectedPurchaseItem = item;
-          sheet.querySelector('[data-picker-sheet-name]').textContent = item.name;
-          sheet.querySelector('[data-picker-sheet-meta]').textContent = [item.brand, item.unit].filter(Boolean).join(' · ');
-          const image = sheet.querySelector('[data-picker-sheet-image]');
-          const fallback = sheet.querySelector('[data-picker-sheet-fallback]');
-          image.hidden = !item.image;
-          image.removeAttribute('src');
-          if (item.image) image.src = item.image;
-          fallback.hidden = Boolean(item.image);
-          fallback.textContent = item.name.slice(0, 1);
-          sheet.querySelector('[data-picker-qty]').value = '1';
-          sheet.querySelector('[data-picker-buy]').value = item.buy_price ?? '';
-          sheet.querySelector('[data-picker-sale]').value = item.sale_price ?? '';
-          updateLineTotal();
-          sheet.hidden = false;
-          sheet.querySelector('[data-picker-qty]').focus();
+        const id = String(item.product_id);
+        const current = Number(selectedCounts[id] || 0);
+        if (root.dataset.mode === 'sale' && current >= Number(item.stock || 0)) {
+          window.RNToast?.error(label('OutOfStock'));
           return;
         }
-        root.dispatchEvent(new CustomEvent('rn:product-picker:selected', { bubbles: true, detail: { ...item, mode: root.dataset.mode } }));
+        selectedCounts[id] = current + 1;
+        localStorage.setItem(root.dataset.cartKey, JSON.stringify(selectedCounts));
+        const countBadge = button.querySelector('[data-picker-count]');
+        countBadge.textContent = localized('__COUNT__', selectedCounts[id]);
+        countBadge.hidden = false;
+        countBadge.classList.remove('is-bumping'); void countBadge.offsetWidth; countBadge.classList.add('is-bumping');
+        button.classList.remove('is-bumping'); void button.offsetWidth; button.classList.add('is-bumping');
+        if (navigator.vibrate) navigator.vibrate(15);
+        root.dispatchEvent(new CustomEvent('rn:product-picker:selected', { bubbles: true, detail: { ...item, mode: root.dataset.mode, quantity: 1, buy_price: item.buy_price, sale_price: item.sale_price } }));
       });
       return button;
     };
@@ -118,26 +119,7 @@
       load(true);
     }));
     more.addEventListener('click', () => { if (hasMore) load(false); });
-    if (sheet) {
-      const qty = sheet.querySelector('[data-picker-qty]'), buy = sheet.querySelector('[data-picker-buy]');
-      updateLineTotal = () => { sheet.querySelector('[data-picker-line-total]').textContent = moneyText((Number(qty.value) || 0) * (Number(buy.value) || 0)); };
-      sheet.querySelectorAll('[data-picker-sheet-close]').forEach(button => button.addEventListener('click', () => { sheet.hidden = true; selectedPurchaseItem = null; }));
-      [qty, buy].forEach(input => input.addEventListener('input', updateLineTotal));
-      sheet.querySelector('[data-picker-sheet-add]').addEventListener('click', () => {
-        if (!selectedPurchaseItem || !qty.value || Number(qty.value) < 1 || buy.value === '' || Number(buy.value) < 0 || sheet.querySelector('[data-picker-sale]').value === '') return;
-        root.dispatchEvent(new CustomEvent('rn:product-picker:selected', { bubbles: true, detail: {
-          ...selectedPurchaseItem, mode: root.dataset.mode, quantity: Number(qty.value), buy_price: Number(buy.value), sale_price: Number(sheet.querySelector('[data-picker-sale]').value)
-        } }));
-        sheet.hidden = true; selectedPurchaseItem = null;
-      });
-    }
     load(true);
 
-    function moneyText(amount) {
-      const locale = document.documentElement.lang?.startsWith('bn') ? 'bn-BD' : 'en-US';
-      const number = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(Number(amount || 0));
-      const currency = root.dataset.currency || '';
-      return root.dataset.currencyPosition === 'right' ? `${number}${currency}` : `${currency}${number}`;
-    }
   });
 })();

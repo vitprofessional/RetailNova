@@ -27,7 +27,8 @@ class Sprint04PurchaseUiTest extends TestCase
         $this->assertSame(4,$xpath->query('//*[@id="savePurchase"]//section[contains(@class,"rn-m-form-section")]')->length);
         $this->assertSame(1,$xpath->query('//*[@data-rn-product-picker and @data-mode="purchase"]')->length);
         $this->assertSame(1,$xpath->query('//*[@data-picker-search and @type="search"]')->length);
-        $this->assertSame(1,$xpath->query('//*[@data-picker-sheet and @hidden]')->length);
+        $this->assertSame(0,$xpath->query('//*[@data-picker-sheet]')->length,'Picking a product adds one item directly; quantity editing stays in the cart line sheet.');
+        $this->assertSame(1,$xpath->query('//*[@data-q6-sheet="line" and @hidden]')->length);
         $this->assertSame(1,$xpath->query('//*[@id="saveButton" and contains(@class,"rn-m-sticky-actions")]')->length);
         $this->assertSame(1,$xpath->query('//*[@id="purchaseSaveButton" and contains(@class,"rn-m-btn--primary")]')->length);
         $this->assertSame(1,$xpath->query('//*[@id="saveButton"]//a[contains(@class,"rn-m-btn--outline") and @data-purchase-leave]')->length);
