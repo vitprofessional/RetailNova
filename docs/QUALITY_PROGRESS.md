@@ -1,7 +1,7 @@
 # Mobile quality work progress
 
 Branch: `quality-v2`
-Checkpoint HEAD: `4b9c8fb3507688ea120d06f20cad83ffb698c619` (Q5 committed; Q6 working tree reviewed and ready)
+Checkpoint HEAD: `d686250` (Q6 committed; all Q stages complete)
 Resume backup: `tests-output/resume-backup.patch` (tracked diff only; untracked mockups are preserved in place).
 
 ## Q stage status
@@ -14,7 +14,7 @@ Resume backup: `tests-output/resume-backup.patch` (tracked diff only; untracked 
 | Q3 — mobile type, spacing, number rules | Complete | `a49fb0d` |
 | Q4 — documents, print sizes, PDF and image share | Complete | Shared templates for sale/purchase invoices, quotations, service invoices, returns and ledgers; A4/thermal80/thermal58; fixed PNG canvas export; local QR and file share fallback. |
 | Q5 — shared image product picker | Complete | Commit `4b9c8fb`; sale, purchase, quotation and purchase-return screens use the tenant-scoped server picker. |
-| Q6 — mobile purchase flow | Complete | Implementation and verification are ready in the Q6 change set; commit subject: `Q6: professional mobile purchase flow`. |
+| Q6 — mobile purchase flow | Complete | Commit `d686250` (`Q6: professional mobile purchase flow`). |
 
 ## Resume inventory
 
@@ -42,4 +42,4 @@ Resume backup: `tests-output/resume-backup.patch` (tracked diff only; untracked 
 - Q6 MobileQualityAudit: Bengali Android UA at 390×844, 45 routes, 0 violations, 0 application console errors (`tests-output/quality/q6-final/audit.json`).
 - Q6 screenshots: empty purchase, three lines, line sheet and payment step under ignored `tests-output/q6/`; comparison notes at `tests-output/q6/capture-notes.md`. The 390px screenshots were opened and reviewed against mockups 13–15; the date chip width was adjusted so the full Bengali date is visible. Sample fixture thumbnails are synthetic color tiles, not production product photography. A known external Font Awesome kit request returns HTTP 403, with no app-origin JavaScript errors.
 
-Next: create the focused Q6 commit after checking the staged file list and diff. Then merge `quality-v2` into `main` and push only after verifying the final commit and test state.
+Next: merge `quality-v2` into `main`, then push after verifying the final commit and branch state.
