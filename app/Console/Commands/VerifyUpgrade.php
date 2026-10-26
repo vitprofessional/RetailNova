@@ -40,6 +40,7 @@ class VerifyUpgrade extends Command
                 'format_version' => 1,
                 'generated_at' => now()->toIso8601String(),
                 'businesses' => $this->businessSnapshots(),
+                'unassigned_business_id_counts' => $this->unassignedBusinessIdCounts(),
             ];
             $json = json_encode($snapshot, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR).PHP_EOL;
             $directory = dirname($path);
@@ -82,6 +83,13 @@ class VerifyUpgrade extends Command
         }
 
         $differences = $this->diffSnapshots($before['businesses'], $after['businesses']);
+        foreach (array_unique(array_merge(array_keys($before['unassigned_business_id_counts'] ?? []), array_keys($after['unassigned_business_id_counts'] ?? []))) as $table) {
+            $oldCount = (int) ($before['unassigned_business_id_counts'][$table] ?? 0);
+            $newCount = (int) ($after['unassigned_business_id_counts'][$table] ?? 0);
+            if ($oldCount !== $newCount) {
+                $differences[] = "unassigned businessId rows in {$table}: {$oldCount} → {$newCount}";
+            }
+        }
         if ($differences === []) {
             $this->info('No differences found across business totals and record counts.');
             return self::SUCCESS;
@@ -149,6 +157,26 @@ class VerifyUpgrade extends Command
         }
 
         return $result;
+    }
+
+    /** @return array<string, int> */
+    private function unassignedBusinessIdCounts(): array
+    {
+        $counts = [];
+        foreach (Schema::getTableListing(null, false) as $table) {
+            if (Schema::hasColumn($table, 'businessId')) {
+                $query = DB::table($table)->whereNull('businessId');
+                if ($table === 'admin_users' && Schema::hasColumn($table, 'role')) {
+                    $query->whereRaw("LOWER(TRIM(COALESCE(role, ''))) <> 'superadmin'");
+                }
+                $count = (int) $query->count();
+                if ($count > 0) {
+                    $counts[$table] = $count;
+                }
+            }
+        }
+        ksort($counts);
+        return $counts;
     }
 
     /** @param array<string, array<string, mixed>> $before @param array<string, array<string, mixed>> $after @return list<string> */

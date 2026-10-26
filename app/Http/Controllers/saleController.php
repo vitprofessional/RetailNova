@@ -29,8 +29,8 @@ class saleController extends Controller
             return false;
         }
 
-        if (method_exists($actor, 'hasSuperAdminPrivileges')) {
-            return (bool) $actor->hasSuperAdminPrivileges();
+        if (method_exists($actor, 'canManageSalesSettings')) {
+            return (bool) $actor->canManageSalesSettings();
         }
 
         $normalizedRole = preg_replace('/[^a-z]/', '', strtolower((string) ($actor->role ?? '')));

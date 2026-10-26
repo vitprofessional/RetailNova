@@ -158,7 +158,7 @@ class StationaryShopSeeder extends Seeder
             }
 
             foreach ($sale['items'] as $item) {
-                DB::table('invoice_items')->insert(array_merge($item, ['saleId' => $saleId, 'created_at' => $now, 'updated_at' => $now]));
+                DB::table('invoice_items')->insert(array_merge($item, ['saleId' => $saleId, 'businessId' => $bid, 'created_at' => $now, 'updated_at' => $now]));
             }
         }
     }

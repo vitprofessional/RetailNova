@@ -43,6 +43,27 @@ class RetailNovaPreflight extends Command
         }
 
         if ($databaseReady) {
+            foreach (Schema::getTableListing(null, false) as $table) {
+                if (!Schema::hasColumn($table, 'businessId')) {
+                    continue;
+                }
+                try {
+                    $unassignedQuery = DB::table($table)->whereNull('businessId');
+                    // NULL businessId is valid only for platform-level superadmins.
+                    if ($table === 'admin_users' && Schema::hasColumn($table, 'role')) {
+                        $unassignedQuery->whereRaw("LOWER(TRIM(COALESCE(role, ''))) <> 'superadmin'");
+                    }
+                    $unassignedCount = $unassignedQuery->count();
+                    $this->check(
+                        'Tenant ownership: '.$table,
+                        $unassignedCount === 0,
+                        $unassignedCount === 0 ? 'no NULL businessId rows' : $unassignedCount.' row(s) have NULL businessId'
+                    );
+                } catch (Throwable $exception) {
+                    $this->check('Tenant ownership: '.$table, false, class_basename($exception));
+                }
+            }
+
             try {
                 $repository = app('migration.repository');
                 if (!$repository->repositoryExists()) {
@@ -63,7 +84,7 @@ class RetailNovaPreflight extends Command
                     $this->check('Admin role/business associations', false, 'required admin schema is missing');
                 } else {
                     $unassigned = DB::table('admin_users')
-                        ->whereRaw("LOWER(TRIM(COALESCE(role, ''))) <> 'superadmin'")
+                        ->whereRaw("LOWER(TRIM(COALESCE(role, ''))) != 'superadmin'")
                         ->where(function ($query) {
                             $query->whereNull('role')
                                 ->orWhereRaw("TRIM(COALESCE(role, '')) = ''")

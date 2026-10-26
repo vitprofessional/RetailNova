@@ -321,6 +321,7 @@ class SaleSeeder extends Seeder
             foreach ($sale['items'] as $item) {
                 DB::table('invoice_items')->insert(array_merge($item, [
                     'saleId'     => $saleId,
+                    'businessId' => $sale['header']['businessId'] ?? null,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ]));

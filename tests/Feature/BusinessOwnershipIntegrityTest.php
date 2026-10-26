@@ -14,6 +14,7 @@ use App\Models\Supplier;
 use App\Services\PurchaseWorkflow;
 use App\Services\StockService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class BusinessOwnershipIntegrityTest extends TestCase
@@ -329,5 +330,23 @@ class BusinessOwnershipIntegrityTest extends TestCase
             $this->assertDatabaseCount('product_stocks', 0);
             $this->assertDatabaseCount('product_serials', 0);
         }
+    }
+
+    public function test_legacy_invoice_item_inherits_its_sale_business_during_backfill(): void
+    {
+        $this->operator(1);
+        $saleId = DB::table('sale_products')->insertGetId([
+            'businessId' => 1, 'invoice' => 'BACKFILL-INV-1', 'date' => '2026-10-26',
+            'grandTotal' => 20, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $itemId = DB::table('invoice_items')->insertGetId([
+            'saleId' => $saleId, 'qty' => 2, 'salePrice' => 10,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $migration = require database_path('migrations/2026_10_26_100000_backfill_missing_tenant_ownership.php');
+        $migration->up();
+
+        $this->assertDatabaseHas('invoice_items', ['id' => $itemId, 'saleId' => $saleId, 'businessId' => 1]);
     }
 }

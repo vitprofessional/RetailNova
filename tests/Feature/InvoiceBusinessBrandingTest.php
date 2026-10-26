@@ -92,6 +92,19 @@ class InvoiceBusinessBrandingTest extends TestCase
             ->assertDontSee('0123456789')->assertDontSee('info@computercare.com');
     }
 
+    public function test_business_admin_can_open_another_employee_invoice_and_sale_edit(): void
+    {
+        $business = $this->business('Admin Access Shop', null, null, null, null);
+        $admin = $this->actor((int) $business->id, 'shop-admin@example.test');
+        $admin->update(['role' => 'admin']);
+        $employee = $this->actor((int) $business->id, 'shop-employee@example.test');
+        $sale = $this->sale((int) $business->id, (int) $employee->id, 'ADMIN-VIEW-1');
+
+        $this->actingAs($admin, 'admin');
+        $this->get(route('invoiceGenerate', ['id' => $sale->id]))->assertOk();
+        $this->get(route('sale.edit', ['id' => $sale->id]))->assertOk();
+    }
+
     private function business(string $name, ?string $logo, ?string $address, ?string $mobile, ?string $email): BusinessSetup
     {
         return BusinessSetup::create([

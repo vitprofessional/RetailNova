@@ -33,6 +33,10 @@ class DeploymentCommandsTest extends TestCase
             'customerId' => 711, 'businessId' => 71, 'totalSale' => '300.00', 'grandTotal' => '295.00',
             'paidAmount' => '100.00', 'invoice' => 'TEST-71', 'created_at' => now(), 'updated_at' => now(),
         ]);
+        $saleId = \Illuminate\Support\Facades\DB::table('sale_products')->where('invoice', 'TEST-71')->value('id');
+        \Illuminate\Support\Facades\DB::table('invoice_items')->insert([
+            'saleId' => $saleId, 'qty' => 1, 'created_at' => now(), 'updated_at' => now(),
+        ]);
         ProductStock::withoutGlobalScopes()->forceCreate([
             'businessId' => 71, 'productId' => 1, 'purchaseId' => 1, 'currentStock' => 8,
         ]);
@@ -49,6 +53,7 @@ class DeploymentCommandsTest extends TestCase
         $this->assertSame('295.00', $first['businesses']['71']['totals']['sales_total']);
         $this->assertSame('220.00', $first['businesses']['71']['totals']['customer_due']);
         $this->assertSame('8.00', $first['businesses']['71']['totals']['stock_quantity']);
+        $this->assertSame(1, $first['unassigned_business_id_counts']['invoice_items']);
 
         \Illuminate\Support\Facades\DB::table('sale_products')->where('invoice', 'TEST-71')->update(['paidAmount' => '150.00']);
         ProductStock::withoutGlobalScopes()->where('businessId', 71)->update(['currentStock' => 6]);
@@ -74,12 +79,16 @@ class DeploymentCommandsTest extends TestCase
     public function test_preflight_reports_all_checks_and_fails_closed_for_local_nonproduction_settings(): void
     {
         config(['app.debug' => true, 'app.key' => '', 'app.url' => 'http://localhost']);
+        \Illuminate\Support\Facades\DB::table('invoice_items')->insert([
+            'saleId' => 9001, 'qty' => 1, 'created_at' => now(), 'updated_at' => now(),
+        ]);
         $this->assertSame(1, Artisan::call('retailnova:preflight'));
         $output = Artisan::output();
 
-        foreach (['PHP >= 8.2', 'PHP extension pdo_mysql', 'APP_DEBUG is disabled',
+        foreach (['PHP >= 8.2', 'PHP extension pdo_mysql', 'Tenant ownership: invoice_items', 'APP_DEBUG is disabled',
             'APP_KEY is configured', 'APP_URL uses HTTPS', 'Pending migrations', 'Scheduler last ran'] as $check) {
             $this->assertStringContainsString($check, $output);
         }
+        $this->assertStringContainsString('1 row(s) have NULL businessId', $output);
     }
 }
