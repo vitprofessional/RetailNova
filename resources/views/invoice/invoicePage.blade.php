@@ -49,7 +49,7 @@
   // Branding is resolved from the sale's owning business by the controller.
   $b = $business ?? $invoice->business ?? null;
   $invoiceLogoUrl = $b ? $b->invoiceLogoUrl() : null;
-  $invoiceFallbackLogoUrl = asset('logo.png');
+  $serialsByPurchase = $serialsByPurchase ?? [];
 @endphp
 
 @php
@@ -62,6 +62,37 @@
   elseif ($paidAmount <= 0 && $currentDue > 0) { $paymentStatus = 'DUE'; $paymentBadge = 'danger'; }
   elseif ($paidAmount > 0 && $currentDue > 0) { $paymentStatus = 'PARTIAL'; $paymentBadge = 'warning'; }
   else { $paymentStatus = 'PAID'; $paymentBadge = 'success'; }
+  $sharedPrintReceipt = [
+    'document_label' => __('common.invoice'),
+    'document_number' => (string) $invoice->invoice,
+    'amount' => \App\Support\LocalizedNumber::money($grandTotal),
+    'status' => __('common.status').' · '.__($paymentBadge === 'success' ? 'purchases.paid' : ($paymentBadge === 'warning' ? 'purchases.partial' : 'purchases.due')),
+    'party_label' => __('invoices.bill_to'),
+    'party_name' => \App\Models\Customer::displayLabel($customer ?? null, $invoice->customerId, $invoice->businessId),
+    'party_meta' => $customer?->mobile,
+    'date' => $invoice->date,
+    'items' => $items->map(function ($item) use ($serialsByPurchase) {
+      $lineSerials = ($serialsByPurchase ?? [])[$item->purchaseId] ?? collect();
+      $quantity = \App\Support\LocalizedNumber::count($item->qty ?? 0);
+      $rate = \App\Support\LocalizedNumber::money($item->salePrice ?? 0);
+      return [
+        'title' => $item->productName,
+        'quantity' => $quantity,
+        'rate' => $rate,
+        'amount' => \App\Support\LocalizedNumber::money($item->totalSale ?? (($item->salePrice ?? 0) * ($item->qty ?? 0))),
+        'detail' => $quantity.' × '.$rate,
+        'serials' => $lineSerials->pluck('serialNumber')->values()->all(),
+      ];
+    })->values()->all(),
+    'totals' => array_values(array_filter([
+      ['label' => __('invoices.subtotal'), 'amount' => \App\Support\LocalizedNumber::money($items->sum(fn ($item) => (float) ($item->totalSale ?? (($item->salePrice ?? 0) * ($item->qty ?? 0)))))],
+      (float) ($invoice->additionalChargeAmount ?? 0) > 0 ? ['label' => $invoice->additionalChargeName ?: __('common.additional_charge'), 'amount' => \App\Support\LocalizedNumber::money($invoice->additionalChargeAmount)] : null,
+      (float) ($invoice->discountAmount ?? 0) > 0 ? ['label' => __('invoices.discount'), 'amount' => '− '.\App\Support\LocalizedNumber::money($invoice->discountAmount)] : null,
+      ['label' => __('invoices.grand_total'), 'amount' => \App\Support\LocalizedNumber::money($grandTotal), 'is_total' => true],
+      ['label' => __('invoices.paid'), 'amount' => \App\Support\LocalizedNumber::money($paidAmount)],
+      ['label' => __('invoices.due'), 'amount' => \App\Support\LocalizedNumber::money($currentDue)],
+    ])),
+  ];
 @endphp
 
 @php
@@ -113,7 +144,7 @@
       <div class="row align-items-start justify-content-between">
         <div class="col-md-6">
           <div class="invoice-branding">
-            <img src="{{ $invoiceLogoUrl ?: $invoiceFallbackLogoUrl }}" alt="{{ $b->businessName ?? __('invoices.invoice') }}" class="invoice-logo" onerror="this.onerror=null;this.src='{{ $invoiceFallbackLogoUrl }}'">
+            @if($invoiceLogoUrl)<img src="{{ $invoiceLogoUrl }}" alt="{{ $b->businessName ?? __('invoices.invoice') }}" class="invoice-logo">@endif
             <div class="company-info">
               @if($b && $b->businessName)<h4 class="company-name">{{ $b->businessName }}</h4>@endif
               <div class="company-details">
@@ -376,7 +407,7 @@
         <div class="row ack-grid">
           <div class="col-md-4">
             <div class="ack-card">
-              <img src="{{ $invoiceLogoUrl ?: $invoiceFallbackLogoUrl }}" alt="{{ $b->businessName ?? __('invoices.invoice') }}" class="ack-logo" onerror="this.onerror=null;this.src='{{ $invoiceFallbackLogoUrl }}'">
+              @if($invoiceLogoUrl)<img src="{{ $invoiceLogoUrl }}" alt="{{ $b->businessName ?? __('invoices.invoice') }}" class="ack-logo">@endif
               @if($b && $b->businessName)<div class="ack-company">{{ $b->businessName }}</div>@endif
               @if($b && $b->businessLocation)<div class="ack-address">{{ $b->businessLocation }}</div>@endif
               <div class="ack-details">
@@ -451,7 +482,7 @@
 
     <div class="thermal-receipt-layout">
       <div class="thermal-center">
-        <img src="{{ $invoiceLogoUrl ?: $invoiceFallbackLogoUrl }}" alt="{{ $b->businessName ?? __('invoices.invoice') }}" class="thermal-business-logo" onerror="this.onerror=null;this.src='{{ $invoiceFallbackLogoUrl }}'">
+        @if($invoiceLogoUrl)<img src="{{ $invoiceLogoUrl }}" alt="{{ $b->businessName ?? __('invoices.invoice') }}" class="thermal-business-logo">@endif
         @if($b && $b->businessName)<div class="thermal-company">{{ $b->businessName }}</div>@endif
         @if($b && $b->businessLocation)<div class="thermal-line">{{ $b->businessLocation }}</div>@endif
         @if($b && $b->mobile)<div class="thermal-line">{{ __('common.phone') }}: {{ $b->mobile }}</div>@endif
@@ -592,6 +623,11 @@
         <a class="btn btn-primary btn-sm" href="{{ route('saleList') }}"><i class="las la-arrow-left"></i> {{ __('invoices.back_to_sales') }}</a>
       </div>
     </div>
+    @push('styles')<link rel="stylesheet" href="{{ asset('css/rn-documents.css') }}?v={{ filemtime(public_path('css/rn-documents.css')) }}">@endpush
+    @include('documents.transaction', ['receipt' => $sharedPrintReceipt, 'business' => $b])
+    @include('documents.actions', ['business' => $b, 'paper' => $printVariant])
+    <script src="{{ asset('vendor/rn-document-tools.js') }}?v={{ filemtime(public_path('vendor/rn-document-tools.js')) }}" defer></script>
+    <script src="{{ asset('js/rn-mobile-documents.js') }}?v={{ filemtime(public_path('js/rn-mobile-documents.js')) }}" defer></script>
     @endif
   </div>
 </div>
@@ -1694,60 +1730,12 @@
 
   function printInvoice(variant){
     try{
-      var pv = normalizePrinterProfile(variant);
-      setInvoiceLayoutVariant(pv);
-      var thermalMode = (pv === 'thermal80' || pv === 'thermal58');
-      var paperWidth = (pv === 'thermal58') ? '58mm' : (pv === 'thermal80' ? '80mm' : '210mm');
-      var pageSizeCss = thermalMode ? (paperWidth + ' auto') : 'A4';
-      var pageMarginCss = thermalMode ? '2mm' : '8mm';
-      // Ensure acknowledgment section breaks only if it won't fit
-      try{ setAckBreakClass(); }catch(e){}
-      var root = document.getElementById('rn-invoice-root');
-      var footer = document.querySelector('.print-only-footer');
-      if(!root) return window.print();
-      var printableRoot = root.cloneNode(true);
-      try{
-        var pA4 = printableRoot.querySelector('#invoiceBodyA4');
-        var pThermal = printableRoot.querySelector('#invoiceBodyThermal');
-        if(pA4 && pThermal){
-          if(thermalMode){
-            pA4.classList.add('d-none');
-            pThermal.classList.remove('d-none');
-            pThermal.classList.toggle('thermal-58', pv === 'thermal58');
-            pThermal.classList.toggle('thermal-80', pv !== 'thermal58');
-          }else{
-            pA4.classList.remove('d-none');
-            pThermal.classList.add('d-none');
-          }
-        }
-      }catch(_e){}
-      var content = printableRoot.outerHTML + (footer ? footer.outerHTML : '');
-      var styleHtml = collectStyles();
-      var w = window.open('', '_blank');
-      if(!w) return alert(window.RNTranslate('popup_blocked'));
-      var doc = w.document;
-      doc.open();
-      doc.write('<!doctype html><html lang="'+document.documentElement.lang+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">');
-      doc.write(styleHtml);
-      // minimal print helper: hide interactive-only elements; rely on page styles for layout
-      // Force marginless printing in the popup regardless of browser defaults
-      doc.write('<style>@page{margin:'+pageMarginCss+'; size:'+pageSizeCss+';} html,body{margin:0;padding:0;print-color-adjust:exact;-webkit-print-color-adjust:exact;} #rn-invoice-root{margin:0 auto!important;padding:0!important;box-shadow:none!important;border:none!important;width:'+(thermalMode ? paperWidth : '100%')+'!important;max-width:'+(thermalMode ? paperWidth : '100%')+'!important} #rn-invoice-root .card-body{padding:'+(thermalMode ? '2mm' : '3mm')+'!important;}'+
-        (thermalMode ? '#rn-invoice-root .invoice-qr-section,#rn-invoice-root .signature-boxes,#rn-invoice-root #acknowledgementSection,#rn-invoice-root .terms-conditions{display:none!important;} #rn-invoice-root .row{display:block!important} #rn-invoice-root .col-md-6,#rn-invoice-root .col-md-4,#rn-invoice-root .col-md-8,#rn-invoice-root .col-12{display:block!important;width:100%!important;max-width:100%!important;flex:0 0 100%!important} #rn-invoice-root .invoice-items-table th:nth-child(2),#rn-invoice-root .invoice-items-table td:nth-child(2),#rn-invoice-root .invoice-items-table th:nth-child(5),#rn-invoice-root .invoice-items-table td:nth-child(5){display:none!important;}'+(pv === 'thermal58' ? '#rn-invoice-root .invoice-items-table th:nth-child(6),#rn-invoice-root .invoice-items-table td:nth-child(6){display:none!important;}' : '')+' #rn-invoice-root,#rn-invoice-root *{font-size:11px!important;line-height:1.25!important;}' : '')+
-      '</style>');
-      doc.write('<style>.no-print{display:none !important} #rn-invoice-root,#rn-invoice-root *{font-family:var(--rn-font-family)!important} html[lang="bn"] #rn-invoice-root,html[lang="bn"] #rn-invoice-root *{line-height:1.6!important}</style>');
-      doc.write('</head><body>');
-      doc.write(content);
-      // Inject a small helper to compute conditional break inside the print window if needed
-      doc.write('<script>(function(){\n  function shouldBreakAck(){\n    try{\n      var root = document.getElementById("rn-invoice-root");\n      var ack = document.getElementById("acknowledgementSection");\n      if(!root || !ack) return false;\n      var r = root.getBoundingClientRect();\n      var a = ack.getBoundingClientRect();\n      var above = a.top - r.top;\n      var pageHeight = 1122; /* approx A4 height in px (11.7in*96) */\n      return (above + a.height) > (pageHeight - 24);\n    }catch(e){ return true; }\n  }\n  function setAckBreak(){\n    try{ var ack = document.getElementById("acknowledgementSection"); if(!ack) return; var cls = "print-break-before-page"; if(shouldBreakAck()) ack.classList.add(cls); else ack.classList.remove(cls); }catch(e){}\n  }\n  try{ setAckBreak(); }catch(e){}\n})();<\/script>');
-      doc.write('</body></html>');
-      doc.close();
-      w.focus();
-      // Give the new window a moment to render before printing
-      Promise.all([doc.fonts ? doc.fonts.ready : Promise.resolve(), new Promise(function(resolve){ w.addEventListener('load', resolve, {once:true}); setTimeout(resolve, 1500); })]).then(function(){ try{ w.print(); }catch(e){ console.warn('print failed', e); } });
-      w.addEventListener('afterprint', function(){ w.close(); }, {once:true});
-    }catch(e){ console.warn('printInvoice error', e); window.print(); }
+      var profile = normalizePrinterProfile(variant || getSelectedPrinterProfile());
+      var selector = document.getElementById('invoicePrinterProfile');
+      if(selector) selector.value = profile;
+      printSelectedInvoice();
+    }catch(e){ console.warn('printInvoice error', e); }
   }
-
   // Conditional page-break for Acknowledgment on direct prints
   function shouldBreakAck(){
     try{

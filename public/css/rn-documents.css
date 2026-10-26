@@ -37,6 +37,7 @@ body[data-rn-document-preview] .rn-print-document--thermal58 { width:48mm; paddi
 .rn-print-document__numeric,.rn-print-document__money { font-variant-numeric:tabular-nums; white-space:nowrap; }
 .rn-print-document__money { color:var(--rn-color-ink); font-weight:700; }
 .rn-print-document__thermal-detail { display: none; }
+.rn-print-document__serials { display:block; margin-top:1mm; color:var(--rn-color-muted,#475467); font-size:8.5pt; font-weight:500; }
 .rn-print-document__totals { display: grid; gap: 4px; width:min(100%,90mm); margin: 12px 0 0 auto; }
 .rn-print-document__totals div { display: flex; justify-content: space-between; gap: 16px; }
 .rn-print-document__totals dd { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -50,6 +51,7 @@ body[data-rn-paper^="thermal"] .rn-print-document__logo { max-width:25mm; max-he
 body[data-rn-paper^="thermal"] .rn-print-document__qr,
 body[data-rn-paper^="thermal"] .rn-print-document__a4-detail { display: none; }
 body[data-rn-paper^="thermal"] .rn-print-document__thermal-detail { display:block; padding-top:1mm; color:var(--rn-color-ink); font-size:9pt; font-weight:500; white-space:nowrap; }
+body[data-rn-paper^="thermal"] .rn-print-document__serials { font-size:8.5pt; white-space:normal; }
 body[data-rn-paper^="thermal"] .rn-print-document__items th,
 body[data-rn-paper^="thermal"] .rn-print-document__items td:first-child { width:100%; }
 body[data-rn-paper^="thermal"] .rn-print-document__items td:not(:first-child) { display:none; }

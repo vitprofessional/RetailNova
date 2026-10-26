@@ -10,6 +10,7 @@ use App\Models\PurchaseInvoice;
 use App\Models\PurchaseProduct;
 use App\Models\SaleProduct;
 use App\Models\InvoiceItem;
+use App\Models\ProductSerial;
 use App\Models\SaleReturn;
 use App\Models\ReturnSaleItem;
 use App\Models\PurchaseReturn;
@@ -126,6 +127,10 @@ class MobileInvoiceVariantsTest extends TestCase
             'qty' => 2, 'salePrice' => 15, 'buyPrice' => 10, 'totalSale' => 30,
             'totalPurchase' => 20, 'profitTotal' => 10,
         ]);
+        ProductSerial::forceCreate([
+            'businessId' => $business->id, 'purchaseId' => $purchase->id, 'saleId' => $sale->id,
+            'productId' => $product->id, 'serialNumber' => 'PRINT-SERIAL-1', 'status' => 'sold',
+        ]);
         $saleReturn = SaleReturn::forceCreate(['businessId' => $business->id, 'saleId' => $sale->id, 'totalReturnAmount' => 5]);
         ReturnSaleItem::forceCreate([
             'businessId' => $business->id, 'returnId' => $saleReturn->id, 'saleId' => $sale->id,
@@ -140,6 +145,9 @@ class MobileInvoiceVariantsTest extends TestCase
         ]);
 
         $this->actingAs($actor, 'admin');
+        $this->get(route('invoiceGenerate', $sale->id))->assertOk()
+            ->assertSee('data-rn-print-document', false)->assertSee('PRINT-SERIAL-1')
+            ->assertDontSee('class="rn-print-document__logo"', false);
         foreach ([
             ['sale-invoice', $sale->id, 'Print Product'],
             ['sale-return', $saleReturn->id, 'Print Product'],
@@ -187,6 +195,10 @@ class MobileInvoiceVariantsTest extends TestCase
             'qty' => 2, 'salePrice' => 150, 'buyPrice' => 100, 'totalSale' => 300,
             'totalPurchase' => 200, 'profitTotal' => 100,
         ]);
+        ProductSerial::forceCreate([
+            'businessId' => $business->id, 'purchaseId' => $purchase->id, 'saleId' => $sale->id,
+            'productId' => $product->id, 'serialNumber' => 'PRINT-SERIAL-1', 'status' => 'sold',
+        ]);
         $quote = Quotation::forceCreate([
             'businessId' => $business->id, 'quote_number' => 'PREVIEW-QUOTE', 'customer_id' => $customer->id,
             'date' => '2026-10-25', 'status' => 'draft', 'subtotal' => 300, 'discount_total' => 0, 'grand_total' => 300,
@@ -231,6 +243,9 @@ class MobileInvoiceVariantsTest extends TestCase
                     } else {
                         $response->assertSee(__('documents.quantity'))->assertSee(__('documents.rate'))
                             ->assertSee(__('documents.amount'));
+                        if ($type === 'sale-invoice') {
+                            $response->assertSee('PRINT-SERIAL-1')->assertSee(__('common.s_n'));
+                        }
                     }
                 }
             }

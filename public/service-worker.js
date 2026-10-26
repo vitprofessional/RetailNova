@@ -1,6 +1,6 @@
 /* RetailNova worker: only the public offline page is cached. */
 const CACHE_PREFIX = 'retailnova-public-offline-';
-const CACHE_NAME = `${CACHE_PREFIX}v1`;
+const CACHE_NAME = `${CACHE_PREFIX}v2`;
 const OFFLINE_URL = new URL('offline.html', self.registration.scope).href;
 
 self.addEventListener('install', (event) => {

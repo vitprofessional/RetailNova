@@ -1,6 +1,6 @@
 @php
     $ledgerPaper = $paper ?? ($receipt['paper'] ?? 'thermal80');
-    $logo = $business?->invoiceLogoUrl() ?: asset('logo.png');
+    $logo = $business?->invoiceLogoUrl();
 @endphp
 <article class="rn-print-document rn-print-document--{{ $ledgerPaper }} rn-print-document--ledger" data-rn-print-document data-paper="{{ $ledgerPaper }}"
          data-qr-payload="{{ $receipt['document_label'].' '.$receipt['document_number'].' | '.$receipt['current_balance'] }}">

@@ -4,7 +4,7 @@
     $paper = in_array($requestedPaper, ['a4', 'thermal80', 'thermal58'], true)
         ? $requestedPaper
         : (in_array($business?->default_invoice_printer, ['a4', 'thermal80', 'thermal58'], true) ? $business->default_invoice_printer : 'thermal80');
-    $logo = $business?->invoiceLogoUrl() ?: asset('logo.png');
+    $logo = $business?->invoiceLogoUrl();
     $documentDate = $receipt['date'] ?? null;
     $isLedger = !empty($receipt['ledger']);
 @endphp
@@ -25,7 +25,7 @@
         <tbody>
         @foreach($documentItems as $line)
             <tr>
-                <td><strong>{{ $line['title'] }}</strong><small class="rn-print-document__thermal-detail">{{ $line['quantity'] ?? '' }} × {{ $line['rate'] ?? '' }} ........ {{ $line['amount'] ?? '' }}</small></td>
+                <td><strong>{{ $line['title'] }}</strong><small class="rn-print-document__thermal-detail">{{ $line['quantity'] ?? '' }} × {{ $line['rate'] ?? '' }} ........ {{ $line['amount'] ?? '' }}</small>@if(!empty($line['serials']))<small class="rn-print-document__serials">{{ __('common.s_n') }}: {{ implode(', ', $line['serials']) }}</small>@endif</td>
                 <td class="rn-print-document__numeric">{{ $line['quantity'] ?? '—' }}</td>
                 <td class="rn-print-document__money">{{ $line['rate'] ?? '—' }}</td>
                 <td class="rn-print-document__money">{{ $line['amount'] ?? '—' }}</td>

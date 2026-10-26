@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\InvoiceItem;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseProduct;
+use App\Models\ProductSerial;
 use App\Models\PurchaseReturn;
 use App\Models\Quotation;
 use App\Models\SaleProduct;
@@ -59,10 +60,14 @@ class DocumentPrintController extends Controller
             abort(403);
         }
 
-        $items = $sale->items->map(fn (InvoiceItem $line) => $this->line(
-            $line->purchase?->product?->name ?? __('invoices.item').' #'.$line->purchaseId,
-            $line->qty, $line->salePrice, $line->totalSale ?? ((float) $line->qty * (float) $line->salePrice),
-        ))->all();
+        $serials = ProductSerial::query()->where('saleId', $sale->id)->orderBy('id')->get()->groupBy('purchaseId');
+        $items = $sale->items->map(function (InvoiceItem $line) use ($serials) {
+            return $this->line(
+                $line->purchase?->product?->name ?? __('invoices.item').' #'.$line->purchaseId,
+                $line->qty, $line->salePrice, $line->totalSale ?? ((float) $line->qty * (float) $line->salePrice),
+                $serials->get($line->purchaseId, collect())->pluck('serialNumber')->values()->all(),
+            );
+        })->all();
         $total = (float) ($sale->grandTotal ?? $sale->totalSale ?? 0);
         $paid = (float) ($sale->paidAmount ?? 0);
         $due = (float) ($sale->curDue ?? $sale->invoiceDue ?? max(0, $total - $paid));
@@ -92,6 +97,7 @@ class DocumentPrintController extends Controller
         $items = $invoice->items->map(fn (PurchaseProduct $line) => $this->line(
             $line->product?->name ?? __('common.product'), $line->qty, $line->buyPrice,
             $line->totalAmount ?? ((float) $line->qty * (float) $line->buyPrice),
+            ProductSerial::query()->where('purchaseId', $line->id)->orderBy('id')->pluck('serialNumber')->all(),
         ))->all();
         $business = BusinessSetup::query()->find($invoice->businessId);
         return [$this->receipt(
@@ -228,7 +234,7 @@ class DocumentPrintController extends Controller
         return [$receipt, $business];
     }
 
-    private function line(string $title, mixed $quantity, mixed $rate, mixed $amount): array
+    private function line(string $title, mixed $quantity, mixed $rate, mixed $amount, array $serials = []): array
     {
         $localizedQuantity = $quantity === null ? '—' : LocalizedNumber::count($quantity);
         $localizedRate = $rate === null ? '—' : LocalizedNumber::money($rate);
@@ -238,6 +244,7 @@ class DocumentPrintController extends Controller
             'rate' => $localizedRate,
             'amount' => $amount === null ? '—' : LocalizedNumber::money($amount),
             'detail' => $quantity === null ? '—' : $localizedQuantity.' × '.$localizedRate,
+            'serials' => $serials,
         ];
     }
 

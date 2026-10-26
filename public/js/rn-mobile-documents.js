@@ -66,7 +66,7 @@
     const old = { display: printDocument.style.display, position: printDocument.style.position, left: printDocument.style.left, top: printDocument.style.top, zIndex: printDocument.style.zIndex };
     Object.assign(printDocument.style, { display: 'block', position: 'fixed', left: '0', top: '0', zIndex: '-1' });
     const width = printDocument.getBoundingClientRect().width || 1;
-    const scale = kind === 'thermal80' ? 576 / width : kind === 'thermal58' ? 384 / width : 2;
+    const scale = kind === 'thermal80' ? (72 * 96 / 25.4) / width : kind === 'thermal58' ? (48 * 96 / 25.4) / width : 2;
     try { return await tools.html2canvas(printDocument, { scale, backgroundColor: '#ffffff', useCORS: true, logging: false }); }
     finally { Object.assign(printDocument.style, old); }
   };
