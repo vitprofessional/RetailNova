@@ -59,6 +59,7 @@
                                 </div>
                             </div>
                             <div class="col-md-7">
+                                @mobile<x-m.product-picker mode="purchase" :label="__('mobile.search_products')" />@endmobile
                                 <div class="form-group">
                                     <label for="productName" class="form-label">{{ __('common.product') }} *</label>
                                     <select id="productName" name="productName_select" class="form-control js-product-select" >
@@ -708,3 +709,16 @@ document.addEventListener('DOMContentLoaded', function(){
 @endsection
 
 @include('customScript')
+<script>
+document.querySelector('[data-rn-product-picker][data-mode="purchase"]')?.addEventListener('rn:product-picker:selected', function (event) {
+    const id = String(event.detail.product_id);
+    const select = document.getElementById('productName');
+    const hidden = document.getElementById('productNameHidden');
+    if (!select || !hidden) return;
+    let option = [...select.options].find(item => item.value === id);
+    if (!option) { option = new Option(event.detail.name, id); select.add(option); }
+    select.value = id;
+    hidden.value = id;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+});
+</script>

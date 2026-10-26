@@ -4,20 +4,14 @@
     selector, quantity buttons, discount, paid amount, payment method and save button), which
     keeps all sale rules and POST fields unchanged.
 --}}
-@php
-    $pos = app(\App\Services\PosCatalog::class)->cards($productList ?? []);
-    $money = fn ($amount) => \App\Support\LocalizedNumber::money($amount);
-@endphp
 <section class="rn-m-pos" data-rn-pos aria-label="{{ __('mobile.sale') }}"
          data-currency="{{ \App\Support\Currency::symbol() }}" data-currency-position="{{ \App\Support\Currency::position() }}"
          data-i18n-items="{{ __('mobile.items_count') }}" data-i18n-change="{{ __('mobile.give_change') }}"
          data-i18n-due="{{ __('mobile.remains_due') }}" data-i18n-unavailable="{{ __('mobile.not_available') }}"
          data-i18n-no-price="{{ __('mobile.no_sale_price_buy_first') }}"
          data-i18n-decrease="{{ __('mobile.decrease') }}" data-i18n-increase="{{ __('mobile.increase') }}">
-    <div class="rn-m-pos-search">
-        <i class="ri-search-line" aria-hidden="true"></i>
-        <label class="sr-only" for="rnPosSearch">{{ __('mobile.search_products') }}</label>
-        <input id="rnPosSearch" type="search" autocomplete="off" placeholder="{{ __('mobile.search_products') }}" data-rn-pos-search>
+    @php($money = fn ($amount) => \App\Support\LocalizedNumber::money($amount))
+    <div class="rn-m-pos-tools">
         <button type="button" class="rn-m-icon-btn" data-rn-pos-barcode-toggle aria-expanded="false" aria-controls="rnPosBarcode" aria-label="{{ __('mobile.scan_barcode') }}"><i class="ri-barcode-line" aria-hidden="true"></i></button>
     </div>
     <div id="rnPosBarcode" class="rn-m-pos-barcode" hidden>
@@ -26,26 +20,7 @@
         <button type="button" class="rn-m-btn rn-m-btn--primary" data-rn-pos-barcode-go>{{ __('mobile.scan_barcode') }}</button>
     </div>
 
-    <div class="rn-m-chips" role="group" aria-label="{{ __('sales.product_category') }}">
-        <button type="button" class="rn-m-chip is-active" data-rn-pos-category="" aria-pressed="true">{{ __('mobile.all_categories') }}</button>
-        @foreach($pos['categories'] as $category)
-            <button type="button" class="rn-m-chip" data-rn-pos-category="{{ $category['id'] }}" aria-pressed="false">{{ $category['name'] }}</button>
-        @endforeach
-    </div>
-
-    <ul class="rn-m-products" role="list" data-rn-pos-products>
-        @foreach($pos['cards'] as $card)
-            <li data-rn-pos-item data-category="{{ $card['category'] }}" data-search="{{ \Illuminate\Support\Str::lower($card['name'].' '.$card['barcode']) }}">
-                <button type="button" class="rn-m-product{{ $card['stock'] <= 0 || $card['price'] === null ? ' is-out' : '' }}" data-product-id="{{ $card['id'] }}" @disabled($card['stock'] <= 0 || $card['price'] === null)>
-                    @if($card['image'])<img class="rn-m-product-image" src="{{ $card['image'] }}" alt="" loading="lazy">@else<span class="rn-m-product-image rn-m-product-image--fallback" aria-hidden="true">{{ \App\Support\LocalizedNumber::digits(mb_substr($card['name'], 0, 1)) }}</span>@endif
-                    <span class="rn-m-product-name">{{ $card['name'] }}</span>
-                    <span class="rn-m-product-price">{{ $card['price'] !== null ? $money($card['price']) : __('mobile.no_sale_price_buy_first') }}</span>
-                    <span class="rn-m-product-stock{{ $card['stock'] <= 0 ? ' is-out' : '' }}">{{ $card['stock'] > 0 ? __('mobile.in_stock', ['count' => \App\Support\LocalizedNumber::count($card['stock'])]) : __('mobile.out_of_stock') }}</span>
-                </button>
-            </li>
-        @endforeach
-    </ul>
-    <p class="rn-m-empty" data-rn-pos-none @if($pos['cards'] !== []) hidden @endif>{{ __('mobile.no_products') }}</p>
+    <x-m.product-picker mode="sale" :label="__('mobile.search_products')" />
     <p class="rn-m-toast" role="status" aria-live="polite" data-rn-pos-toast hidden></p>
 
     {{-- The whole bar is one button: "N items · total · Take payment →"; disabled (light) while the cart is empty. --}}

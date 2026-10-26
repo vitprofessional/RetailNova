@@ -76,6 +76,10 @@ class purchase extends Controller
         endif;
     }
 
+   public function selectPurchaseForReturn(){
+        return view('purchase.selectPurchaseForReturn');
+   }
+
     public function purchaseReturnSave(Request $request){
         $data=$request->validate(['purchaseId'=>['required','integer'],'supplierId'=>['required','integer'],
             'productId'=>['required','integer'],'returnQty'=>['required','integer','min:1'],

@@ -164,6 +164,7 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
 
     // Mobile list pages: read-only JSON for "load more" (same scope and permissions as each page).
     Route::get('/m/lists/{list}', [\App\Http\Controllers\MobileListController::class, 'page'])->name('m.lists')->where('list', '[a-z-]+');
+    Route::get('/m/product-picker', \App\Http\Controllers\MobileProductPickerController::class)->name('m.product-picker');
 
     // Admin profile management
     Route::get('/admin/profile', [
@@ -503,6 +504,8 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
         purchase::class,
         'delPurchase'
     ])->name('delPurchase');
+
+    Route::get('/return/purchase/select', [purchase::class, 'selectPurchaseForReturn'])->name('returnPurchase.select');
 
     Route::get('/return/purchase/{id}',[
         purchase::class,

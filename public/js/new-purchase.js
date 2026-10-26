@@ -4,29 +4,38 @@
  const rows = form.querySelector('#productDetails'), counter = form.querySelector('#purchaseItemCount');
  const supplier = form.querySelector('#supplierName'), product = form.querySelector('#productName');
  const supplierHelp = form.querySelector('[data-purchase-supplier-help]');
- const picker = form.querySelector('.rn-m-purchase-picker');
- const productCards = picker?.querySelector('.rn-m-purchase-product-cards');
- const productSearch = picker?.querySelector('#purchaseProductSearch');
- const refreshProductCards = () => {
-  if (!productCards || !product) return;
-  const filter = (productSearch?.value || '').trim().toLocaleLowerCase();
-  productCards.replaceChildren();
-  [...product.options].filter(option => option.value && option.textContent.toLocaleLowerCase().includes(filter)).forEach(option => {
-   const button = document.createElement('button'); button.type='button'; button.className='rn-m-purchase-product'; button.dataset.productId=option.value;
-   const image=option.dataset.image ? document.createElement('img') : document.createElement('span');
-   image.className='rn-m-purchase-product-image'+(option.dataset.image ? '' : ' is-fallback');
-   if(option.dataset.image){ image.src=option.dataset.image; image.alt=''; image.loading='lazy'; }
-   else image.textContent=option.textContent.trim().slice(0,1);
-   const name=document.createElement('span'); name.className='rn-m-purchase-product-name'; name.textContent=option.textContent.trim();
-   const icon=document.createElement('i'); icon.className='ri-add-line'; icon.setAttribute('aria-hidden','true');
-   button.append(image,name,icon); productCards.append(button);
-  });
- };
- productSearch?.addEventListener('input', refreshProductCards);
- productCards?.addEventListener('click', event => {
-  const card=event.target.closest('.rn-m-purchase-product'); if(!card || product.disabled) return;
-  product.value=card.dataset.productId; product.dispatchEvent(new Event('change',{bubbles:true}));
+ const picker = form.querySelector('[data-rn-product-picker][data-mode="purchase"]');
+ picker?.addEventListener('rn:product-picker:selected', event => {
+  const selected = event.detail;
+  if (!selected?.product_id) return;
+  if (product.disabled || !supplier?.value) {
+   const notice = picker.querySelector('[data-picker-error]');
+   if (notice) { notice.textContent = supplierHelp?.dataset.noSupplier || ''; notice.hidden = false; }
+   refreshSupplierHelp();
+   return;
+  }
+  let option = [...product.options].find(item => item.value === String(selected.product_id));
+  if (!option) {
+   option = new Option(selected.name, String(selected.product_id));
+   product.add(option);
+  }
+  product.value = option.value;
+  product.dispatchEvent(new Event('change',{bubbles:true}));
   form.querySelector('#addProductRow')?.click();
+  const row = rows?.querySelector('tr.product-row:last-child');
+  if (row) {
+   const fields = [
+    [row.querySelector('.quantity'), selected.quantity],
+    [row.querySelector('input[id^="buyPrice"]'), selected.buy_price],
+    [row.querySelector('input.sale-price'), selected.sale_price],
+   ];
+   fields.forEach(([field, value]) => {
+    if (!field || value === undefined || value === null) return;
+    field.value = String(value);
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+   });
+  }
  });
  const refreshSupplierHelp = () => {
   if (!supplierHelp) return;
@@ -59,13 +68,11 @@
   form.querySelector('#purchaseItemsScroll').hidden=count===0;
  };
  refresh();
- refreshProductCards();
  refreshSupplierHelp();
  form.addEventListener('change', event => {
   if (event.target === supplier || event.target === product) refreshSupplierHelp();
  });
  new MutationObserver(refreshSupplierHelp).observe(product, {childList:true});
- new MutationObserver(refreshProductCards).observe(product, {childList:true});
  rows.addEventListener('click',event=>{const step=event.target.closest('[data-step]');if(!step)return;const input=step.parentElement.querySelector('input.quantity');const value=Math.max(1,(parseInt(input.value||'1',10)||1)+parseInt(step.dataset.step,10));input.value=String(value);input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));});
  new MutationObserver(refresh).observe(rows,{childList:true,subtree:true});
  // Financial and serial payloads are owned exclusively by existing purchase handlers.

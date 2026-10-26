@@ -41,13 +41,7 @@
             </div>
           </div>
 
-          <section class="rn-m-quote-picker" aria-label="{{ __('common.product') }}">
-            <label class="sr-only" for="quoteProductSearch">{{ __('mobile.list_search') }}</label>
-            <input id="quoteProductSearch" class="form-control rn-m-quote-picker-search" type="search" placeholder="{{ __('mobile.list_search') }}" autocomplete="off">
-            <div class="rn-m-quote-product-cards" role="listbox" aria-label="{{ __('common.product') }}">
-              @foreach($products as $p)<button type="button" class="rn-m-quote-product" data-product-id="{{ $p->id }}" data-product-name="{{ $p->name }}"><span>{{ $p->name }}</span><i class="ri-add-line" aria-hidden="true"></i></button>@endforeach
-            </div>
-          </section>
+          <x-m.product-picker mode="quotation" :label="__('mobile.search_products')" />
           <div class="mb-3 table-responsive product-table rn-m-form-section rn-m-quotation-items">
             <table class="table mb-0 table-bordered rounded-0 rn-table-pro rn-m-quote-items" id="itemsTable">
               <thead>
@@ -175,11 +169,7 @@
   }
   document.getElementById('addItemRow').addEventListener('click', function(){ addRow(); });
   document.querySelectorAll('#quoteItems .qty').forEach(wrapStepper);
-  var picker=document.querySelector('.rn-m-quote-picker');
-  if(picker){
-    picker.addEventListener('input',function(e){if(e.target.id==='quoteProductSearch'){var q=e.target.value.trim().toLocaleLowerCase();picker.querySelectorAll('.rn-m-quote-product').forEach(function(card){card.hidden=!card.dataset.productName.toLocaleLowerCase().includes(q);});}});
-    picker.addEventListener('click',function(e){var card=e.target.closest('.rn-m-quote-product');if(card)addRow(card.dataset.productId);});
-  }
+  document.querySelector('[data-rn-product-picker][data-mode="quotation"]')?.addEventListener('rn:product-picker:selected',function(e){addRow(e.detail.product_id);});
   document.getElementById('quoteItems').addEventListener('click',function(e){var step=e.target.closest('[data-step]');if(step){var input=step.parentElement.querySelector('input.qty');input.value=String(Math.max(1,(parseInt(input.value||'1',10)||1)+parseInt(step.dataset.step,10)));input.dispatchEvent(new Event('input',{bubbles:true}));}});
   document.getElementById('quoteItems').addEventListener('change',function(e){if(e.target.matches('select[name="items[product_id][]"]'))recalc();});
   document.getElementById('quoteItems').addEventListener('input', function(e){ if(['qty','price','dperc','damt'].some(c=> e.target.classList.contains(c))) recalc(); });

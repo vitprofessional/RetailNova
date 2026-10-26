@@ -57,8 +57,8 @@ class MobileFormRulesTest extends TestCase
         $this->assertStringNotContainsString('Select Product', $edit);
         $this->assertStringContainsString("__('common.select_product')", $create);
         $this->assertStringContainsString("__('common.select_product')", $edit);
-        $this->assertStringContainsString('rn-m-quote-picker', $create);
-        $this->assertStringContainsString('rn-m-quote-product', $edit);
+        $this->assertStringContainsString('<x-m.product-picker mode="quotation"', $create);
+        $this->assertStringContainsString('<x-m.product-picker mode="quotation"', $edit);
     }
 
     public function test_secondary_admin_and_catalog_forms_use_the_shared_mobile_form_contract(): void

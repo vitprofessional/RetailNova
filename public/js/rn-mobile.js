@@ -105,9 +105,6 @@
         var rows = el('productDetails');
         var customer = el('customerName');
         var product = el('productName');
-        var cards = Array.prototype.slice.call(pos.querySelectorAll('[data-rn-pos-item]'));
-        var search = pos.querySelector('[data-rn-pos-search]');
-        var none = pos.querySelector('[data-rn-pos-none]');
         var toastEl = pos.querySelector('[data-rn-pos-toast]');
         var bar = {
             count: pos.querySelector('[data-rn-pos-count]'),
@@ -120,7 +117,6 @@
         var sheetDiscount = pos.querySelector('[data-rn-checkout-discount]');
         var given = pos.querySelector('[data-rn-checkout-given]');
         var result = pos.querySelector('[data-rn-checkout-result]');
-        var activeCategory = '';
 
         var currency = pos.dataset.currency || '';
         var currencyRight = pos.dataset.currencyPosition === 'right';
@@ -140,31 +136,6 @@
             clearTimeout(toast.timer);
             toast.timer = setTimeout(function () { toastEl.hidden = true; }, 3200);
         }
-
-        // ---- Product grid: search, category chips, tap to add ----
-        function filterCards() {
-            var query = (search.value || '').trim().toLocaleLowerCase();
-            var shown = 0;
-            cards.forEach(function (card) {
-                var visible = (!activeCategory || card.dataset.category === activeCategory)
-                    && (!query || (card.dataset.search || '').indexOf(query) !== -1);
-                card.hidden = !visible;
-                if (visible) { shown++; }
-            });
-            if (none) { none.hidden = shown > 0; }
-        }
-        search.addEventListener('input', filterCards);
-        pos.addEventListener('click', function (event) {
-            var chip = event.target.closest('[data-rn-pos-category]');
-            if (!chip) { return; }
-            activeCategory = chip.dataset.rnPosCategory;
-            pos.querySelectorAll('[data-rn-pos-category]').forEach(function (other) {
-                var on = other === chip;
-                other.classList.toggle('is-active', on);
-                other.setAttribute('aria-pressed', on ? 'true' : 'false');
-            });
-            filterCards();
-        });
 
         // The sale form is customer-first: use the walk-in customer when none is chosen yet.
         function ensureCustomer() {
@@ -201,9 +172,9 @@
                 })
                 .catch(function () { toast(pos.dataset.i18nUnavailable); });
         }
-        pos.addEventListener('click', function (event) {
-            var card = event.target.closest('[data-product-id]');
-            if (card && !card.disabled) { addProduct(card.dataset.productId, card); }
+        pos.addEventListener('rn:product-picker:selected', function (event) {
+            var selected = event.detail;
+            if (selected && selected.product_id) { addProduct(String(selected.product_id)); }
         });
 
         // Barcode: hand the code to the existing barcode lookup.
@@ -377,6 +348,5 @@
             if (save) { save.click(); }
         });
 
-        filterCards();
     }
 })();

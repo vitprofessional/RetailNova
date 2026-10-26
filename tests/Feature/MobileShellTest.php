@@ -281,8 +281,13 @@ class MobileShellTest extends TestCase
         $this->assertMatchesRegularExpression('/[০-৯]/u', $home);
         $this->assertDoesNotMatchRegularExpression('/[0-9]/', $home);
 
-        $stock = $this->xpath($this->get(route('newsale'))->getContent())->query('//*[@data-rn-pos]//*[contains(@class,"rn-m-product-stock")]')->item(0)->textContent;
-        $this->assertStringContainsString('২', $stock);
+        $salePage = $this->xpath($this->get(route('newsale'))->getContent());
+        $this->assertCount(1, $salePage->query('//*[@data-rn-product-picker and @data-mode="sale"]'));
+        // Product cards are intentionally loaded from the tenant-scoped JSON endpoint; the page shell
+        // does not embed catalog data or create additional transaction POST fields.
+        $catalog = $this->getJson(route('m.product-picker', ['mode' => 'sale']))->assertOk()->json('items');
+        $this->assertCount(1, $catalog);
+        $this->assertSame(2, $catalog[0]['stock']);
         $this->assertSame('১২৩', LocalizedNumber::digits('123', 'bn'));
         $this->assertSame('123', LocalizedNumber::digits('123', 'en'));
     }
@@ -297,7 +302,9 @@ class MobileShellTest extends TestCase
         $this->assertCount(0, $xpath->query('//*[@id="saveSaleForm"]//*[@data-rn-pos]'), 'The mobile layer sits outside the sale form.');
         $this->assertCount(0, $xpath->query('//*[@data-rn-pos]//*[@name and @name!="rnPaymentMethod"]'), 'Mobile controls carry no field names.');
         $this->assertCount(0, $xpath->query('//*[@data-rn-pos]//form'));
-        $this->assertGreaterThan(0, $xpath->query('//*[@data-rn-pos]//button[@data-product-id]')->length);
+        $this->assertSame(1, $xpath->query('//*[@data-rn-product-picker and @data-mode="sale"]')->length);
+        $this->assertSame(1, $xpath->query('//*[@data-rn-product-picker]//input[@data-picker-search and not(@name)]')->length);
+        $this->assertSame(0, $xpath->query('//*[@data-rn-product-picker]//*[@name]')->length, 'Picker controls do not alter transaction POST fields.');
         $this->assertCount(1, $xpath->query('//*[@data-rn-pos-bar]//button[@data-rn-pos-checkout]'));
         $this->assertCount(4, $xpath->query('//*[@data-rn-checkout]//input[@data-rn-checkout-method]'));
         $this->assertCount(1, $xpath->query('//*[@data-rn-checkout]//button[@data-rn-checkout-complete]'));
