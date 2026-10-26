@@ -274,6 +274,17 @@ class MobileListPagesTest extends TestCase
         $this->assertCount(1, $page->query('//*[@data-rn-sheet and @role="dialog"]//form[@method="GET"]'));
     }
 
+    public function test_sales_history_defaults_to_this_month_with_an_active_chip(): void
+    {
+        $admin = $this->actor('admin');
+        $this->seedLists(1, 'Current', $admin);
+        $this->actingAs($admin, 'admin');
+
+        $page = $this->xpath($this->onPhone()->get(route('saleList'))->assertOk()->getContent());
+        $this->assertCount(1, $page->query('//nav[contains(@class,"rn-m-periods")]/a[@data-rn-period="this_month" and @aria-current="true"]'));
+        $this->assertSame(1, $this->getJson(route('m.lists', ['list' => 'sales']))->assertOk()->json('total'));
+    }
+
     public function test_card_menus_hold_single_actions_by_permission(): void
     {
         $admin = $this->actor('admin');

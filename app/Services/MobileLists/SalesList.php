@@ -8,6 +8,8 @@ use App\Models\SaleProduct;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 /** Sales history (desktop: saleController@saleList, sale/saleList.blade.php). */
 class SalesList extends MobileList
@@ -25,6 +27,18 @@ class SalesList extends MobileList
     public function dated(): bool
     {
         return true;
+    }
+
+    /** Sales history opens on the current month and keeps the matching chip selected. */
+    public function filters(Request $request): array
+    {
+        $filters = parent::filters($request);
+        if (!isset($filters['from']) && !isset($filters['to'])) {
+            $filters['from'] = Carbon::today()->startOfMonth()->toDateString();
+            $filters['to'] = Carbon::today()->endOfMonth()->toDateString();
+        }
+
+        return $filters;
     }
 
     public function create(): ?array

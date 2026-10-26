@@ -33,7 +33,7 @@
                 @empty
                     <tr><td colspan="3" class="text-center text-muted">{{ __('common.no_data_found') }}</td></tr>
                 @endforelse
-            </tbody><tfoot><tr><th>{{ __('common.total') }}</th><th><x-mobile.report-money :amount="$totalExpense" /></th><th>100%</th></tr></tfoot>
+            </tbody><tfoot><tr><th>{{ __('common.total') }}</th><th><x-mobile.report-money :amount="$totalExpense" /></th><th>{{ app(\App\Support\MobileView::class)->isMobile() ? \App\Support\LocalizedNumber::digits('100%') : '100%' }}</th></tr></tfoot>
         </table></div>
         <div class="rn-report-chart"><canvas id="expenseChart" aria-label="{{ __('reports.expense_reports') }}"></canvas></div>
     </div></div>

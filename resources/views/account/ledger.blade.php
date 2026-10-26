@@ -100,7 +100,7 @@
                                         </tr>
                                         @forelse($ledgerEntries as $entry)
                                         <tr>
-                                            <td>{{ $entry['date']->format('d M Y') }}</td>
+                                            <td>{{ app(\App\Support\MobileView::class)->isMobile() ? \App\Support\MobileDateTime::date($entry['date']) : $entry['date']->format('d M Y') }}</td>
                                             <td>{{ $entry['reference'] }}</td>
                                             <td>{{ $entry['description'] }}</td>
                                             <td class="text-right">{{ $entry['debit'] > 0 ? number_format($entry['debit'], 2) : '-' }}</td>

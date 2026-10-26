@@ -18,7 +18,7 @@
         background: var(--rn-color-primary);
         box-shadow: var(--rn-shadow-raised);
         color: var(--rn-color-on-primary);
-        font-size: 20px;
+        font-size: var(--rn-fs-body);
         font-weight: 700;
         line-height: 1.2;
         text-decoration: none;
@@ -29,8 +29,8 @@
     .rn-m-home-sale-cta:focus-visible { outline: 3px solid var(--rn-color-primary-soft); outline-offset: 3px; }
 
     /* ---------- List page ---------- */
-    .rn-m-list-page { margin: -12px -12px 0; padding: 0 12px 72px; }
-    .rn-m-list-header { margin: 0 -12px; padding: 12px; background: var(--rn-color-primary); }
+    .rn-m-list-page { margin: 0; padding: 0 0 calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 16px); }
+    .rn-m-list-header { margin: 0 calc(-1 * var(--rn-space-4)); padding: 12px var(--rn-space-4); background: var(--rn-color-primary); }
     .rn-m-list-toolbar { display: flex; gap: 8px; align-items: stretch; }
     .rn-m-search {
         display: flex;
@@ -1308,6 +1308,9 @@
         .rn-report-page .card-header h5 { margin: 0; font-size: var(--rn-type-label); }
         .rn-report-page .card-header .btn { min-height: var(--rn-touch); }
         .rn-report-page .pagination { flex-wrap: wrap; gap: 4px; }
+        .rn-report-mobile-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; font: var(--rn-type-label); }
+        .rn-report-mobile-pagination a { min-height: 44px; display: inline-flex; align-items: center; color: var(--rn-teal-700); text-decoration: none; }
+        .rn-report-mobile-pagination [aria-disabled="true"] { color: var(--rn-text-muted); }
         .rn-report-page canvas { max-height: 190px; }
     }
 
@@ -1427,4 +1430,17 @@
     .rn-report-mobile-overview .rn-report-bar-column small,
     .rn-report-mobile-overview .rn-report-bar-label,
     .rn-report-mobile-overview .rn-report-mobile-kpi > span { font-size: var(--rn-type-helper) !important; }
+
+    /* Legacy screens are mobile pages too: normalize inherited Bootstrap/theme typography
+       to the shared seven-step scale, then restore semantic roles below. */
+    body.rn-app .content-page .rn-m-page :where(*:not(i):not(svg):not(path):not([class^="ri-"]):not([class*=" ri-"])) {
+        font-family: var(--rn-font-family) !important;
+        font-size: var(--rn-fs-body) !important;
+    }
+    body.rn-app .content-page .rn-m-page :where(h1, .rn-m-title, .rn-m-report-title) { font-size: var(--rn-fs-title) !important; line-height: var(--rn-lh-title); }
+    body.rn-app .content-page .rn-m-page :where(h2, h3, h4, h5, .rn-m-card-title, .rn-m-section-title, .rn-m-report-hub-copy strong) { font-size: var(--rn-fs-heading) !important; line-height: var(--rn-lh-heading); }
+    body.rn-app .content-page .rn-m-page :where(label, dt, .rn-m-card-sub, .rn-m-card-meta, .rn-m-card-note, .rn-m-date-heading, .rn-m-helper, small, .small, .rn-m-grid-label) { font-size: var(--rn-fs-label) !important; }
+    body.rn-app .content-page .rn-m-page :where(.rn-m-card-tag, .rn-m-chip, .rn-m-tab, .rn-m-tab-label, .rn-m-status, .badge, .rn-superadmin-tag, .rn-m-detail-summary__status) { font-size: var(--rn-fs-tag) !important; }
+    body.rn-app .content-page .rn-m-page :where(.rn-m-card-amount, .rn-m-summary dd, .rn-m-invoice-totals dd, .rn-report-mobile-kpi strong, .rn-m-master-card__amount) { font-size: var(--rn-fs-amount) !important; }
+    body.rn-app .content-page .rn-m-page :where(.rn-m-hero-amount) { font-size: var(--rn-fs-hero) !important; line-height: var(--rn-lh-hero); }
 }

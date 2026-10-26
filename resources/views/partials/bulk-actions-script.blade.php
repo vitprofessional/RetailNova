@@ -32,7 +32,7 @@
         });
 
         if (!wrapper) {
-            console.error("Critical Error: Bulk actions UI wrapper ('bulkActionsWrapper') not found. Script cannot function.");
+            // Mobile cards do not render the desktop bulk-action toolbar or checkboxes.
             return;
         }
         console.log("Found UI wrapper:", wrapper);

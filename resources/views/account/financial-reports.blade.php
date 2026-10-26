@@ -42,7 +42,7 @@
                             @if($reportType == 'balance_sheet')
                                 {{-- Balance Sheet --}}
                                 <h5 class="text-center mb-3">{{ __('reports.balance_sheet') }}</h5>
-                                <p class="text-center">{{ __('common.as_of') }} {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}</p>
+                                <p class="text-center">{{ __('common.as_of') }} {{ app(\App\Support\MobileView::class)->isMobile() ? \App\Support\MobileDateTime::date($endDate) : \Carbon\Carbon::parse($endDate)->format('F d, Y') }}</p>
 
                                 <div class="row">
                                     <div class="col-md-6">
@@ -102,7 +102,7 @@
                             @elseif($reportType == 'income_statement')
                                 {{-- Income Statement --}}
                                 <h5 class="text-center mb-3">{{ __('reports.income_statement') }}</h5>
-                                <p class="text-center">{{ __('common.for_the_period') }} {{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} {{ __('common.to') }} {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}</p>
+                                <p class="text-center">{{ __('common.for_the_period') }} {{ app(\App\Support\MobileView::class)->isMobile() ? \App\Support\MobileDateTime::date($startDate) : \Carbon\Carbon::parse($startDate)->format('M d, Y') }} {{ __('common.to') }} {{ app(\App\Support\MobileView::class)->isMobile() ? \App\Support\MobileDateTime::date($endDate) : \Carbon\Carbon::parse($endDate)->format('M d, Y') }}</p>
 
                                 <h6>{{ __('reports.revenue') }}</h6>
                                 <table class="table rn-report-table table-sm">
@@ -142,7 +142,7 @@
                             @elseif($reportType == 'trial_balance')
                                 {{-- Trial Balance --}}
                                 <h5 class="text-center mb-3">{{ __('reports.trial_balance') }}</h5>
-                                <p class="text-center">{{ __('common.as_of') }} {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}</p>
+                                <p class="text-center">{{ __('common.as_of') }} {{ app(\App\Support\MobileView::class)->isMobile() ? \App\Support\MobileDateTime::date($endDate) : \Carbon\Carbon::parse($endDate)->format('F d, Y') }}</p>
 
 <table class="table rn-report-table table-bordered rn-table-pro">
                                     <thead class="thead-dark">

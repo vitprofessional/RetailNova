@@ -90,6 +90,7 @@ return [
     'cart_empty' => 'Tap a product to add it',
     'in_stock' => ':count in stock',
     'not_available' => 'This product is not available for sale right now.',
+    'no_sale_price_buy_first' => 'No price — purchase first',
     'no_products' => 'No products found.',
     'customer' => 'Customer',
     'items' => 'Items',

@@ -90,6 +90,7 @@ return [
     'cart_empty' => 'যোগ করতে পণ্যে চাপ দিন',
     'in_stock' => 'স্টকে :count',
     'not_available' => 'এই পণ্যটি এখন বিক্রির জন্য পাওয়া যাচ্ছে না।',
+    'no_sale_price_buy_first' => 'দাম নেই — আগে কিনুন',
     'no_products' => 'কোনো পণ্য পাওয়া যায়নি।',
     'customer' => 'কাস্টমার',
     'items' => 'পণ্য',

@@ -93,7 +93,7 @@
                                     <tbody>
                                         @forelse($transactions as $transaction)
                                         <tr>
-                                            <td>{{ $transaction->transaction_date->format('d M Y') }}</td>
+                                            <td>{{ app(\App\Support\MobileView::class)->isMobile() ? \App\Support\MobileDateTime::date($transaction->transaction_date) : $transaction->transaction_date->format('d M Y') }}</td>
                                             <td>{{ $transaction->reference_no }}</td>
                                             <td>
                                                 <span class="badge badge-info">{{ ucfirst($transaction->transaction_type) }}</span>

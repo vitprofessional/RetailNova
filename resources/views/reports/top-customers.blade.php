@@ -55,7 +55,7 @@
     <div class="col-lg-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between">
-                <h5>{{ __('reports.top_customers_count', ['count'=>$limit]) }}</h5>
+                <h5>{{ __('reports.top_customers_count', ['count'=>app(\App\Support\MobileView::class)->isMobile() ? \App\Support\LocalizedNumber::digits($limit) : $limit]) }}</h5>
                 <button onclick="window.print()" class="btn btn-sm btn-primary">
                     <i class="ri-printer-line"></i> {{ __('customers.print') }}
                 </button>

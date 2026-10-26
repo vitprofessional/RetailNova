@@ -26,7 +26,10 @@
   const presentRows = () => {
     const count = rows.querySelectorAll('tr[data-product-summary]').length;
     document.getElementById('saleEmptyState').hidden = count > 0;
-    document.getElementById('saleItemCount').textContent = String(count);
+    const digits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+    document.getElementById('saleItemCount').textContent = String(count).replace(/[0-9]/g, digit =>
+      (document.documentElement.lang || '').toLowerCase().startsWith('bn') ? digits[Number(digit)] : digit
+    );
     form.querySelector('.rn-sale-table-wrap').hidden = count === 0;
     form.querySelector('.rn-sale-table-hint').hidden = count === 0;
   };

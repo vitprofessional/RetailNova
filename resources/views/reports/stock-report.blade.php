@@ -152,9 +152,27 @@
                     </table>
                 </div>
 
-                <div class="mt-3">
-                    {{ $products->appends(request()->query())->links() }}
-                </div>
+                @mobile
+                    @if($products->lastPage() > 1)
+                        <nav class="rn-report-mobile-pagination" aria-label="{{ __('navigation.purchase_history') }}">
+                            @if($products->currentPage() > 1)
+                                <a href="{{ $products->previousPageUrl() }}">{{ __('datatables.previous') }}</a>
+                            @else
+                                <span aria-disabled="true">{{ __('datatables.previous') }}</span>
+                            @endif
+                            <span>{{ \App\Support\LocalizedNumber::digits($products->currentPage()) }} / {{ \App\Support\LocalizedNumber::digits($products->lastPage()) }}</span>
+                            @if($products->hasMorePages())
+                                <a href="{{ $products->nextPageUrl() }}">{{ __('datatables.next') }}</a>
+                            @else
+                                <span aria-disabled="true">{{ __('datatables.next') }}</span>
+                            @endif
+                        </nav>
+                    @endif
+                @else
+                    <div class="mt-3">
+                        {{ $products->appends(request()->query())->links() }}
+                    </div>
+                @endmobile
             </div>
         </div>
     </div>
