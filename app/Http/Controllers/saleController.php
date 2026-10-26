@@ -744,14 +744,12 @@ class saleController extends Controller
             DB::commit();
             Alert::success(__('common.notification_success'),__('common.notification_sale_return_saved_successfully'));
             return back();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
-            \Log::error('saleReturnSave failed: '.$e->getMessage(), [
+            \Log::error('saleReturnSave failed', ['exception' => $e,
                 'saleId' => $resolvedSaleId,
-                'payload' => $requ->all(),
             ]);
-            Alert::error(__('common.notification_sorry'),__('common.notification_sale_return_failed_please_try_again'));
-            return back();
+            return back()->withInput()->withErrors(['return' => __('mobile.return_save_retry')]);
         }
     }
 

@@ -102,7 +102,7 @@ class purchase extends Controller
             'adjustAmount'=>['nullable','numeric','min:0'],'serialIds'=>['sometimes','array'],
             'serialIds.*'=>['integer','distinct']]);
         $workflow=app(\App\Services\PurchaseWorkflow::class);
-        \Illuminate\Support\Facades\DB::transaction(function() use($data,$workflow){
+        try { \Illuminate\Support\Facades\DB::transaction(function() use($data,$workflow){
             $workflow->lockSerialNamespace();$line=$workflow->line((int)$data['purchaseId']);
             $line=PurchaseProduct::withoutGlobalScopes()->whereKey($line->id)->lockForUpdate()->firstOrFail();
             $stock=ProductStock::withoutGlobalScopes()->where('purchaseId',$line->id)->lockForUpdate()->first();
@@ -117,7 +117,11 @@ class purchase extends Controller
             $history=PurchaseReturn::create(['purchaseId'=>$line->id,'totalReturnAmount'=>$total,'adjustAmount'=>$data['adjustAmount']??0]);
             $item=new ReturnPurchaseItem();$item->returnId=$history->id;$item->purchaseId=$line->id;$item->supplierId=$line->supplier;$item->productId=$line->productName;$item->qty=$qty;$item->save();
             $stock->currentStock-=$qty;$stock->save();
-        });
+        }); } catch (\Illuminate\Validation\ValidationException $e) { throw $e; }
+        catch (\Throwable $e) {
+            \Log::error('purchaseReturnSave failed', ['exception' => $e, 'businessId' => auth('admin')->user()?->businessId]);
+            return back()->withInput()->withErrors(['return' => __('mobile.return_save_retry')]);
+        }
         return redirect()->route('purchaseList')->with('status',__('purchases.return_saved'));
     }
 

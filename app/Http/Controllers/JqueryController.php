@@ -680,23 +680,30 @@ class JqueryController extends Controller
     }
 
     public function savePurchase(PurchaseSaveRequest $requ){
-        $workflow=app(\App\Services\PurchaseWorkflow::class);
-        $header=null;
-        $ids=array_filter((array)$requ->input('purchaseId',[]));
-        if($ids){
-            foreach($ids as $id){
-                $line=$workflow->line((int)$id);
-                if(!$line->purchase_invoice_id){
-                    throw \Illuminate\Validation\ValidationException::withMessages(['items'=>__('purchases.legacy_identity_required')]);
+        try {
+            $workflow=app(\App\Services\PurchaseWorkflow::class);
+            $header=null;
+            $ids=array_filter((array)$requ->input('purchaseId',[]));
+            if($ids){
+                foreach($ids as $id){
+                    $line=$workflow->line((int)$id);
+                    if(!$line->purchase_invoice_id){
+                        throw \Illuminate\Validation\ValidationException::withMessages(['items'=>__('purchases.legacy_identity_required')]);
+                    }
+                    if($header && $header->id!==(int)$line->purchase_invoice_id){
+                        throw \Illuminate\Validation\ValidationException::withMessages(['items'=>__('purchases.foreign_line')]);
+                    }
+                    $header=$workflow->header((int)$line->purchase_invoice_id);
                 }
-                if($header && $header->id!==(int)$line->purchase_invoice_id){
-                    throw \Illuminate\Validation\ValidationException::withMessages(['items'=>__('purchases.foreign_line')]);
-                }
-                $header=$workflow->header((int)$line->purchase_invoice_id);
             }
+            $header=$workflow->save($requ->all(),$header);
+            return redirect()->route('purchase.invoice.show',$header->id)->with('status',__('purchases.invoice_saved'));
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Log::error('savePurchase failed', ['exception' => $e, 'businessId' => auth('admin')->user()?->businessId]);
+            return back()->withInput()->withErrors(['purchase' => __('mobile.purchase_save_retry')]);
         }
-        $header=$workflow->save($requ->all(),$header);
-        return redirect()->route('purchase.invoice.show',$header->id)->with('status',__('purchases.invoice_saved'));
     }
 
     public function getServiceDetails($id){
@@ -991,11 +998,10 @@ class JqueryController extends Controller
             return back();
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
-        } catch (\Exception $e) {
-            // Log exception
-            \Log::error('saveSale transaction failed: '.$e->getMessage());
+        } catch (\Throwable $e) {
+            \Log::error('saveSale transaction failed', ['exception' => $e, 'businessId' => auth('admin')->user()?->businessId]);
 
-            $msg = __('common.data_failed');
+            $msg = __('mobile.sale_save_retry');
             // Friendly message for insufficient stock
             if (stripos($e->getMessage(), 'Insufficient stock') !== false) {
                 // try to extract purchaseId from message
@@ -1007,7 +1013,7 @@ class JqueryController extends Controller
                 if ($purchaseId) {
                     $pp = PurchaseProduct::find($purchaseId);
                     if ($pp) {
-                        $productName = $pp->productName;
+                        $productName = Product::find($pp->productName)?->name;
                     }
                 }
                 if ($productName) {
@@ -1017,8 +1023,7 @@ class JqueryController extends Controller
                 }
             }
 
-            $message = Alert::error(__('common.notification_sorry'),$msg);
-            return back();
+            return back()->withInput()->withErrors(['sale' => $msg ?: __('mobile.sale_save_retry')]);
         }
     }
 

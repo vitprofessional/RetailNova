@@ -91,6 +91,39 @@ class PurchasePaymentMethodTest extends TestCase
             ->assertOk()->assertSee('id="paymentMethodDesktop"',false);
     }
 
+    public function test_purchase_return_exception_keeps_input_and_adds_persistent_error(): void
+    {
+        $this->setupBusiness();
+        $workflow = \Mockery::mock(\App\Services\PurchaseWorkflow::class);
+        $workflow->shouldReceive('lockSerialNamespace')->once()->andThrow(new \RuntimeException('simulated return failure'));
+        $this->app->instance(\App\Services\PurchaseWorkflow::class, $workflow);
+
+        $this->from(route('returnPurchase.select'))->post(route('purchaseReturnSave'), [
+            'purchaseId' => 1, 'supplierId' => 1, 'productId' => 1, 'returnQty' => 1,
+        ])->assertRedirect(route('returnPurchase.select'))
+            ->assertSessionHasErrors(['return'])
+            ->assertSessionHas('_old_input.returnQty', 1);
+    }
+
+    public function test_purchase_save_exception_keeps_input_and_adds_persistent_error(): void
+    {
+        $this->setupBusiness();
+        $supplier = Supplier::forceCreate(['businessId'=>1,'name'=>'Retry supplier']);
+        $product = Product::forceCreate(['businessId'=>1,'name'=>'Retry product']);
+        $workflow = \Mockery::mock(\App\Services\PurchaseWorkflow::class);
+        $workflow->shouldReceive('save')->once()->andThrow(new \RuntimeException('simulated purchase failure'));
+        $this->app->instance(\App\Services\PurchaseWorkflow::class, $workflow);
+
+        $this->from(route('addPurchase'))->post(route('savePurchase'), [
+            'businessId'=>1,'supplierName'=>$supplier->id,'purchaseDate'=>'2026-10-26','invoiceData'=>'Q8-RETRY',
+            'productName'=>[$product->id],'quantity'=>[1],'buyPrice'=>[10],'salePriceExVat'=>[15],
+            'serialNumber'=>[[]],'discountStatus'=>'','discountAmount'=>0,'discountPercent'=>0,
+            'grandTotal'=>10,'paidAmount'=>0,'dueAmount'=>10,'payment_method'=>'due',
+        ])->assertRedirect(route('addPurchase'))
+            ->assertSessionHasErrors(['purchase'])
+            ->assertSessionHas('_old_input.invoiceData','Q8-RETRY');
+    }
+
     private function setupBusiness(): void
     {
         BusinessSetup::forceCreate(['id'=>1,'businessName'=>'Q6 purchase QA','businessType'=>'computer_shop']);

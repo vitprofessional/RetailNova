@@ -4,6 +4,9 @@
 return [
     'saving' => 'Saving',
     'save_retry' => 'Could not save. Please try again.',
+    'sale_save_retry' => 'Sale could not be saved. Please try again.',
+    'purchase_save_retry' => 'Purchase could not be saved. Please try again.',
+    'return_save_retry' => 'Return could not be saved. Please try again.',
     'sale_price_short' => 'Sale',
     'serials_short' => 'Serials',
     // Navigation

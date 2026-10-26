@@ -159,6 +159,60 @@ class SalesRegressionTest extends TestCase
             ->assertSee(__('sales.purchase_id'));
     }
 
+    public function test_stock_validation_returns_form_input_for_mobile_feedback(): void
+    {
+        $inventory = $this->inventory(serialized: false);
+        $this->login();
+        $payload = $this->payload($inventory, 4);
+        $response = $this->from(route('newsale'))->post(route('saveSale'), $payload);
+
+        $response->assertRedirect(route('newsale'))
+            ->assertSessionHasErrors()
+            ->assertSessionHas('_old_input.qty.0', 4);
+        $this->assertSame(3, (int) $inventory['stock']->fresh()->currentStock);
+    }
+
+    public function test_sale_exception_returns_persistent_sale_error_and_old_input(): void
+    {
+        $inventory = $this->inventory(serialized: false);
+        $this->login();
+        $stock = \Mockery::mock(\App\Services\StockService::class);
+        $stock->shouldReceive('decreaseStockForSale')->once()->andThrow(new \RuntimeException('simulated transaction failure'));
+        $this->app->instance(\App\Services\StockService::class, $stock);
+        $payload = $this->payload($inventory, 1);
+
+        $this->from(route('newsale'))->post(route('saveSale'), $payload)
+            ->assertRedirect(route('newsale'))
+            ->assertSessionHasErrors(['sale'])
+            ->assertSessionHas('_old_input.qty.0', 1);
+        $this->assertSame(3, (int) $inventory['stock']->fresh()->currentStock);
+    }
+
+    public function test_sale_return_exception_returns_persistent_error_and_old_input(): void
+    {
+        $inventory = $this->inventory(serialized: false);
+        $this->login();
+        $payload = $this->payload($inventory, 1);
+        $this->post(route('saveSale'), $payload)->assertRedirect();
+        $sale = SaleProduct::query()->latest('id')->firstOrFail();
+        $foreignLine = PurchaseProduct::create([
+            'productName' => $inventory['purchase']->productName,
+            'supplier' => $inventory['purchase']->supplier,
+            'businessId' => 1, 'purchase_date' => '2026-10-11', 'invoice' => uniqid('PUR-RET-'),
+            'qty' => 1, 'buyPrice' => 100, 'salePriceExVat' => 150, 'totalAmount' => 100,
+            'grandTotal' => 100, 'paidAmount' => 100, 'dueAmount' => 0,
+        ]);
+
+        $this->from(route('saleReturnDetails', ['id' => $sale->id]))
+            ->post(route('saleReturnSave'), [
+                'customerId' => $payload['customerId'], 'totalQty' => [1], 'saleId' => [$sale->id],
+                'productId' => [$inventory['purchase']->productName], 'purchaseId' => [$foreignLine->id],
+                'adjustAmount' => 0,
+            ])->assertRedirect(route('saleReturnDetails', ['id' => $sale->id]))
+            ->assertSessionHasErrors(['return'])
+            ->assertSessionHas('_old_input.totalQty.0', 1);
+    }
+
     public function test_explicit_and_spaced_superadmins_can_save_optional_sales_with_both_actions(): void
     {
         $inventory = $this->inventory();
