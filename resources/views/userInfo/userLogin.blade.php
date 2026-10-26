@@ -7,6 +7,7 @@
     <title>{{ __('authentication.login_title') }} | RetailNova</title>
     <link rel="icon" href="{{ asset('logo.png') }}" type="image/png">
     @include('partials.pwa-head')
+    <link rel="stylesheet" href="{{ asset('css/rn-tokens.css') }}?v={{ filemtime(public_path('css/rn-tokens.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/login.css') }}?v={{ filemtime(public_path('css/login.css')) }}">
     <meta name="theme-color" content="#fff8fb">
 </head>

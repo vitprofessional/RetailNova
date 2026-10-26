@@ -24,6 +24,36 @@ class LocalizedNumber
     /** Money with the business currency (see Currency::format), digits localized. */
     public static function money(int|float|string|null $value, ?string $locale = null): string
     {
-        return self::digits(Currency::format((float) ($value ?? 0), 2, true), $locale);
+        $number = is_numeric($value) ? (float) $value : 0.0;
+        $decimals = abs($number - round($number)) < 0.000001 ? 0 : 2;
+        $formatted = self::groupIndian(abs($number), $decimals);
+        $symbol = Currency::symbol();
+        $money = Currency::position() === 'right' ? $formatted.$symbol : $symbol.$formatted;
+        if ($number < 0) {
+            $money = '−'.$money;
+        }
+
+        return self::digits($money, $locale);
+    }
+
+    /** Quantity/count formatted with Indian lakh grouping (1,25,880). */
+    public static function grouped(int|float|string|null $value, ?string $locale = null, int $decimals = 0): string
+    {
+        $number = is_numeric($value) ? (float) $value : 0.0;
+        return self::digits(self::groupIndian($number, $decimals), $locale);
+    }
+
+    private static function groupIndian(float $number, int $decimals): string
+    {
+        $fixed = number_format($number, $decimals, '.', '');
+        [$integer, $fraction] = array_pad(explode('.', $fixed, 2), 2, '');
+        if (strlen($integer) > 3) {
+            $last = substr($integer, -3);
+            $rest = substr($integer, 0, -3);
+            $integer = preg_replace('/\B(?=(\d{2})+(?!\d))/', ',', $rest).','.$last;
+        }
+
+        $fraction = rtrim($fraction, '0');
+        return $integer.($fraction !== '' ? '.'.$fraction : '');
     }
 }

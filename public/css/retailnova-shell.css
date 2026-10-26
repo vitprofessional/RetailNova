@@ -119,7 +119,6 @@
 }
 .rn-sidebar .rn-business-navigation a > i { color: #9db5d7; }
 .rn-sidebar .rn-business-navigation a > span,
-body:has(.rn-new-sale) .rn-new-sale { font-family: "Noto Sans Bengali", "Nirmala UI", "Segoe UI", sans-serif; }
 .rn-sidebar .rn-business-navigation a:hover,
 .rn-sidebar .rn-business-navigation a[aria-expanded="true"] {
     color: #fff !important;

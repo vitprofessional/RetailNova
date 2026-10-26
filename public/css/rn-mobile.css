@@ -32,9 +32,12 @@
         margin-left: 0 !important;
         width: 100% !important;
         min-height: 100vh;
-        padding: calc(var(--rn-m-header-h) + 12px) 12px calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 20px) !important;
+        padding: calc(var(--rn-m-header-h) + 12px) 0 calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 20px) !important;
     }
     body.rn-app .content-page > .container-fluid { padding-left: 0; padding-right: 0; max-width: 100%; }
+    body.rn-app .rn-m-page { width: 100%; min-width: 0; padding-inline: var(--rn-space-4); }
+    body.rn-app .rn-m-number { white-space: nowrap; font-variant-numeric: tabular-nums; }
+    body.rn-app .rn-m-money-fit { display: inline-block; max-width: 100%; transform-origin: left center; }
     body.rn-app .row { margin-left: 0; margin-right: 0; }
 
     body.rn-app button,

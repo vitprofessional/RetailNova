@@ -14,6 +14,31 @@
     }
     window.RNLocalDigits = digits;
 
+    // Fitted monetary values shrink only as far as their semantic role permits.
+    function fitMobileMoney(root) {
+        (root || document).querySelectorAll('[data-rn-fit]').forEach(function (node) {
+            var role = node.getAttribute('data-rn-fit');
+            var steps = role === 'hero' ? [30, 26, 24, 22] : [18, 16, 15];
+            var index = 0;
+            function fit() {
+                if (!node.isConnected) { return; }
+                node.style.fontSize = steps[index] + 'px';
+                while (node.scrollWidth > node.clientWidth + 1 && index < steps.length - 1) {
+                    index += 1;
+                    node.style.fontSize = steps[index] + 'px';
+                }
+            }
+            fit();
+            if ('ResizeObserver' in window) {
+                var observer = new ResizeObserver(fit);
+                observer.observe(node.parentElement || node);
+            }
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { fitMobileMoney(); });
+    } else { fitMobileMoney(); }
+
     function sameOriginReferrer() {
         try { return !!document.referrer && new URL(document.referrer).origin === window.location.origin; } catch (e) { return false; }
     }

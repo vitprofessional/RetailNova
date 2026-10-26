@@ -1039,7 +1039,9 @@
       @endmobile
       <div class="content-page">
         <div class="container-fluid">
+            @mobile<div class="rn-m-page">@endmobile
             @yield('container')
+            @mobile</div>@endmobile
         </div>
       </div>
       <div class="modal fade" id="new-order" tabindex="-1" role="dialog" aria-hidden="true">

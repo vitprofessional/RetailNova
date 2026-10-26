@@ -6,6 +6,10 @@
     font-display: swap;
 }
 
+@media (max-width: 767px) {
+    body.rn-login-page { font-family: var(--rn-font-family); }
+}
+
 :root {
     color-scheme: light;
     --rn-navy: #101d3c;

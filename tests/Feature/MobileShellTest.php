@@ -356,6 +356,9 @@ class MobileShellTest extends TestCase
         $this->assertSame('৳১,৬৪০', LocalizedNumber::money(1640, 'bn'));
         $this->assertSame('৳১,৬৪০.৫', LocalizedNumber::money('1640.50', 'bn'));
         $this->assertSame('৳1,640.25', LocalizedNumber::money('1640.25', 'en'));
+        $this->assertSame('৳১,২৫,৮৮০', LocalizedNumber::money(125880, 'bn'));
+        $this->assertSame('৳1,25,880', LocalizedNumber::money(125880, 'en'));
+        $this->assertSame('১,২৫,৮৮০', LocalizedNumber::grouped(125880, 'bn'));
     }
 
     public function test_fonts_and_libraries_are_served_locally(): void
@@ -392,9 +395,10 @@ class MobileShellTest extends TestCase
             $this->assertStringContainsString($token, $tokens);
         }
         foreach ([
-            '--rn-type-page-title: 21px', '--rn-type-summary-amount: 30px', '--rn-type-card-amount: 18px',
-            '--rn-type-card-name: 17px', '--rn-type-body: 16px', '--rn-type-label: 15px', '--rn-type-helper: 14px',
-            '--rn-type-tag: 13.5px', '--rn-type-bottom-label: 13px', '--rn-type-button: 17px',
+            '--rn-fs-hero: 30px', '--rn-fs-title: 21px', '--rn-fs-amount: 18px', '--rn-fs-heading: 17px',
+            '--rn-fs-body: 16px', '--rn-fs-label: 14px', '--rn-fs-tag: 13px',
+            '--rn-space-1: 4px', '--rn-space-2: 8px', '--rn-space-3: 12px', '--rn-space-4: 16px',
+            '--rn-space-5: 20px', '--rn-space-6: 24px', '--rn-space-8: 32px',
             '--rn-icon-header: 24px', '--rn-icon-tab: 26px', '--rn-icon-menu: 28px', '--rn-icon-avatar: 44px',
         ] as $token) {
             $this->assertStringContainsString($token, $tokens);
@@ -405,5 +409,7 @@ class MobileShellTest extends TestCase
         }
         // Components use the tokens, not raw colors.
         $this->assertDoesNotMatchRegularExpression('/#[0-9a-fA-F]{3,8}\b/', file_get_contents(public_path('css/rn-mobile.css')));
+        $this->assertStringNotContainsString("font-family: 'Noto Bengali'", file_get_contents(resource_path('views/partials/localization.blade.php')));
+        $this->assertStringNotContainsString('font-family: "Noto Sans Bengali"', file_get_contents(public_path('css/new-sale.css')));
     }
 }

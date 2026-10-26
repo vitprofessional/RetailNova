@@ -1,6 +1,6 @@
 .rn-new-sale-shell { min-width: 0; }
 body:has(.rn-new-sale) .iq-footer { width: auto !important; }
-.rn-new-sale { width: 100%; min-width: 0; container: new-sale / inline-size; font-family: "Noto Sans Bengali", "Nirmala UI", "Segoe UI", sans-serif; }
+.rn-new-sale { width: 100%; min-width: 0; container: new-sale / inline-size; }
 .rn-new-sale, .rn-new-sale * { box-sizing: border-box; }
 .rn-new-sale .rn-sale-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 10px 0 20px; }
 .rn-new-sale .rn-sale-breadcrumb { display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; }
