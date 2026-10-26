@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'default_invoice_paper' => 'চালানের ডিফল্ট কাগজ',
     'actions' => 'কার্যক্রম',
     'address' => 'ঠিকানা',
     'back' => 'ফিরুন',

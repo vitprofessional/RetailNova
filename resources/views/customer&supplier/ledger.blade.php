@@ -46,6 +46,9 @@
             <x-m.empty-state icon="ri-file-list-3-line" :title="__('mobile.ledger_empty')" />
         @endif
     </section>
+    <nav class="rn-m-invoice-actions" aria-label="{{ __('common.actions') }}">
+        <a href="{{ route('documents.print', ['type' => $type === 'customer' ? 'customer-ledger' : 'supplier-ledger', 'id' => $contact->id, 'size' => request()->query('size', 'thermal80'), 'autoprint' => 1]) }}" target="_blank" rel="noopener"><i class="ri-printer-line" aria-hidden="true"></i><small>{{ __('common.print') }}</small></a>
+    </nav>
 </main>
 @else
 <div class="card rn-contact-ledger-desktop">

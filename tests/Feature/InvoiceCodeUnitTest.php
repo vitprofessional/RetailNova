@@ -114,7 +114,7 @@ class InvoiceCodeUnitTest extends TestCase
             ->assertSee('Test Item')->assertSee('data-invoice-product', false)->assertSee('×')
             ->assertDontSee('id="invoiceBodyA4"', false);
 
-        $thermal = $this->get(route('invoiceThermalPrint', ['id' => $saleId, 'printer' => 'thermal58']));
+        $thermal = $this->followingRedirects()->get(route('invoiceThermalPrint', ['id' => $saleId, 'printer' => 'thermal58']));
         $thermal->assertOk()->assertSee('Test Item');
 
         DB::table('invoice_items')->insert([

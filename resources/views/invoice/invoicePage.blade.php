@@ -77,6 +77,9 @@
     @if(app(\App\Support\MobileView::class)->isMobile())
     @php $serialsByPurchase = $serialsByPurchase ?? []; @endphp
     @include('partials.mobile-document-receipt', ['receipt' => [
+      'type' => 'sale-invoice',
+      'business' => $b,
+      'print_url' => route('documents.print', ['type' => 'sale-invoice', 'id' => $invoice->id]),
       'status' => __('common.status').' · '.__($paymentBadge === 'success' ? 'purchases.paid' : ($paymentBadge === 'warning' ? 'purchases.partial' : 'purchases.due')),
       'amount' => \App\Support\LocalizedNumber::money($grandTotal), 'document_label' => __('common.invoice'), 'document_number' => $invoice->invoice,
       'party_label' => __('invoices.bill_to'), 'party_name' => \App\Models\Customer::displayLabel($customer ?? null, $invoice->customerId, $invoice->businessId),
@@ -95,9 +98,8 @@
         ['label' => __('invoices.due'), 'amount' => \App\Support\LocalizedNumber::money($currentDue)],
       ]),
       'actions' => [
-        ['url' => route('invoiceThermalPrint', ['id' => $invoice->id, 'printer' => 'thermal80']), 'label' => __('common.print'), 'icon' => 'ri-printer-line'],
+        ['type' => 'print', 'label' => __('common.print'), 'icon' => 'ri-printer-line'],
         ['type' => 'share', 'label' => __('common.share'), 'icon' => 'ri-share-line'],
-        ['type' => 'copy', 'label' => __('common.copy'), 'icon' => 'ri-file-copy-line'],
         ['type' => 'pdf', 'label' => __('common.pdf'), 'icon' => 'ri-file-pdf-line'],
       ],
       'primary_url' => route('newsale'), 'primary_label' => __('mobile.new_sale'),
@@ -1570,11 +1572,6 @@
   #acknowledgementSection { page-break-inside: avoid; break-inside: avoid-page; }
   .print-break-before-page { page-break-before: always; break-before: page; }
 
-  @page {
-    margin: 8mm;
-    size: A4;
-  }
-
   /* Ensure colors print */
   * {
     print-color-adjust: exact;
@@ -1687,7 +1684,11 @@
   function printSelectedInvoice(){
     try{
       var pv = getSelectedPrinterProfile();
-      return printInvoice(pv);
+      var printUrl = @json(route('documents.print', ['type' => 'sale-invoice', 'id' => $invoice->id]));
+      var url = new URL(printUrl, window.location.href);
+      url.searchParams.set('size', normalizePrinterProfile(pv));
+      url.searchParams.set('autoprint', '1');
+      window.open(url.toString(), '_blank', 'noopener');
     }catch(e){ console.warn('printSelectedInvoice failed', e); }
   }
 

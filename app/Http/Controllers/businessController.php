@@ -54,6 +54,7 @@ class businessController extends Controller
             'website' => ['nullable', 'url', 'max:255'],
             'currencySymbol' => ['nullable', 'string', 'max:16'],
             'currencyPosition' => ['nullable', 'in:left,right'],
+            'defaultInvoicePrinter' => ['nullable', 'in:a4,thermal80,thermal58'],
             'fbPage' => ['nullable', 'url', 'max:255'],
             'twitter' => ['nullable', 'url', 'max:255'],
             'youtubeChannel' => ['nullable', 'url', 'max:255'],
@@ -86,6 +87,7 @@ class businessController extends Controller
         $business->youtube          = $requ->youtubeChannel;
         $business->linkedin         = $requ->linkedin;
         $business->businessType     = $selectedBusinessType;
+        $business->default_invoice_printer = $requ->input('defaultInvoicePrinter', $business->default_invoice_printer ?: 'thermal80');
         // Submitted-but-empty clears the symbol (display falls back to the default symbol);
         // a request that omits the field keeps the saved value.
         if ($requ->exists('currencySymbol')) {

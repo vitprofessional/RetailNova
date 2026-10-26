@@ -107,10 +107,10 @@ class QuotationController extends Controller
 
     public function print($id){
         $quote = Quotation::findOrFail($id);
-        $quote->load(['customer','items.product']);
-        $business = \App\Models\BusinessSetup::orderBy('id','desc')->first();
-        // Use the new print2 view which mirrors the quotation view layout
-        return view('quotation.print2', ['quote'=>$quote, 'business'=>$business]);
+        return redirect()->route('documents.print', [
+            'type' => 'quotation', 'id' => $quote->id,
+            'size' => request()->query('size', 'thermal80'), 'autoprint' => 1,
+        ]);
     }
 
     public function edit($id){

@@ -309,19 +309,11 @@ class serviceController extends Controller
     // Printable invoice view
     public function serviceInvoicePrint($id)
     {
-        $invoice = \App\Models\ServiceInvoice::with('items')->find($id);
-        if (!$invoice) {
-            Alert::error(__('common.notification_failed'), __('common.notification_invoice_not_found'));
-            return redirect()->route('serviceProvideList');
-        }
-
-        $customer = null;
-        if ($invoice->customer_id) {
-            $customer = Customer::find($invoice->customer_id);
-        }
-
-        $business = \App\Models\BusinessSetup::first();
-        return view('service.serviceInvoicePrint', ['invoice' => $invoice, 'customer' => $customer, 'business' => $business]);
+        $invoice = \App\Models\ServiceInvoice::query()->findOrFail($id);
+        return redirect()->route('documents.print', [
+            'type' => 'service-invoice', 'id' => $invoice->id,
+            'size' => request()->query('size', 'thermal80'), 'autoprint' => 1,
+        ]);
     }
 
     // Save provided services (multiple rows at once)

@@ -108,10 +108,10 @@ class CustomerDisplayRegressionTest extends TestCase
 
         $label = __('common.walking_customer');
         $this->withSession(['locale' => 'bn'])->get(route('quotation.show', $walkInQuote->id))->assertOk()->assertSee($label);
-        $this->get(route('quotation.print', $walkInQuote->id))->assertOk()->assertSee($label);
+        $this->followingRedirects()->get(route('quotation.print', $walkInQuote->id))->assertOk()->assertSee($label);
         $this->get(route('invoicePage', ['id' => $walkInSale->id]))
             ->assertOk()->assertSee($label)->assertDontSee('class="signature-boxes"', false);
-        $this->get(route('invoiceThermalPrint', ['id' => $walkInSale->id]))->assertOk()->assertSee($label);
+        $this->followingRedirects()->get(route('invoiceThermalPrint', ['id' => $walkInSale->id]))->assertOk()->assertSee($label);
 
         $missingLabel = __('common.customer').' #'.$deletedCustomer->id;
         $this->get(route('quotation.show', $deletedQuote->id))->assertOk()->assertSee($missingLabel)->assertDontSee('Former Private Customer');

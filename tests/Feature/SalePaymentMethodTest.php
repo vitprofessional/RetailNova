@@ -91,8 +91,8 @@ class SalePaymentMethodTest extends TestCase
             foreach (['a4', 'thermal80', 'thermal58'] as $printer) {
                 $this->get(route('invoiceGenerate', ['id' => $bkash->id, 'printer' => $printer]))->assertOk()->assertSee($label);
             }
-            $this->get(route('invoiceThermalPrint', ['id' => $bkash->id]))->assertOk()->assertSee($label);
-            $this->get(route('invoiceThermalPrint', ['id' => $legacy->id]))->assertOk()->assertDontSee(__('invoices.payment_mode', [], $locale));
+            $this->followingRedirects()->get(route('invoiceThermalPrint', ['id' => $bkash->id]))->assertOk()->assertSee($label);
+            $this->followingRedirects()->get(route('invoiceThermalPrint', ['id' => $legacy->id]))->assertOk()->assertDontSee(__('invoices.payment_mode', [], $locale));
         }
     }
 }

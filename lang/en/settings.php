@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'default_invoice_paper' => 'Default invoice paper',
     'actions' => 'Actions',
     'address' => 'Address',
     'back' => 'Back',

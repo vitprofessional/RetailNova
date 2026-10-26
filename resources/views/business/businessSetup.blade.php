@@ -256,6 +256,15 @@
                                     </div>
 
                                     <div class="form-group mb-4">
+                                        <label for="defaultInvoicePrinter" class="form-label font-weight-600">{{ __('settings.default_invoice_paper') }}</label>
+                                        <select class="form-control" id="defaultInvoicePrinter" name="defaultInvoicePrinter">
+                                            <option value="a4" @selected(($business->default_invoice_printer ?? 'thermal80') === 'a4')>{{ __('sales.a4_invoice') }}</option>
+                                            <option value="thermal80" @selected(($business->default_invoice_printer ?? 'thermal80') === 'thermal80')>{{ __('sales.pos_thermal_80mm') }}</option>
+                                            <option value="thermal58" @selected(($business->default_invoice_printer ?? 'thermal80') === 'thermal58')>{{ __('sales.pos_thermal_58mm') }}</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group mb-4">
                                         <label for="invoiceTermsText" class="form-label font-weight-600">
                                             <i class="las la-file-contract mr-2"></i>{{ __('settings.invoice_terms_conditions_text') }}
                                         </label>

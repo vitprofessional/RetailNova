@@ -43,7 +43,8 @@ class InvoiceBusinessBrandingTest extends TestCase
 
         $this->actingAs($actorOne, 'admin');
         foreach (['a4', 'thermal80', 'thermal58'] as $printer) {
-            $response = $this->get(route('invoiceGenerate', ['id' => $saleOne->id, 'printer' => $printer]))->assertOk();
+            $response = $this->get(route('invoiceGenerate', ['id' => $saleOne->id, 'printer' => $printer]));
+            $response->assertOk();
             $response->assertViewHas('business', fn ($business) => $business && (int) $business->id === (int) $businessOne->id);
             $response->assertSee('Northwind Parts & Service Center');
             $response->assertSee('10 North Road')->assertSee('01700000001')->assertSee('northwind@example.test');
@@ -53,7 +54,7 @@ class InvoiceBusinessBrandingTest extends TestCase
         }
 
         $this->get(route('invoicePage', ['id' => $saleOne->id]))->assertOk()->assertSee('Northwind Parts & Service Center')->assertSee('/uploads/business/' . $logoOne);
-        $this->get(route('invoiceThermalPrint', ['id' => $saleOne->id, 'printer' => 'thermal58']))
+        $this->followingRedirects()->get(route('invoiceThermalPrint', ['id' => $saleOne->id, 'printer' => 'thermal58']))
             ->assertOk()->assertSee('Northwind Parts & Service Center')->assertSee('thermal58')->assertSee('/uploads/business/' . $logoOne);
 
         $this->actingAs($actorTwo, 'admin');

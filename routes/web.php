@@ -905,6 +905,10 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
         'thermalPrint'
     ])->name('invoiceThermalPrint');
 
+    Route::get('/documents/{type}/{id}', [\App\Http\Controllers\DocumentPrintController::class, 'print'])
+        ->where(['type' => '[a-z-]+', 'id' => '[0-9]+'])
+        ->name('documents.print');
+
     // audits viewer
     Route::get('/audits',[\App\Http\Controllers\AuditController::class,'index'])->name('audits.index');
     Route::get('/audits/export',[\App\Http\Controllers\AuditController::class,'export'])->name('audits.export');

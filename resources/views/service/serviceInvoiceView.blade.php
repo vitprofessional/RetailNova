@@ -3,6 +3,9 @@
 @section('container')
 @mobile
 @include('partials.mobile-document-receipt', ['receipt' => [
+    'type' => 'service-invoice',
+    'business' => $business,
+    'print_url' => route('documents.print', ['type' => 'service-invoice', 'id' => $invoice->id]),
     'status' => __('common.status').' · '.__('common.service_invoice'),
     'amount' => \App\Support\LocalizedNumber::money($invoice->total_amount), 'document_label' => __('common.service_invoice'), 'document_number' => $invoice->invoice_number,
     'party_label' => __('invoices.bill_to'),
@@ -12,9 +15,8 @@
     'empty_label' => __('invoices.no_items_found'),
     'totals' => [['label' => __('invoices.total'), 'amount' => \App\Support\LocalizedNumber::money($invoice->total_amount), 'is_total' => true]],
     'actions' => [
-        ['url' => route('serviceInvoicePrint',['id'=>$invoice->id]), 'label' => __('common.print'), 'icon' => 'ri-printer-line'],
+        ['type' => 'print', 'label' => __('common.print'), 'icon' => 'ri-printer-line'],
         ['type' => 'share', 'label' => __('common.share'), 'icon' => 'ri-share-line'],
-        ['type' => 'copy', 'label' => __('common.copy'), 'icon' => 'ri-file-copy-line'],
         ['type' => 'pdf', 'label' => __('common.pdf'), 'icon' => 'ri-file-pdf-line'],
     ],
     'primary_url' => route('provideService'), 'primary_label' => __('navigation.new_service'),
@@ -31,7 +33,7 @@
                     <small class="text-muted">{{ __('common.created') }}: @mobile{{ \App\Support\MobileDateTime::date($invoice->created_at) }} {{ \App\Support\MobileDateTime::time($invoice->created_at) }}@else{{ $invoice->created_at->format('Y-m-d H:i') }}@endmobile</small>
                 </div>
                 <div>
-                    <a href="{{ route('serviceInvoicePrint',['id'=>$invoice->id]) }}" class="btn btn-outline-secondary" target="_blank"><i class="fa-solid fa-print"></i> {{ __('invoices.print') }}</a>
+                    <a href="{{ route('documents.print', ['type'=>'service-invoice','id'=>$invoice->id,'size'=>$business?->default_invoice_printer ?: 'thermal80','autoprint'=>1]) }}" class="btn btn-outline-secondary" target="_blank" rel="noopener"><i class="fa-solid fa-print"></i> {{ __('invoices.print') }}</a>
                     <a href="{{ route('serviceProvideList') }}" class="btn btn-secondary">{{ __('invoices.back_to_list') }}</a>
                 </div>
             </div>

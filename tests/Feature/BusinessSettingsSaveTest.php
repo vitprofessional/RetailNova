@@ -135,6 +135,17 @@ class BusinessSettingsSaveTest extends TestCase
         $this->assertSame('Custom terms', $business->invoice_terms_text);
     }
 
+    public function test_default_invoice_paper_is_saved_and_restricted_to_supported_profiles(): void
+    {
+        $business = $this->signIn('admin', ['default_invoice_printer' => 'thermal80']);
+
+        $this->save(['defaultInvoicePrinter' => 'thermal58'])->assertSessionHasNoErrors();
+        $this->assertSame('thermal58', $business->fresh()->default_invoice_printer);
+
+        $this->save(['defaultInvoicePrinter' => 'letter'])->assertSessionHasErrors('defaultInvoicePrinter');
+        $this->assertSame('thermal58', $business->fresh()->default_invoice_printer);
+    }
+
     public function test_long_location_and_invoice_footer_are_accepted(): void
     {
         $this->signIn();

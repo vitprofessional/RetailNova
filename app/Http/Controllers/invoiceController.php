@@ -83,12 +83,11 @@ class invoiceController extends Controller
         if(!$invoice){ abort(404, 'Invoice not found'); }
 
         $this->authorizeInvoiceBusiness($invoice);
+        $paper = $request->query('size', $request->query('printer', 'thermal80'));
+        $paper = in_array($paper, ['a4', 'thermal80', 'thermal58'], true) ? $paper : 'thermal80';
 
-        $items = $this->invoiceItems((int) $invoice->id);
-        $customer = null;
-        try{ if($invoice->customerId) $customer = Customer::find($invoice->customerId); }catch(\Throwable $_){ $customer = null; }
-
-        $business = $invoice->business;
-        return view('invoice.thermalPrint', compact('invoice','items','customer','business'));
+        return redirect()->route('documents.print', [
+            'type' => 'sale-invoice', 'id' => $invoice->id, 'size' => $paper, 'autoprint' => 1,
+        ]);
    }
 }

@@ -1,0 +1,50 @@
+.rn-print-document { display: none; }
+.rn-document-sheet { width: min(440px, calc(100vw - 32px)); max-width: 100%; padding: 0; border: 0; border-radius: 20px; box-shadow: 0 24px 80px rgb(16 24 40 / 27%); }
+.rn-document-sheet::backdrop { background: rgb(16 24 40 / 55%); }
+.rn-document-sheet__inner { position: relative; padding: 24px; }
+.rn-document-sheet__close { position: absolute; inset-block-start: 12px; inset-inline-end: 12px; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--rn-color-bg, #f2f4f7); font-size: 24px; }
+.rn-document-sheet h2 { margin: 0 48px 20px 0; font-size: 21px; }
+.rn-document-sheet fieldset { display: grid; gap: 8px; padding: 0; border: 0; }
+.rn-document-sheet fieldset label { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 10px 12px; border: 1px solid var(--rn-color-border, #d0d5dd); border-radius: 12px; }
+.rn-document-sheet input { width: 20px; height: 20px; accent-color: var(--rn-color-primary, #167c78); }
+.rn-document-sheet__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
+.rn-document-sheet__actions button { min-height: 48px; border: 0; border-radius: 12px; background: var(--rn-color-primary, #167c78); color: var(--rn-color-on-primary, #fff); font: inherit; font-weight: 700; }
+.rn-document-toast { position: fixed; z-index: 10000; inset-inline: 16px; inset-block-end: calc(24px + env(safe-area-inset-bottom)); width: fit-content; max-width: calc(100vw - 32px); margin-inline: auto; padding: 12px 18px; border-radius: 999px; background: var(--rn-color-ink, #101828); color: #fff; box-shadow: var(--rn-shadow-lg, 0 8px 24px rgb(16 24 40 / 18%)); font: var(--rn-type-helper, 500 14px/1.4 var(--rn-font-family, sans-serif)); }
+.rn-print-document { box-sizing: border-box; width: 190mm; padding: 0; background: #fff; color: #172033; font: 12pt/1.4 "Hind Siliguri", "Noto Sans Bengali", sans-serif; }
+.rn-print-document__brand { display: grid; grid-template-columns: max-content minmax(0, 1fr) 18mm; align-items: center; gap: 4mm; padding-bottom: 4mm; border-bottom: 1px solid #d0d5dd; }
+.rn-print-document__brand strong, .rn-print-document__brand span { display: block; }
+.rn-print-document__brand strong { font-size: 17pt; }
+.rn-print-document__logo { max-width: 36mm; max-height: 20mm; object-fit: contain; }
+.rn-print-document__qr { width: 18mm; height: 18mm; overflow: hidden; }
+.rn-print-document__qr canvas { display: block; width: 18mm !important; height: 18mm !important; max-width: 18mm; max-height: 18mm; }
+.rn-print-document__title { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; }
+.rn-print-document__title h1 { margin: 0; font-size: 18pt; }
+.rn-print-document__party { display: grid; gap: 3px; margin: 10px 0 14px; }
+.rn-print-document__items { width: 100%; border-collapse: collapse; }
+.rn-print-document__items th, .rn-print-document__items td { padding: 6px; border-bottom: 1px solid #d0d5dd; text-align: start; }
+.rn-print-document__items th:last-child, .rn-print-document__items td:last-child { text-align: end; white-space: nowrap; }
+.rn-print-document__thermal-detail { display: none; }
+.rn-print-document__totals { display: grid; gap: 4px; margin: 12px 0 0 auto; max-width: 90mm; }
+.rn-print-document__totals div { display: flex; justify-content: space-between; gap: 16px; }
+.rn-print-document__totals dd { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rn-print-document__totals .is-total { border-top: 1px solid #667085; padding-top: 6px; font-weight: 700; }
+.rn-print-document__footer { margin-top: 14px; padding-top: 8px; border-top: 1px solid #d0d5dd; text-align: center; font-size: 10pt; }
+/* Keep downloadable thermal images and PDFs composed like the thermal print view. */
+body[data-rn-paper^="thermal"] .rn-print-document__brand { grid-template-columns: max-content minmax(0, 1fr); }
+body[data-rn-paper^="thermal"] .rn-print-document__logo { max-width: 25mm; max-height: 12mm; }
+body[data-rn-paper^="thermal"] .rn-print-document__qr,
+body[data-rn-paper^="thermal"] .rn-print-document__a4-detail { display: none; }
+body[data-rn-paper^="thermal"] .rn-print-document__thermal-detail { display: block; font-size: 8pt; font-weight: 400; }
+body[data-rn-paper^="thermal"] .rn-print-document__items th,
+body[data-rn-paper^="thermal"] .rn-print-document__items td { padding: 2mm 1mm; font-size: 9pt; }
+@media print {
+  html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+  body[data-rn-paper] > *:not([data-rn-print-document]) { display: none !important; }
+  body * { visibility: hidden !important; }
+  [data-rn-print-document], [data-rn-print-document] * { visibility: visible !important; }
+  body[data-rn-paper] > [data-rn-print-document] { display: block !important; position: static !important; box-sizing: border-box; width: 190mm; padding: 0; }
+  body[data-rn-paper="thermal80"] [data-rn-print-document] { width: 72mm; }
+  body[data-rn-paper="thermal58"] [data-rn-print-document] { width: 48mm; }
+  .rn-document-sheet, [data-rn-tabbar], #rn-sidebar, .rn-m-header, .rn-m-list-header, .rn-m-fab { display: none !important; }
+  tr, .rn-print-document__totals > div { break-inside: avoid; }
+}

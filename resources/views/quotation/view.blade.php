@@ -44,6 +44,9 @@
 @endphp
 @mobile
 @include('partials.mobile-document-receipt', ['receipt' => [
+  'type' => 'quotation',
+  'business' => $b,
+  'print_url' => route('documents.print', ['type' => 'quotation', 'id' => $quote->id]),
   'status' => __('common.status').' · '.(\Illuminate\Support\Facades\Lang::has('common.'.$quote->status) ? __('common.'.$quote->status) : ucfirst($quote->status)),
   'amount' => \App\Support\LocalizedNumber::money($quote->grand_total), 'document_label' => __('common.quotation'), 'document_number' => $quote->quote_number,
   'party_label' => __('common.bill_to'), 'party_name' => \App\Models\Customer::displayLabel($customer, $quote->customer_id, $quote->businessId), 'party_meta' => $customer?->mobile,
@@ -55,9 +58,8 @@
     ['label' => __('common.grand_total'), 'amount' => \App\Support\LocalizedNumber::money($quote->grand_total), 'is_total' => true],
   ],
   'actions' => [
-    ['url' => route('quotation.print', ['id' => $quote->id]), 'label' => __('common.print'), 'icon' => 'ri-printer-line'],
+    ['type' => 'print', 'label' => __('common.print'), 'icon' => 'ri-printer-line'],
     ['type' => 'share', 'label' => __('common.share'), 'icon' => 'ri-share-line'],
-    ['type' => 'copy', 'label' => __('common.copy'), 'icon' => 'ri-file-copy-line'],
     ['type' => 'pdf', 'label' => __('common.pdf'), 'icon' => 'ri-file-pdf-line'],
   ],
   'primary_url' => route('quotation.create'), 'primary_label' => __('common.new_quotation'),
@@ -209,7 +211,7 @@
             @if($quote->status === 'draft')
             <a class="btn btn-warning btn-sm" href="{{ route('quotation.edit', ['id'=>$quote->id]) }}"><i class="las la-pen"></i> {{ __('common.edit') }}</a>
             @endif
-            <a class="btn btn-outline-secondary btn-sm" target="_blank" href="{{ route('quotation.print', ['id'=>$quote->id]) }}"><i class="las la-print"></i> {{ __('common.print') }}</a>
+            <a class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener" href="{{ route('documents.print', ['type'=>'quotation','id'=>$quote->id,'size'=>$b?->default_invoice_printer ?: 'thermal80','autoprint'=>1]) }}"><i class="las la-print"></i> {{ __('common.print') }}</a>
             <a class="btn btn-primary btn-sm" href="{{ route('quotation.list') }}"><i class="las la-arrow-left"></i> {{ __('common.back_to_quotations') }}</a>
           </div>
         </div>
