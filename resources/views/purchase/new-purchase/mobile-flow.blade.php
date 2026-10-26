@@ -3,7 +3,7 @@
     <main class="rn-q6-main" data-q6-main>
         <section class="rn-q6-supplier-card">
             <span class="rn-q6-supplier-icon" aria-hidden="true"><i class="las la-truck"></i></span>
-            <div class="rn-q6-supplier-copy"><small>{{ __('mobile.supplier') }}</small><strong data-q6-supplier-name>{{ __('mobile.select_supplier') }}</strong><span>{{ __('mobile.previous_due') }} <b data-q6-opening-due>—</b></span></div>
+            <div class="rn-q6-supplier-copy"><small>{{ __('mobile.supplier') }}</small><strong data-q6-supplier-name>{{ __('mobile.select_supplier') }}</strong><span data-q6-previous-due hidden>{{ __('mobile.previous_due') }} <b data-q6-opening-due><x-m.money :value="0" /></b></span></div>
             <button type="button" data-q6-open-supplier>{{ __('mobile.change') }}</button>
         </section>
         <div class="rn-q6-meta-row">

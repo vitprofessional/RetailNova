@@ -82,8 +82,10 @@ class MobileShellTest extends TestCase
         }
         $this->assertNotContains(route('stockProduct'), $grid, 'Stock stays in the bottom tab, not the More page.');
         $this->assertNotContains(route('productlist'), $grid, 'The product-list alias does not duplicate the Stock tab.');
-        $expectedHomeRoutes = ['addPurchase', 'addCustomer', 'expense.list', 'account.transactions', 'addSupplier', 'returnSaleList', 'quotation.list', 'damageProductList'];
-        $this->assertSame(array_map(fn ($name) => route($name), $expectedHomeRoutes), $shortcutHrefs, 'Home presents the approved eight destinations in order.');
+        $expectedHomeRoutes = ['addPurchase', 'addCustomer', 'expense.list', 'account.transactions', 'addSupplier', 'returnSaleList'];
+        $this->assertSame(array_map(fn ($name) => route($name), $expectedHomeRoutes), $shortcutHrefs, 'Home presents six destinations in two complete three-column rows.');
+        $this->assertCount(6, $shortcutHrefs, 'Home shortcut grid has two complete three-column rows.');
+        $this->assertStringContainsString('grid-template-columns: repeat(3, minmax(0, 1fr))', file_get_contents(public_path('css/rn-mobile.css')));
         foreach ($expectedHomeRoutes as $routeName) {
             $this->assertNotContains(route($routeName), $tabHrefs, "$routeName is not duplicated from the bottom navigation.");
         }

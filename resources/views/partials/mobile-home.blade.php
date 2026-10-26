@@ -59,7 +59,7 @@
                             <span class="rn-m-tx-icon" aria-hidden="true"><i class="ri-shopping-cart-2-line"></i></span>
                             <span class="rn-m-tx-body">
                                 <strong>{{ $sale['customer'] ?: __('mobile.walk_in_customer') }}</strong>
-                                <span>@if(filled($sale['invoice'])){{ $sale['invoice'] }} · @endif{{ \App\Support\LocalizedNumber::digits(optional($sale['date'])->format('d/m/Y')) }}</span>
+                                <span>@if(filled($sale['invoice']))<span data-latin-ok>{{ $sale['invoice'] }}</span> · @endif<time datetime="{{ optional($sale['date'])->toDateString() }}" aria-label="{{ \App\Support\MobileDateTime::date($sale['date']) }}">{{ \App\Support\MobileDateTime::compactDate($sale['date']) }}</time></span>
                             </span>
                             <span class="rn-m-tx-amount">{{ $money($sale['total']) }}@if($sale['due'] > 0)<small>{{ __('mobile.due') }} {{ $money($sale['due']) }}</small>@endif</span>
                         </li>

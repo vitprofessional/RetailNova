@@ -173,4 +173,22 @@ class MobileReportCardsTest extends TestCase
             ->assertDontSee('Business Overview')
             ->assertDontSee('Download report');
     }
+
+    public function test_shared_mobile_money_marks_negative_amounts_and_uses_localized_date_label(): void
+    {
+        app()->setLocale('bn');
+        $money = $this->blade('<x-m.money :value="-1250" />');
+        $this->assertStringContainsString('is-negative', $money);
+        $this->assertStringContainsString('−৳১,২৫০', $money);
+        $this->assertSame('২৬ অক্টো', \App\Support\MobileDateTime::compactDate('2026-10-26'));
+    }
+
+    public function test_mobile_purchase_supplier_due_is_hidden_until_a_supplier_is_selected(): void
+    {
+        $html = file_get_contents(resource_path('views/purchase/new-purchase/mobile-flow.blade.php'));
+        $this->assertStringContainsString('data-q6-previous-due hidden', $html);
+        $script = file_get_contents(public_path('js/rn-q6-purchase.js'));
+        $this->assertStringContainsString("[data-q6-previous-due]').hidden = false", $script);
+        $this->assertStringContainsString("data-q6-supplier-name>{{ __('mobile.select_supplier') }}", $html);
+    }
 }

@@ -8,11 +8,12 @@
 @php
     $tag = $card['url'] ? 'a' : 'div';
     $menuId = 'rnCardMenu-'.substr(md5(($card['url'] ?? '').'|'.$card['id'].'|'.$card['title']), 0, 12);
+    $initial = preg_match('/\p{L}/u', (string) ($card['title'] ?? ''), $letter) ? $letter[0] : '•';
 @endphp
 <li class="rn-m-card" data-rn-card="{{ $card['id'] }}">
     <{{ $tag }} @if($card['url']) href="{{ $card['url'] }}" @endif class="rn-m-card-main">
         <span class="rn-m-card-top">
-            <span class="rn-m-card-avatar" aria-hidden="true">@if(!empty($card['avatar_url']))<img src="{{ $card['avatar_url'] }}" alt="" loading="lazy">@else{{ \App\Support\LocalizedNumber::digits((string) $card['avatar']) }}@endif</span>
+            <span class="rn-m-card-avatar" aria-hidden="true">@if(!empty($card['avatar_url']))<img src="{{ $card['avatar_url'] }}" alt="" loading="lazy">@else{{ $initial }}@endif</span>
             <span class="rn-m-card-body">
                 <strong class="rn-m-card-title">{{ $card['title'] }}</strong>
                 @if(($card['subtitle'] ?? '') !== '')<span class="rn-m-card-sub">{{ $card['subtitle'] }}</span>@endif

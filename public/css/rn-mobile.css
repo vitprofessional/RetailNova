@@ -414,7 +414,7 @@
     .rn-m-stat--due dd { color: var(--rn-color-warning); }
     .rn-m-stat--profit dd { color: var(--rn-color-primary); }
     .rn-m-home-section { padding: 0; }
-    .rn-m-home .rn-m-grid { margin-top: 16px; padding: 16px 8px; border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); box-shadow: var(--rn-shadow-card); }
+    .rn-m-home .rn-m-grid { margin-top: 16px; padding: 16px 8px; border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); box-shadow: var(--rn-shadow-card); grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .rn-m-alert {
         display: flex;
         align-items: center;

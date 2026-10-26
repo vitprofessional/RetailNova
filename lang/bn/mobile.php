@@ -103,7 +103,7 @@ return [
     'product_picker_error' => 'পণ্য লোড করা যায়নি। আবার চেষ্টা করুন।',
     'purchase_title' => 'পণ্য কেনা',
     'supplier' => 'মহাজন',
-    'select_supplier' => 'মহাজন বাছুন',
+    'select_supplier' => 'সাপ্লায়ার বাছুন',
     'previous_due' => 'আগের পাওনা',
     'change' => 'বদলান',
     'more_information' => 'আরও তথ্য',

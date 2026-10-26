@@ -14,6 +14,15 @@ class MobileDateTime
         catch (\Throwable) { return ''; }
     }
 
+    /** Compact, localized month label for narrow mobile transaction rows. */
+    public static function compactDate(mixed $value): string
+    {
+        if (!$value) return '';
+        try {
+            return LocalizedNumber::digits(Carbon::parse($value)->locale(app()->getLocale())->translatedFormat('j M'));
+        } catch (\Throwable) { return ''; }
+    }
+
     public static function time(mixed $value): string
     {
         if (!$value) return '';

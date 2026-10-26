@@ -88,6 +88,7 @@
   openingDue = Number(choice.dataset.due || 0);
   $('[data-q6-supplier-name]').textContent = choice.dataset.name || '';
   $('[data-q6-opening-due]').textContent = money(openingDue);
+  $('[data-q6-previous-due]').hidden = false;
   closeSheets();
  });
  $('[data-q6-supplier-search]')?.addEventListener('input', event => {

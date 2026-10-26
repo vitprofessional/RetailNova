@@ -69,7 +69,7 @@
             <div class="col-lg-6">
                 <div class="card card-block card-stretch card-height bg-primary">
                     <div class="card-body text-white">
-                        <h6 class="mb-2">{{ __('sales.total_profit') }}</h6>
+                        <h6 class="mb-2">{{ $totalProfit < 0 ? __('common.total_loss') : __('sales.total_profit') }}</h6>
                         <h3><x-mobile.report-money :amount="$totalProfit" /></h3>
                         <p class="mb-0">{{ __('sales.from_sales') }}</p>
                     </div>

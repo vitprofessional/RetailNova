@@ -16,8 +16,8 @@ Resume backup: `tests-output/resume-backup.patch` (tracked diff only; untracked 
 | Q5 — shared image product picker | Complete | Commit `4b9c8fb`; sale, purchase, quotation and purchase-return screens use the tenant-scoped server picker. |
 | Q6 — mobile purchase flow | Complete | Commit `d686250` (`Q6: professional mobile purchase flow`). |
 | Q7a — document print preview and share sheet | Complete | Local commit on `quality-v3`; 8 document types × 3 paper sizes × autoprint on/off verified. |
-| Q7b — mobile UI refinements | Pending | Next stage: reports, negative money, Bengali digits, dashboard gutters/dates, home grid, avatar fallback and purchase supplier prompt. |
-| Q7c — quality audit hardening | Pending | Extend MobileQualityAudit, demonstrate current findings, fix them and reach zero violations. |
+| Q7b — mobile UI refinements | Complete | Local commit on `quality-v3`; report rows now use dividers inside their existing card, negative money marks itself, home shows six shortcuts in two complete rows, dates compact in Bangla, list avatars use name initials, and purchase due stays hidden before supplier selection. |
+| Q7c — quality audit hardening | Pending | Extend MobileQualityAudit, demonstrate checks against violating fixture content, then run the authenticated page audit and fix findings. |
 
 ## Resume inventory
 
@@ -53,4 +53,12 @@ Resume backup: `tests-output/resume-backup.patch` (tracked diff only; untracked 
 - Q7a Chromium matrix: 48 Bengali Android 390×844 screenshots and 48 PDFs under ignored `tests-output/q7/docs/`; all PDFs contain expected text, no toolbar text, and thermal dimensions are bounded. Visual notes are in `tests-output/q7/docs/capture-notes.md`.
 - Q7a limitation: HTTP navigation to the temporary local server was blocked by the environment’s socket/network policy. Chromium rendered HTML produced by the actual Laravel controller and Blade templates with local public assets; live HTTP navigation is not claimed.
 
-Next: implement Q7b, commit separately, then harden and verify the mobile quality audit for Q7c. Do not merge or push unless the owner asks.
+Next: harden and verify the mobile quality audit for Q7c. Do not merge or push unless the owner asks.
+
+## Q7b verification
+
+- Focused regressions: `MobileShellTest|MobileReportCardsTest|PurchasePaymentMethodTest` — 26 tests, 619 assertions, passed.
+- Full isolated SQLite suite: 387 tests, 12,235 assertions, 0 failures; 6 existing output-buffer risky tests and 6 PHPUnit deprecations.
+- `php artisan view:cache`, PHP syntax checks, Node syntax check and `git diff --check` passed.
+- The mobile list/avatar and home date changes are covered by rendered HTML/helper assertions; live 390px screenshots are pending because this runtime denies sockets to local ports. Screenshots are not claimed.
+- Q7b is isolated from Q7a and remains on `quality-v3`; no merge/push.

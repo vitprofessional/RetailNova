@@ -120,7 +120,7 @@
             <div class="col-lg-3 col-md-6">
                 <div class="card card-block card-stretch card-height bg-success rn-report-kpi-card rn-report-kpi-card--profit">
                     <div class="card-body text-white">
-                        <h6 class="mb-2">{{ __('settings.profit') }}</h6>
+                        <h6 class="mb-2">{{ $profit < 0 ? __('common.total_loss') : __('settings.profit') }}</h6>
                         <h3><x-mobile.report-money :amount="$profit" /></h3>
                         <p class="mb-0">{{ __('settings.gross_profit') }}</p>
                     </div>

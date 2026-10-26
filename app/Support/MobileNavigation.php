@@ -118,8 +118,9 @@ class MobileNavigation
         return $result;
     }
 
-    public function shortcuts(int $limit = 8): array
+    public function shortcuts(int $limit = 6): array
     {
+        $limit = min(6, max(0, $limit));
         $tabRoutes = array_column($this->tabs(), 'route');
         $reportRoutes = ['reports.business', 'reports.sales', 'reports.purchases', 'reports.stock', 'reports.topCustomers', 'reports.payableReceivable', 'account.reports', 'expense.reports'];
         $homeFabDestinations = array_values(array_diff(self::FAB_DESTINATIONS, ['addPurchase']));
