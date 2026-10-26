@@ -46,24 +46,7 @@
     </div>
 </main>
 @include('documents.'.($receipt['type'] ?? 'transaction'), ['receipt' => $receipt, 'business' => $documentBusiness])
-<dialog class="rn-document-sheet" data-rn-document-sheet aria-labelledby="rnDocumentSheetTitle">
-    <form method="dialog" class="rn-document-sheet__inner">
-        <button class="rn-document-sheet__close" value="cancel" aria-label="{{ __('common.close') }}">×</button>
-        <h2 id="rnDocumentSheetTitle">{{ __('mobile.document_paper_size') }}</h2>
-        <fieldset>
-            <legend class="visually-hidden">{{ __('mobile.document_paper_size') }}</legend>
-            <label><input type="radio" name="paper" value="a4" @checked(($documentBusiness?->default_invoice_printer ?? 'thermal80') === 'a4')> {{ __('sales.a4_invoice') }}</label>
-            <label><input type="radio" name="paper" value="thermal80" @checked(($documentBusiness?->default_invoice_printer ?? 'thermal80') === 'thermal80')> {{ __('sales.pos_thermal_80mm') }}</label>
-            <label><input type="radio" name="paper" value="thermal58" @checked(($documentBusiness?->default_invoice_printer ?? 'thermal80') === 'thermal58')> {{ __('sales.pos_thermal_58mm') }}</label>
-        </fieldset>
-        <div class="rn-document-sheet__actions">
-            <button type="button" data-document-print>{{ __('common.print') }}</button>
-            <button type="button" data-document-png>{{ __('mobile.download_png') }}</button>
-            <button type="button" data-document-pdf>{{ __('common.pdf') }}</button>
-            <button type="button" data-document-share>{{ __('common.share') }}</button>
-        </div>
-    </form>
-</dialog>
+@include('documents.actions', ['business' => $documentBusiness, 'paper' => $documentBusiness?->default_invoice_printer ?? 'thermal80'])
 <script src="{{ asset('vendor/rn-document-tools.js') }}" defer></script>
 <script src="{{ asset('js/rn-mobile-documents.js') }}" defer></script>
 <script>

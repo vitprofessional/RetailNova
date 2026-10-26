@@ -14,6 +14,7 @@ use App\Models\SaleReturn;
 use App\Models\ServiceInvoice;
 use App\Models\Supplier;
 use App\Support\LocalizedNumber;
+use App\Support\MobileDateTime;
 use App\Services\PurchaseWorkflow;
 use Illuminate\Http\Request;
 
@@ -58,11 +59,10 @@ class DocumentPrintController extends Controller
             abort(403);
         }
 
-        $items = $sale->items->map(fn (InvoiceItem $line) => [
-            'title' => $line->purchase?->product?->name ?? __('invoices.item').' #'.$line->purchaseId,
-            'detail' => LocalizedNumber::count($line->qty).' × '.LocalizedNumber::money($line->salePrice),
-            'amount' => LocalizedNumber::money($line->totalSale ?? ((float) $line->qty * (float) $line->salePrice)),
-        ])->all();
+        $items = $sale->items->map(fn (InvoiceItem $line) => $this->line(
+            $line->purchase?->product?->name ?? __('invoices.item').' #'.$line->purchaseId,
+            $line->qty, $line->salePrice, $line->totalSale ?? ((float) $line->qty * (float) $line->salePrice),
+        ))->all();
         $total = (float) ($sale->grandTotal ?? $sale->totalSale ?? 0);
         $paid = (float) ($sale->paidAmount ?? 0);
         $due = (float) ($sale->curDue ?? $sale->invoiceDue ?? max(0, $total - $paid));
@@ -89,11 +89,10 @@ class DocumentPrintController extends Controller
     private function purchaseInvoice(int $id, PurchaseWorkflow $workflow): array
     {
         $invoice = $workflow->header($id)->load(['supplier', 'items.product']);
-        $items = $invoice->items->map(fn (PurchaseProduct $line) => [
-            'title' => $line->product?->name ?? __('common.product'),
-            'detail' => LocalizedNumber::count($line->qty).' × '.LocalizedNumber::money($line->buyPrice),
-            'amount' => LocalizedNumber::money($line->totalAmount ?? ((float) $line->qty * (float) $line->buyPrice)),
-        ])->all();
+        $items = $invoice->items->map(fn (PurchaseProduct $line) => $this->line(
+            $line->product?->name ?? __('common.product'), $line->qty, $line->buyPrice,
+            $line->totalAmount ?? ((float) $line->qty * (float) $line->buyPrice),
+        ))->all();
         $business = BusinessSetup::query()->find($invoice->businessId);
         return [$this->receipt(
             __('purchases.payment_status').' · '.__(((float) $invoice->due_amount <= 0) ? 'purchases.paid' : (((float) $invoice->paid_amount > 0) ? 'purchases.partial' : 'purchases.due')),
@@ -101,7 +100,7 @@ class DocumentPrintController extends Controller
             __('purchases.supplier'), $invoice->supplier?->name ?: __('mobile.suppliers'), $invoice->supplier?->mobile,
             $items,
             [
-                ['label' => __('purchases.subtotal'), 'amount' => LocalizedNumber::money($invoice->total_amount)],
+                ['label' => __('common.subtotal'), 'amount' => LocalizedNumber::money($invoice->total_amount)],
                 ...(float) $invoice->discount_amount > 0 ? [['label' => __('common.discount'), 'amount' => LocalizedNumber::money($invoice->discount_amount)]] : [],
                 ['label' => __('common.grand_total'), 'amount' => LocalizedNumber::money($invoice->grand_total), 'is_total' => true],
                 ['label' => __('invoices.paid'), 'amount' => LocalizedNumber::money($invoice->paid_amount)],
@@ -113,11 +112,10 @@ class DocumentPrintController extends Controller
     private function quotation(int $id): array
     {
         $quote = Quotation::with(['customer', 'items.product'])->findOrFail($id);
-        $items = $quote->items->map(fn ($line) => [
-            'title' => $line->product?->name ?: ($line->description ?: __('common.product')),
-            'detail' => LocalizedNumber::count($line->qty).' × '.LocalizedNumber::money($line->unit_price),
-            'amount' => LocalizedNumber::money($line->line_total),
-        ])->all();
+        $items = $quote->items->map(fn ($line) => $this->line(
+            $line->product?->name ?: ($line->description ?: __('common.product')),
+            $line->qty, $line->unit_price, $line->line_total,
+        ))->all();
         $business = BusinessSetup::query()->find($quote->businessId);
         return [$this->receipt(
             __('common.status').' · '.(\Illuminate\Support\Facades\Lang::has('common.'.$quote->status) ? __('common.'.$quote->status) : $quote->status),
@@ -137,11 +135,9 @@ class DocumentPrintController extends Controller
         $invoice = ServiceInvoice::with('items')->findOrFail($id);
         $customer = $invoice->customer_id ? Customer::query()->find($invoice->customer_id) : null;
         $business = BusinessSetup::query()->find($invoice->businessId);
-        $items = $invoice->items->map(fn ($line) => [
-            'title' => $line->service_name,
-            'detail' => LocalizedNumber::count($line->qty).' × '.LocalizedNumber::money($line->rate),
-            'amount' => LocalizedNumber::money($line->line_total),
-        ])->all();
+        $items = $invoice->items->map(fn ($line) => $this->line(
+            $line->service_name, $line->qty, $line->rate, $line->line_total,
+        ))->all();
         return [$this->receipt(
             __('common.status').' · '.__('common.service_invoice'), $invoice->total_amount,
             __('common.service_invoice'), (string) $invoice->invoice_number,
@@ -152,14 +148,15 @@ class DocumentPrintController extends Controller
 
     private function saleReturn(int $id): array
     {
-        $return = SaleReturn::with(['sale.business', 'sale.customer', 'items.product'])->findOrFail($id);
+        $return = SaleReturn::with(['sale.business', 'sale.customer', 'sale.items', 'items.product', 'items.purchase'])->findOrFail($id);
         $sale = $return->sale;
         $business = $sale?->business;
-        $items = $return->items->map(fn ($line) => [
-            'title' => $line->product?->name ?: __('common.product'),
-            'detail' => LocalizedNumber::count($line->qty),
-            'amount' => '',
-        ])->all();
+        $items = $return->items->map(function ($line) use ($sale) {
+            $rate = $sale?->items->firstWhere('purchaseId', $line->purchaseId)?->salePrice
+                ?? $line->purchase?->salePriceExVat;
+            return $this->line($line->product?->name ?: __('common.product'), $line->qty, $rate,
+                $rate === null ? null : (float) $line->qty * (float) $rate);
+        })->all();
         return [$this->receipt(__('common.status').' · '.__('common.return'), $return->totalReturnAmount,
             __('common.return'), (string) ($sale?->invoice ?: $return->id), __('invoices.bill_to'),
             Customer::displayLabel($sale?->customer, $sale?->customerId, $return->businessId), $sale?->customer?->mobile,
@@ -173,11 +170,12 @@ class DocumentPrintController extends Controller
         $purchase = $return->purchase;
         $business = BusinessSetup::query()->find($return->businessId);
         $supplier = $purchase ? Supplier::query()->find($purchase->supplier) : null;
-        $items = $return->returnItems->map(fn ($line) => [
-            'title' => $line->product?->name ?: __('common.product'),
-            'detail' => LocalizedNumber::count($line->qty),
-            'amount' => '',
-        ])->all();
+        $purchaseLines = PurchaseProduct::query()->whereIn('id', $return->returnItems->pluck('purchaseId'))->get()->keyBy('id');
+        $items = $return->returnItems->map(function ($line) use ($purchaseLines) {
+            $rate = $purchaseLines->get($line->purchaseId)?->buyPrice;
+            return $this->line($line->product?->name ?: __('common.product'), $line->qty, $rate,
+                $rate === null ? null : (float) $line->qty * (float) $rate);
+        })->all();
         return [$this->receipt(__('common.status').' · '.__('common.return'), $return->totalReturnAmount,
             __('common.return'), (string) ($purchase?->invoice ?: $return->id), __('purchases.supplier'),
             $supplier?->name ?: __('mobile.suppliers'), $supplier?->mobile,
@@ -191,27 +189,56 @@ class DocumentPrintController extends Controller
         abort_unless($actor, 403);
         $contact = ($type === 'customer' ? Customer::query() : Supplier::query())->findOrFail($id);
         $business = BusinessSetup::query()->findOrFail($contact->businessId);
-        $rows = [];
+        abort_unless((int) $actor->businessId === (int) $contact->businessId || $actor->hasSuperAdminPrivileges(), 404);
+        $entries = [];
         if ($type === 'customer') {
             foreach (SaleProduct::query()->where('customerId', $contact->id)->orderBy('date')->get() as $sale) {
-                $rows[] = ['title' => $sale->invoice ?: __('common.invoice').' #'.$sale->id,
-                    'detail' => LocalizedNumber::money($sale->paidAmount ?? 0).' · '.__('mobile.ledger_paid'),
-                    'amount' => LocalizedNumber::money($sale->grandTotal ?? $sale->totalSale ?? 0),
-                    'raw_amount' => (float) ($sale->grandTotal ?? $sale->totalSale ?? 0)];
+                $gross = (float) ($sale->grandTotal ?? $sale->totalSale ?? 0);
+                $paid = (float) ($sale->paidAmount ?? 0);
+                $entries[] = ['date_value' => $sale->date, 'description' => $sale->invoice ?: __('common.invoice').' #'.$sale->id,
+                    'sale_purchase_value' => $gross, 'deposit_value' => $paid];
             }
         } else {
             foreach (PurchaseInvoice::query()->where('supplier_id', $contact->id)->orderBy('purchase_date')->get() as $invoice) {
-                $rows[] = ['title' => $invoice->invoice ?: __('purchases.invoice').' #'.$invoice->id,
-                    'detail' => LocalizedNumber::money($invoice->paid_amount).' · '.__('mobile.ledger_paid'),
-                    'amount' => LocalizedNumber::money($invoice->grand_total), 'raw_amount' => (float) $invoice->grand_total];
+                $entries[] = ['date_value' => $invoice->purchase_date, 'description' => $invoice->invoice ?: __('purchases.invoice').' #'.$invoice->id,
+                    'sale_purchase_value' => (float) $invoice->grand_total, 'deposit_value' => (float) $invoice->paid_amount];
+            }
+            foreach (PurchaseProduct::query()->where('supplier', (string) $contact->id)->whereNull('purchase_invoice_id')->orderBy('purchase_date')->get() as $line) {
+                $entries[] = ['date_value' => $line->purchase_date, 'description' => $line->invoice ?: __('common.product'),
+                    'sale_purchase_value' => (float) ($line->totalAmount ?? 0), 'deposit_value' => (float) ($line->paidAmount ?? 0)];
             }
         }
-        abort_unless((int) $actor->businessId === (int) $contact->businessId || $actor->hasSuperAdminPrivileges(), 404);
-        $total = array_sum(array_column($rows, 'raw_amount'));
-        return [$this->receipt(__('mobile.ledger_transactions'), $total, __('mobile.ledger_'.$type), (string) $contact->name,
-            __('mobile.ledger_'.$type), $contact->name, $contact->mobile, $rows,
-            [['label' => __('mobile.ledger_total_'.$type), 'amount' => LocalizedNumber::money($total), 'is_total' => true]],
-        ), $business];
+        usort($entries, fn ($a, $b) => (string) $a['date_value'] <=> (string) $b['date_value']);
+        $balance = (float) ($contact->openingBalance ?? 0);
+        $rows = [];
+        if ($balance != 0.0) {
+            $rows[] = ['date' => '', 'description' => __('mobile.previous_due'), 'sale_purchase' => '—', 'deposit' => '—', 'balance' => LocalizedNumber::money($balance)];
+        }
+        foreach ($entries as $entry) {
+            $balance += $entry['sale_purchase_value'] - $entry['deposit_value'];
+            $rows[] = ['date' => MobileDateTime::date($entry['date_value']), 'description' => $entry['description'],
+                'sale_purchase' => LocalizedNumber::money($entry['sale_purchase_value']),
+                'deposit' => LocalizedNumber::money($entry['deposit_value']), 'balance' => LocalizedNumber::money($balance)];
+        }
+        $receipt = $this->receipt(__('mobile.ledger_'.$type), $balance, __('mobile.ledger_'.$type), (string) $contact->name,
+            __('mobile.ledger_'.$type), $contact->name, $contact->mobile, [], []);
+        $receipt['ledger'] = true;
+        $receipt['ledger_rows'] = $rows;
+        $receipt['current_balance'] = LocalizedNumber::money($balance);
+        return [$receipt, $business];
+    }
+
+    private function line(string $title, mixed $quantity, mixed $rate, mixed $amount): array
+    {
+        $localizedQuantity = $quantity === null ? '—' : LocalizedNumber::count($quantity);
+        $localizedRate = $rate === null ? '—' : LocalizedNumber::money($rate);
+        return [
+            'title' => $title,
+            'quantity' => $localizedQuantity,
+            'rate' => $localizedRate,
+            'amount' => $amount === null ? '—' : LocalizedNumber::money($amount),
+            'detail' => $quantity === null ? '—' : $localizedQuantity.' × '.$localizedRate,
+        ];
     }
 
     private function receipt(string $status, mixed $amount, string $documentLabel, string $number, string $partyLabel,

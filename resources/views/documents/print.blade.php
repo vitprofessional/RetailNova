@@ -7,8 +7,17 @@
     <link rel="stylesheet" href="{{ asset('css/rn-tokens.css') }}">
     <link rel="stylesheet" href="{{ asset('css/rn-documents.css') }}">
 </head>
-<body>
+<body data-rn-document-preview data-rn-paper="{{ $paper }}">
+    <nav class="rn-document-toolbar" aria-label="{{ __('common.actions') }}">
+        <button type="button" data-document-back data-back-url="{{ route('dashboard') }}">{{ __('common.back') }}</button>
+        <button type="button" data-document-print>{{ __('common.print') }}</button>
+        <button type="button" data-document-pdf>{{ __('common.pdf') }}</button>
+        <button type="button" data-document-open-share>{{ __('common.share') }}</button>
+    </nav>
+    <main class="rn-document-preview" aria-label="{{ $receipt['document_label'] }} preview">
     @include('documents.'.$templateType, ['receipt' => $receipt, 'business' => $business, 'paper' => $paper])
+    </main>
+    @include('documents.actions', ['business' => $business, 'paper' => $paper])
     <script src="{{ asset('vendor/rn-document-tools.js') }}" defer></script>
     <script src="{{ asset('js/rn-mobile-documents.js') }}" defer></script>
 </body>

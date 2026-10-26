@@ -7,20 +7,30 @@
   let originalParent = null;
   let originalNextSibling = null;
 
-  const paper = () => new URLSearchParams(window.location.search).get('size')
+  const paper = () => sheet?.querySelector('input[name="paper"]:checked')?.value
+    || new URLSearchParams(window.location.search).get('size')
     || new URLSearchParams(window.location.search).get('printer')
-    || sheet?.querySelector('input[name="paper"]:checked')?.value
     || printDocument.dataset.paper || 'a4';
   const applyPaper = () => {
     const kind = paper();
-    const sizes = { a4: ['A4 portrait', '10mm', '190mm'], thermal80: ['80mm 200mm', '4mm', '72mm'], thermal58: ['58mm 200mm', '4mm', '48mm'] };
-    const [size, margin, width] = sizes[kind] || sizes.a4;
+    const sizes = { a4: { size: 'A4 portrait', margin: 10, width: '190mm' }, thermal80: { size: '80mm', margin: 4, width: '72mm' }, thermal58: { size: '58mm', margin: 4, width: '48mm' } };
+    const selected = sizes[kind] || sizes.a4;
+    const { margin, width } = selected;
+    printDocument.style.width = document.body.hasAttribute('data-rn-document-preview') && kind === 'a4'
+      ? 'min(190mm, calc(100vw - 32px))' : width;
+    document.body.dataset.rnPaper = kind;
+    let pageSize = selected.size;
+    if (kind !== 'a4') {
+      const old = { display: printDocument.style.display, position: printDocument.style.position, visibility: printDocument.style.visibility, left: printDocument.style.left, top: printDocument.style.top };
+      if (getComputedStyle(printDocument).display === 'none') Object.assign(printDocument.style, { display: 'block', position: 'absolute', visibility: 'hidden', left: '-100000px', top: '0' });
+      const contentHeightMm = Math.max(40, Math.ceil(printDocument.getBoundingClientRect().height * 25.4 / 96));
+      Object.assign(printDocument.style, old);
+      pageSize = `${selected.size} ${contentHeightMm + margin * 2}mm`;
+    }
     let style = document.getElementById('rn-document-page-size');
     if (!style) { style = document.createElement('style'); style.id = 'rn-document-page-size'; document.head.append(style); }
-    style.textContent = `@page { size: ${size}; margin: ${margin}; }`;
+    style.textContent = `@page { size: ${pageSize}; margin: ${margin}mm; }`;
     printDocument.dataset.paper = kind;
-    printDocument.style.width = width;
-    document.body.dataset.rnPaper = kind;
     return kind;
   };
   const attachForPrint = () => {
@@ -85,10 +95,11 @@
     const page = kind === 'a4'
       ? { width: 210, height: 297, contentWidth: 190, margin: 10 }
       : kind === 'thermal58'
-        ? { width: 58, height: 200, contentWidth: 48, margin: 4 }
-        : { width: 80, height: 200, contentWidth: 72, margin: 4 };
+        ? { width: 58, contentWidth: 48, margin: 4 }
+        : { width: 80, contentWidth: 72, margin: 4 };
     const scale = page.contentWidth / canvas.width;
-    const sourcePageHeight = Math.max(1, Math.floor((page.height - page.margin * 2) / scale));
+    if (kind !== 'a4') page.height = Math.ceil(canvas.height * scale + page.margin * 2);
+    const sourcePageHeight = kind === 'a4' ? Math.max(1, Math.floor((page.height - page.margin * 2) / scale)) : canvas.height;
     const pdf = new tools.jsPDF({ orientation: 'portrait', unit: 'mm', format: [page.width, page.height], compress: true });
     for (let offset = 0, number = 0; offset < canvas.height; offset += sourcePageHeight, number++) {
       if (number) pdf.addPage([page.width, page.height], 'portrait');
@@ -101,11 +112,10 @@
     return pdf;
   };
   const closeThen = async action => { sheet.close(); await action(); };
-  sheet?.querySelector('[data-document-print]')?.addEventListener('click', () => closeThen(async () => {
+  const printInPlace = async () => {
     const kind = applyPaper();
-    const printUrl = receipt.dataset.documentPrintUrl;
-    if (printUrl) {
-      const url = new URL(printUrl, window.location.href);
+    if (receipt?.dataset.documentPrintUrl && !document.body.hasAttribute('data-rn-document-preview')) {
+      const url = new URL(receipt.dataset.documentPrintUrl, window.location.href);
       url.searchParams.set('size', kind);
       url.searchParams.set('autoprint', '1');
       window.open(url.toString(), '_blank', 'noopener');
@@ -114,7 +124,17 @@
     await qrCanvas();
     attachForPrint();
     window.print();
-  }));
+  };
+  sheet?.querySelector('[data-document-print]')?.addEventListener('click', () => closeThen(printInPlace));
+  document.querySelector('.rn-document-toolbar [data-document-print]')?.addEventListener('click', printInPlace);
+  document.querySelector('[data-document-back]')?.addEventListener('click', () => {
+    if (window.history.length > 1) window.history.back();
+    else window.location.assign(document.querySelector('[data-document-back]').dataset.backUrl);
+  });
+  document.querySelector('[data-document-open-share]')?.addEventListener('click', () => sheet?.showModal());
+  document.querySelector('.rn-document-toolbar [data-document-pdf]')?.addEventListener('click', async () => {
+    try { (await createPdf()).save(`${fileBase}.pdf`); } catch (error) { console.error(error); }
+  });
   sheet?.querySelector('[data-document-png]')?.addEventListener('click', () => closeThen(async () => {
     const blob = await canvasToBlob(await capture(), 'image/png');
     download(blob, `${fileBase}.png`);
@@ -127,8 +147,10 @@
     if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: document.title });
     else { download(file, file.name); showSavedToast(); }
   }));
-  window.addEventListener('afterprint', () => { restoreAfterPrint(); delete document.body.dataset.rnPaper; });
+  window.addEventListener('afterprint', () => { restoreAfterPrint(); if (!document.body.hasAttribute('data-rn-document-preview')) delete document.body.dataset.rnPaper; });
+  applyPaper();
+  qrCanvas().catch(error => console.warn('Document QR could not be rendered locally', error));
   if (new URLSearchParams(window.location.search).get('autoprint') === '1') {
-    setTimeout(async () => { await qrCanvas(); applyPaper(); attachForPrint(); window.print(); }, 300);
+    setTimeout(printInPlace, 300);
   }
 })();

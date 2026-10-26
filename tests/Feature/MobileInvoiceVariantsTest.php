@@ -159,6 +159,84 @@ class MobileInvoiceVariantsTest extends TestCase
         $this->get(route('documents.print', ['type' => 'sale-invoice', 'id' => $otherSale->id]))->assertNotFound();
     }
 
+    public function test_every_document_type_and_paper_size_renders_a_persistent_preview_for_auto_and_manual_print(): void
+    {
+        [$business, $actor] = $this->businessAndActor();
+        $customer = Customer::forceCreate(['name' => 'Preview Customer', 'businessId' => $business->id]);
+        $supplier = Supplier::forceCreate(['name' => 'Preview Supplier', 'businessId' => $business->id]);
+        $product = Product::forceCreate(['name' => 'Preview Product', 'businessId' => $business->id]);
+        $purchase = PurchaseProduct::forceCreate([
+            'businessId' => $business->id, 'productName' => $product->id, 'supplier' => (string) $supplier->id,
+            'invoice' => 'PREVIEW-PURCHASE', 'purchase_date' => '2026-10-25', 'qty' => 2,
+            'buyPrice' => 100, 'salePriceExVat' => 150, 'totalAmount' => 200,
+        ]);
+        $purchaseInvoice = PurchaseInvoice::forceCreate([
+            'businessId' => $business->id, 'supplier_id' => $supplier->id, 'invoice' => 'PREVIEW-PURCHASE',
+            'purchase_date' => '2026-10-25', 'total_amount' => 200, 'grand_total' => 200,
+            'paid_amount' => 100, 'due_amount' => 100,
+        ]);
+        $purchase->purchase_invoice_id = $purchaseInvoice->id;
+        $purchase->save();
+        $sale = SaleProduct::forceCreate([
+            'businessId' => $business->id, 'invoice' => 'PREVIEW-SALE', 'date' => '2026-10-25',
+            'customerId' => $customer->id, 'grandTotal' => 300, 'totalSale' => 300, 'paidAmount' => 150,
+            'invoiceDue' => 150, 'curDue' => 150, 'salespersonId' => $actor->id,
+        ]);
+        InvoiceItem::forceCreate([
+            'businessId' => $business->id, 'saleId' => $sale->id, 'purchaseId' => $purchase->id,
+            'qty' => 2, 'salePrice' => 150, 'buyPrice' => 100, 'totalSale' => 300,
+            'totalPurchase' => 200, 'profitTotal' => 100,
+        ]);
+        $quote = Quotation::forceCreate([
+            'businessId' => $business->id, 'quote_number' => 'PREVIEW-QUOTE', 'customer_id' => $customer->id,
+            'date' => '2026-10-25', 'status' => 'draft', 'subtotal' => 300, 'discount_total' => 0, 'grand_total' => 300,
+        ]);
+        QuotationItem::forceCreate([
+            'businessId' => $business->id, 'quotation_id' => $quote->id, 'product_id' => $product->id,
+            'description' => 'Preview Product', 'qty' => 2, 'unit_price' => 150, 'discount_percent' => 0,
+            'discount_amount' => 0, 'line_total' => 300,
+        ]);
+        $service = ServiceInvoice::forceCreate([
+            'businessId' => $business->id, 'invoice_number' => 'PREVIEW-SERVICE', 'customer_id' => $customer->id,
+            'is_walkin' => false, 'total_amount' => 300,
+        ]);
+        ServiceInvoiceItem::forceCreate([
+            'businessId' => $business->id, 'invoice_id' => $service->id, 'service_name' => 'Screen Repair',
+            'rate' => 150, 'qty' => 2, 'line_total' => 300,
+        ]);
+        $saleReturn = SaleReturn::forceCreate(['businessId' => $business->id, 'saleId' => $sale->id, 'totalReturnAmount' => 150]);
+        ReturnSaleItem::forceCreate(['businessId' => $business->id, 'returnId' => $saleReturn->id, 'saleId' => $sale->id,
+            'productId' => $product->id, 'purchaseId' => $purchase->id, 'customerId' => $customer->id, 'qty' => 1]);
+        $purchaseReturn = PurchaseReturn::forceCreate(['businessId' => $business->id, 'purchaseId' => $purchase->id, 'totalReturnAmount' => 100]);
+        ReturnPurchaseItem::forceCreate(['businessId' => $business->id, 'returnId' => $purchaseReturn->id,
+            'purchaseId' => $purchase->id, 'supplierId' => $supplier->id, 'productId' => $product->id, 'qty' => 1]);
+
+        $this->actingAs($actor, 'admin');
+        $documents = [
+            ['sale-invoice', $sale->id], ['purchase-invoice', $purchaseInvoice->id], ['quotation', $quote->id],
+            ['service-invoice', $service->id], ['sale-return', $saleReturn->id], ['purchase-return', $purchaseReturn->id],
+            ['customer-ledger', $customer->id], ['supplier-ledger', $supplier->id],
+        ];
+        foreach ($documents as [$type, $id]) {
+            foreach (['a4', 'thermal80', 'thermal58'] as $size) {
+                foreach ([false, true] as $autoprint) {
+                    $url = route('documents.print', ['type' => $type, 'id' => $id]).'?'.http_build_query(['size' => $size, 'autoprint' => $autoprint ? 1 : 0]);
+                    $response = $this->get($url)->assertOk()->assertSee('data-rn-document-preview', false)
+                        ->assertSee('data-rn-print-document', false)->assertSee('data-document-back', false)
+                        ->assertSee('data-document-open-share', false)->assertSee(__('documents.paper_size'));
+                    $this->assertNotSame('', trim(strip_tags($response->getContent())), "{$type}/{$size}/autoprint=".(int) $autoprint.' must render visible document text.');
+                    if (str_contains($type, 'ledger')) {
+                        $response->assertSee(__('documents.current_balance'))->assertSee(__('documents.deposit'))
+                            ->assertDontSee(__('common.thank_you_for_your_business'));
+                    } else {
+                        $response->assertSee(__('documents.quantity'))->assertSee(__('documents.rate'))
+                            ->assertSee(__('documents.amount'));
+                    }
+                }
+            }
+        }
+    }
+
     private function businessAndActor(): array
     {
         $business = BusinessSetup::forceCreate(['businessName' => 'Mobile Invoice Shop', 'businessType' => 'computer_shop']);
