@@ -2,6 +2,7 @@
 /* Mobile quality gate. Requires RN_AUDIT_BASE_URL and authenticated credentials (or storage state). */
 const fs = require('node:fs');
 const path = require('node:path');
+const { execFileSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '../..');
 const out = path.resolve(root, process.env.RN_AUDIT_OUTPUT || 'tests-output/quality');
@@ -15,8 +16,22 @@ const routes = inventory.split(/\r?\n/).flatMap(line => {
 })
   .filter(route => !/[?*]/.test(route))
   .map(route => route.replace(/\{[^}]+\}/g, '1'));
+function auditDocumentIds() {
+  if (process.env.RN_AUDIT_DOCUMENT_IDS) return JSON.parse(process.env.RN_AUDIT_DOCUMENT_IDS);
+  const fixturePath = process.env.RN_AUDIT_FIXTURE_DB;
+  if (!fixturePath) return {};
+  const outputRoot = path.resolve(root, 'tests-output') + path.sep;
+  const absoluteFixturePath = path.resolve(fixturePath);
+  if (!absoluteFixturePath.startsWith(outputRoot)) throw new Error('RN_AUDIT_FIXTURE_DB must point inside tests-output/.');
+  const stdout = execFileSync(process.env.PHP_EXECUTABLE || 'C:\\xampp\\php\\php.exe', [
+    path.join(__dirname, 'SeedMobileQualityAudit.php'),
+  ], { encoding: 'utf8', env: { ...process.env, APP_ENV: 'local', DB_CONNECTION: 'sqlite', DB_DATABASE: absoluteFixturePath } });
+  const jsonLine = stdout.trim().split(/\r?\n/).at(-1);
+  return JSON.parse(jsonLine);
+}
+const documentIds = auditDocumentIds();
 const documentRoutes = ['sale-invoice','purchase-invoice','quotation','service-invoice','sale-return','purchase-return','customer-ledger','supplier-ledger']
-  .map(type => `documents/${type}/1`);
+  .map(type => `documents/${type}/${documentIds[type] || 1}`);
 const urls = [...new Set([...routes, ...documentRoutes].map(route => new URL(route.replace(/^\//, ''), base + '/').toString()))];
 const onlyRoutes = (process.env.RN_AUDIT_ONLY || '').split(',').map(value => value.trim()).filter(Boolean);
 const auditedUrls = onlyRoutes.length ? urls.filter(url => onlyRoutes.some(route => new URL(url).pathname.includes(route))) : urls;
@@ -153,12 +168,25 @@ async function main() {
   });
   page.on('dialog', dialog => dialog.dismiss());
   const errors = [];
+  const networkFlakes = [];
+  let activeAuditUrl = null;
+  let routeNetworkFailures = [];
+  page.on('requestfailed', request => {
+    const error = request.failure()?.errorText || '';
+    if (/ERR_NO_BUFFER_SPACE|ERR_CONNECTION_RESET|ERR_NETWORK_CHANGED|ERR_TIMED_OUT|ECONNRESET|ETIMEDOUT/i.test(error)) {
+      routeNetworkFailures.push({ url: request.url(), error });
+    }
+  });
   page.on('pageerror', error => errors.push({ url: page.url(), message: error.message }));
   // The app's documented Font Awesome kit may return 403 from its external host.
   // Only fail on browser errors from this application origin; pageerror still catches JS faults.
   const appOrigin = new URL(base).origin;
   page.on('console', message => {
     if (message.type() !== 'error') return;
+    if (/ERR_NO_BUFFER_SPACE|ERR_CONNECTION_RESET|ERR_NETWORK_CHANGED|ERR_TIMED_OUT|ECONNRESET|ETIMEDOUT/i.test(message.text())) {
+      routeNetworkFailures.push({ url: message.location()?.url || page.url(), error: message.text() });
+      return;
+    }
     const location = message.location()?.url;
     if (location && new URL(location).origin === appOrigin) errors.push({ url: page.url(), message: message.text(), source: location });
   });
@@ -209,6 +237,11 @@ async function main() {
       await page.waitForFunction(() => String(document.documentElement.lang || '').startsWith('bn'), { timeout: 15000 });
     }
   }
+  // Locale selection can leave the More sheet open. Close it before page checks so
+  // drawer headings do not contaminate typography and gutter measurements.
+  await page.keyboard.press('Escape').catch(() => {});
+  const moreTab = page.locator('[data-rn-tab="more"]');
+  if (await moreTab.count() && await moreTab.getAttribute('aria-expanded') === 'true') await moreTab.click();
   const auditLocale = await page.locator('html').getAttribute('lang');
   if (!String(auditLocale).startsWith('bn')) throw new Error(`Mobile audit locale did not switch to Bengali (actual: ${auditLocale}).`);
 
@@ -217,8 +250,39 @@ async function main() {
       const url = auditedUrls[i];
       try {
         if (await page.evaluate(() => Boolean(window.__rnNativeDialogCalls))) await page.evaluate(() => { window.__rnNativeDialogCalls.length = 0; });
-        const response = await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
-        await page.waitForTimeout(500);
+        activeAuditUrl = url;
+        let response = null;
+        let navigationFailed = null;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          routeNetworkFailures = [];
+          try {
+            response = await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+            await page.waitForLoadState('networkidle', { timeout: 30000 });
+            await page.waitForTimeout(500);
+            if (routeNetworkFailures.length && attempt === 0) {
+              networkFlakes.push({ page: url, attempt: 1, failures: routeNetworkFailures });
+              continue;
+            }
+            if (routeNetworkFailures.length) networkFlakes.push({ page: url, attempt: 2, failures: routeNetworkFailures });
+            navigationFailed = null;
+            break;
+          } catch (error) {
+            const message = String(error.message || error);
+            if (/ERR_|net::|ECONNRESET|ETIMEDOUT|timeout/i.test(message)) {
+              networkFlakes.push({ page: url, attempt: attempt + 1, error: message });
+              navigationFailed = error;
+              if (attempt === 0) continue;
+              break;
+            }
+            throw error;
+          }
+        }
+        if (navigationFailed) {
+          fs.writeFileSync(path.join(out, 'audit.json'), JSON.stringify({ gate: 'full', locale: auditLocale,
+            viewport: { width: 390, height: 844 }, routes: auditedUrls.length, findings, consoleErrors: errors,
+            networkFlakes, sourceDialogCandidates: staticDialogCalls.length }, null, 2));
+          continue;
+        }
         if (response && response.status() >= 400) findings.push({ page: url, check: 'http-status', actual: response.status() });
         if (/\/admin\/login|\/login$/.test(new URL(page.url()).pathname)) {
           findings.push({ page: url, check: 'authenticated-session', actual: 'redirected to login' });
@@ -241,10 +305,10 @@ async function main() {
         }
       } catch (error) { findings.push({ page: url, check: 'navigation', actual: error.message }); }
     }
-    fs.writeFileSync(path.join(out, 'audit.json'), JSON.stringify({ gate: 'full', locale: auditLocale, viewport: { width: 390, height: 844 }, routes: auditedUrls.length, findings, consoleErrors: errors, sourceDialogCandidates: staticDialogCalls.length }, null, 2));
+    fs.writeFileSync(path.join(out, 'audit.json'), JSON.stringify({ gate: 'full', locale: auditLocale, viewport: { width: 390, height: 844 }, routes: auditedUrls.length, findings, consoleErrors: errors, networkFlakes, sourceDialogCandidates: staticDialogCalls.length, documentIds }, null, 2));
   }
   await browser.close();
-  console.log(JSON.stringify({ gate: fullGate ? 'full' : 'foundation', routes: fullGate ? auditedUrls.length : undefined, violations: findings.length, consoleErrors: errors.length, report: path.join(out,'audit.json') }, null, 2));
+  console.log(JSON.stringify({ gate: fullGate ? 'full' : 'foundation', routes: fullGate ? auditedUrls.length : undefined, violations: findings.length, consoleErrors: errors.length, networkFlakes: networkFlakes.length, report: path.join(out,'audit.json') }, null, 2));
   if (findings.length || errors.length) process.exitCode = 1;
 }
 main().catch(error => { console.error(error.stack || error); process.exit(1); });
