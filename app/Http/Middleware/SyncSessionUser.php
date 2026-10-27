@@ -18,7 +18,10 @@ class SyncSessionUser
             if ($id) {
                 $user = User::find($id);
                 if ($user) {
-                    Auth::login($user);
+                    // Resolve legacy POS session users for this request only.
+                    // Auth::login() writes to the web guard's session and rotates
+                    // the session ID, which can invalidate concurrent AJAX calls.
+                    Auth::guard('web')->setUser($user);
                 } else {
                     // Drop stale session identifier
                     Session::forget('pos_user_id');
