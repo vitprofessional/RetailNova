@@ -235,9 +235,12 @@
                 return legacy ? Object.assign({ counts: {} }, legacy) : { counts: {}, lines: [] };
             } catch (_) { return { counts: {}, lines: [] }; }
         }
-        var restoringCart = false;
+        // Keep persisted lines intact until asynchronous server rows have been
+        // restored. The first bar refresh runs before the restoration block below.
+        var restoringCart = Boolean(cartKey);
+        var restoreFailed = false;
         function saveCart() {
-            if (!cartKey || restoringCart) return;
+            if (!cartKey || restoringCart || restoreFailed) return;
             try {
                 var lines = saleRows().map(function (row) {
                     return { product_id: row.dataset.productGroup, quantity: Number(row.querySelector('.qty')?.value || 1), sale_price: row.querySelector('.salePrice')?.value || '', warranty: row.querySelector('.warrantyDays')?.value || '' };
@@ -292,7 +295,9 @@
                 image.className = 'rn-m-line-image' + (row.dataset.productImage ? '' : ' is-fallback');
                 if (row.dataset.productImage) { image.src = row.dataset.productImage; image.alt = ''; image.loading = 'lazy'; }
                 else {
-                    var initial = String((row.querySelector('.rn-sale-product-name') || {}).textContent || '').match(/[\p{L}]/u)?.[0];
+                    var productName = String((row.querySelector('.rn-sale-product-name') || {}).textContent || '');
+                    var initial = window.RNAvatar?.initial(productName);
+                    if (window.RNAvatar) image.classList.add(window.RNAvatar.toneClass(productName));
                     if (initial) image.textContent = initial;
                     else { image.classList.add('is-product-icon'); image.innerHTML = '<i class="ri-box-3-line" aria-hidden="true"></i>'; }
                 }
@@ -438,22 +443,23 @@
             try {
                 var savedCart = readCart();
                 if (savedCart && Array.isArray(savedCart.lines) && savedCart.lines.length) {
-                    restoringCart = true;
                     (async function () {
                         if (savedCart.customer_id && customer) { customer.value = savedCart.customer_id; fire(customer, 'change'); }
                         await ensureCustomer();
                         for (var savedLine of savedCart.lines) {
                             await addProduct(String(savedLine.product_id), null, Number(savedLine.quantity) || 1);
                             var row = rows?.querySelector('tr[data-product-group="' + savedLine.product_id + '"][data-product-summary]');
-                            if (row) {
-                                var price = row.querySelector('.salePrice'); if (price && savedLine.sale_price !== '') { price.value = savedLine.sale_price; fire(price); }
-                                var warranty = row.querySelector('.warrantyDays'); if (warranty) { warranty.value = savedLine.warranty || ''; fire(warranty); }
-                            }
+                            if (!row) { throw new Error('Persisted cart line could not be restored.'); }
+                            var price = row.querySelector('.salePrice'); if (price && savedLine.sale_price !== '') { price.value = savedLine.sale_price; fire(price); }
+                            var warranty = row.querySelector('.warrantyDays'); if (warranty) { warranty.value = savedLine.warranty || ''; fire(warranty); }
                         }
                         restoringCart = false; saveCart(); refreshBar();
-                    })().catch(function () { restoringCart = false; });
+                    })().catch(function () { restoreFailed = true; restoringCart = false; });
+                } else {
+                    restoringCart = false;
+                    refreshBar(false);
                 }
-            } catch (_) { restoringCart = false; }
+            } catch (_) { restoreFailed = true; restoringCart = false; }
         }
 
     }

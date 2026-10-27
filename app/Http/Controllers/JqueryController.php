@@ -979,7 +979,7 @@ class JqueryController extends Controller
             });
 
             $savedSale = $createdSaleId > 0 ? SaleProduct::whereKey($createdSaleId)->first() : null;
-            Alert::success(__('common.notification_success'), __('sales.sale_completed_invoice', ['invoice' => $savedSale?->invoiceNo ?? $createdSaleId]));
+            Alert::success('', __('sales.sale_completed_invoice', ['invoice' => $savedSale?->invoice ?? $createdSaleId]));
             if($createdSaleId > 0){
                 $defaultPrinter = (string) config('pos.default_invoice_printer', 'thermal80');
                 if(!in_array($defaultPrinter, ['a4', 'thermal80', 'thermal58'], true)){

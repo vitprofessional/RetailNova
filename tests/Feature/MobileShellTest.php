@@ -339,7 +339,7 @@ class MobileShellTest extends TestCase
         $this->assertFalse($select->hasAttribute('name'), 'The select only mirrors into the hidden field.');
         $this->assertSame(['cash', 'bkash', 'nagad', 'due'], array_map(fn ($o) => $o->getAttribute('value'), iterator_to_array($xpath->query('./option', $select))));
         $this->assertSame('cash', $xpath->query('./option[@selected]', $select)->item(0)->getAttribute('value'));
-        $this->assertSame(['ক্যাশ', 'বিকাশ', 'নগদ', 'বাকি'], array_map(fn ($l) => trim($l->textContent), iterator_to_array($xpath->query('//*[@data-rn-checkout]//label[contains(@class,"rn-m-segment-btn")]'))));
+        $this->assertSame(['ক্যাশ', 'বিকাশ', 'নগদ (মোবাইল)', 'বাকি'], array_map(fn ($l) => trim($l->textContent), iterator_to_array($xpath->query('//*[@data-rn-checkout]//label[contains(@class,"rn-m-segment-btn")]'))));
         $this->assertStringContainsString('পুরো টাকা', $xpath->query('//*[@data-rn-checkout]//button[@data-rn-quick="exact"]')->item(0)->textContent);
     }
 
