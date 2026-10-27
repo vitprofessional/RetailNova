@@ -49,10 +49,3 @@
 @include('documents.actions', ['business' => $documentBusiness, 'paper' => $documentBusiness?->default_invoice_printer ?? 'thermal80'])
 <script src="{{ asset('vendor/rn-document-tools.js') }}?v={{ filemtime(public_path('vendor/rn-document-tools.js')) }}" defer></script>
 <script src="{{ asset('js/rn-mobile-documents.js') }}?v={{ filemtime(public_path('js/rn-mobile-documents.js')) }}" defer></script>
-<script>
-(() => {
-    const receipt = document.querySelector('[data-mobile-document-receipt]');
-    const sheet = document.querySelector('[data-rn-document-sheet]');
-    receipt?.querySelectorAll('[data-receipt-action="print"], [data-receipt-action="pdf"], [data-receipt-action="share"]').forEach(button => button.addEventListener('click', () => sheet?.showModal()));
-})();
-</script>

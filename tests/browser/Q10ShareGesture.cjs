@@ -15,12 +15,16 @@ const html = `<!doctype html><html lang="bn"><head><title>Receipt SAL-Q10</title
   const browser = await browserType.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE || undefined });
   const context = await browser.newContext({ ...devices['iPhone 14 Pro Max'], locale: 'bn-BD' });
   await context.addInitScript(() => {
-    window.__clickTask = 0;
+    window.__isUserGestureTask = false;
     window.__shareRecord = null;
-    document.addEventListener('click', () => { window.__clickTask += 1; }, true);
+    document.addEventListener('click', () => {
+      window.__isUserGestureTask = true;
+      setTimeout(() => { window.__isUserGestureTask = false; }, 0);
+    }, true);
     Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => true });
     Object.defineProperty(navigator, 'share', { configurable: true, value: payload => {
-      window.__shareRecord = { task: window.__clickTask, type: payload.files[0].type, name: payload.files[0].name, title: payload.title };
+      window.__shareRecord = { userActivation: navigator.userActivation?.isActive === true,
+        type: payload.files[0].type, name: payload.files[0].name, title: payload.title };
       return Promise.resolve();
     }});
   });
@@ -33,14 +37,14 @@ const html = `<!doctype html><html lang="bn"><head><title>Receipt SAL-Q10</title
   await page.locator('[data-document-share]').click();
   const record = await page.evaluate(() => window.__shareRecord);
   if (!record || record.type !== 'application/pdf' || !record.name.endsWith('.pdf')) throw new Error(`Invalid PDF share payload: ${JSON.stringify(record)}`);
-  if (record.task !== await page.evaluate(() => window.__clickTask)) throw new Error('navigator.share was not called synchronously during the click task.');
+  if (!record.userActivation) throw new Error('navigator.share was called without a live iPhone user activation.');
   await page.locator('[data-document-open-share]').click();
   await page.locator('[data-document-share]').waitFor();
   await page.locator('input[name="share-format"][value="png"]').check();
   await page.waitForFunction(() => !document.querySelector('[data-document-share]').disabled);
   await page.locator('[data-document-share]').click();
   const image = await page.evaluate(() => window.__shareRecord);
-  if (image.type !== 'image/png' || !image.name.endsWith('.png')) throw new Error(`Invalid image share payload: ${JSON.stringify(image)}`);
+  if (image.type !== 'image/png' || !image.name.endsWith('.png') || !image.userActivation) throw new Error(`Invalid live-activation image share payload: ${JSON.stringify(image)}`);
   console.log(`PASS: iPhone ${process.env.RN_BROWSER === 'chromium' ? 'Chromium' : 'WebKit'} emulation calls share synchronously with correctly named PDF and PNG Files.`);
   await browser.close();
 })().catch(error => { console.error(error); process.exit(1); });

@@ -215,8 +215,12 @@
     }
     window.RNToast?.error(error?.message || (document.documentElement.lang.startsWith('bn') ? 'ফাইল শেয়ার করা যায়নি' : 'Could not share file'));
   }
-  const openShareSheet = () => { sheet?.showModal(); prepareFiles(); };
-  document.querySelector('[data-document-open-share]')?.addEventListener('click', openShareSheet);
+  const openShareSheet = () => {
+    if (sheet && !sheet.open) sheet.showModal();
+    prepareFiles();
+  };
+  document.querySelectorAll('[data-document-open-share], [data-receipt-action="print"], [data-receipt-action="pdf"], [data-receipt-action="share"]')
+    .forEach(button => button.addEventListener('click', openShareSheet));
   window.addEventListener('afterprint', () => { restoreAfterPrint(); if (!document.body.hasAttribute('data-rn-document-preview')) delete document.body.dataset.rnPaper; });
   applyPaper();
   qrCanvas().catch(error => console.warn('Document QR could not be rendered locally', error));
