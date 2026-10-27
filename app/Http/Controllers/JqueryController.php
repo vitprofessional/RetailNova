@@ -697,7 +697,7 @@ class JqueryController extends Controller
                 }
             }
             $header=$workflow->save($requ->all(),$header);
-            return redirect()->route('purchase.invoice.show',$header->id)->with('status',__('purchases.invoice_saved'));
+            return redirect()->route('purchase.invoice.show',$header->id)->with('status',__('purchases.invoice_saved', ['invoice' => $header->invoice]));
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
@@ -978,7 +978,8 @@ class JqueryController extends Controller
                 }
             });
 
-            Alert::success(__('common.notification_success'),__('common.notification_data_saved_successfully'));
+            $savedSale = $createdSaleId > 0 ? SaleProduct::whereKey($createdSaleId)->first() : null;
+            Alert::success(__('common.notification_success'), __('sales.sale_completed_invoice', ['invoice' => $savedSale?->invoiceNo ?? $createdSaleId]));
             if($createdSaleId > 0){
                 $defaultPrinter = (string) config('pos.default_invoice_printer', 'thermal80');
                 if(!in_array($defaultPrinter, ['a4', 'thermal80', 'thermal58'], true)){

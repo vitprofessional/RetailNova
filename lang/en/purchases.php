@@ -179,7 +179,7 @@ return [
     'consumed_delete' => 'Purchased items with sales, returns or consumed stock cannot be deleted.',
     'legacy_identity_required' => 'Historical product rows have no verified invoice header. Review their identity before invoice editing; do not merge by invoice number.',
     'use_invoice_actions' => 'Use the invoice actions to change this purchase.',
-    'invoice_saved' => 'Purchase invoice saved.',
+    'invoice_saved' => 'Purchase saved — invoice :invoice',
     'invoice_deleted' => 'Purchase invoice deleted.',
     'paid_delete' => 'Paid invoices cannot be deleted without a reviewed payment reversal.',
     'sale_price' => 'Sale price',

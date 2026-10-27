@@ -26,6 +26,7 @@
         box-shadow: var(--rn-shadow-raised); font-size: var(--rn-fs-body); font-weight: 600;
     }
     .rn-m-toast.is-info { background: var(--rn-color-ink); }
+    .rn-m-toast [data-rn-toast-undo] { min-height: 36px; padding: 4px 10px; border: 1px solid currentColor; border-radius: var(--rn-radius-sm); background: transparent; color: inherit; font-size: var(--rn-fs-label); font-weight: 700; }
     .rn-m-toast-icon { display: grid; flex: 0 0 28px; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: color-mix(in srgb, white 20%, transparent); font-size: 18px; font-weight: 700; }
     .rn-m-field-error { margin: 4px 0 0; color: var(--rn-color-danger); font-size: var(--rn-fs-label); font-weight: 600; }
     [aria-invalid="true"] { border-color: var(--rn-color-danger) !important; box-shadow: 0 0 0 2px var(--rn-color-danger-tint) !important; }

@@ -32,6 +32,7 @@
     .rn-q6-empty span { font:var(--rn-type-helper); }
     .rn-q6-lines { display:grid; gap:12px; }
     .rn-q6-line-card { display:grid; grid-template-columns:64px minmax(0,1fr) auto; align-items:center; gap:10px 12px; padding:14px; border:1px solid #eceef1; border-radius:20px; background:#fff; box-shadow:0 2px 4px rgba(16,24,40,.05); }
+    .rn-q6-line-remove { grid-column:3; grid-row:1; width:36px; height:36px; border:0; border-radius:10px; background:var(--rn-color-danger-tint); color:var(--rn-color-danger); font-size:24px; line-height:1; }
     .rn-q6-line-image { display:grid; grid-row:1; grid-column:1; width:64px; height:64px; place-items:center; overflow:hidden; border-radius:14px; background:#edf3f2; color:#147a76; font-size:24px; object-fit:cover; }
     .rn-q6-line-copy { grid-row:1; grid-column:2; display:grid; min-width:0; gap:4px; }
     .rn-q6-line-copy strong { overflow:hidden; font:var(--rn-type-card-name); text-overflow:ellipsis; white-space:nowrap; }

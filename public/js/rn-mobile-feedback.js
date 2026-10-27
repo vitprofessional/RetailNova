@@ -5,6 +5,7 @@
   const banner = root.querySelector('[data-rn-error-banner]');
   const toast = root.querySelector('[data-rn-toast]');
   const toastMessage = root.querySelector('[data-rn-toast-message]');
+  const undoButton = root.querySelector('[data-rn-toast-undo]');
   const errorMessage = root.querySelector('[data-rn-error-message]');
   const mobile = () => Boolean(document.querySelector('[data-rn-tabbar]'));
   let toastTimer = null;
@@ -22,13 +23,20 @@
     toast.classList.add(kind === 'success' ? 'is-success' : 'is-info');
     toast.querySelector('.rn-m-toast-icon').textContent = kind === 'success' ? '✓' : 'i';
     toastMessage.textContent = message;
+    if (undoButton) undoButton.hidden = true;
     toast.hidden = false;
     toastTimer = window.setTimeout(() => { toast.hidden = true; }, 2500);
   };
   window.RNToast = {
     success: message => showToast('success', message),
     error: message => showToast('error', message || root.dataset.labelError),
-    info: message => showToast('info', message)
+    info: message => showToast('info', message),
+    undo(message, callback) {
+      showToast('info', message);
+      if (!undoButton) return;
+      undoButton.hidden = false;
+      undoButton.onclick = () => { undoButton.hidden = true; clearTimeout(toastTimer); toast.hidden = true; callback?.(); };
+    }
   };
   window.showToast = (title, message, icon) => {
     const kind = icon === 'error' ? 'error' : icon === 'success' ? 'success' : 'info';

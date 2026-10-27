@@ -28,7 +28,7 @@
         </section>
     @endif
     <div class="rn-m-toast" data-rn-toast role="status" aria-live="polite" @unless($toastMessage) hidden @endunless>
-        <span class="rn-m-toast-icon" aria-hidden="true">✓</span><span data-rn-toast-message>{{ $toastMessage }}</span>
+        <span class="rn-m-toast-icon" aria-hidden="true">✓</span><span data-rn-toast-message>{{ $toastMessage }}</span><button type="button" data-rn-toast-undo hidden>{{ __('common.restore') }}</button>
     </div>
     <script type="application/json" data-rn-error-map>{!! json_encode($errorMessages, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!}</script>
     @if($deleteConfig)

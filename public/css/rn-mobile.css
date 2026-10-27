@@ -630,6 +630,7 @@
     .rn-m-line-body { flex: 1 1 auto; min-width: 0; }
     .rn-m-line-body strong { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
     .rn-m-line-body span { color: var(--rn-color-muted); font-size: var(--rn-type-bottom-label); }
+    .rn-m-line-remove { flex: 0 0 40px; width: 40px; height: 40px; border: 0; border-radius: var(--rn-radius-sm); background: var(--rn-color-danger-tint); color: var(--rn-color-danger); font-size: 24px; line-height: 1; }
     .rn-m-stepper { display: flex; flex: 0 0 auto; align-items: center; gap: 4px; }
     .rn-m-stepper button {
         width: var(--rn-touch);

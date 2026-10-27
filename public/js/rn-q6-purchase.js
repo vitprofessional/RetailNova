@@ -5,7 +5,16 @@
  const $ = selector => root.querySelector(selector);
  const rows = form.querySelector('#productDetails');
  const picker = form.querySelector('[data-rn-product-picker][data-mode="purchase"]');
- const cartKey = picker?.dataset.cartKey ? picker.dataset.cartKey + '-lines' : '';
+ const cartKey = picker?.dataset.cartKey || '';
+ const legacyCartKey = cartKey ? cartKey + '-lines' : '';
+ const readCart = () => {
+  try {
+   const saved = JSON.parse(localStorage.getItem(cartKey) || 'null');
+   if (saved && (saved.lines || saved.counts)) return saved;
+   const legacy = JSON.parse(localStorage.getItem(legacyCartKey) || 'null');
+   return legacy ? Object.assign({ counts:{} }, legacy) : { counts:{}, lines:[] };
+  } catch (_) { return { counts:{}, lines:[] }; }
+ };
  let restoringCart = true;
  const pickerSlot = $('[data-q6-picker-slot]');
  const pickerAnchor = document.createComment('purchase picker desktop location');
@@ -135,14 +144,15 @@
     const serialText=document.createElement('span'); serialText.dataset.q6SerialText='1';
     const arrow=document.createElement('i'); arrow.className='las la-angle-right'; arrow.setAttribute('aria-hidden','true');
     serial.append(serialIcon,serialText,arrow);
-    footer.append(price,serial); card.append(image,copy,total,footer);
-    card.addEventListener('click', event => { if (event.target.closest('[data-q6-serial-tag]')) { card.dispatchEvent(new CustomEvent('q6:edit-line',{bubbles:true,detail:{row}})); return; } card.dispatchEvent(new CustomEvent('q6:edit-line',{bubbles:true,detail:{row}})); });
+    const remove=document.createElement('button'); remove.type='button'; remove.className='rn-q6-line-remove'; remove.textContent='×'; remove.setAttribute('aria-label',root.dataset.removeLabel||'Remove');
+    footer.append(price,serial); card.append(image,copy,total,remove,footer);
+    card.addEventListener('click', event => { if(event.target.closest('[data-q6-remove-card]')) return; card.dispatchEvent(new CustomEvent('q6:edit-line',{bubbles:true,detail:{row}})); });
     target.appendChild(card);
    }
    const imageBox=row.querySelector('[data-product-image]'); const img=imageBox?.querySelector('img'); const cardImage=card.querySelector('.rn-q6-line-image');
    cardImage.replaceChildren();
    if(img?.src){const view=new Image();view.src=img.src;view.alt='';view.loading='lazy';view.className='rn-q6-line-image';cardImage.replaceWith(view);}
-   else {cardImage.textContent=imageBox?.textContent?.trim() || name.trim().slice(0,1);}
+   else {const initial=String(imageBox?.textContent||name||'').match(/[\p{L}]/u)?.[0];if(initial)cardImage.textContent=initial;else{cardImage.classList.add('is-product-icon');const icon=document.createElement('i');icon.className='ri-box-3-line';icon.setAttribute('aria-hidden','true');cardImage.append(icon);}}
    card.querySelector('[data-q6-name]').textContent=name;
    const brand=picker?.dataset.brand || '';
    const unit=picker?.dataset.unit || '';
@@ -177,13 +187,34 @@
      buy_price: row.querySelector('input[id^="buyPrice"]')?.value || '',
      sale_price: row.querySelector('input.sale-price')?.value || '',
     })).filter(line => line.product_id);
-    localStorage.setItem(cartKey, JSON.stringify({ supplier_id: supplierSelect?.value || '', lines,
+    const saved = readCart();
+    saved.supplier_id = supplierSelect?.value || '';
+    saved.lines = lines;
+    saved.counts = {};
+    lines.forEach(line => { saved.counts[line.product_id] = Number(line.quantity) || 1; });
+    Object.assign(saved, {
      discount_status: discountStatus?.value || '1', discount_amount: discountAmount?.value || '0',
      discount_percent: discountPercent?.value || '0', paid_amount: paidInput?.value || '0',
-     payment_method: mobileMethod?.value || 'cash', note: noteInput?.value || '' }));
+     payment_method: mobileMethod?.value || 'cash', note: noteInput?.value || '' });
+    localStorage.setItem(cartKey, JSON.stringify(saved));
+    if (legacyCartKey) localStorage.removeItem(legacyCartKey);
+    picker?.querySelectorAll('[data-picker-count]').forEach(badge=>{const n=Number(saved.counts[badge.dataset.pickerCount]||0);badge.textContent=n?localDigits(n):'';badge.hidden=!n;});
    } catch (_) {}
   }
  };
+ let purchaseSwipeStart=null;
+ $('[data-q6-lines]')?.addEventListener('touchstart',event=>{purchaseSwipeStart={x:event.changedTouches[0].clientX,y:event.changedTouches[0].clientY};},{passive:true});
+ $('[data-q6-lines]')?.addEventListener('touchend',event=>{if(!purchaseSwipeStart)return;const dx=event.changedTouches[0].clientX-purchaseSwipeStart.x,dy=event.changedTouches[0].clientY-purchaseSwipeStart.y;purchaseSwipeStart=null;if(dx < -70 && Math.abs(dx)>Math.abs(dy))event.target.closest('.rn-q6-line-card')?.querySelector('.rn-q6-line-remove')?.click();},{passive:true});
+ $('[data-q6-lines]')?.addEventListener('click',event=>{
+  const button=event.target.closest('.rn-q6-line-remove');if(!button)return;event.preventDefault();event.stopPropagation();
+  const card=button.closest('.rn-q6-line-card'), row=[...rows.querySelectorAll('tr.product-row')].find(item=>item.dataset.idx===card.dataset.idx);if(!row)return;
+  const snapshot={product_id:row.querySelector('input[name^="productName["]')?.value||'',name:row.querySelector('input[name^="selectProductName["]')?.value||'',quantity:row.querySelector('.quantity')?.value||'1',buy_price:row.querySelector('input[id^="buyPrice"]')?.value||'',sale_price:row.querySelector('input.sale-price')?.value||''};
+  row.querySelector('.remove-row')?.click();
+  window.RNToast?.undo('মুছে ফেলা হয়েছে · ফিরিয়ে আনুন',()=>{
+   picker?.dispatchEvent(new CustomEvent('rn:product-picker:selected',{bubbles:true,detail:{...snapshot,mode:'purchase',quantity:1}}));
+   const started=Date.now();const restore=()=>{const restored=[...rows.querySelectorAll('tr.product-row')].find(item=>item.querySelector('input[name^="productName["]')?.value===snapshot.product_id);if(restored){for(const [selector,value] of [['.quantity',snapshot.quantity],['input[id^="buyPrice"]',snapshot.buy_price],['input.sale-price',snapshot.sale_price]]){const field=restored.querySelector(selector);if(field){field.value=value;poke(field);}}renderRows();}else if(Date.now()-started<5000)setTimeout(restore,60);};restore();
+  });
+ });
  const updateDue = grand => {
   const paid=numeric($('[data-q6-paid]'));
   const due=Math.max(0, grand-paid);
@@ -285,7 +316,7 @@
  document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeSheets();if(!payment.hidden)closePayment();}});
  if (cartKey) {
   try {
-   const saved = JSON.parse(localStorage.getItem(cartKey) || 'null');
+   const saved = readCart();
    if (saved && Array.isArray(saved.lines) && saved.lines.length) {
     if (saved.supplier_id && supplierSelect) { supplierSelect.value = saved.supplier_id; supplierSelect.dispatchEvent(new Event('change', {bubbles:true})); }
     (async () => {

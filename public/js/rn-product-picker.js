@@ -10,8 +10,12 @@
     const error = root.querySelector('[data-picker-error]');
     const sheet = root.querySelector('[data-picker-sheet]');
     let mode = 'category', category = '', brand = '', page = 1, hasMore = false, waiting = false, activeRequest = null;
-    let selectedCounts = {};
-    try { selectedCounts = JSON.parse(localStorage.getItem(root.dataset.cartKey) || '{}') || {}; } catch (_) {}
+    let cartState = {};
+    try {
+      cartState = JSON.parse(localStorage.getItem(root.dataset.cartKey) || '{}') || {};
+      if (!cartState.counts) cartState = { counts: cartState };
+    } catch (_) { cartState = { counts: {} }; }
+    const selectedCounts = cartState.counts || (cartState.counts = {});
     let timer;
     const label = key => root.dataset[`label${key}`] || '';
     const localized = (template, count) => template.replace('__COUNT__', count.toLocaleString(document.documentElement.lang?.startsWith('bn') ? 'bn-BD' : 'en-US'));
@@ -42,7 +46,11 @@
       if (item.image) {
         const image = document.createElement('img'); image.className = 'rn-m-picker-card__image'; image.src = item.image; image.alt = ''; image.loading = 'lazy'; button.append(image);
       } else {
-        const fallback = document.createElement('span'); fallback.className = 'rn-m-picker-card__image rn-m-picker-card__fallback'; fallback.textContent = item.name.slice(0, 1); button.append(fallback);
+        const fallback = document.createElement('span'); fallback.className = 'rn-m-picker-card__image rn-m-picker-card__fallback';
+        const initial = String(item.name || '').match(/[\p{L}]/u)?.[0];
+        if (initial) fallback.textContent = initial;
+        else { const icon = document.createElement('i'); icon.className = 'ri-box-3-line'; icon.setAttribute('aria-hidden', 'true'); fallback.append(icon); }
+        button.append(fallback);
       }
       const badge = document.createElement('span');
       badge.className = 'rn-m-picker-card__count';
@@ -78,7 +86,8 @@
           return;
         }
         selectedCounts[id] = current + 1;
-        localStorage.setItem(root.dataset.cartKey, JSON.stringify(selectedCounts));
+        cartState.counts = selectedCounts;
+        localStorage.setItem(root.dataset.cartKey, JSON.stringify(cartState));
         const countBadge = button.querySelector('[data-picker-count]');
         countBadge.textContent = localized('__COUNT__', selectedCounts[id]);
         countBadge.hidden = false;
