@@ -15,12 +15,104 @@ const routes = inventory.split(/\r?\n/).flatMap(line => {
 })
   .filter(route => !/[?*]/.test(route))
   .map(route => route.replace(/\{[^}]+\}/g, '1'));
-const urls = [...new Set(routes.map(route => new URL(route.replace(/^\//, ''), base + '/').toString()))];
+const documentRoutes = ['sale-invoice','purchase-invoice','quotation','service-invoice','sale-return','purchase-return','customer-ledger','supplier-ledger']
+  .map(type => `documents/${type}/1`);
+const urls = [...new Set([...routes, ...documentRoutes].map(route => new URL(route.replace(/^\//, ''), base + '/').toString()))];
 const onlyRoutes = (process.env.RN_AUDIT_ONLY || '').split(',').map(value => value.trim()).filter(Boolean);
 const auditedUrls = onlyRoutes.length ? urls.filter(url => onlyRoutes.some(route => new URL(url).pathname.includes(route))) : urls;
 
+function scanAppNativeDialogCalls() {
+  const roots = ['public/js', 'resources/views'];
+  const files = [];
+  const walk = directory => {
+    if (!fs.existsSync(directory)) return;
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      if (entry.name === 'vendor' || entry.name === 'node_modules') continue;
+      const full = path.join(directory, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.(?:js|blade\.php)$/i.test(entry.name)) files.push(full);
+    }
+  };
+  roots.forEach(relative => walk(path.join(root, relative)));
+  const findings = [];
+  for (const file of files) {
+    const source = fs.readFileSync(file, 'utf8');
+    const pattern = /\b(?:window\s*\.\s*)?(?:alert|confirm|prompt)\s*\(/gi;
+    for (const match of source.matchAll(pattern)) findings.push({ file: path.relative(root, file).replaceAll('\\', '/'), offset: match.index, call: match[0] });
+  }
+  return findings;
+}
+
+async function inspectPage(page) {
+  return page.evaluate(async () => {
+    const visible = element => { const r = element.getBoundingClientRect(), s = getComputedStyle(element); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
+    const leaves = [...document.querySelectorAll('body *')].filter(el => el.children.length === 0 && el.textContent.trim() && visible(el));
+    const isDocument = /\/documents\//.test(location.pathname);
+    const allowed = [13,14,16,17,18,21,30];
+    const isIcon = el => el.matches('i,svg,path,[class^="ri-"],[class*=" ri-"],[class^="fa-"],[class*=" fa-"]')
+      || /fontawesome|remixicon|line awesome|material icons|bootstrap-icons/i.test(getComputedStyle(el).fontFamily);
+    const badFont = isDocument ? [] : leaves.filter(el => !isIcon(el) && !/^"?Hind Siliguri"?/i.test(getComputedStyle(el).fontFamily.trim())).slice(0, 12).map(el => ({ text: el.textContent.trim().slice(0,40), font: getComputedStyle(el).fontFamily }));
+    const badSize = isDocument ? [] : leaves.filter(el => { const size = parseFloat(getComputedStyle(el).fontSize); return size < 13 || !allowed.some(value => Math.abs(value-size)<0.1); }).slice(0, 20).map(el => ({ text: el.textContent.trim().slice(0,40), size: getComputedStyle(el).fontSize }));
+    const overflow = document.documentElement.scrollWidth > innerWidth;
+    const cardLike = el => {
+      const s = getComputedStyle(el);
+      if (el.matches('input,select,textarea,button,label,details,summary,option,table,thead,tbody,tfoot,tr,td,th')) return false;
+      const namedCard = el.matches('.card,.rn-m-card,article');
+      const radius = parseFloat(s.borderTopLeftRadius) > 0;
+      const border = parseFloat(s.borderTopWidth) > 0 && s.borderTopStyle !== 'none';
+      const background = s.backgroundColor !== 'rgba(0, 0, 0, 0)' || s.backgroundImage !== 'none';
+      const padding = parseFloat(s.paddingTop) >= 8 && parseFloat(s.paddingRight) >= 8 && parseFloat(s.paddingBottom) >= 8 && parseFloat(s.paddingLeft) >= 8;
+      const block = ['block','flow-root','flex','grid','list-item'].includes(s.display);
+      return visible(el) && (namedCard || (block && border && radius && background && padding));
+    };
+    const cardNodes = [...document.querySelectorAll('body *')].filter(cardLike);
+    const nestedCards = cardNodes.flatMap(el => {
+      let parent = el.parentElement;
+      while (parent && parent !== document.body) {
+        if (cardLike(parent)) return [{ child: el.tagName.toLowerCase()+'.'+String(el.className).replace(/\s+/g,'.'), parent: parent.tagName.toLowerCase()+'.'+String(parent.className).replace(/\s+/g,'.') }];
+        parent = parent.parentElement;
+      }
+      return [];
+    }).slice(0, 12);
+    const latinDigits = document.documentElement.lang.startsWith('bn') ? leaves.filter(el => {
+      if (el.matches('input,textarea') || el.closest('[data-latin-ok]') || el.closest('[aria-hidden="true"]')) return false;
+      return /[0-9]/.test(el.textContent);
+    }).slice(0, 30).map(el => ({ text: el.textContent.trim().slice(0,80), tag: el.tagName.toLowerCase(), className: typeof el.className === 'string' ? el.className : '' })) : [];
+    const dangerProbe = document.createElement('span');
+    dangerProbe.style.color = 'var(--rn-color-danger)';
+    document.body.appendChild(dangerProbe);
+    const danger = getComputedStyle(dangerProbe).color;
+    dangerProbe.remove();
+    const negativeMoney = [...document.querySelectorAll('.rn-m-number,[data-rn-component="money"]')].filter(el => visible(el) && /(?:−|-)\s*(?:৳|[$€£])/.test(el.textContent.trim()))
+      .filter(el => getComputedStyle(el).color !== danger)
+      .slice(0, 12).map(el => ({ text: el.textContent.trim(), color: getComputedStyle(el).color, expected: danger }));
+    const emptyAvatars = [...document.querySelectorAll('.rn-m-card-avatar,.rn-m-ledger-avatar,.rn-m-picker-card__image,.rn-product-thumb,.rn-m-product-thumb,[data-rn-avatar]')]
+      .filter(visible).filter(el => !el.querySelector('img[src]') && !el.textContent.trim())
+      .slice(0, 12).map(el => ({ tag: el.tagName.toLowerCase(), className: typeof el.className === 'string' ? el.className : '' }));
+    const headingGutter = [...document.querySelectorAll('h2,h3')].filter(visible).filter(el => el.getBoundingClientRect().left < 16)
+      .slice(0, 12).map(el => ({ text: el.textContent.trim().slice(0,60), left: Math.round(el.getBoundingClientRect().left) }));
+    const nativeDialogs = (window.__rnNativeDialogCalls || []).map(call => ({ method: call.method }));
+    const unwrappedFlash = [...document.querySelectorAll('.alert,.alert-success,.alert-danger,.alert-warning,[data-flash-message]')]
+      .filter(visible).filter(el => !el.closest('[data-rn-feedback],[data-rn-toast],[data-rn-error-banner]'))
+      .slice(0, 12).map(el => ({ text: el.textContent.trim().slice(0,100), className: typeof el.className === 'string' ? el.className : '' }));
+    const wrappedNumbers = [...document.querySelectorAll('.rn-m-number,[data-rn-component]')].filter(visible).filter(el => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return range.getClientRects().length > 1 || el.scrollWidth > el.clientWidth;
+    }).map(el => el.textContent.trim().slice(0,40));
+    return { badFont, badSize, overflow, nestedCards, latinDigits, negativeMoney, emptyAvatars, headingGutter, nativeDialogs, unwrappedFlash, wrappedNumbers, isDocument };
+  });
+}
+
 async function main() {
   fs.mkdirSync(out, { recursive: true });
+  if (process.argv.includes('--scan-native-dialogs')) {
+    const calls = scanAppNativeDialogCalls();
+    fs.writeFileSync(path.join(out, 'native-dialog-source-scan.json'), JSON.stringify(calls, null, 2));
+    console.log(JSON.stringify({ filesScanned: 'public/js + resources/views (app-owned only)', calls: calls.length, report: path.join(out, 'native-dialog-source-scan.json') }, null, 2));
+    if (calls.length) process.exitCode = 1;
+    return;
+  }
   if (!fullGate) {
     const tokenCss = fs.readFileSync(path.join(root, 'public/css/rn-tokens.css'), 'utf8');
     const localization = fs.readFileSync(path.join(root, 'resources/views/partials/localization.blade.php'), 'utf8');
@@ -49,17 +141,49 @@ async function main() {
     userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36',
     serviceWorkers: 'block', storageState: process.env.RN_AUDIT_STORAGE_STATE || undefined });
   const page = await context.newPage();
+  await page.addInitScript(() => {
+    const calls = [];
+    Object.defineProperty(window, '__rnNativeDialogCalls', { value: calls, configurable: false, writable: true });
+    for (const method of ['alert', 'confirm', 'prompt']) {
+      window[method] = function (...args) {
+        calls.push({ method });
+        return method === 'confirm' ? false : (method === 'prompt' ? null : undefined);
+      };
+    }
+  });
+  page.on('dialog', dialog => dialog.dismiss());
   const errors = [];
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', error => errors.push({ url: page.url(), message: error.message }));
   // The app's documented Font Awesome kit may return 403 from its external host.
   // Only fail on browser errors from this application origin; pageerror still catches JS faults.
   const appOrigin = new URL(base).origin;
   page.on('console', message => {
     if (message.type() !== 'error') return;
     const location = message.location()?.url;
-    if (location && new URL(location).origin === appOrigin) errors.push(message.text());
+    if (location && new URL(location).origin === appOrigin) errors.push({ url: page.url(), message: message.text(), source: location });
   });
   const findings = [];
+  // Source candidates are reported separately; only executed native dialogs fail the browser audit.
+  const staticDialogCalls = scanAppNativeDialogCalls();
+  if (process.argv.includes('--self-test')) {
+    await page.setContent(`<html lang="bn"><head><style>:root{--rn-color-danger:#c4320a} body{margin:0;font:14px Arial} .card{border:1px solid #aaa;border-radius:8px;background:white;padding:8px} .rn-m-number{color:#111} .rn-m-card-avatar{display:inline-block;width:44px;height:44px}</style></head><body><h2>শিরোনাম</h2><div class="card"><div class="card">nested</div></div><span>মোট 123</span><span class="rn-m-number">−৳১২</span><span class="rn-m-card-avatar" data-rn-avatar></span><div class="alert">flash outside feedback</div></body></html>`);
+    await page.evaluate(() => {
+      window.__rnNativeDialogCalls = [];
+      for (const method of ['alert', 'confirm', 'prompt']) {
+        const native = window[method];
+        window[method] = function (...args) { window.__rnNativeDialogCalls.push({ method }); return Reflect.apply(native, window, args); };
+      }
+      alert('bad'); confirm('bad'); prompt('bad');
+    });
+    const result = await inspectPage(page);
+    const catches = { nested: result.nestedCards.length > 0, latinDigits: result.latinDigits.length > 0, negativeMoney: result.negativeMoney.length > 0, emptyAvatar: result.emptyAvatars.length > 0, headingGutter: result.headingGutter.length > 0, nativeDialogs: result.nativeDialogs.length === 3, unwrappedFlash: result.unwrappedFlash.length > 0 };
+    fs.writeFileSync(path.join(out, 'audit-selftest.json'), JSON.stringify({ caught: catches, findings: result }, null, 2));
+    await browser.close();
+    const missed = Object.entries(catches).filter(([, caught]) => !caught).map(([name]) => name);
+    console.log(JSON.stringify({ selfTest: true, caught: catches, missed, report: path.join(out, 'audit-selftest.json') }, null, 2));
+    if (missed.length) process.exitCode = 1;
+    return;
+  }
   if (!process.env.RN_AUDIT_STORAGE_STATE) {
     const login = await page.goto(base + '/login', { waitUntil: 'networkidle' }).catch(() => null);
     if (!login || /login/i.test(new URL(page.url()).pathname)) {
@@ -81,7 +205,8 @@ async function main() {
     if (await more.count()) await more.click();
     const bangla = page.locator('[data-rn-language] button[name="preferred_locale"][value="bn"]');
     if (await bangla.count()) {
-      await Promise.all([page.waitForLoadState('networkidle'), bangla.click()]);
+      await bangla.click();
+      await page.waitForFunction(() => String(document.documentElement.lang || '').startsWith('bn'), { timeout: 15000 });
     }
   }
   const auditLocale = await page.locator('html').getAttribute('lang');
@@ -91,54 +216,32 @@ async function main() {
     for (let i = 0; i < auditedUrls.length; i++) {
       const url = auditedUrls[i];
       try {
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+        if (await page.evaluate(() => Boolean(window.__rnNativeDialogCalls))) await page.evaluate(() => { window.__rnNativeDialogCalls.length = 0; });
+        const response = await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
         await page.waitForTimeout(500);
+        if (response && response.status() >= 400) findings.push({ page: url, check: 'http-status', actual: response.status() });
         if (/\/admin\/login|\/login$/.test(new URL(page.url()).pathname)) {
           findings.push({ page: url, check: 'authenticated-session', actual: 'redirected to login' });
           continue;
         }
-        const result = await page.evaluate(() => {
-          const visible = element => { const r = element.getBoundingClientRect(), s = getComputedStyle(element); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
-          const textNodes = [...document.querySelectorAll('body *')].filter(el => el.children.length === 0 && el.textContent.trim() && visible(el));
-          const allowed = [13,14,16,17,18,21,30];
-          const isIcon = el => el.matches('i,svg,path,[class^="ri-"],[class*=" ri-"],[class^="fa-"],[class*=" fa-"]')
-            || /fontawesome|remixicon|line awesome|material icons|bootstrap-icons/i.test(getComputedStyle(el).fontFamily);
-          const badFont = textNodes.filter(el => !isIcon(el) && !/^"?Hind Siliguri"?/i.test(getComputedStyle(el).fontFamily.trim())).slice(0, 12).map(el => ({ text: el.textContent.trim().slice(0,40), font: getComputedStyle(el).fontFamily }));
-          const badSize = textNodes.filter(el => { const size = parseFloat(getComputedStyle(el).fontSize); return size < 13 || !allowed.some(value => Math.abs(value-size)<0.1); }).slice(0, 20).map(el => ({ text: el.textContent.trim().slice(0,40), size: getComputedStyle(el).fontSize }));
-          const overflow = document.documentElement.scrollWidth > 390;
-          // Exact component selectors avoid matching titles/tags such as rn-m-card-title.
-          const containers = [...document.querySelectorAll('.rn-m-page, .rn-m-card, .rn-m-section, .rn-m-form-section, .rn-m-summary')].filter(visible);
-          const nested = [...document.querySelectorAll('.rn-m-card, .rn-m-section, .rn-m-form-section')]
-            .some(card => card.querySelector('.rn-m-card, .rn-m-section, .rn-m-form-section'));
-          // A page wrapper and full-width headers/sheets are intentional. Content cards/sections
-          // must align to the wrapper gutter (16px), rather than add their own side offset.
-          const gutters = containers.filter(el => !el.matches('.rn-m-page') && !el.closest('.rn-m-list-header,.rn-m-sheet,.rn-m-header'))
-            .map(el => Math.round(el.getBoundingClientRect().left))
-            .filter(left => left !== 16 && left !== 0);
-          const englishDigits = document.documentElement.lang.startsWith('bn') ? textNodes.filter(el => {
-            if (el.matches('input,textarea')) return false;
-            const text = el.textContent.trim();
-            if (!/[0-9]/.test(text)) return false;
-            const englishMonthDate = /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2}(?:,)?\s+\d{4}\b|\b\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}\b/i.test(text);
-            if (englishMonthDate) return true;
-            // Business identifiers and names retain their entered characters; this gate targets
-            // formatted numeric UI, not invoice/barcode/SKU/phone values or names containing digits.
-            if (/[A-Za-z]/.test(text) || /^[+\d()\-\s]{7,}$/.test(text)) return false;
-            if (/^\d{1,3}$/.test(text) && el.closest('tr') && el.closest('td:first-child')) return false;
-            return true;
-          }).slice(0, 15).map(el => ({ text: el.textContent.trim().slice(0,60), tag: el.tagName, className: typeof el.className === 'string' ? el.className : '', html: el.outerHTML.slice(0,240) })) : [];
-          const wrappedNumbers = [...document.querySelectorAll('.rn-m-number,[data-rn-component]')].filter(visible).filter(el => el.getBoundingClientRect().height > parseFloat(getComputedStyle(el).fontSize) * 1.7).map(el => el.textContent.trim().slice(0,40));
-          return { badFont, badSize, overflow, nested, gutters: [...new Set(gutters)], englishDigits, wrappedNumbers };
-        });
+        const result = await inspectPage(page);
         const slug = String(i+1).padStart(3, '0') + '-' + new URL(url).pathname.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').slice(0,50);
         await page.screenshot({ path: path.join(out, slug + '.png'), fullPage: false });
-        for (const check of ['badFont','badSize','gutters','englishDigits']) if (result[check].length) findings.push({ page: url, check, details: result[check] });
+        for (const check of ['badFont','badSize','nestedCards','latinDigits','negativeMoney','emptyAvatars','headingGutter','nativeDialogs','unwrappedFlash']) if (result[check].length) findings.push({ page: url, check, details: result[check] });
         if (result.wrappedNumbers.length) findings.push({ page: url, check: 'wrapped-numbers', details: result.wrappedNumbers });
         if (result.overflow) findings.push({ page: url, check: 'horizontal-overflow' });
-        if (result.nested) findings.push({ page: url, check: 'nested-cards' });
+        if (result.isDocument) {
+          await page.emulateMedia({ media: 'print' });
+          const printSmall = await page.evaluate(() => [...document.querySelectorAll('body *')].filter(el => el.children.length === 0 && el.textContent.trim()).filter(el => {
+            const style = getComputedStyle(el), rect = el.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0 && style.display !== 'none' && parseFloat(style.fontSize) < 9.34;
+          }).slice(0, 20).map(el => ({ text: el.textContent.trim().slice(0, 70), sizePx: getComputedStyle(el).fontSize })));
+          if (printSmall.length) findings.push({ page: url, check: 'document-print-font-below-7pt', details: printSmall });
+          await page.emulateMedia({ media: 'screen' });
+        }
       } catch (error) { findings.push({ page: url, check: 'navigation', actual: error.message }); }
     }
-    fs.writeFileSync(path.join(out, 'audit.json'), JSON.stringify({ gate: 'full', locale: auditLocale, viewport: { width: 390, height: 844 }, routes: auditedUrls.length, findings, consoleErrors: errors }, null, 2));
+    fs.writeFileSync(path.join(out, 'audit.json'), JSON.stringify({ gate: 'full', locale: auditLocale, viewport: { width: 390, height: 844 }, routes: auditedUrls.length, findings, consoleErrors: errors, sourceDialogCandidates: staticDialogCalls.length }, null, 2));
   }
   await browser.close();
   console.log(JSON.stringify({ gate: fullGate ? 'full' : 'foundation', routes: fullGate ? auditedUrls.length : undefined, violations: findings.length, consoleErrors: errors.length, report: path.join(out,'audit.json') }, null, 2));

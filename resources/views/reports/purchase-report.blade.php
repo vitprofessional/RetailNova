@@ -99,8 +99,8 @@
                                 @endphp
                                 <tr>
                                     <td>{{ $reportDate ? (app(\App\Support\MobileView::class)->isMobile() ? \App\Support\MobileDateTime::date($reportDate) : \Carbon\Carbon::parse($reportDate)->format('d M Y')) : '-' }}</td>
-                                    <td>{{ $purchase->invoice_no ?: '—' }}</td>
-                                    <td>{{ $purchase->supplier_name ?? 'Unknown Supplier' }}</td>
+                                    <td data-latin-ok>{{ $purchase->invoice_no ?: '—' }}</td>
+                                    <td data-latin-ok>{{ $purchase->supplier_name ?? 'Unknown Supplier' }}</td>
                                     <td class="text-center"><x-mobile.report-count :value="intval($purchase->line_items ?? 0)" /></td>
                                     <td class="text-right"><x-mobile.report-money :amount="$purchase->sub_total ?? 0" /></td>
                                     <td class="text-right"><x-mobile.report-money :amount="$purchase->discount_total ?? 0" /></td>

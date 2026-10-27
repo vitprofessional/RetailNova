@@ -131,11 +131,11 @@
                                     }
                                 @endphp
                                 <tr class="{{ $quantity <= 0 ? 'table-danger' : ($quantity <= 10 ? 'table-warning' : '') }}">
-                                    <td><strong>{{ $product->name }}</strong></td>
-                                    <td>{{ $product->barCode ?: '—' }}</td>
-                                    <td>{{ $product->brandModel->name ?? '—' }}</td>
-                                    <td>{{ $product->categoryModel->name ?? '—' }}</td>
-                                    <td>{{ $product->unitModel->name ?? '—' }}</td>
+                                    <td data-latin-ok><strong>{{ $product->name }}</strong></td>
+                                    <td data-latin-ok>{{ $product->barCode ?: '—' }}</td>
+                                    <td data-latin-ok>{{ $product->brandModel->name ?? '—' }}</td>
+                                    <td data-latin-ok>{{ $product->categoryModel->name ?? '—' }}</td>
+                                    <td data-latin-ok>{{ $product->unitModel->name ?? '—' }}</td>
                                     <td class="text-center">
                                         <strong class="text-{{ $statusClass }}"><x-mobile.report-count :value="$quantity" /></strong>
                                     </td>

@@ -24,7 +24,7 @@
                 <li class="rn-m-barcode-card" data-product-search="{{ strtolower($product->name.' '.($product->barCode ?? '')) }}">
                     <div class="rn-m-barcode-card__top">
                         <label class="rn-m-barcode-select"><input type="checkbox" class="product-checkbox" name="product_ids[]" value="{{ $product->id }}" aria-label="{{ __('common.select') }} {{ $product->name }}"></label>
-                        <div class="rn-m-barcode-card__copy"><strong>{{ $product->name }}</strong><span>{{ $product->barCode ?: __('common.no_barcode') }}</span><span class="rn-superadmin-tag">{{ $product->barCode ? __('common.active') : __('common.pending') }}</span></div>
+                        <div class="rn-m-barcode-card__copy"><strong data-latin-ok>{{ $product->name }}</strong><span data-latin-ok>{{ $product->barCode ?: __('common.no_barcode') }}</span><span class="rn-superadmin-tag">{{ $product->barCode ? __('common.active') : __('common.pending') }}</span></div>
                         <details class="rn-m-master-menu">
                             <summary aria-label="{{ __('common.actions') }}">⋮</summary>
                             <div class="rn-m-master-menu__items">

@@ -39,7 +39,7 @@
             @if($mobileLogo)<img src="{{ $mobileLogo }}" alt="" class="rn-m-brand-logo">@else{{ $mobileInitial }}@endif
         </span>
         <div class="rn-m-header-text">
-            <h1 class="rn-m-title">{{ $mobileBusinessName }}</h1>
+            <h1 class="rn-m-title" data-latin-ok>{{ $mobileBusinessName }}</h1>
             <p class="rn-m-header-date" data-rn-header-date>{{ $mobileDate }}</p>
         </div>
         <button type="button" class="rn-m-header-btn rn-m-bell" data-rn-notifications-toggle aria-expanded="false" aria-controls="rnNotifications"
@@ -49,7 +49,7 @@
         </button>
     @else
         <a href="{{ route('dashboard') }}" class="rn-m-header-btn" data-rn-back aria-label="{{ __('mobile.back') }}"><i class="ri-arrow-left-line" aria-hidden="true"></i></a>
-        <h1 class="rn-m-title">{{ $mobileTitle }}</h1>
+        <h1 class="rn-m-title" data-latin-ok>{{ $mobileTitle }}</h1>
     @endif
 </header>
 @if($mobileIsHome)

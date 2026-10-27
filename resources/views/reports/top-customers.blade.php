@@ -88,9 +88,9 @@
                                             <x-mobile.report-count :value="$index + 1" />
                                         @endif
                                     </td>
-                                    <td><strong>{{ $customer->name }}</strong></td>
-                                    <td>{{ $customer->mail ?: '—' }}</td>
-                                    <td>{{ $customer->mobile ?: '—' }}</td>
+                                    <td data-latin-ok><strong>{{ $customer->name }}</strong></td>
+                                    <td data-latin-ok>{{ $customer->mail ?: '—' }}</td>
+                                    <td data-latin-ok>{{ $customer->mobile ?: '—' }}</td>
                                     <td class="text-center">
                                         <span class="badge bg-primary"><x-mobile.report-count :value="$customer->total_orders" /></span>
                                     </td>

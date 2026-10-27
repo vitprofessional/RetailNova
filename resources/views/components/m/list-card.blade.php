@@ -8,21 +8,22 @@
 @php
     $tag = $card['url'] ? 'a' : 'div';
     $menuId = 'rnCardMenu-'.substr(md5(($card['url'] ?? '').'|'.$card['id'].'|'.$card['title']), 0, 12);
-    $initial = preg_match('/\p{L}/u', (string) ($card['title'] ?? ''), $letter) ? $letter[0] : '•';
+    $initial = \App\Support\AvatarInitial::fromName($card['title'] ?? null);
+    $avatarTone = \App\Support\AvatarInitial::toneClass($card['title'] ?? null);
 @endphp
 <li class="rn-m-card" data-rn-card="{{ $card['id'] }}">
     <{{ $tag }} @if($card['url']) href="{{ $card['url'] }}" @endif class="rn-m-card-main">
         <span class="rn-m-card-top">
-            <span class="rn-m-card-avatar" aria-hidden="true">@if(!empty($card['avatar_url']))<img src="{{ $card['avatar_url'] }}" alt="" loading="lazy">@else{{ $initial }}@endif</span>
+            <span class="rn-m-card-avatar {{ $avatarTone }}" aria-hidden="true">@if(!empty($card['avatar_url']))<img src="{{ $card['avatar_url'] }}" alt="" loading="lazy">@elseif($initial){{ $initial }}@else<i class="{{ $card['avatar_icon'] ?? 'ri-user-line' }}" aria-hidden="true"></i>@endif</span>
             <span class="rn-m-card-body">
-                <strong class="rn-m-card-title">{{ $card['title'] }}</strong>
-                @if(($card['subtitle'] ?? '') !== '')<span class="rn-m-card-sub">{{ $card['subtitle'] }}</span>@endif
+                <strong class="rn-m-card-title" data-latin-ok>{{ $card['title'] }}</strong>
+                @if(($card['subtitle'] ?? '') !== '')<span class="rn-m-card-sub" data-latin-ok>{{ $card['subtitle'] }}</span>@endif
             </span>
             @if(!empty($card['amount']))<span class="rn-m-card-amount is-{{ $card['amount_tone'] ?? 'ink' }}">{{ $card['amount'] }}</span>@endif
         </span>
         <span class="rn-m-card-footer">
             <span class="rn-m-card-tags">
-                @if(!empty($card['meta']))@foreach($card['meta'] as $meta)<span class="rn-m-card-tag">{{ $meta }}</span>@endforeach @endif
+                @if(!empty($card['meta']))@foreach($card['meta'] as $meta)<span class="rn-m-card-tag" data-latin-ok>{{ $meta }}</span>@endforeach @endif
                 @if(!empty($card['badge']))<span class="rn-m-badge rn-m-badge--{{ $card['badge']['tone'] }}">{{ $card['badge']['label'] }}</span>@endif
                 @if(!empty($card['note']))<small class="rn-m-card-note is-{{ $card['note_tone'] ?? 'muted' }}">{{ $card['note'] }}</small>@endif
             </span>

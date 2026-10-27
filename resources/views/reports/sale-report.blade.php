@@ -106,8 +106,8 @@
                             @forelse($sales as $sale)
                                 <tr>
                                     <td>{{ app(\App\Support\MobileView::class)->isMobile() ? \App\Support\MobileDateTime::date($sale->date) : \Carbon\Carbon::parse($sale->date)->format('d M Y') }}</td>
-                                    <td>{{ $sale->invoice ?: '—' }}</td>
-                                    <td>{{ \App\Models\Customer::displayLabel($sale->customer, $sale->customerId, $sale->businessId) }}</td>
+                                    <td data-latin-ok>{{ $sale->invoice ?: '—' }}</td>
+                                    <td data-latin-ok>{{ \App\Models\Customer::displayLabel($sale->customer, $sale->customerId, $sale->businessId) }}</td>
                                     <td class="text-right"><x-mobile.report-money :amount="$sale->totalSale ?? 0" /></td>
                                     <td class="text-right"><x-mobile.report-money :amount="$sale->discountAmount ?? 0" /></td>
                                     <td class="text-right"><strong><x-mobile.report-money :amount="$sale->grandTotal" /></strong></td>

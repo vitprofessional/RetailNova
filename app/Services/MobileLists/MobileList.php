@@ -223,7 +223,7 @@ abstract class MobileList
     /** First letter of a name, for the card avatar. */
     protected function initial(?string $name): string
     {
-        return preg_match('/\p{L}/u', (string) $name, $letter) ? mb_strtoupper($letter[0]) : '#';
+        return \App\Support\AvatarInitial::fromName($name) ?? '';
     }
 
     /** A ⋮ menu entry that is a plain link. */

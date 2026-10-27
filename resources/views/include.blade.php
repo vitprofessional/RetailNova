@@ -1436,6 +1436,7 @@
         </div>
     </div>
     @mobile
+        <script src="{{ asset('js/rn-avatar.js') }}?v={{ filemtime(public_path('js/rn-avatar.js')) }}" defer></script>
         <script src="{{ asset('js/rn-mobile.js') }}?v={{ filemtime(public_path('js/rn-mobile.js')) }}" defer></script>
         <script src="{{ asset('js/rn-m-components.js') }}?v={{ filemtime(public_path('js/rn-m-components.js')) }}" defer></script>
         <script src="{{ asset('js/rn-mobile-feedback.js') }}?v={{ filemtime(public_path('js/rn-mobile-feedback.js')) }}" defer></script>

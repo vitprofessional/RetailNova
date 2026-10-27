@@ -58,6 +58,22 @@
     --rn-color-border: #D0D5DD;
     --rn-color-surface: #FFFFFF;
     --rn-color-on-primary: #FFFFFF;
+    --rn-avatar-bg-0: #E2F2F1;
+    --rn-avatar-fg-0: #0D4F4B;
+    --rn-avatar-bg-1: #EAF0FF;
+    --rn-avatar-fg-1: #263C80;
+    --rn-avatar-bg-2: #FCE7F3;
+    --rn-avatar-fg-2: #831843;
+    --rn-avatar-bg-3: #FFF1E6;
+    --rn-avatar-fg-3: #7C2D12;
+    --rn-avatar-bg-4: #F1EAFE;
+    --rn-avatar-fg-4: #4C1D95;
+    --rn-avatar-bg-5: #E7F6EC;
+    --rn-avatar-fg-5: #14532D;
+    --rn-avatar-bg-6: #FEF3C7;
+    --rn-avatar-fg-6: #713F12;
+    --rn-avatar-bg-7: #EAECF0;
+    --rn-avatar-fg-7: #344054;
 
     --rn-font-family: "Hind Siliguri", "Noto Sans Bengali", system-ui, sans-serif;
 

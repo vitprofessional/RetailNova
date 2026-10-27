@@ -28,7 +28,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($categories as $category)
+                    @foreach($categories as $category)
                     <tr>
                         <td>{{ $category->name }}</td>
                         <td>{{ \Str::limit($category->description, 50) ?? '-' }}</td>
@@ -51,14 +51,7 @@
                             </div>
                         </td>
                     </tr>
-                    @empty
-                    <tr>
-                        <td colspan="4" class="text-center py-4">
-                            <i class="las la-inbox" style="font-size: 40px; color: #ddd;"></i>
-                            <p class="text-muted mt-2">{{ __('common.no_categories_found') }}</p>
-                        </td>
-                    </tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>

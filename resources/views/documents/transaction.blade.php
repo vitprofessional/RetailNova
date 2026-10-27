@@ -13,11 +13,11 @@
     @include('documents.partials.brand', ['business' => $business, 'logo' => $logo])
     <div class="rn-print-document__title">
         <h1>{{ $receipt['document_label'] }}</h1>
-        <span>{{ $receipt['document_number'] }}@if($documentDate) · {{ $documentDate }}@endif</span>
+        <span data-latin-ok>{{ $receipt['document_number'] }}@if($documentDate) · {{ $documentDate }}@endif</span>
     </div>
     <section class="rn-print-document__party">
-        <strong>{{ $receipt['party_label'] }}: {{ $receipt['party_name'] }}</strong>
-        @if(!empty($receipt['party_meta']))<span>{{ $receipt['party_meta'] }}</span>@endif
+        <strong data-latin-ok>{{ $receipt['party_label'] }}: {{ $receipt['party_name'] }}</strong>
+        @if(!empty($receipt['party_meta']))<span data-latin-ok>{{ $receipt['party_meta'] }}</span>@endif
         <span>{{ $receipt['status'] }}</span>
     </section>
     <table class="rn-print-document__items">
@@ -25,7 +25,7 @@
         <tbody>
         @foreach($documentItems as $line)
             <tr>
-                <td><strong>{{ $line['title'] }}</strong><small class="rn-print-document__thermal-detail">{{ $line['quantity'] ?? '' }} × {{ $line['rate'] ?? '' }} ........ {{ $line['amount'] ?? '' }}</small>@if(!empty($line['serials']))<small class="rn-print-document__serials">{{ __('common.s_n') }}: {{ implode(', ', $line['serials']) }}</small>@endif</td>
+                <td><strong data-latin-ok>{{ $line['title'] }}</strong><small class="rn-print-document__thermal-detail" data-latin-ok><span>{{ $line['quantity'] ?? '' }} × {{ $line['rate'] ?? '' }}</span><strong>{{ $line['amount'] ?? '' }}</strong></small>@if(!empty($line['serials']))<small class="rn-print-document__serials" data-latin-ok>{{ __('common.s_n') }}: {{ implode(', ', $line['serials']) }}</small>@endif</td>
                 <td class="rn-print-document__numeric">{{ $line['quantity'] ?? '—' }}</td>
                 <td class="rn-print-document__money">{{ $line['rate'] ?? '—' }}</td>
                 <td class="rn-print-document__money">{{ $line['amount'] ?? '—' }}</td>

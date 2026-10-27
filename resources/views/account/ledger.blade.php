@@ -5,7 +5,7 @@
 @section('container')
 @mobile
 <section class="rn-m-list-page" data-rn-list="account-ledger">
-  <header class="rn-m-list-header"><h2>{{ $account->account_code }} · {{ $account->account_name }}</h2><div class="rn-m-summary-row"><span>{{ __('common.current_balance') }}</span><strong>{{ \App\Support\LocalizedNumber::money($account->current_balance) }}</strong></div></header>
+  <header class="rn-m-list-header"><h2 data-latin-ok>{{ $account->account_code }} · {{ $account->account_name }}</h2><div class="rn-m-summary-row"><span>{{ __('common.current_balance') }}</span><strong>{{ \App\Support\LocalizedNumber::money($account->current_balance) }}</strong></div></header>
   <form method="GET" action="{{ route('account.ledger', $account->id) }}" class="rn-m-filter-fields rn-m-list-filters">
     <x-m.field name="start_date" :label="__('common.start_date')" type="date" :value="request('start_date')" /><x-m.field name="end_date" :label="__('common.end_date')" type="date" :value="request('end_date')" />
     <button class="rn-m-btn rn-m-btn--primary">{{ __('common.filter') }}</button><a class="rn-m-btn rn-m-btn--outline" href="{{ route('account.ledger', $account->id) }}">{{ __('common.reset') }}</a><a class="rn-m-btn rn-m-btn--outline" href="{{ route('account.chart') }}">{{ __('common.back') }}</a>

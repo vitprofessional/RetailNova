@@ -26,7 +26,7 @@
                 <span>{{ __('mobile.start_sale') }}</span>
             </a>
         @endif
-        <h2 class="sr-only">{{ __('mobile.shortcuts') }}</h2>
+        <h2 class="rn-m-shortcuts-title">{{ __('mobile.shortcuts') }}</h2>
         <ul class="rn-m-grid" role="list">
             @foreach($mobileNav->shortcuts() as $item)
                 <li><a href="{{ $item['url'] }}" class="rn-m-grid-item" title="{{ $item['label'] }}"><span class="rn-m-grid-icon" aria-hidden="true"><i class="{{ $item['icon'] }}"></i></span><span class="rn-m-grid-label">{{ $item['label'] }}</span></a></li>
@@ -58,7 +58,7 @@
                         <li class="rn-m-tx">
                             <span class="rn-m-tx-icon" aria-hidden="true"><i class="ri-shopping-cart-2-line"></i></span>
                             <span class="rn-m-tx-body">
-                                <strong>{{ $sale['customer'] ?: __('mobile.walk_in_customer') }}</strong>
+                                <strong data-latin-ok>{{ $sale['customer'] ?: __('mobile.walk_in_customer') }}</strong>
                                 <span>@if(filled($sale['invoice']))<span data-latin-ok>{{ $sale['invoice'] }}</span> · @endif<time datetime="{{ optional($sale['date'])->toDateString() }}" aria-label="{{ \App\Support\MobileDateTime::date($sale['date']) }}">{{ \App\Support\MobileDateTime::compactDate($sale['date']) }}</time></span>
                             </span>
                             <span class="rn-m-tx-amount">{{ $money($sale['total']) }}@if($sale['due'] > 0)<small>{{ __('mobile.due') }} {{ $money($sale['due']) }}</small>@endif</span>

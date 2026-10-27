@@ -31,10 +31,10 @@
                 <small>{{ \App\Support\MobileDateTime::date($audit->created_at) }} · {{ \App\Support\MobileDateTime::time($audit->created_at) }}</small>
                 @if(!empty($old) || !empty($new) || $audit->url || $audit->ip_address)
                     <details class="rn-m-audit-values"><summary>{{ __('common.view') }}</summary>
-                        @if(!empty($old))<strong>{{ __('common.old') }}</strong><pre>{{ json_encode($old, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE) }}</pre>@endif
-                        @if(!empty($new))<strong>{{ __('common.new') }}</strong><pre>{{ json_encode($new, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE) }}</pre>@endif
-                        @if($audit->url)<small>{{ __('common.url') }}: {{ $audit->url }}</small>@endif
-                        @if($audit->ip_address)<small>{{ __('common.ip') }}: {{ $audit->ip_address }}</small>@endif
+                        @if(!empty($old))<strong>{{ __('common.old') }}</strong><pre data-latin-ok>{{ json_encode($old, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE) }}</pre>@endif
+                        @if(!empty($new))<strong>{{ __('common.new') }}</strong><pre data-latin-ok>{{ json_encode($new, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE) }}</pre>@endif
+                        @if($audit->url)<small data-latin-ok>{{ __('common.url') }}: {{ $audit->url }}</small>@endif
+                        @if($audit->ip_address)<small data-latin-ok>{{ __('common.ip') }}: {{ $audit->ip_address }}</small>@endif
                     </details>
                 @endif
             </li>

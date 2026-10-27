@@ -43,7 +43,7 @@ body:has(.rn-new-sale) .iq-footer { width: auto !important; }
 .rn-new-sale .rn-sale-help { margin: 7px 0 0; color: #58687e; font-size: 13px; line-height: 1.55; }
 .rn-new-sale .rn-sale-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .rn-new-sale .rn-sale-count { padding: 4px 12px; border-radius: 20px; color: #2c5b9d; background: #edf3fc; font-variant-numeric: tabular-nums; }
-.rn-new-sale .rn-sale-empty { padding: 32px 18px; border: 1px dashed #c7d3e1; border-radius: 12px; background: linear-gradient(140deg,#f8faff,#f3f7fd); color: #58687e; text-align: center; }
+.rn-new-sale .rn-sale-empty { padding: 32px 18px; border: 0; border-radius: 0; background: transparent; color: #58687e; text-align: center; }
 .rn-new-sale .rn-sale-empty i { display: inline-flex; align-items: center; justify-content: center; width: 54px; height: 54px; border-radius: 16px; color: #3478f6; background: #e9f0ff; font-size: 36px; }
 .rn-new-sale .rn-sale-empty h3 { margin: 10px 0; font-size: 16px; }
 .rn-new-sale .rn-sale-empty p { margin-bottom: 0; font-size: 13px; }

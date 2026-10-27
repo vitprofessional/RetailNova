@@ -46,7 +46,7 @@
         <h2>{{ __('reports.top_five_products') }}</h2>
         @forelse($topProducts as $index=>$product)
             <div class="rn-report-top-product" data-rn-export-row data-label="{{ $product['name'] }}" data-value="{{ \App\Support\LocalizedNumber::count($product['quantity']) }}">
-                <span class="rn-report-rank">{{ \App\Support\LocalizedNumber::count($index+1) }}</span><strong>{{ $product['name'] }}</strong><span>{{ \App\Support\LocalizedNumber::count($product['quantity']) }}</span>
+                <span class="rn-report-rank">{{ \App\Support\LocalizedNumber::count($index+1) }}</span><strong data-latin-ok>{{ $product['name'] }}</strong><span>{{ \App\Support\LocalizedNumber::count($product['quantity']) }}</span>
             </div>
         @empty
             <p class="rn-report-empty">{{ __('reports.no_top_products') }}</p>

@@ -143,12 +143,12 @@
                         <tr>
                             <td><input type="checkbox" name="ids[]" value="{{ $u->id }}" class="row-check"></td>
                             <td>{{ $u->id }}</td>
-                            <td>{{ $u->fullName }}</td>
-                            <td><a href="mailto:{{ $u->mail }}">{{ $u->mail }}</a></td>
+                            <td data-latin-ok>{{ $u->fullName }}</td>
+                            <td data-latin-ok><a href="mailto:{{ $u->mail }}">{{ $u->mail }}</a></td>
                             <td><span class="{{ $badge }}">{{ ucfirst($u->role) }}</span></td>
-                            <td>{{ ($businessMap[$u->businessId] ?? '') ?: __('common.no_data_found') }}</td>
-                            <td>{{ $u->contactNumber ?: '-' }}</td>
-                            <td>{{ optional($u->created_at)->format('Y-m-d') ?: '-' }}</td>
+                            <td data-latin-ok>{{ ($businessMap[$u->businessId] ?? '') ?: __('common.no_data_found') }}</td>
+                            <td data-latin-ok>{{ $u->contactNumber ?: '-' }}</td>
+                            <td data-latin-ok>{{ optional($u->created_at)->format('Y-m-d') ?: '-' }}</td>
                             <td class="text-right">
                                 <a href="{{ route($routeBase.'.users.edit', $u->id) }}" class="btn btn-sm btn-secondary">{{ __('common.edit') }}</a>
                                 @if(($actor->id ?? 0) !== $u->id)

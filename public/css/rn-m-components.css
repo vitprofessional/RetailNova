@@ -16,8 +16,25 @@
     .rn-m-error-banner [data-rn-error-close] {
         flex: 0 0 44px; width: 44px; min-height: 44px; margin: -6px -8px -6px 0;
         border: 0; border-radius: var(--rn-radius-sm); background: transparent;
-        color: inherit; font-size: 26px; line-height: 1;
+        color: inherit; font-size: var(--rn-fs-title); line-height: 1;
     }
+    .rn-m-number { display: inline-block; white-space: nowrap !important; font-variant-numeric: tabular-nums; }
+    .rn-m-avatar--tone-0 { background:var(--rn-avatar-bg-0); color:var(--rn-avatar-fg-0); }
+    .rn-m-avatar--tone-1 { background:var(--rn-avatar-bg-1); color:var(--rn-avatar-fg-1); }
+    .rn-m-avatar--tone-2 { background:var(--rn-avatar-bg-2); color:var(--rn-avatar-fg-2); }
+    .rn-m-avatar--tone-3 { background:var(--rn-avatar-bg-3); color:var(--rn-avatar-fg-3); }
+    .rn-m-avatar--tone-4 { background:var(--rn-avatar-bg-4); color:var(--rn-avatar-fg-4); }
+    .rn-m-avatar--tone-5 { background:var(--rn-avatar-bg-5); color:var(--rn-avatar-fg-5); }
+    .rn-m-avatar--tone-6 { background:var(--rn-avatar-bg-6); color:var(--rn-avatar-fg-6); }
+    .rn-m-avatar--tone-7 { background:var(--rn-avatar-bg-7); color:var(--rn-avatar-fg-7); }
+    .rn-m-card-avatar.rn-m-avatar--tone-0:not(:has(img)), body.rn-app .rn-m-picker-card__image.rn-m-avatar--tone-0, .rn-m-line-image.is-fallback.rn-m-avatar--tone-0 { background:var(--rn-avatar-bg-0); color:var(--rn-avatar-fg-0); }
+    .rn-m-card-avatar.rn-m-avatar--tone-1:not(:has(img)), body.rn-app .rn-m-picker-card__image.rn-m-avatar--tone-1, .rn-m-line-image.is-fallback.rn-m-avatar--tone-1 { background:var(--rn-avatar-bg-1); color:var(--rn-avatar-fg-1); }
+    .rn-m-card-avatar.rn-m-avatar--tone-2:not(:has(img)), body.rn-app .rn-m-picker-card__image.rn-m-avatar--tone-2, .rn-m-line-image.is-fallback.rn-m-avatar--tone-2 { background:var(--rn-avatar-bg-2); color:var(--rn-avatar-fg-2); }
+    .rn-m-card-avatar.rn-m-avatar--tone-3:not(:has(img)), body.rn-app .rn-m-picker-card__image.rn-m-avatar--tone-3, .rn-m-line-image.is-fallback.rn-m-avatar--tone-3 { background:var(--rn-avatar-bg-3); color:var(--rn-avatar-fg-3); }
+    .rn-m-card-avatar.rn-m-avatar--tone-4:not(:has(img)), body.rn-app .rn-m-picker-card__image.rn-m-avatar--tone-4, .rn-m-line-image.is-fallback.rn-m-avatar--tone-4 { background:var(--rn-avatar-bg-4); color:var(--rn-avatar-fg-4); }
+    .rn-m-card-avatar.rn-m-avatar--tone-5:not(:has(img)), body.rn-app .rn-m-picker-card__image.rn-m-avatar--tone-5, .rn-m-line-image.is-fallback.rn-m-avatar--tone-5 { background:var(--rn-avatar-bg-5); color:var(--rn-avatar-fg-5); }
+    .rn-m-card-avatar.rn-m-avatar--tone-6:not(:has(img)), body.rn-app .rn-m-picker-card__image.rn-m-avatar--tone-6, .rn-m-line-image.is-fallback.rn-m-avatar--tone-6 { background:var(--rn-avatar-bg-6); color:var(--rn-avatar-fg-6); }
+    .rn-m-card-avatar.rn-m-avatar--tone-7:not(:has(img)), body.rn-app .rn-m-picker-card__image.rn-m-avatar--tone-7, .rn-m-line-image.is-fallback.rn-m-avatar--tone-7 { background:var(--rn-avatar-bg-7); color:var(--rn-avatar-fg-7); }
     .rn-m-toast {
         position: fixed; z-index: 1500; left: 16px; right: 16px;
         bottom: calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 12px);
@@ -1105,6 +1122,8 @@
     .rn-m-master-fab { position: fixed; z-index: 1035; right: 16px; bottom: calc(84px + var(--rn-safe-bottom)); display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 24px; background: var(--rn-color-primary); box-shadow: var(--rn-shadow-md); color: var(--rn-color-on-primary); font-weight: 700; text-decoration: none; }
     .rn-m-master-fab span { font-size: var(--rn-icon-menu); line-height: 1; }
     .rn-m-master-cards .rn-m-empty-state { padding: 24px 16px; border: 1px dashed var(--rn-color-border); border-radius: var(--rn-radius-lg); color: var(--rn-color-muted); text-align: center; }
+    .rn-m-master-cards .rn-m-empty-state { border: 0; border-radius: 0; background: transparent; }
+    .rn-superadmin-mobile-list .rn-m-empty-state { border: 0; border-radius: 0; background: transparent; }
 
     @media (max-width: 767px) {
         .rn-m-detail-page table.rn-m-detail-lines,
