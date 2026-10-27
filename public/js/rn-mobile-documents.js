@@ -62,13 +62,13 @@
   const capture = async () => {
     const kind = applyPaper();
     await qrCanvas();
-    await document.fonts?.ready;
+    if (document.fonts?.ready) await document.fonts.ready;
     const old = { display: printDocument.style.display, position: printDocument.style.position, left: printDocument.style.left, top: printDocument.style.top, zIndex: printDocument.style.zIndex };
     Object.assign(printDocument.style, { display: 'block', position: 'fixed', left: '0', top: '0', zIndex: '-1' });
-    const width = printDocument.getBoundingClientRect().width || 1;
-    const scale = kind === 'thermal80' ? (72 * 96 / 25.4) / width : kind === 'thermal58' ? (48 * 96 / 25.4) / width : 2;
-    try { return await tools.html2canvas(printDocument, { scale, backgroundColor: '#ffffff', useCORS: true, logging: false }); }
-    finally { Object.assign(printDocument.style, old); }
+    printDocument.classList.add('rn-document-capturing');
+    const scale = Math.max(3, Number(window.devicePixelRatio) || 1);
+    try { return await tools.html2canvas(printDocument, { scale, backgroundColor: '#fff', useCORS: true, logging: false }); }
+    finally { printDocument.classList.remove('rn-document-capturing'); Object.assign(printDocument.style, old); }
   };
   const download = (blob, filename) => {
     const url = URL.createObjectURL(blob);
@@ -107,7 +107,7 @@
       slice.width = canvas.width;
       slice.height = Math.min(sourcePageHeight, canvas.height - offset);
       slice.getContext('2d').drawImage(canvas, 0, offset, canvas.width, slice.height, 0, 0, slice.width, slice.height);
-      pdf.addImage(slice.toDataURL('image/jpeg', 0.88), 'JPEG', page.margin, page.margin, page.contentWidth, slice.height * scale, undefined, 'FAST');
+      pdf.addImage(slice.toDataURL('image/png'), 'PNG', page.margin, page.margin, page.contentWidth, slice.height * scale, undefined, 'SLOW');
     }
     return pdf;
   };
