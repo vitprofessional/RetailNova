@@ -42,7 +42,7 @@
             <li class="rn-m-empty">{{ __('common.no_audits_found') }}</li>
         @endforelse
     </ul>
-    {{ $audits->withQueryString()->links() }}
+    <div data-latin-ok>{{ $audits->withQueryString()->links() }}</div>
 </section>
 @else
 <div class="container-fluid">
