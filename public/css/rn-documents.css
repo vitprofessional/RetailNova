@@ -37,7 +37,9 @@ body[data-rn-document-preview] .rn-print-document--thermal58 { width:48mm; paddi
 .rn-print-document__numeric,.rn-print-document__money { font-variant-numeric:tabular-nums; white-space:nowrap; }
 .rn-print-document__money { color:var(--rn-color-ink); font-weight:700; }
 .rn-print-document__thermal-detail { display: none; }
-.rn-print-document__serials { display:block; margin-top:1mm; color:var(--rn-color-muted,#475467); font-size:8.5pt; font-weight:500; }
+.rn-print-document__thermal-values { display:flex; justify-content:space-between; align-items:baseline; gap:2mm; width:100%; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.rn-print-document__thermal-values strong { color:var(--rn-color-ink); font:inherit; font-weight:700; text-align:end; }
+.rn-print-document__serials { display:block; margin-top:1mm; color:var(--rn-color-muted,#475467); font-size:9pt; font-weight:500; }
 .rn-print-document__totals { display: grid; gap: 4px; width:min(100%,90mm); margin: 12px 0 0 auto; }
 .rn-print-document__totals div { display: flex; justify-content: space-between; gap: 16px; }
 .rn-print-document__totals dd { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -46,25 +48,52 @@ body[data-rn-document-preview] .rn-print-document--thermal58 { width:48mm; paddi
 /* Thermal receipts use centered shop branding and occupy the full printer width. */
 body[data-rn-paper^="thermal"] .rn-print-document__brand { display:flex; flex-direction:column; justify-content:center; text-align:center; gap:2mm; }
 body[data-rn-paper^="thermal"] .rn-print-document__brand-copy { text-align:center; }
-body[data-rn-paper^="thermal"] .rn-print-document__brand-copy strong { font-size:14pt; font-weight:700; }
 body[data-rn-paper^="thermal"] .rn-print-document__logo { max-width:25mm; max-height:16mm; margin-inline:auto; }
 body[data-rn-paper^="thermal"] .rn-print-document__qr,
 body[data-rn-paper^="thermal"] .rn-print-document__a4-detail { display: none; }
-body[data-rn-paper^="thermal"] .rn-print-document__thermal-detail { display:block; padding-top:1mm; color:var(--rn-color-ink); font-size:9pt; font-weight:500; white-space:nowrap; }
-body[data-rn-paper^="thermal"] .rn-print-document__serials { font-size:8.5pt; white-space:normal; }
+body[data-rn-paper^="thermal"] .rn-print-document__thermal-detail { display:block; padding-top:1mm; color:var(--rn-color-ink); font-weight:500; white-space:nowrap; }
 body[data-rn-paper^="thermal"] .rn-print-document__items th,
 body[data-rn-paper^="thermal"] .rn-print-document__items td:first-child { width:100%; }
 body[data-rn-paper^="thermal"] .rn-print-document__items td:not(:first-child) { display:none; }
-body[data-rn-paper^="thermal"] .rn-print-document__items th,
-body[data-rn-paper^="thermal"] .rn-print-document__items td { padding:2mm 1mm; font-size:9pt; }
 body[data-rn-paper^="thermal"] .rn-print-document__items thead { display:none; }
 body[data-rn-paper^="thermal"] .rn-print-document__items tbody tr { display:block; width:100%; }
 body[data-rn-paper^="thermal"] .rn-print-document__items tbody td:first-child { display:block; width:100%; box-sizing:border-box; }
-body[data-rn-paper^="thermal"] .rn-print-document__a4-detail { display:none; }
 body[data-rn-paper^="thermal"] .rn-print-document__totals { width:100%; max-width:none; }
-body[data-rn-paper^="thermal"] .rn-print-document__money,
-body[data-rn-paper^="thermal"] .rn-print-document__totals dd { color:var(--rn-color-ink); font-size:10pt; font-weight:700; }
-body[data-rn-paper^="thermal"] .rn-print-document--thermal58 { font-size:9pt; }
+body[data-rn-paper^="thermal"] .rn-print-document__totals div { align-items:baseline; }
+body[data-rn-paper^="thermal80"] .rn-print-document__brand-copy strong { font-size:12pt; font-weight:700; }
+body[data-rn-paper^="thermal80"] .rn-print-document__brand-copy span,
+body[data-rn-paper^="thermal80"] .rn-print-document__footer { font-size:8pt; }
+body[data-rn-paper^="thermal80"] .rn-print-document__title h1,
+body[data-rn-paper^="thermal80"] .rn-print-document__title > span,
+body[data-rn-paper^="thermal80"] .rn-print-document__party,
+body[data-rn-paper^="thermal80"] .rn-print-document__items th,
+body[data-rn-paper^="thermal80"] .rn-print-document__items td,
+body[data-rn-paper^="thermal80"] .rn-print-document__money,
+body[data-rn-paper^="thermal80"] .rn-print-document__totals dt,
+body[data-rn-paper^="thermal80"] .rn-print-document__totals dd { font-size:9pt; }
+body[data-rn-paper^="thermal80"] .rn-print-document__items td:first-child > strong { font-size:9pt; font-weight:600; }
+body[data-rn-paper^="thermal80"] .rn-print-document__thermal-detail,
+body[data-rn-paper^="thermal80"] .rn-print-document__serials { font-size:8pt; }
+body[data-rn-paper^="thermal80"] .rn-print-document__totals .is-total { border-top:1px solid var(--rn-color-ink); border-bottom:1px solid var(--rn-color-ink); padding-block:2mm; }
+body[data-rn-paper^="thermal80"] .rn-print-document__totals .is-total dt,
+body[data-rn-paper^="thermal80"] .rn-print-document__totals .is-total dd { font-size:11pt; font-weight:700; }
+body[data-rn-paper^="thermal58"] .rn-print-document__brand-copy strong { font-size:11pt; font-weight:700; }
+body[data-rn-paper^="thermal58"] .rn-print-document__brand-copy span,
+body[data-rn-paper^="thermal58"] .rn-print-document__footer { font-size:7pt; }
+body[data-rn-paper^="thermal58"] .rn-print-document__title h1,
+body[data-rn-paper^="thermal58"] .rn-print-document__title > span,
+body[data-rn-paper^="thermal58"] .rn-print-document__party,
+body[data-rn-paper^="thermal58"] .rn-print-document__items th,
+body[data-rn-paper^="thermal58"] .rn-print-document__items td,
+body[data-rn-paper^="thermal58"] .rn-print-document__money,
+body[data-rn-paper^="thermal58"] .rn-print-document__totals dt,
+body[data-rn-paper^="thermal58"] .rn-print-document__totals dd { font-size:8pt; }
+body[data-rn-paper^="thermal58"] .rn-print-document__items td:first-child > strong { font-size:8pt; font-weight:600; }
+body[data-rn-paper^="thermal58"] .rn-print-document__thermal-detail,
+body[data-rn-paper^="thermal58"] .rn-print-document__serials { font-size:7pt; }
+body[data-rn-paper^="thermal58"] .rn-print-document__totals .is-total { border-top:1px solid var(--rn-color-ink); border-bottom:1px solid var(--rn-color-ink); padding-block:1.5mm; }
+body[data-rn-paper^="thermal58"] .rn-print-document__totals .is-total dt,
+body[data-rn-paper^="thermal58"] .rn-print-document__totals .is-total dd { font-size:10pt; font-weight:700; }
 .rn-print-document--ledger .rn-print-document__ledger { font-size:10pt; }
 .rn-print-document--ledger .rn-print-document__current-balance { display:flex; justify-content:space-between; gap:12px; margin:14px 0 0; padding-top:10px; border-top:2px solid var(--rn-color-ink); font-size:16pt; font-weight:700; }
 .rn-print-document--ledger .rn-print-document__current-balance b { white-space:nowrap; font-variant-numeric:tabular-nums; }
