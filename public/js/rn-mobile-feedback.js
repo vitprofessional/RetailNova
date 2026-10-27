@@ -15,7 +15,7 @@
     banner.hidden = false;
     banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
-  const showToast = (kind, message) => {
+  const showToast = (kind, message, duration = 2500) => {
     if (!message) return;
     if (kind === 'error') { showBanner(message); return; }
     clearTimeout(toastTimer);
@@ -25,10 +25,11 @@
     toastMessage.textContent = message;
     if (undoButton) undoButton.hidden = true;
     toast.hidden = false;
-    toastTimer = window.setTimeout(() => { toast.hidden = true; }, 2500);
+    toast.style.zIndex = '12000';
+    toastTimer = window.setTimeout(() => { toast.hidden = true; }, duration);
   };
   window.RNToast = {
-    success: message => showToast('success', message),
+    success: (message, options = {}) => showToast('success', message, Number(options.duration) || 2500),
     error: message => showToast('error', message || root.dataset.labelError),
     info: message => showToast('info', message),
     undo(message, callback) {

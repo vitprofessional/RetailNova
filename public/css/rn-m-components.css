@@ -748,6 +748,7 @@
         .rn-m-product-picker__chips .rn-m-chip { flex: 0 0 auto; min-height: 40px; white-space: nowrap; }
         .rn-m-product-picker__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; min-width: 0; }
         .rn-m-picker-card { display: grid; grid-template-rows: 76px auto auto auto; align-content: start; gap: 6px; position: relative; min-width: 0; min-height: 176px; padding: 10px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); color: var(--rn-color-ink); text-align: start; }
+        .rn-m-picker-card.is-added { border: 2px solid var(--rn-color-primary); transition: border-color 180ms ease; }
         .rn-m-picker-card__count { position: absolute; z-index: 1; inset-block-start: 8px; inset-inline-end: 8px; display: grid; min-width: 30px; height: 30px; padding: 0 7px; place-items: center; border: 2px solid var(--rn-color-surface); border-radius: var(--rn-radius-pill); background: var(--rn-color-primary); color: var(--rn-color-on-primary); font: var(--rn-type-tag); font-weight: 700; }
         .rn-m-picker-card__count[hidden] { display: none; }
         .rn-m-picker-card.is-bumping .rn-m-picker-card__count, .rn-m-picker-card__count.is-bumping { animation: rn-picker-bump 220ms ease-out; }

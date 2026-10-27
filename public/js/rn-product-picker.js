@@ -42,7 +42,9 @@
       button.type = 'button'; button.className = 'rn-m-picker-card';
       button.setAttribute('role', 'listitem');
       const unavailableSale = root.dataset.mode === 'sale' && (item.stock <= 0 || item.sale_price === null);
-      if (unavailableSale) { button.disabled = true; button.classList.add('is-unavailable'); }
+      const unavailablePurchase = root.dataset.mode === 'purchase' && (item.buy_price === null || item.buy_price === '');
+      const unavailable = unavailableSale || unavailablePurchase;
+      if (unavailable) button.classList.add('is-unavailable');
       if (item.image) {
         const image = document.createElement('img'); image.className = 'rn-m-picker-card__image'; image.src = item.image; image.alt = ''; image.loading = 'lazy'; button.append(image);
       } else {
@@ -73,9 +75,11 @@
       if (root.dataset.mode === 'sale' || root.dataset.mode === 'purchase-return') {
         const stock = document.createElement('span'); stock.className = 'rn-m-picker-card__stock'; stock.textContent = localized(label('Stock'), item.stock); button.append(stock);
       }
-      if (unavailableSale) { const note = document.createElement('span'); note.className = 'rn-m-picker-card__note'; note.textContent = item.sale_price === null ? label('NoPrice') : label('OutOfStock'); button.append(note); }
+      if (unavailable) { const note = document.createElement('span'); note.className = 'rn-m-picker-card__note'; note.textContent = unavailablePurchase || item.sale_price === null ? label('NoPrice') : label('OutOfStock'); button.append(note); }
       else { const add = document.createElement('span'); add.className = 'rn-m-picker-card__add'; add.setAttribute('aria-hidden', 'true'); add.textContent = '+'; button.append(add); }
       button.addEventListener('click', () => {
+        if (unavailablePurchase) { window.RNToast?.error(label('NoPrice')); return; }
+        if (unavailableSale) { window.RNToast?.error(item.sale_price === null ? label('NoPrice') : label('OutOfStock')); return; }
         if (root.dataset.mode === 'purchase-return') {
           const template = root.dataset.returnUrlTemplate;
           if (template) { window.location.assign(template.replace('__ID__', String(item.item_id))); return; }
@@ -95,6 +99,11 @@
         countBadge.classList.remove('is-bumping'); void countBadge.offsetWidth; countBadge.classList.add('is-bumping');
         button.classList.remove('is-bumping'); void button.offsetWidth; button.classList.add('is-bumping');
         if (navigator.vibrate) navigator.vibrate(15);
+        button.classList.add('is-added');
+        window.setTimeout(() => button.classList.remove('is-added'), 2000);
+        const totalCount = Object.values(selectedCounts).reduce((sum, count) => sum + Number(count || 0), 0);
+        const shortName = String(item.name || '').trim().slice(0, 32);
+        window.RNToast?.success(`${shortName} যোগ হয়েছে · মোট ${localized('__COUNT__', totalCount)}টি`, { duration: 1500 });
         root.dispatchEvent(new CustomEvent('rn:product-picker:selected', { bubbles: true, detail: { ...item, mode: root.dataset.mode, quantity: 1, buy_price: item.buy_price, sale_price: item.sale_price } }));
       });
       return button;

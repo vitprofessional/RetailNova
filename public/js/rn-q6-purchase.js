@@ -5,6 +5,7 @@
  const $ = selector => root.querySelector(selector);
  const rows = form.querySelector('#productDetails');
  const picker = form.querySelector('[data-rn-product-picker][data-mode="purchase"]');
+ const pickerDone = root.querySelector('[data-q6-picker-done]');
  const cartKey = picker?.dataset.cartKey || '';
  const legacyCartKey = cartKey ? cartKey + '-lines' : '';
  const readCart = () => {
@@ -42,6 +43,16 @@
   const formatted = whole.length > 3 ? whole.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + whole.slice(-3) : whole;
   return localDigits(formatted + (fraction ? '.' + fraction : ''));
  };
+ const refreshPickerFooter = () => {
+  if (!pickerDone) return;
+  const count = [...rows.querySelectorAll('tr.product-row')].filter(row => row.querySelector('input[name^="productName["]')?.value).length;
+  const totalQty = [...rows.querySelectorAll('tr.product-row')].reduce((sum,row)=>sum+numeric(row.querySelector('.quantity')),0);
+  const total = [...rows.querySelectorAll('tr.product-row')].reduce((sum,row)=>sum+(numeric(row.querySelector('input[id^="totalAmount"]')) || numeric(row.querySelector('.quantity'))*numeric(row.querySelector('input[id^="buyPrice"]'))),0);
+  pickerDone.hidden = count === 0;
+  root.querySelector('[data-q6-picker-count]').textContent = localDigits(totalQty);
+  root.querySelector('[data-q6-picker-total]').textContent = money(total);
+  pickerDone.classList.remove('is-pulsing'); void pickerDone.offsetWidth; pickerDone.classList.add('is-pulsing');
+ };
  const money = value => {
   const amount = Number(value || 0);
   return (amount < 0 ? '−' : '') + (root.dataset.currency || '৳') + grouped(Math.abs(amount));
@@ -75,6 +86,7 @@
   window.setTimeout(()=>{
    const row=[...rows.querySelectorAll('tr.product-row')].at(-1);
    if(row && selected){row.dataset.q6Brand=selected.brand||'';row.dataset.q6Meta=[selected.brand,selected.unit].filter(Boolean).join(' · ');renderRows();}
+   refreshPickerFooter();
   },0);
  });
 
@@ -178,6 +190,7 @@
   $('[data-q6-grand]').textContent=money(computedGrand);
   $('[data-q6-total]').textContent=money(computedGrand);
   updateDue(computedGrand);
+  refreshPickerFooter();
   if (cartKey && !restoringCart) {
    try {
     const lines = actual.map(row => ({
@@ -225,6 +238,7 @@
  rows.addEventListener('change', renderRows);
  new MutationObserver(renderRows).observe(rows,{childList:true,subtree:true,attributes:true,attributeFilter:['value']});
  renderRows();
+ pickerDone?.addEventListener('click', closeSheets);
 
  root.addEventListener('q6:edit-line', event => {
   activeRow=event.detail.row;

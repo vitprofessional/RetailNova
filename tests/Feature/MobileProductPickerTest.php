@@ -117,7 +117,9 @@ class MobileProductPickerTest extends TestCase
         $this->get(route('addPurchase'))->assertOk()->assertSee('data-mode="purchase"', false)
             ->assertSee('name="productAdd"', false)->assertSee('name="productName[__IDX__]"', false)
             ->assertDontSee('data-picker-sheet', false)->assertDontSee('data-picker-qty', false)
-            ->assertSee('data-q6-sheet="line"', false);
+            ->assertSee('data-q6-sheet="line"', false)
+            ->assertSee('data-q6-picker-done', false)
+            ->assertSee(__('mobile.done'));
         $this->get(route('quotation.create'))->assertOk()->assertSee('data-mode="quotation"', false);
         $this->get(route('quotation.edit', $quote->id))->assertOk()->assertSee('data-mode="quotation"', false);
         $this->get(route('editPurchase', $purchase->id))->assertOk()->assertSee('data-mode="purchase"', false)

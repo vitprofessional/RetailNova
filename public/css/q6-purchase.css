@@ -87,6 +87,11 @@
     .rn-q6-sheet-panel { position:relative; display:grid; gap:18px; max-height:84dvh; overflow:auto; padding:16px 20px calc(20px + var(--rn-safe-bottom)); border-radius:24px 24px 0 0; background:#fff; box-shadow:0 -6px 24px #0002; }
     .rn-q6-product-sheet .rn-q6-sheet-panel { padding-inline:14px; }
     .rn-q6-product-sheet .rn-q6-picker-slot > .rn-m-product-picker { margin:0; }
+    .rn-q6-picker-done { position:sticky; bottom:0; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:58px; padding:10px 16px calc(10px + var(--rn-safe-bottom)); border:0; border-radius:16px; background:var(--q6-teal); color:#fff; font:var(--rn-type-label); box-shadow:0 -4px 18px #0002; }
+    .rn-q6-picker-done[hidden] { display:none !important; }
+    .rn-q6-picker-done strong { font:var(--rn-type-label); }
+    .rn-q6-picker-done.is-pulsing { animation:rn-q6-picker-pulse 220ms ease-out; }
+    @keyframes rn-q6-picker-pulse { 50% { transform:scale(.985); filter:brightness(1.08); } }
     .rn-q6-sheet-panel > header { display:grid; grid-template-columns:1fr auto; align-items:center; gap:12px; }
     .rn-q6-sheet-panel > header > span { grid-column:1/-1; justify-self:center; width:48px; height:5px; border-radius:999px; background:#d0d5dd; }
     .rn-q6-sheet-panel > header h2 { margin:0; font:var(--rn-type-section-title); }
