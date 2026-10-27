@@ -1,4 +1,4 @@
-<div class="rn-q6-purchase" data-q6-purchase data-locale="{{ app()->getLocale() }}" data-currency="{{ $currencySymbol }}" data-sale-price-short="{{ __('mobile.sale_price_short') }}" data-serial-label="{{ __('mobile.serials_short') }}">
+<div class="rn-q6-purchase" data-q6-purchase data-locale="{{ app()->getLocale() }}" data-currency="{{ $currencySymbol }}" data-sale-price-short="{{ __('mobile.sale_price_short') }}" data-serial-label="{{ __('mobile.serials_short') }}" data-reason-supplier="{{ __('mobile.purchase_supplier_required') }}" data-reason-products="{{ __('mobile.purchase_product_required') }}" data-reason-serial="{{ __('mobile.purchase_serial_required') }}">
     <header class="rn-q6-header"><a href="{{ route('purchaseList') }}" data-purchase-leave aria-label="{{ __('common.cancel') }}"><i class="las la-arrow-left" aria-hidden="true"></i></a><h1>{{ __('mobile.purchase_title') }}</h1></header>
     <main class="rn-q6-main" data-q6-main>
         <section class="rn-q6-supplier-card">

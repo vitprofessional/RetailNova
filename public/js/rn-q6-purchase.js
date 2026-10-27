@@ -24,6 +24,7 @@
  const desktopMethod = form.querySelector('#paymentMethodDesktop');
  const mobileMethod = $('[data-q6-mobile-method]');
  const supplierSelect = form.querySelector('#supplierName');
+ const supplierPost = form.querySelector('[data-q6-supplier-post]');
  const dateInput = form.querySelector('#date');
  const referenceInput = form.querySelector('#reference');
  const discountStatus = form.querySelector('#discountStatus');
@@ -72,6 +73,17 @@
  };
  const setVisibleMode = () => {
   movePicker();
+  if (supplierSelect) {
+   supplierSelect.disabled = mobile.matches;
+   supplierSelect.required = !mobile.matches;
+   if (supplierPost) { supplierPost.disabled = !mobile.matches; supplierPost.value = supplierSelect.value; if (mobile.matches) supplierPost.name = supplierSelect.name; else supplierPost.removeAttribute('name'); }
+  }
+  form.querySelectorAll(':required').forEach(control => {
+   if (control === supplierSelect || control.disabled) return;
+   const hidden = !control.getClientRects().length;
+   if (mobile.matches && hidden) { control.disabled = true; control.dataset.q6AutoDisabled = '1'; }
+   else if (control.dataset.q6AutoDisabled === '1') { control.disabled = false; delete control.dataset.q6AutoDisabled; }
+  });
   if (desktopMethod) desktopMethod.disabled = mobile.matches;
   if (mobileMethod) {
    mobileMethod.disabled = !mobile.matches;
@@ -106,6 +118,7 @@
   const choice = event.target.closest('[data-q6-supplier]');
   if (!choice || !supplierSelect) return;
   supplierSelect.value = choice.dataset.q6Supplier;
+  if (supplierPost) supplierPost.value = supplierSelect.value;
   supplierSelect.dispatchEvent(new Event('change', { bubbles:true }));
   supplierSelect.dispatchEvent(new Event('input', { bubbles:true }));
   openingDue = Number(choice.dataset.due || 0);
@@ -315,12 +328,35 @@
  $('[data-q6-note]')?.addEventListener('input',event=>{noteInput.value=event.target.value;poke(noteInput);});
  $('[data-q6-submit]')?.addEventListener('click',()=>{
   updateDue(numeric(grandInput));
+  const submitButton = $('[data-q6-submit]');
+  const fail = (message, sheetName) => {
+   submitButton.disabled = false; submitButton.classList.remove('is-submitting'); submitButton.removeAttribute('aria-busy'); submitButton.querySelector('.rn-m-submit-spinner')?.remove();
+   window.RNToast?.error(message);
+   if (!payment.hidden) closePayment();
+   showSheet(sheetName);
+  };
+  if (mobile.matches && !supplierSelect?.value) { fail(root.dataset.reasonSupplier, 'supplier'); return; }
+  if (mobile.matches && ![...rows.querySelectorAll('tr.product-row')].some(row=>row.querySelector('input[name^="productName["]')?.value)) { fail(root.dataset.reasonProducts, 'products'); return; }
   if(desktopMethod)desktopMethod.disabled=true;
   mobileMethod.disabled=false;
-  $('[data-q6-submit]').disabled=true;
+  submitButton.disabled=true;
+  submitButton.setAttribute('aria-busy','true');
+  if (!submitButton.querySelector('.rn-m-submit-spinner')) { const spinner=document.createElement('span');spinner.className='rn-m-submit-spinner';spinner.setAttribute('aria-hidden','true');submitButton.append(spinner); }
   const submit=form.querySelector('#purchaseSaveButton');
   if(submit)submit.click();else form.requestSubmit();
  });
+ form.addEventListener('invalid', event => {
+  if (!mobile.matches) return;
+  const failed=event.target;
+  const submitButton=$('[data-q6-submit]');
+  submitButton.disabled=false;submitButton.classList.remove('is-submitting');submitButton.removeAttribute('aria-busy');submitButton.querySelector('.rn-m-submit-spinner')?.remove();
+  const key=failed.name||'';
+  const message=key==='supplierName'?root.dataset.reasonSupplier:(key.includes('serial')?root.dataset.reasonSerial:(failed.validationMessage||root.dataset.reasonProducts));
+  window.RNToast?.error(message);
+  if(key==='supplierName')showSheet('supplier');
+  else if(key.includes('serial')){const row=failed.closest('tr.product-row');if(row){activeRow=row;showSheet('line');setTimeout(()=>row.querySelector('.open-serials')?.click(),120);}}
+  else if(!payment.hidden)closePayment();
+ }, true);
  form.addEventListener('submit',()=>{ if(mobile.matches){ if(desktopMethod)desktopMethod.disabled=true; mobileMethod.disabled=false; } });
  form.querySelector('#purchaseSaveButton')?.addEventListener('click',event=>{ if(mobile.matches && !payment.hidden){ event.preventDefault();form.requestSubmit(); } });
  form.querySelector('#purchaseSaveButton')?.setAttribute('data-q6-desktop-submit','1');
@@ -332,7 +368,7 @@
   try {
    const saved = readCart();
    if (saved && Array.isArray(saved.lines) && saved.lines.length) {
-    if (saved.supplier_id && supplierSelect) { supplierSelect.value = saved.supplier_id; supplierSelect.dispatchEvent(new Event('change', {bubbles:true})); }
+    if (saved.supplier_id && supplierSelect) { supplierSelect.value = saved.supplier_id; if(supplierPost)supplierPost.value=saved.supplier_id; supplierSelect.dispatchEvent(new Event('change', {bubbles:true})); }
     (async () => {
      for (const line of saved.lines) {
       const before = rows.querySelectorAll('tr.product-row').length;
@@ -358,4 +394,21 @@
    } else restoringCart = false;
   } catch (_) { restoringCart = false; }
  }
+ try {
+  const errorMap = JSON.parse(document.querySelector('[data-rn-error-map]')?.textContent || '{}');
+  const first = Object.entries(errorMap).find(([, messages]) => Array.isArray(messages) ? messages.length : Boolean(messages));
+  if (first) {
+   const [key, messages] = first;
+   const message = Array.isArray(messages) ? messages[0] : messages;
+   window.setTimeout(() => {
+    if (key === 'supplierName') showSheet('supplier');
+    else if (key.toLowerCase().includes('serial')) {
+     const row = [...rows.querySelectorAll('tr.product-row')].find(item => item.querySelector('input[name^="productName["]')?.value);
+     if (row) { activeRow = row; showSheet('line'); window.setTimeout(() => row.querySelector('.open-serials')?.click(), 120); }
+     else showSheet('products');
+    } else if (/product|item|qty/i.test(key)) showSheet('products');
+    if (message) window.RNToast?.error(message);
+   }, 0);
+  }
+ } catch (_) {}
 })();

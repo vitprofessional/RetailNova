@@ -119,6 +119,8 @@ class MobileProductPickerTest extends TestCase
             ->assertDontSee('data-picker-sheet', false)->assertDontSee('data-picker-qty', false)
             ->assertSee('data-q6-sheet="line"', false)
             ->assertSee('data-q6-picker-done', false)
+            ->assertSee('data-q6-supplier-post', false)
+            ->assertSee('data-reason-products=', false)
             ->assertSee(__('mobile.done'));
         $this->get(route('quotation.create'))->assertOk()->assertSee('data-mode="quotation"', false);
         $this->get(route('quotation.edit', $quote->id))->assertOk()->assertSee('data-mode="quotation"', false);

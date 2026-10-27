@@ -20,7 +20,7 @@
                                         <option value="{{$supplierData->id}}">{{$supplierData->name}}</option>
                                         @endforeach
                                         @endif
-                                    </select><button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#supplier"><i class="las la-plus mr-2"></i>{{ __('purchases.new_supplier') }}</button></div>
+                                    </select><input type="hidden" data-q6-supplier-post disabled><button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#supplier"><i class="las la-plus mr-2"></i>{{ __('purchases.new_supplier') }}</button></div>
                                 </div>
                             </div><div class="rn-purchase-field">
                                 <div class="form-group">
