@@ -16,4 +16,9 @@ return [
     'share' => 'শেয়ার',
     'save_pdf' => 'PDF সেভ',
     'save_image' => 'ছবি সেভ',
+    'share_format' => 'শেয়ারের ধরন',
+    'image' => 'ছবি',
+    'preparing' => 'তৈরি হচ্ছে…',
+    'file_saved_share' => 'ফাইল সেভ হয়েছে — Files থেকে শেয়ার করুন',
+    'share_retry' => 'আবার শেয়ার চাপুন',
 ];

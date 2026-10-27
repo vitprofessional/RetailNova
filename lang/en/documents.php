@@ -16,4 +16,9 @@ return [
     'share' => 'Share',
     'save_pdf' => 'Save PDF',
     'save_image' => 'Save image',
+    'share_format' => 'Share format',
+    'image' => 'Image',
+    'preparing' => 'Preparing…',
+    'file_saved_share' => 'File saved — share it from Files',
+    'share_retry' => 'Tap Share again',
 ];

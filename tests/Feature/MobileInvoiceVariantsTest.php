@@ -52,6 +52,8 @@ class MobileInvoiceVariantsTest extends TestCase
             ->assertSee('data-rn-print-document', false)->assertSee('data-document-qr', false)
             ->assertSee('value="thermal80"', false)->assertSee('value="thermal58"', false)
             ->assertSee(asset('vendor/rn-document-tools.js'), false)->assertSee(asset('js/rn-mobile-documents.js'), false)
+            ->assertSee('data-document-share', false)->assertSee('name="share-format" value="pdf" checked', false)
+            ->assertSee('name="share-format" value="png"', false)
             ->assertDontSee('data-receipt-action="copy"', false)
             ->assertSee('Mobile Purchase Cable')->assertDontSee(__('purchases.no_items'))
             ->assertDontSee('invoice-qr-section')->assertDontSee('data-invoice-qr')

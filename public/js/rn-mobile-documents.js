@@ -51,6 +51,10 @@
   const businessName = printDocument.querySelector('.rn-print-document__brand strong')?.textContent?.trim();
   const documentNumber = printDocument.querySelector('.rn-print-document__title span')?.textContent?.trim();
   const fileBase = `${asciiPart(businessName)}-${asciiPart(documentNumber)}`;
+  const prepared = new Map();
+  let prepareSequence = 0;
+  const shareButton = sheet?.querySelector('[data-document-share]');
+  const shareFormat = () => sheet?.querySelector('input[name="share-format"]:checked')?.value || 'pdf';
   const qrCanvas = async () => {
     const target = printDocument.querySelector('[data-document-qr]');
     if (!target || target.dataset.ready === '1') return;
@@ -89,9 +93,7 @@
     document.body.append(toast);
     setTimeout(() => toast.remove(), 2800);
   };
-  const createPdf = async () => {
-    const kind = applyPaper();
-    const canvas = await capture();
+  const createPdf = async (kind, canvas) => {
     const page = kind === 'a4'
       ? { width: 210, height: 297, contentWidth: 190, margin: 10 }
       : kind === 'thermal58'
@@ -111,6 +113,35 @@
     }
     return pdf;
   };
+  const prepareFiles = async () => {
+    if (!sheet || !shareButton) return;
+    const kind = applyPaper();
+    const token = ++prepareSequence;
+    shareButton.disabled = true;
+    shareButton.setAttribute('aria-busy', 'true');
+    shareButton.textContent = shareButton.dataset.buildingLabel;
+    try {
+      const canvas = await capture();
+      const png = await canvasToBlob(canvas, 'image/png');
+      const pdf = await createPdf(kind, canvas);
+      const files = {
+        png: new File([png], `${fileBase}.png`, { type: 'image/png' }),
+        pdf: new File([pdf.output('blob')], `${fileBase}.pdf`, { type: 'application/pdf' }),
+      };
+      if (token !== prepareSequence) return;
+      prepared.set(kind, files);
+      shareButton.disabled = false;
+      shareButton.removeAttribute('aria-busy');
+      shareButton.textContent = shareButton.dataset.readyLabel;
+    } catch (error) {
+      if (token !== prepareSequence) return;
+      shareButton.disabled = true;
+      shareButton.removeAttribute('aria-busy');
+      shareButton.textContent = shareButton.dataset.buildingLabel;
+      console.error(error);
+    }
+  };
+  const currentFiles = () => prepared.get(paper());
   const closeThen = async action => { sheet.close(); await action(); };
   const printInPlace = async () => {
     const kind = applyPaper();
@@ -131,22 +162,45 @@
     if (window.history.length > 1) window.history.back();
     else window.location.assign(document.querySelector('[data-document-back]').dataset.backUrl);
   });
-  document.querySelector('[data-document-open-share]')?.addEventListener('click', () => sheet?.showModal());
   document.querySelector('.rn-document-toolbar [data-document-pdf]')?.addEventListener('click', async () => {
-    try { (await createPdf()).save(`${fileBase}.pdf`); } catch (error) { console.error(error); }
+    try { const kind=applyPaper(); const canvas=await capture(); (await createPdf(kind,canvas)).save(`${fileBase}.pdf`); } catch (error) { console.error(error); }
   });
-  sheet?.querySelector('[data-document-png]')?.addEventListener('click', () => closeThen(async () => {
-    const blob = await canvasToBlob(await capture(), 'image/png');
-    download(blob, `${fileBase}.png`);
-    showSavedToast();
-  }));
-  sheet?.querySelector('[data-document-pdf]')?.addEventListener('click', () => closeThen(async () => (await createPdf()).save(`${fileBase}.pdf`)));
-  sheet?.querySelector('[data-document-share]')?.addEventListener('click', () => closeThen(async () => {
-    const pdf = await createPdf();
-    const file = new File([pdf.output('blob')], `${fileBase}.pdf`, { type: 'application/pdf' });
-    if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: document.title });
-    else { download(file, file.name); showSavedToast(); }
-  }));
+  sheet?.querySelector('[data-document-png]')?.addEventListener('click', () => {
+    const file = currentFiles()?.png;
+    if (file) { sheet.close(); download(file, file.name); showSavedToast(); }
+    else prepareFiles();
+  });
+  sheet?.querySelector('[data-document-pdf]')?.addEventListener('click', () => {
+    const file = currentFiles()?.pdf;
+    if (file) { sheet.close(); download(file, file.name); }
+    else prepareFiles();
+  });
+  sheet?.querySelectorAll('input[name="paper"]').forEach(input => input.addEventListener('change', prepareFiles));
+  shareButton?.addEventListener('click', () => {
+    const file = currentFiles()?.[shareFormat()];
+    if (!file) { window.RNToast?.info(shareButton.dataset.buildingLabel); return; }
+    sheet.close();
+    const canShareFiles = typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
+    if (!canShareFiles) {
+      download(file, file.name);
+      window.RNToast?.info(document.documentElement.lang.startsWith('bn') ? 'ফাইল সেভ হয়েছে — Files থেকে শেয়ার করুন' : 'File saved — share it from Files');
+      return;
+    }
+    let shareRequest;
+    try { shareRequest = navigator.share({ files: [file], title: document.title }); }
+    catch (error) { handleShareError(error); return; }
+    Promise.resolve(shareRequest).catch(handleShareError);
+  });
+  function handleShareError(error) {
+    if (error?.name === 'AbortError') return;
+    if (error?.name === 'NotAllowedError') {
+      window.RNToast?.info(document.documentElement.lang.startsWith('bn') ? 'আবার শেয়ার চাপুন' : 'Tap Share again');
+      return;
+    }
+    window.RNToast?.error(error?.message || (document.documentElement.lang.startsWith('bn') ? 'ফাইল শেয়ার করা যায়নি' : 'Could not share file'));
+  }
+  const openShareSheet = () => { sheet?.showModal(); prepareFiles(); };
+  document.querySelector('[data-document-open-share]')?.addEventListener('click', openShareSheet);
   window.addEventListener('afterprint', () => { restoreAfterPrint(); if (!document.body.hasAttribute('data-rn-document-preview')) delete document.body.dataset.rnPaper; });
   applyPaper();
   qrCanvas().catch(error => console.warn('Document QR could not be rendered locally', error));
