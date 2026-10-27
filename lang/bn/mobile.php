@@ -112,6 +112,8 @@ return [
     'purchase_supplier_required' => 'সাপ্লায়ার বাছুন',
     'purchase_product_required' => 'অন্তত একটি পণ্য যোগ করুন',
     'purchase_serial_required' => 'সিরিয়াল দিন',
+    'product_count_unit' => 'টি পণ্য',
+    'picker_done' => 'হয়ে গেছে',
     'previous_due' => 'আগের পাওনা',
     'change' => 'বদলান',
     'more_information' => 'আরও তথ্য',

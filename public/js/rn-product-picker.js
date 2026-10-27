@@ -101,10 +101,10 @@
         if (navigator.vibrate) navigator.vibrate(15);
         button.classList.add('is-added');
         window.setTimeout(() => button.classList.remove('is-added'), 2000);
+        root.dispatchEvent(new CustomEvent('rn:product-picker:selected', { bubbles: true, detail: { ...item, mode: root.dataset.mode, quantity: 1, buy_price: item.buy_price, sale_price: item.sale_price } }));
         const totalCount = Object.values(selectedCounts).reduce((sum, count) => sum + Number(count || 0), 0);
         const shortName = String(item.name || '').trim().slice(0, 32);
         window.RNToast?.success(`${shortName} যোগ হয়েছে · মোট ${localized('__COUNT__', totalCount)}টি`, { duration: 1500 });
-        root.dispatchEvent(new CustomEvent('rn:product-picker:selected', { bubbles: true, detail: { ...item, mode: root.dataset.mode, quantity: 1, buy_price: item.buy_price, sale_price: item.sale_price } }));
       });
       return button;
     };

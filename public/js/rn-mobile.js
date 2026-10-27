@@ -189,7 +189,13 @@
         }
         pos.addEventListener('rn:product-picker:selected', function (event) {
             var selected = event.detail;
-            if (selected && selected.product_id) { addProduct(String(selected.product_id), null, selected.quantity || 1); }
+            if (selected && selected.product_id) {
+                pendingPickerAdds++;
+                addProduct(String(selected.product_id), null, selected.quantity || 1).finally(function () {
+                    pendingPickerAdds = Math.max(0, pendingPickerAdds - 1);
+                    refreshBar(false);
+                });
+            }
         });
 
         // Barcode: hand the code to the existing barcode lookup.
@@ -239,6 +245,7 @@
         // restored. The first bar refresh runs before the restoration block below.
         var restoringCart = Boolean(cartKey);
         var restoreFailed = false;
+        var pendingPickerAdds = 0;
         function saveCart() {
             if (!cartKey || restoringCart || restoreFailed) return;
             try {
@@ -248,8 +255,10 @@
                 var saved = readCart();
                 saved.customer_id = customer?.value || '';
                 saved.lines = lines;
-                saved.counts = {};
-                lines.forEach(function (line) { saved.counts[line.product_id] = Number(line.quantity) || 1; });
+                if (lines.length || pendingPickerAdds === 0) {
+                    saved.counts = {};
+                    lines.forEach(function (line) { saved.counts[line.product_id] = Number(line.quantity) || 1; });
+                }
                 localStorage.setItem(cartKey, JSON.stringify(saved));
                 if (legacyCartKey) localStorage.removeItem(legacyCartKey);
                 if (picker) picker.querySelectorAll('[data-picker-count]').forEach(function (badge) {

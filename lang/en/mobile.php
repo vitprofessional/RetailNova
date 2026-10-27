@@ -112,6 +112,8 @@ return [
     'purchase_supplier_required' => 'Select a supplier',
     'purchase_product_required' => 'Add at least one product',
     'purchase_serial_required' => 'Enter the required serial numbers',
+    'product_count_unit' => 'products',
+    'picker_done' => 'Done',
     'previous_due' => 'Previous due',
     'change' => 'Change',
     'more_information' => 'More information',

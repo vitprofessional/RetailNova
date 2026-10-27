@@ -85,6 +85,22 @@
   const canvasToBlob = (canvas, type) => new Promise((resolve, reject) => {
     canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Could not create document image')), type);
   });
+  const fullPaperPngCanvas = (kind, content) => {
+    const page = kind === 'a4' ? { width:210, contentWidth:190, margin:10 } : kind === 'thermal58' ? { width:58, contentWidth:48, margin:4 } : { width:80, contentWidth:72, margin:4 };
+    const dpi = 300 / 25.4;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.ceil(page.width * dpi);
+    const contentWidth = Math.round(page.contentWidth * dpi);
+    const contentHeight = Math.round(content.height * contentWidth / content.width);
+    const marginX = Math.round((page.width - page.contentWidth) * dpi / 2);
+    const marginY = Math.round(page.margin * dpi);
+    canvas.height = contentHeight + marginY * 2;
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(content, marginX, marginY, contentWidth, contentHeight);
+    return canvas;
+  };
   const showSavedToast = () => {
     const toast = document.createElement('div');
     toast.className = 'rn-document-toast';
@@ -122,7 +138,7 @@
     shareButton.textContent = shareButton.dataset.buildingLabel;
     try {
       const canvas = await capture();
-      const png = await canvasToBlob(canvas, 'image/png');
+      const png = await canvasToBlob(fullPaperPngCanvas(kind, canvas), 'image/png');
       const pdf = await createPdf(kind, canvas);
       const files = {
         png: new File([png], `${fileBase}.png`, { type: 'image/png' }),
