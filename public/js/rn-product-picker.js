@@ -47,7 +47,8 @@
         const image = document.createElement('img'); image.className = 'rn-m-picker-card__image'; image.src = item.image; image.alt = ''; image.loading = 'lazy'; button.append(image);
       } else {
         const fallback = document.createElement('span'); fallback.className = 'rn-m-picker-card__image rn-m-picker-card__fallback';
-        const initial = String(item.name || '').match(/[\p{L}]/u)?.[0];
+        const initial = window.RNAvatar?.initial(item.name);
+        if (window.RNAvatar) fallback.classList.add(window.RNAvatar.toneClass(item.name));
         if (initial) fallback.textContent = initial;
         else { const icon = document.createElement('i'); icon.className = 'ri-box-3-line'; icon.setAttribute('aria-hidden', 'true'); fallback.append(icon); }
         button.append(fallback);

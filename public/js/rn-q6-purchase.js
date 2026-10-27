@@ -152,7 +152,7 @@
    const imageBox=row.querySelector('[data-product-image]'); const img=imageBox?.querySelector('img'); const cardImage=card.querySelector('.rn-q6-line-image');
    cardImage.replaceChildren();
    if(img?.src){const view=new Image();view.src=img.src;view.alt='';view.loading='lazy';view.className='rn-q6-line-image';cardImage.replaceWith(view);}
-   else {const initial=String(imageBox?.textContent||name||'').match(/[\p{L}]/u)?.[0];if(initial)cardImage.textContent=initial;else{cardImage.classList.add('is-product-icon');const icon=document.createElement('i');icon.className='ri-box-3-line';icon.setAttribute('aria-hidden','true');cardImage.append(icon);}}
+   else {const initial=window.RNAvatar?.initial(name);if(window.RNAvatar)cardImage.classList.add(window.RNAvatar.toneClass(name));if(initial)cardImage.textContent=initial;else{cardImage.classList.add('is-product-icon');const icon=document.createElement('i');icon.className='ri-box-3-line';icon.setAttribute('aria-hidden','true');cardImage.append(icon);}}
    card.querySelector('[data-q6-name]').textContent=name;
    const brand=picker?.dataset.brand || '';
    const unit=picker?.dataset.unit || '';
