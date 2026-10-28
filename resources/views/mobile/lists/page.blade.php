@@ -35,6 +35,15 @@
         @endif
     </div>
 
+    @if($key === 'products')
+        <nav class="rn-m-segment rn-m-stock-tabs" aria-label="{{ __('mobile.stock') }}" data-rn-product-stock-tabs>
+            <a href="{{ route('productlist') }}" class="rn-m-segment-btn{{ request()->routeIs('productlist') ? ' is-active' : '' }}" @if(request()->routeIs('productlist')) aria-current="page" @endif>{{ __('mobile.products') }}</a>
+            @if(app(\App\Support\MobileNavigation::class)->allows('stockProduct'))
+                <a href="{{ route('stockProduct') }}" class="rn-m-segment-btn{{ request()->routeIs('stockProduct') ? ' is-active' : '' }}" @if(request()->routeIs('stockProduct')) aria-current="page" @endif>{{ __('mobile.stock_by_lot') }}</a>
+            @endif
+        </nav>
+    @endif
+
     <x-m.summary-bar :items="$page['summary']" />
 
     <ul id="rnCards-{{ $key }}" class="rn-m-cards" role="list" data-rn-cards>

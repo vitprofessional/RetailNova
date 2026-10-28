@@ -79,9 +79,13 @@ class productController extends Controller
             if ($oldImage && $oldImage !== $data->image) {
                 app(\App\Support\BusinessUploads::class)->delete($oldImage);
             }
-            $msg = $req->profileId ? __('common.product_updated') : __('common.product_created');
+            $msg = $req->profileId ? __('common.product_updated') : __('mobile.product_added', ['name' => $data->name]);
             Alert::success(__('common.notification_success'), $msg);
-            return redirect(route('addProduct'));
+            $successRoute = ! $req->profileId && app(\App\Support\MobileView::class)->isMobile()
+                ? 'productlist'
+                : 'addProduct';
+
+            return redirect()->route($successRoute);
         }
         if ($newImage) {
             app(\App\Support\BusinessUploads::class)->delete($newImage);
@@ -417,7 +421,20 @@ class productController extends Controller
     
     //stock product
     public function stockProduct(){
-        $productStock = ProductStock::join('products','products.id','product_stocks.productId')->leftJoin('purchase_products','purchase_products.id','product_stocks.purchaseId')->leftJoin('suppliers','suppliers.id','purchase_products.supplier')->select(
+        $stockQuery = app(\App\Services\PurchaseWorkflow::class)->scoped(ProductStock::query())
+            ->join('products', function ($join) {
+                $join->on('products.id', '=', 'product_stocks.productId')
+                    ->on('products.businessId', '=', 'product_stocks.businessId');
+            })
+            ->leftJoin('purchase_products', function ($join) {
+                $join->on('purchase_products.id', '=', 'product_stocks.purchaseId')
+                    ->on('purchase_products.businessId', '=', 'product_stocks.businessId');
+            })
+            ->leftJoin('suppliers', function ($join) {
+                $join->on('suppliers.id', '=', 'purchase_products.supplier')
+                    ->on('suppliers.businessId', '=', 'product_stocks.businessId');
+            });
+        $productStock = $stockQuery->select(
             'product_stocks.id as stockId',
             'products.id as productId',
             'products.name as productName',

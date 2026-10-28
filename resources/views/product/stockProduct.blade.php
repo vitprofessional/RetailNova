@@ -3,9 +3,39 @@
 @mobile
 <section class="rn-m-list-page" data-rn-list="stock-lots">
     <header class="rn-m-list-header"><div class="rn-m-list-toolbar"><form method="GET" class="rn-m-search" role="search"><i class="ri-search-line" aria-hidden="true"></i><label class="sr-only" for="stockLotSearch">{{ __('mobile.search_products_list') }}</label><input id="stockLotSearch" type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('mobile.search_products_list') }}"></form></div></header>
+    <nav class="rn-m-segment rn-m-stock-tabs" aria-label="{{ __('mobile.stock') }}" data-rn-product-stock-tabs>
+        <a href="{{ route('productlist') }}" class="rn-m-segment-btn">{{ __('mobile.products') }}</a>
+        <a href="{{ route('stockProduct') }}" class="rn-m-segment-btn is-active" aria-current="page">{{ __('mobile.stock_by_lot') }}</a>
+    </nav>
+    @php
+        $stockLotsByProduct = collect($productStockList ?? [])->filter(fn ($lot) => !request('q') || str_contains(mb_strtolower($lot->productName.' '.$lot->invoiceNo), mb_strtolower(request('q'))))->groupBy('productId');
+    @endphp
     <ul class="rn-m-cards" role="list" data-rn-cards>
-        @forelse(($productStockList ?? collect())->filter(fn($lot) => !request('q') || str_contains(mb_strtolower($lot->productName.' '.$lot->invoiceNo), mb_strtolower(request('q')))) as $lot)
-            <x-m.list-card :card="['id' => $lot->stockId, 'url' => null, 'avatar' => mb_substr($lot->productName, 0, 1), 'title' => $lot->productName, 'subtitle' => $lot->invoiceNo ? __('purchases.invoice').' '.$lot->invoiceNo : null, 'amount' => null, 'amount_tone' => 'ink', 'note' => null, 'note_tone' => 'muted', 'badge' => ['label' => __('mobile.stock').' '.\App\Support\LocalizedNumber::count($lot->currentStock), 'tone' => 'success'], 'meta' => array_values(array_filter([$lot->supplierName ?: null, $lot->buyPrice !== null ? __('inventory.purchase_price').': '.\App\Support\LocalizedNumber::money($lot->buyPrice) : null, $lot->salePriceExVat !== null ? __('inventory.sale_price').': '.\App\Support\LocalizedNumber::money($lot->salePriceExVat) : null, $lot->discount !== null ? __('common.dp').': '.\App\Support\LocalizedNumber::money($lot->discount) : null])), 'actions' => []]" />
+        @forelse($stockLotsByProduct as $productId => $lots)
+            @php $firstLot = $lots->first(); $totalStock = $lots->sum('currentStock'); @endphp
+            <li class="rn-m-card rn-m-stock-product" data-product-id="{{ $productId }}">
+                <div class="rn-m-stock-product-head">
+                    <span class="rn-m-card-avatar" aria-hidden="true">{{ preg_match('/\p{L}/u', (string) $firstLot->productName, $initial) ? mb_strtoupper($initial[0]) : '◈' }}</span>
+                    <strong class="rn-m-card-title">{{ $firstLot->productName }}</strong>
+                    <span class="rn-m-stock-total">{{ __('mobile.stock') }} {{ \App\Support\LocalizedNumber::count($totalStock) }}</span>
+                </div>
+                <ul class="rn-m-stock-lots" role="list" aria-label="{{ __('mobile.stock_by_lot') }}">
+                    @foreach($lots as $lot)
+                        <li class="rn-m-stock-lot">
+                            <div class="rn-m-stock-lot-title">
+                                @if($lot->invoiceNo)<span>{{ __('purchases.invoice') }} · <span data-latin-ok>{{ $lot->invoiceNo }}</span></span>@else<span>{{ __('mobile.stock_by_lot') }}</span>@endif
+                                <strong>{{ __('mobile.stock') }} {{ \App\Support\LocalizedNumber::count($lot->currentStock) }}</strong>
+                            </div>
+                            <div class="rn-m-stock-lot-meta">
+                                @if($lot->supplierName)<span>{{ $lot->supplierName }}</span>@endif
+                                @if($lot->buyPrice !== null)<span>{{ __('inventory.purchase_price') }}: {{ \App\Support\LocalizedNumber::money($lot->buyPrice) }}</span>@endif
+                                @if($lot->salePriceExVat !== null)<span>{{ __('inventory.sale_price') }}: {{ \App\Support\LocalizedNumber::money($lot->salePriceExVat) }}</span>@endif
+                                @if($lot->discount !== null)<span>{{ __('purchases.discount') }}: {{ \App\Support\LocalizedNumber::money($lot->discount) }}</span>@endif
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </li>
         @empty
             <li class="rn-m-empty-state">{{ __('inventory.no_products_available') }}</li>
         @endforelse

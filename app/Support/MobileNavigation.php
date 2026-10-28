@@ -37,7 +37,7 @@ class MobileNavigation
         'dashboard' => 'mobile.home', 'newsale' => 'mobile.sale', 'saleList' => 'mobile.sale', 'addPurchase' => 'mobile.purchase', 'purchaseList' => 'mobile.purchase_list',
         'stockProduct' => 'mobile.stock_management', 'expense.list' => 'mobile.expense_list', 'account.transactions' => 'mobile.cashbox',
         'reports.payableReceivable' => 'mobile.due_list', 'reports.business' => 'mobile.business_overview', 'addSupplier' => 'mobile.suppliers',
-        'productlist' => 'mobile.stock_management', 'addCustomer' => 'mobile.customer_and_due',
+        'productlist' => 'mobile.products', 'addCustomer' => 'mobile.customer_and_due',
         'quotation.list' => 'mobile.quotation',
         'returnSaleList' => 'mobile.returns', 'damageProductList' => 'mobile.damaged_items',
         'provideService' => 'mobile.service', 'serviceProvideList' => 'mobile.service_list',
@@ -64,7 +64,11 @@ class MobileNavigation
     ];
 
     /** Items filed under a different section than their menu group. */
-    private const ROUTE_SECTIONS = ['returnPurchaseList' => 'purchase', 'serialList' => 'inventory'];
+    private const ROUTE_SECTIONS = ['returnPurchaseList' => 'purchase', 'serialList' => 'inventory', 'stockProduct' => 'inventory'];
+    private const FAB_PARENTS = [
+        'addPurchase' => 'purchaseList', 'quotation.create' => 'quotation.list', 'addProduct' => 'productlist',
+        'damageProduct' => 'damageProductList', 'provideService' => 'serviceProvideList', 'expense.create' => 'expense.list',
+    ];
 
     private ?array $items = null;
 
@@ -82,7 +86,7 @@ class MobileNavigation
 
         return array_values(array_filter([
             $tab('home', $this->first(['dashboard']), 'ri-home-5-line', 'mobile.home'),
-            $tab('stock', $this->first(['stockProduct', 'productlist']), 'ri-archive-line', 'mobile.stock', ['stockProduct', 'productlist', 'editProduct']),
+            $tab('stock', $this->first(['productlist', 'stockProduct']), 'ri-archive-line', 'mobile.stock', ['stockProduct', 'productlist', 'editProduct']),
             $tab('sale', $this->first(['newsale']), 'ri-shopping-cart-2-line', 'mobile.sale', ['newsale']),
             // The reports tab is a hub so every permitted report is reached from one place.
             $tab('reports', $this->hasAny(['reports.business', 'reports.sales', 'reports.purchases', 'reports.stock', 'reports.topCustomers', 'reports.payableReceivable', 'account.reports', 'expense.reports']) ? 'reports.index' : null, 'ri-bar-chart-2-line', 'mobile.reports', ['reports.*', 'account.reports', 'expense.reports']),
@@ -115,7 +119,81 @@ class MobileNavigation
             $result[] = ['key' => $key, 'title' => __('mobile.section_'.$key), 'items' => $items];
         }
 
+        // Profile is a personal destination rather than a business menu entry, so
+        // expose it explicitly in Settings for every authenticated admin role.
+        if (Route::has('admin.profile.show')) {
+            $profile = [
+                'route' => 'admin.profile.show',
+                'url' => route('admin.profile.show'),
+                'icon' => 'ri-user-settings-line',
+                'label' => __('mobile.my_profile'),
+            ];
+            $settingsIndex = array_search('settings', array_column($result, 'key'), true);
+            if ($settingsIndex === false) {
+                $result[] = ['key' => 'settings', 'title' => __('mobile.section_settings'), 'items' => [$profile]];
+            } else {
+                $result[$settingsIndex]['items'][] = $profile;
+            }
+        }
+
         return $result;
+    }
+
+    /** Route names reachable from tabs, More, home shortcuts, or a list's create FAB. */
+    public function reachableRouteNames(): array
+    {
+        $reachable = array_merge(
+            array_column($this->tabs(), 'route'),
+            array_column(array_merge(...array_map(fn (array $section) => $section['items'], $this->moreSections())), 'route'),
+            array_column($this->shortcuts(), 'route'),
+        );
+
+        foreach (self::FAB_PARENTS as $destination => $parent) {
+            if ($this->allows($destination) && $this->allows($parent)) {
+                $reachable[] = $destination;
+            }
+        }
+        if (Route::has('admin.profile.show')) {
+            $reachable[] = 'admin.profile.show';
+        }
+        // The reports tab is a hub that links to each permission-aware report.
+        if ($this->hasAny(['reports.business', 'reports.sales', 'reports.purchases', 'reports.stock', 'reports.topCustomers', 'reports.payableReceivable', 'account.reports', 'expense.reports'])) {
+            $reachable = array_merge($reachable, array_filter(
+                ['reports.business', 'reports.sales', 'reports.purchases', 'reports.stock', 'reports.topCustomers', 'reports.payableReceivable', 'account.reports', 'expense.reports'],
+                fn (string $route) => $this->allows($route),
+            ));
+        }
+
+        return array_values(array_unique(array_filter($reachable)));
+    }
+
+    /** Browser-audit graph for proving that every desktop menu item has a mobile path. */
+    public function reachabilityAuditData(): array
+    {
+        $desktopRoutes = collect($this->navigation->groups())
+            ->flatMap(fn (array $group) => collect($group['items'])->pluck('route'))
+            ->unique()->filter(fn (string $name) => Route::has($name))
+            ->map(fn (string $name) => ['name' => $name, 'url' => route($name)])
+            ->values()->all();
+        $fabEdges = [];
+        foreach (self::FAB_PARENTS as $destination => $parent) {
+            if ($this->allows($destination) && $this->allows($parent)) {
+                $fabEdges[] = ['parent' => route($parent), 'destination' => route($destination), 'name' => $destination];
+            }
+        }
+        $reportRoutes = ['reports.business', 'reports.sales', 'reports.purchases', 'reports.stock', 'reports.topCustomers', 'reports.payableReceivable', 'account.reports', 'expense.reports'];
+
+        return [
+            'desktopRoutes' => $desktopRoutes,
+            'mobileRootLinks' => array_values(array_unique(array_merge(
+                array_column($this->tabs(), 'url'),
+                array_column(array_merge(...array_map(fn (array $section) => $section['items'], $this->moreSections())), 'url'),
+                array_column($this->shortcuts(), 'url'),
+            ))),
+            'fabEdges' => $fabEdges,
+            'reportsHub' => Route::has('reports.index') ? route('reports.index') : null,
+            'reportLinks' => array_values(array_map(fn (string $name) => route($name), array_filter($reportRoutes, fn (string $name) => $this->allows($name)))),
+        ];
     }
 
     public function shortcuts(int $limit = 6): array

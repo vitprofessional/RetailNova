@@ -4,7 +4,9 @@
     $flashSuccess = session('success') ?: session('status');
     $alertConfig = json_decode((string) session('alert.config', ''), true) ?: [];
     $alertType = $alertConfig['icon'] ?? 'info';
-    $alertText = trim(collect([$alertConfig['text'] ?? null, $alertConfig['title'] ?? null])->filter()->implode(' — '));
+    // SweetAlert titles are commonly generic (“Success” / “সফল”); the message
+    // is the actionable, specific text that belongs in the mobile toast.
+    $alertText = trim((string) ($alertConfig['text'] ?? $alertConfig['title'] ?? ''));
     $errorMessages = $errors->getMessages();
     $bannerMessage = $errors->first() ?: $flashError ?: ($alertType === 'error' ? $alertText : null);
     $toastMessage = $flashSuccess ?: ($flashWarning ?: (($alertType === 'success' || $alertType === 'warning' || $alertType === 'info') ? $alertText : null));

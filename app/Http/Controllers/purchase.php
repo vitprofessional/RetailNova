@@ -122,7 +122,9 @@ class purchase extends Controller
             \Log::error('purchaseReturnSave failed', ['exception' => $e, 'businessId' => auth('admin')->user()?->businessId]);
             return back()->withInput()->withErrors(['return' => __('mobile.return_save_retry')]);
         }
-        return redirect()->route('purchaseList')->with('status',__('purchases.return_saved'));
+        $destination = app(\App\Support\MobileView::class)->isMobile() ? 'returnPurchaseList' : 'purchaseList';
+
+        return redirect()->route($destination)->with('status',__('purchases.return_saved'));
     }
 
 

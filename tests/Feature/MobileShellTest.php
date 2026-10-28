@@ -58,6 +58,7 @@ class MobileShellTest extends TestCase
         $tabs = $xpath->query('//nav[@data-rn-tabbar]//a[@data-rn-tab]');
         $this->assertSame(['home', 'stock', 'sale', 'reports', 'more'], array_map(fn ($a) => $a->getAttribute('data-rn-tab'), iterator_to_array($tabs)));
         $this->assertSame(route('newsale'), $xpath->query('//a[@data-rn-tab="sale" and contains(@class,"rn-m-tab--sale")]')->item(0)->getAttribute('href'));
+        $this->assertSame(route('productlist'), $xpath->query('//a[@data-rn-tab="stock"]')->item(0)->getAttribute('href'));
         $this->assertSame(route('reports.index'), $xpath->query('//a[@data-rn-tab="reports"]')->item(0)->getAttribute('href'));
         $this->assertSame('page', $xpath->query('//a[@data-rn-tab="home"]')->item(0)->getAttribute('aria-current'));
         $saleXpath = $this->xpath($this->get(route('newsale'))->assertOk()->getContent());
@@ -80,8 +81,10 @@ class MobileShellTest extends TestCase
             $this->assertNotContains($href, $grid, 'Bottom-tab destinations are not repeated in More.');
             $this->assertNotContains($href, $shortcutHrefs, 'Bottom-tab destinations are not repeated in Home shortcuts.');
         }
-        $this->assertNotContains(route('stockProduct'), $grid, 'Stock stays in the bottom tab, not the More page.');
+        $this->assertContains(route('stockProduct'), $grid, 'The lot view remains reachable from More → inventory.');
         $this->assertNotContains(route('productlist'), $grid, 'The product-list alias does not duplicate the Stock tab.');
+        $this->assertCount(1, $xpath->query('//*[@id="rn-more"]//a[@href="'.route('admin.profile.show').'"]'));
+        $this->assertCount(1, $xpath->query('//header[@data-rn-mobile-header]//a[@data-rn-profile-link and @href="'.route('admin.profile.show').'"]'));
         $expectedHomeRoutes = ['addPurchase', 'addCustomer', 'expense.list', 'account.transactions', 'addSupplier', 'returnSaleList'];
         $this->assertSame(array_map(fn ($name) => route($name), $expectedHomeRoutes), $shortcutHrefs, 'Home presents six destinations in two complete three-column rows.');
         $this->assertCount(6, $shortcutHrefs, 'Home shortcut grid has two complete three-column rows.');
@@ -134,6 +137,8 @@ class MobileShellTest extends TestCase
         }
         $this->assertSame(0, $in('people', 'reports.payableReceivable'), 'Due reporting is presented from the customer filter and report hub, not a duplicate More route.');
         $this->assertSame(0, $in('inventory', 'productlist'), 'Stock catalog alias is not repeated in More.');
+        $this->assertSame(1, $in('inventory', 'stockProduct'), 'The lot view is grouped under inventory in More.');
+        $this->assertSame(1, $in('settings', 'admin.profile.show'), 'Profile is available under Settings.');
         $this->assertSame('কাস্টমার ও বাকি', trim($xpath->query('//section[@data-rn-more-section="people"]//a[@href="'.route('addCustomer').'"]')->item(0)->textContent));
     }
 
@@ -220,6 +225,37 @@ class MobileShellTest extends TestCase
         $this->assertCount(0, $seller->query('//*[@id="rn-more"]//a[@href="'.route('account.chart').'"]'), 'Finance menus stay hidden.');
         $this->assertCount(0, $seller->query('//a[@data-rn-tab="reports" and @href="'.route('reports.business').'"]'));
         $this->assertCount(0, $seller->query('//*[@data-rn-home]//a[@href="'.route('expense.list').'"]'), 'Shortcuts follow permissions too.');
+    }
+
+    public function test_every_desktop_menu_route_is_reachable_from_mobile_navigation_or_a_list_fab(): void
+    {
+        $this->inventory();
+        \App\Models\BusinessSetup::whereKey(1)->update(['businessType' => 'computer_shop']);
+
+        foreach (['admin', 'gm', 'storemanager', 'salesmanager', 'super admin'] as $role) {
+            $this->actingAs($this->actor($role), 'admin');
+            $desktopRoutes = collect(app(\App\Services\BusinessNavigation::class)->groups())
+                ->flatMap(fn (array $group) => collect($group['items'])->pluck('route'))
+                ->unique()->values();
+            $mobileReachable = app(\App\Support\MobileNavigation::class)->reachableRouteNames();
+            foreach ($desktopRoutes as $routeName) {
+                $this->assertContains($routeName, $mobileReachable, "{$routeName} is unreachable on mobile for role {$role}.");
+            }
+        }
+    }
+
+    public function test_product_catalog_is_the_stock_tab_and_exposes_the_new_product_fab_and_lot_segment(): void
+    {
+        $this->inventory();
+        $this->actingAs($this->actor('admin'), 'admin');
+
+        $dashboard = $this->xpath($this->get(route('dashboard'))->assertOk()->getContent());
+        $this->assertSame(route('productlist'), $dashboard->query('//a[@data-rn-tab="stock"]')->item(0)->getAttribute('href'));
+
+        $catalog = $this->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 13) Mobile')
+            ->get(route('productlist'))->assertOk()->assertSee('data-rn-product-stock-tabs', false)
+            ->assertSee(route('stockProduct'), false)->assertSee(route('addProduct'), false);
+        $this->assertSame(1, $this->xpath($catalog->getContent())->query('//a[contains(@class,"rn-m-fab") and @href="'.route('addProduct').'"]')->length);
     }
 
     public function test_home_shows_only_the_users_own_business(): void

@@ -53,4 +53,29 @@ class MobileFeedbackTest extends TestCase
             ->assertSee('data-rn-error-map', false)
             ->assertSee('data-rn-error-close', false);
     }
+
+    public function test_mobile_success_toast_uses_the_specific_message_without_generic_success_title(): void
+    {
+        $this->inventory();
+        $this->actingAs($this->actor('admin'), 'admin')
+            ->withSession(['alert.config' => json_encode([
+                'icon' => 'success', 'title' => 'সফল', 'text' => 'পণ্য যোগ হয়েছে — পরীক্ষার পণ্য',
+            ], JSON_UNESCAPED_UNICODE)])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('পণ্য যোগ হয়েছে — পরীক্ষার পণ্য')
+            ->assertDontSee('সফল — পণ্য যোগ হয়েছে', false);
+    }
+
+    public function test_mobile_product_create_returns_to_catalog_with_record_and_specific_toast(): void
+    {
+        app()->setLocale('bn');
+        $this->inventory();
+        $this->actingAs($this->actor('admin'), 'admin');
+
+        $response = $this->post(route('saveProduct'), ['name' => 'মোবাইল তালিকা পণ্য']);
+
+        $response->assertRedirect(route('productlist'));
+        $this->assertDatabaseHas('products', ['name' => 'মোবাইল তালিকা পণ্য', 'businessId' => 1]);
+    }
 }

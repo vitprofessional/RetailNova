@@ -4,6 +4,21 @@
  * Linked only for the mobile version, after rn-mobile.css. Colors come from rn-tokens.css only.
  */
 @media screen {
+    .rn-m-profile { flex: 0 0 var(--rn-touch); border: 1px solid color-mix(in srgb, var(--rn-color-on-primary) 30%, transparent); background: color-mix(in srgb, var(--rn-color-on-primary) 14%, transparent); font-size: var(--rn-fs-heading); font-weight: 700; }
+    .rn-m-profile:hover, .rn-m-profile:focus-visible { background: color-mix(in srgb, var(--rn-color-on-primary) 22%, transparent); }
+    .rn-m-stock-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 12px 0 0; }
+    .rn-m-stock-tabs .rn-m-segment-btn { color: var(--rn-color-primary); text-decoration: none; white-space: nowrap; }
+    .rn-m-stock-tabs .rn-m-segment-btn.is-active { background: var(--rn-color-primary); color: var(--rn-color-on-primary); }
+    .rn-m-stock-product { overflow: hidden; padding: 0 12px; }
+    .rn-m-stock-product-head { display: grid; grid-template-columns: var(--rn-icon-avatar) minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 68px; }
+    .rn-m-stock-total { color: var(--rn-color-success); font-size: var(--rn-fs-label); font-weight: 700; white-space: nowrap; }
+    .rn-m-stock-lots { margin: 0; padding: 0; list-style: none; }
+    .rn-m-stock-lot { padding: 10px 0; border-top: 1px solid var(--rn-color-border); }
+    .rn-m-stock-lot-title { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--rn-color-ink); font-size: var(--rn-fs-label); }
+    .rn-m-stock-lot-title > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rn-m-stock-lot-title strong { flex: 0 0 auto; color: var(--rn-color-success); white-space: nowrap; }
+    .rn-m-stock-lot-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; color: var(--rn-color-helper); font-size: var(--rn-fs-label); }
+    .rn-m-stock-lot-meta > span { min-width: 0; }
     .rn-m-feedback { position: relative; z-index: 1100; }
     .rn-m-error-banner {
         position: relative; display: flex; align-items: flex-start; gap: 12px;

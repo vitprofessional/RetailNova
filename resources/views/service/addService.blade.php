@@ -2,8 +2,8 @@
 <div class="col-12">
     @include('sweetalert::alert')
 </div>
-<div class="card">
-    <div class="card-body">
+<div class="{{ app(\App\Support\MobileView::class)->isMobile() ? 'rn-m-service-master-shell' : 'card' }}">
+    <div class="{{ app(\App\Support\MobileView::class)->isMobile() ? 'rn-m-service-master-content' : 'card-body' }}">
         <div class="row">
             <div class="col-12 mb-3 rn-m-form-page-title">
                 <h4>{{ __('common.create_service') }}</h4>
@@ -21,7 +21,7 @@
             }
             $mobileMasterRows = collect($listItem ?? [])->map(fn($item) => [
                 'title' => $item->serviceName,
-                'amount' => \App\Support\Currency::format($item->rate),
+                'amount' => \App\Support\LocalizedNumber::money($item->rate),
                 'edit' => route('editService', ['id' => $item->id]),
                 'delete' => route('delService', ['id' => $item->id]),
                 'confirm' => __('common.delete').' '.$item->serviceName.'?',

@@ -7,6 +7,7 @@
     $mobileIsHome = request()->routeIs('dashboard');
     $mobileUser = auth('admin')->user();
     $mobileLocale = app()->getLocale();
+    $mobileProfileInitial = preg_match('/\p{L}/u', (string) $mobileUser?->fullName, $profileLetter) ? mb_strtoupper($profileLetter[0]) : '•';
     if ($mobileIsHome) {
         $mobileBusinessName = $rnBusinessName ?? config('app.name');
         $mobileBusiness = ($config ?? collect())->first();
@@ -47,9 +48,11 @@
             <i class="ri-notification-3-line" aria-hidden="true"></i>
             @if($mobileAlerts)<span class="rn-m-bell-badge" aria-hidden="true">{{ \App\Support\LocalizedNumber::count(count($mobileAlerts)) }}</span>@endif
         </button>
+        <a href="{{ route('admin.profile.show') }}" class="rn-m-header-btn rn-m-profile" data-rn-profile-link aria-label="{{ __('mobile.my_profile') }}" title="{{ __('mobile.my_profile') }}"><span data-latin-ok>{{ $mobileProfileInitial }}</span></a>
     @else
         <a href="{{ route('dashboard') }}" class="rn-m-header-btn" data-rn-back aria-label="{{ __('mobile.back') }}"><i class="ri-arrow-left-line" aria-hidden="true"></i></a>
         <h1 class="rn-m-title" data-latin-ok>{{ $mobileTitle }}</h1>
+        <a href="{{ route('admin.profile.show') }}" class="rn-m-header-btn rn-m-profile" data-rn-profile-link aria-label="{{ __('mobile.my_profile') }}" title="{{ __('mobile.my_profile') }}"><span data-latin-ok>{{ $mobileProfileInitial }}</span></a>
     @endif
 </header>
 @if($mobileIsHome)
@@ -82,7 +85,8 @@
     </a>
 </nav>
 
-<section id="rn-more" class="rn-m-more" role="dialog" aria-modal="true" aria-labelledby="rn-more-title" data-rn-more>
+<section id="rn-more" class="rn-m-more" role="dialog" aria-modal="true" aria-labelledby="rn-more-title" data-rn-more
+         data-rn-reachability="{{ json_encode($mobileNav->reachabilityAuditData(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}">
     <header class="rn-m-header rn-m-more-header">
         <a href="#rn-more-closed" class="rn-m-header-btn" data-rn-more-close aria-label="{{ __('mobile.close') }}"><i class="ri-close-line" aria-hidden="true"></i></a>
         <h2 id="rn-more-title" class="rn-m-title">{{ __('mobile.more') }}</h2>

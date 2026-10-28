@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Customer;
 use App\Models\BusinessLocation;
+use App\Models\ProductStock;
+use App\Models\PurchaseProduct;
 use OwenIt\Auditing\Models\Audit;
 use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -60,6 +62,32 @@ class MobileRemainingListsTest extends TestCase
             ->assertSee((string) $inventory['stock']->currentStock)
             ->assertSee(__('mobile.stock').' '.\App\Support\LocalizedNumber::count($inventory['stock']->currentStock))
             ->assertDontSee('Purchase ID');
+    }
+
+    public function test_mobile_stock_lots_are_grouped_per_product_and_tenant_scoped(): void
+    {
+        $inventory = $this->inventory();
+        $secondPurchase = PurchaseProduct::forceCreate([
+            'productName' => $inventory['product']->id, 'supplier' => $inventory['supplier']->id, 'businessId' => 1,
+            'purchase_date' => '2026-10-24', 'invoice' => 'PUR-LOT-SECOND', 'qty' => 5,
+            'buyPrice' => 120, 'salePriceExVat' => 180, 'totalAmount' => 600,
+            'grandTotal' => 600, 'paidAmount' => 600, 'dueAmount' => 0, 'disAmount' => 15,
+        ]);
+        ProductStock::create(['productId' => $inventory['product']->id, 'purchaseId' => $secondPurchase->id, 'businessId' => 1, 'currentStock' => 5]);
+        $foreign = $this->inventory(2);
+
+        $response = $this->withHeader('User-Agent', self::PHONE)->get(route('stockProduct'))->assertOk()
+            ->assertSee('data-rn-product-stock-tabs', false)
+            ->assertSee('PUR-LOT-SECOND')
+            ->assertSee(__('mobile.stock').' '.\App\Support\LocalizedNumber::count(8));
+        $response->assertSee(__('purchases.discount'));
+        $xpath = new \DOMXPath((function (string $html) {
+            $document = new \DOMDocument();
+            @$document->loadHTML('<?xml encoding="UTF-8">'.$html);
+            return $document;
+        })($response->getContent()));
+        $this->assertSame(1, $xpath->query('//li[@data-product-id="'.$inventory['product']->id.'"]')->length, 'Two purchase lots for one product render as one product card.');
+        $this->assertSame(0, $xpath->query('//li[@data-product-id="'.$foreign['product']->id.'"]')->length, 'A business cannot see another tenant’s lot card.');
     }
 
     public function test_mobile_control_lists_render_records_as_cards_and_keep_actions(): void

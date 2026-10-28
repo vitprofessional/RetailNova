@@ -743,7 +743,9 @@ class saleController extends Controller
 
             DB::commit();
             Alert::success(__('common.notification_success'),__('common.notification_sale_return_saved_successfully'));
-            return back();
+            return app(\App\Support\MobileView::class)->isMobile()
+                ? redirect()->route('returnSaleList')
+                : back();
         } catch (\Throwable $e) {
             DB::rollBack();
             \Log::error('saleReturnSave failed', ['exception' => $e,

@@ -45,6 +45,14 @@ class MobileMasterDataListsTest extends TestCase
             $response->assertSee(route($editRoute, ['id' => 1]), false);
             $response->assertSee(route($deleteRoute, ['id' => 1]), false);
         }
+
+        $serviceResponse = $this->get(route('addServiceName'))->assertOk()
+            ->assertSee(\App\Support\LocalizedNumber::money(450));
+        $serviceDocument = new \DOMDocument();
+        @$serviceDocument->loadHTML('<?xml encoding="UTF-8">'.$serviceResponse->getContent());
+        $serviceXPath = new \DOMXPath($serviceDocument);
+        $this->assertSame(0, $serviceXPath->query('//article[contains(@class,"rn-m-master-card")]/ancestor::*[contains(concat(" ",normalize-space(@class)," ")," card ")]')->length,
+            'Mobile service master cards do not sit inside an extra card wrapper.');
     }
 
     public function test_mobile_master_form_opens_from_fab_and_desktop_list_remains_in_markup(): void

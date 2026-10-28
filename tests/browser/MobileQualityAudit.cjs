@@ -245,6 +245,60 @@ async function main() {
   const auditLocale = await page.locator('html').getAttribute('lang');
   if (!String(auditLocale).startsWith('bn')) throw new Error(`Mobile audit locale did not switch to Bengali (actual: ${auditLocale}).`);
 
+  // Reachability graph: dashboard tabs/shortcuts/More are the first edge; list
+  // FABs and report-hub links are the second. Validate the actual rendered hrefs.
+  await page.goto(base + '/dashboard', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(500);
+  const reachabilityData = await page.locator('[data-rn-reachability]').getAttribute('data-rn-reachability');
+  const reachability = reachabilityData ? JSON.parse(reachabilityData) : null;
+  const reachabilityFindings = [];
+  if (!reachability) {
+    reachabilityFindings.push({ reason: 'missing-reachability-map' });
+  } else {
+    const dashboardLinks = await page.locator('[data-rn-tabbar] a[href], [data-rn-home] a[href]').evaluateAll(links => links.map(link => link.href));
+    const moreTrigger = page.locator('[data-rn-tab="more"]');
+    if (await moreTrigger.count()) {
+      await moreTrigger.click();
+      await page.waitForFunction(() => {
+        const sheet = document.querySelector('[data-rn-more]');
+        return sheet && getComputedStyle(sheet).display !== 'none' && sheet.getBoundingClientRect().height > 0;
+      }, { timeout: 5000 }).catch(() => reachabilityFindings.push({ reason: 'more-sheet-did-not-open' }));
+    }
+    const moreLinks = await page.locator('[data-rn-more] a[href]').evaluateAll(links => links.map(link => link.href));
+    const rootLinks = new Set([...dashboardLinks, ...moreLinks]
+      .filter(url => !url.startsWith('javascript:') && !url.endsWith('#rn-more-closed')));
+    await page.locator('[data-rn-more-close]').click().catch(() => {});
+    const reachable = new Set(rootLinks);
+    for (const url of reachability.mobileRootLinks) {
+      if (!rootLinks.has(url)) reachabilityFindings.push({ url, reason: 'expected-mobile-root-link-not-rendered' });
+    }
+    const candidates = new Set([...reachability.fabEdges.map(edge => edge.parent), reachability.reportsHub].filter(Boolean));
+    for (const url of candidates) {
+      if (!rootLinks.has(url)) continue;
+      try {
+        await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+        await page.waitForTimeout(500);
+        const fabHrefs = await page.locator('a.rn-m-fab[href]').evaluateAll(links => links.map(link => link.href));
+        fabHrefs.forEach(href => reachable.add(href));
+        if (url === reachability.reportsHub) {
+          const reportHrefs = await page.locator('main a[href], [data-rn-report-hub] a[href]').evaluateAll(links => links.map(link => link.href));
+          reportHrefs.forEach(href => reachable.add(href));
+        }
+      } catch (error) {
+        reachabilityFindings.push({ url, reason: 'route-load-failed', message: String(error.message || error) });
+      }
+    }
+    for (const edge of reachability.fabEdges) {
+      if (!rootLinks.has(edge.parent) || !reachable.has(edge.destination)) {
+        reachabilityFindings.push({ route: edge.name, reason: 'fab-destination-unreachable-within-3-steps', parent: edge.parent, destination: edge.destination });
+      }
+    }
+    for (const route of reachability.desktopRoutes) {
+      if (!reachable.has(route.url)) reachabilityFindings.push({ route: route.name, url: route.url, reason: 'desktop-route-unreachable-within-3-steps' });
+    }
+  }
+  if (reachabilityFindings.length) findings.push({ page: base + '/dashboard', reachability: reachabilityFindings });
+
   {
     for (let i = 0; i < auditedUrls.length; i++) {
       const url = auditedUrls[i];
