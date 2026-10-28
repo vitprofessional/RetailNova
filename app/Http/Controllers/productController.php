@@ -17,6 +17,7 @@ use App\Http\Requests\BrandSaveRequest;
 use App\Http\Requests\CategorySaveRequest;
 use App\Http\Requests\ProductUnitSaveRequest;
 use App\Services\CatalogUsage;
+use App\Support\BusinessContext;
 
 class productController extends Controller
 {
@@ -302,6 +303,9 @@ class productController extends Controller
 
     // handle saving damage product report and adjust stock (FIFO)
     public function damageProductSave(Request $req){
+        if (is_array($req->input('items'))) {
+            return $this->saveMobileDamageProducts($req);
+        }
         $validator = \Validator::make($req->all(), [
             'purchaseDate' => ['nullable','date'],
             'refData'      => ['nullable','string','max:190'],
@@ -361,6 +365,86 @@ class productController extends Controller
             \Log::error('damageProductSave failed: '.$e->getMessage());
             Alert::error(__('common.notification_error'),__('common.notification_failed_to_save_damage_record'));
             return back()->withInput();
+        }
+    }
+
+    /** Save a set of mobile damage rows while retaining the existing FIFO stock semantics. */
+    private function saveMobileDamageProducts(Request $req)
+    {
+        $validator = \Validator::make($req->all(), [
+            'purchaseDate' => ['required', 'date'],
+            'refData' => ['nullable', 'string', 'max:190'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'integer'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
+            'items.*.buy_price' => ['nullable', 'numeric', 'min:0'],
+            'items.*.sale_price' => ['nullable', 'numeric', 'min:0'],
+        ]);
+        if ($validator->fails()) {
+            return back()->withInput()->withErrors(['items' => $validator->errors()->first() ?: __('inventory.damage_empty')]);
+        }
+
+        $businessId = BusinessContext::defaultForCreate();
+        if (!$businessId) {
+            return back()->withInput()->withErrors(['items' => __('purchases.business_required')]);
+        }
+        $items = array_values($validator->validated()['items']);
+        $productIds = array_map(static fn ($item) => (int) $item['product_id'], $items);
+        if (count(array_unique($productIds)) !== count($productIds)) {
+            return back()->withInput()->withErrors(['items' => __('inventory.damage_duplicate_product')]);
+        }
+
+        try {
+            DB::transaction(function () use ($req, $items, $productIds, $businessId): void {
+                foreach ($items as $item) {
+                    $productId = (int) $item['product_id'];
+                    // Never trust a submitted product id outside the actor's business.
+                    Product::withoutGlobalScopes()->where('businessId', $businessId)->whereKey($productId)->firstOrFail();
+                    $qty = (int) $item['qty'];
+                    $stocks = ProductStock::withoutGlobalScopes()->where('businessId', $businessId)
+                        ->where('productId', $productId)->where('currentStock', '>', 0)
+                        ->orderBy('id')->lockForUpdate()->get();
+                    $available = (int) $stocks->sum('currentStock');
+                    if ($qty > $available) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'items' => __('inventory.damage_exceeds_stock', ['qty' => $qty, 'stock' => $available]),
+                        ]);
+                    }
+
+                    $remaining = $qty;
+                    foreach ($stocks as $stock) {
+                        if ($remaining <= 0) break;
+                        $take = min((int) $stock->currentStock, $remaining);
+                        $stock->currentStock = max(0, (int) $stock->currentStock - $take);
+                        $stock->save();
+                        $remaining -= $take;
+                    }
+
+                    $buy = $item['buy_price'] ?? null;
+                    $sale = $item['sale_price'] ?? null;
+                    $unitPrice = is_numeric($sale) && (float) $sale > 0 ? (float) $sale : (float) ($buy ?? 0);
+                    $damage = new DamageProduct();
+                    $damage->businessId = $businessId;
+                    $damage->reference = $req->input('refData');
+                    $damage->date = $req->input('purchaseDate');
+                    $damage->product_id = $productId;
+                    $damage->qty = $qty;
+                    $damage->buy_price = $buy;
+                    $damage->sale_price = $sale;
+                    $damage->total = $unitPrice * $qty;
+                    $damage->admin_id = auth('admin')->id();
+                    $damage->save();
+                }
+            });
+
+            return redirect()->route('damageProductList')->with('success', __('inventory.damage_saved_count', [
+                'count' => \App\Support\LocalizedNumber::count(count($items)),
+            ]));
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withInput()->withErrors($e->errors());
+        } catch (\Throwable $e) {
+            \Log::error('Mobile damage product save failed', ['business_id' => $businessId, 'product_ids' => $productIds, 'exception' => $e]);
+            return back()->withInput()->withErrors(['items' => __('inventory.damage_save_failed')]);
         }
     }
 

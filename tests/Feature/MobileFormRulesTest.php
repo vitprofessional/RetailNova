@@ -31,9 +31,9 @@ class MobileFormRulesTest extends TestCase
         $css = file_get_contents(public_path('css/rn-m-components.css'));
 
         $this->assertIsString($css);
-        $this->assertStringContainsString('bottom: 18px;', $css);
-        $this->assertStringContainsString('width: var(--rn-touch);', $css);
-        $this->assertStringContainsString('height: var(--rn-touch);', $css);
+        $this->assertStringContainsString('.rn-m-field-label-row', $css);
+        $this->assertStringContainsString('.rn-m-field-action-button', $css);
+        $this->assertStringContainsString('min-height: var(--rn-touch);', $css);
     }
 
     public function test_mobile_transaction_forms_hide_database_identifiers_and_the_global_tabbar(): void

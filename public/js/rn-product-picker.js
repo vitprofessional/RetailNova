@@ -42,8 +42,9 @@
       button.type = 'button'; button.className = 'rn-m-picker-card';
       button.setAttribute('role', 'listitem');
       const unavailableSale = root.dataset.mode === 'sale' && (item.stock <= 0 || item.sale_price === null);
+      const unavailableDamage = root.dataset.mode === 'damage' && Number(item.stock || 0) <= 0;
       const unavailablePurchase = root.dataset.mode === 'purchase' && (item.buy_price === null || item.buy_price === '');
-      const unavailable = unavailableSale || unavailablePurchase;
+      const unavailable = unavailableSale || unavailablePurchase || unavailableDamage;
       if (unavailable) button.classList.add('is-unavailable');
       if (item.image) {
         const image = document.createElement('img'); image.className = 'rn-m-picker-card__image'; image.src = item.image; image.alt = ''; image.loading = 'lazy'; button.append(image);
@@ -72,7 +73,7 @@
         const value = root.dataset.currencyPosition === 'right' ? `${number}${currency}` : `${currency}${number}`;
         const amount = document.createElement('span'); amount.className = 'rn-m-picker-card__price'; amount.textContent = value; button.append(amount);
       }
-      if (root.dataset.mode === 'sale' || root.dataset.mode === 'purchase-return') {
+      if (root.dataset.mode === 'sale' || root.dataset.mode === 'purchase-return' || root.dataset.mode === 'damage') {
         const stock = document.createElement('span'); stock.className = 'rn-m-picker-card__stock'; stock.textContent = localized(label('Stock'), item.stock); button.append(stock);
       }
       if (unavailable) { const note = document.createElement('span'); note.className = 'rn-m-picker-card__note'; note.textContent = unavailablePurchase || item.sale_price === null ? label('NoPrice') : label('OutOfStock'); button.append(note); }
@@ -86,7 +87,7 @@
         }
         const id = String(item.product_id);
         const current = Number(selectedCounts[id] || 0);
-        if (root.dataset.mode === 'sale' && current >= Number(item.stock || 0)) {
+        if (['sale', 'damage'].includes(root.dataset.mode) && current >= Number(item.stock || 0)) {
           window.RNToast?.error(label('OutOfStock'));
           return;
         }

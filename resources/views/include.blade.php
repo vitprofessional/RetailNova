@@ -27,11 +27,13 @@
         <link rel="stylesheet" href="{{ \App\Support\VendorAsset::url('line-awesome/css/line-awesome.min.css', 'https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css') }}">
     @enddesktop
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/remixicon/fonts/remixicon.css">
-    @if($rnFontAwesome = \App\Support\VendorAsset::local('fontawesome/css/all.min.css'))
-        <link rel="stylesheet" href="{{ $rnFontAwesome }}">
-    @else
-        <script src="https://kit.fontawesome.com/7001e2ea29.js" crossorigin="anonymous"></script>
-    @endif
+    @desktop
+        @if($rnFontAwesome = \App\Support\VendorAsset::local('fontawesome/css/all.min.css'))
+            <link rel="stylesheet" href="{{ $rnFontAwesome }}">
+        @else
+            <script src="https://kit.fontawesome.com/7001e2ea29.js" crossorigin="anonymous"></script>
+        @endif
+    @enddesktop
     <!-- Ensure jQuery is available early for inline scripts -->
     <script src="{{ \App\Support\VendorAsset::url('jquery/jquery-3.6.0.min.js', 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js') }}"></script>
     <script>

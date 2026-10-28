@@ -867,35 +867,50 @@
         .rn-m-expense-actions .rn-m-btn { min-height: 48px; }
     }
     @media (max-width: 992px) {
-        .rn-m-damage-form { padding-bottom: calc(78px + var(--rn-safe-bottom)); }
-        .rn-m-damage-meta { margin-bottom: 12px; padding: 14px; }
-        .rn-m-damage-meta > .card { margin: 0; border: 0; box-shadow: none; }
-        .rn-m-damage-meta > .card > .card-header,
-        .rn-m-damage-meta > .card > .card-body { padding: 0; }
-        .rn-m-damage-meta .card-header { display: none; }
-        .rn-m-damage-meta .card-title { margin: 0; font-size: var(--rn-type-body); font-weight: 700; }
-        .rn-m-damage-meta .row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 10px; margin: 0; }
-        .rn-m-damage-meta .row > [class*="col-"] { width: auto; max-width: none; padding: 0; }
-        .rn-m-damage-meta .row > [class*="col-"]:last-child { grid-column: 1 / -1; }
-        .rn-m-damage-meta .form-group { min-width: 0; margin-bottom: 12px; }
-        .rn-m-damage-meta .form-control { width: 100%; min-width: 0; min-height: 48px; border-color: var(--rn-color-border); border-radius: var(--rn-radius-md); }
-        .rn-m-damage-items-card > .card { margin: 0; border: 0; background: transparent; box-shadow: none; }
-        .rn-m-damage-items-card > .card > .card-body { padding: 0; }
-        .rn-m-damage-items { margin: 0 0 12px !important; padding: 0; overflow: visible !important; border: 0 !important; border-radius: 0; background: transparent !important; box-shadow: none !important; }
-        .rn-m-damage-table { width: 100%; min-width: 0 !important; max-width: 100%; table-layout: fixed; }
-        .rn-m-damage-table thead { display: none; }
-        .rn-m-damage-table tbody { display: block; }
-        .rn-m-damage-table tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 12px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); }
-        .rn-m-damage-table tbody td { display: block; width: auto !important; min-width: 0; padding: 0 !important; border: 0; overflow-wrap: anywhere; }
-        .rn-m-damage-table tbody td::before { content: attr(data-label); display: block; margin-bottom: 5px; color: var(--rn-color-muted); font-size: var(--rn-type-tag); font-weight: 600; line-height: 1.5; }
-        .rn-m-damage-table tbody td:first-child,
-        .rn-m-damage-table tbody td:nth-child(6),
-        .rn-m-damage-table tbody td:last-child { grid-column: 1 / -1; }
-        .rn-m-damage-table .form-control { width: 100%; min-width: 0; min-height: 48px; padding: 8px 10px; border-color: var(--rn-color-border); border-radius: var(--rn-radius-md); }
-        .rn-m-damage-table #qty-stock { font-size: var(--rn-type-tag); }
-        .rn-m-damage-table .list-action button { display: grid; width: 44px; height: 44px; place-items: center; border: 1px solid var(--rn-color-danger); border-radius: var(--rn-radius-md); color: var(--rn-color-danger); }
-        .rn-m-damage-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
-        .rn-m-damage-actions .rn-m-btn { min-height: 48px; margin: 0; }
+        .rn-m-damage-form { display: grid; gap: 12px; padding-bottom: calc(90px + var(--rn-safe-bottom)); }
+        .rn-m-damage-meta-card, .rn-m-damage-item-section { min-width: 0; padding: 14px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); box-shadow: var(--rn-shadow-sm); }
+        .rn-m-damage-date-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+        .rn-m-damage-date-row > button { display: flex; min-height: 48px; align-items: center; gap: 10px; padding: 0 12px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); background: var(--rn-color-surface); color: var(--rn-color-ink); text-align: left; font: var(--rn-type-body); }
+        .rn-m-damage-date-row > button i { color: var(--rn-color-primary); font-size: var(--rn-icon-control); }
+        .rn-m-damage-date-row > label { margin: 0; color: var(--rn-color-ink); font: var(--rn-type-label); text-align: left; }
+        .rn-m-damage-date-row > input { width: 100%; min-height: 48px; padding: 8px 12px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); background: var(--rn-color-surface); color: var(--rn-color-ink); font: var(--rn-type-body); }
+        .rn-m-damage-item-section > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+        .rn-m-damage-item-section h2 { margin: 0; color: var(--rn-color-ink); font: var(--rn-type-section-title); }
+        .rn-m-damage-item-section > header > span { color: var(--rn-color-helper); font: var(--rn-type-helper); }
+        .rn-m-damage-empty { padding: 20px 8px; color: var(--rn-color-helper); font: var(--rn-type-body); text-align: center; }
+        .rn-m-damage-empty[hidden] { display: none !important; }
+        .rn-m-damage-lines { display: grid; gap: 10px; }
+        .rn-m-damage-line { min-width: 0; padding: 12px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); background: var(--rn-color-surface); }
+        .rn-m-damage-line-heading, .rn-m-damage-line-meta, .rn-m-damage-line-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .rn-m-damage-line-heading > strong { min-width: 0; color: var(--rn-color-ink); font: var(--rn-type-card-name); overflow-wrap: anywhere; }
+        .rn-m-damage-remove { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; border: 0; border-radius: 12px; background: var(--rn-color-danger-tint); color: var(--rn-color-danger); }
+        .rn-m-damage-remove i { font-size: var(--rn-icon-control); }
+        .rn-m-damage-line-meta { justify-content: flex-start; flex-wrap: wrap; margin: 4px 0 10px; color: var(--rn-color-helper); font: var(--rn-type-helper); }
+        .rn-m-damage-line-footer { border-top: 1px solid var(--rn-color-border); padding-top: 10px; }
+        .rn-m-damage-stepper { display: inline-grid; grid-template-columns: 44px 64px 44px; align-items: center; gap: 4px; }
+        .rn-m-damage-stepper button { min-height: 44px; border: 1px solid var(--rn-color-border); border-radius: 12px; background: var(--rn-color-surface); color: var(--rn-color-primary); font-size: 22px; }
+        .rn-m-damage-stepper input { width: 64px; min-height: 44px; padding: 4px; border: 1px solid var(--rn-color-border); border-radius: 10px; color: var(--rn-color-ink); font: var(--rn-type-body); text-align: center; }
+        .rn-m-damage-line-total { color: var(--rn-color-ink); font: var(--rn-type-card-amount); font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .rn-m-damage-add { display: flex; width: 100%; min-height: 48px; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; border: 1px dashed var(--rn-color-primary); border-radius: var(--rn-radius-md); background: var(--rn-color-primary-tint); color: var(--rn-color-primary); font: var(--rn-type-button); }
+        .rn-m-damage-add i { font-size: var(--rn-icon-control); }
+        .rn-m-damage-sticky { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; }
+        .rn-m-damage-sticky > div { display: grid; min-width: 0; gap: 2px; }
+        .rn-m-damage-sticky > div > span { color: var(--rn-color-helper); font: var(--rn-type-helper); }
+        .rn-m-damage-sticky > div > strong { color: var(--rn-color-ink); font: var(--rn-type-card-amount); }
+        .rn-m-damage-sticky > button { min-height: 48px; margin: 0; font: var(--rn-type-button); }
+        body:has(.rn-m-damage-form) .rn-m-toast { bottom: calc(84px + var(--rn-safe-bottom) + 56px); }
+        .rn-m-damage-sheet[hidden] { display: none !important; }
+        .rn-m-damage-sheet { position: fixed; z-index: 1200; inset: 0; display: grid; align-items: end; }
+        .rn-m-damage-sheet-scrim { position: absolute; inset: 0; border: 0; background: rgb(16 24 40 / 48%); }
+        .rn-m-damage-sheet-panel { position: relative; display: grid; gap: 14px; max-height: 86dvh; overflow: auto; padding: 12px 14px calc(18px + var(--rn-safe-bottom)); border-radius: 24px 24px 0 0; background: var(--rn-color-surface); box-shadow: 0 -6px 24px rgb(16 24 40 / 16%); }
+        .rn-m-damage-sheet-panel > header { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
+        .rn-m-damage-sheet-panel > header > span { grid-column: 1 / -1; justify-self: center; width: 48px; height: 5px; border-radius: 999px; background: var(--rn-color-border); }
+        .rn-m-damage-sheet-panel > header h2 { margin: 0; color: var(--rn-color-ink); font: var(--rn-type-section-title); }
+        .rn-m-damage-sheet-panel > header button { width: 44px; height: 44px; border: 0; border-radius: 12px; background: var(--rn-color-border); color: var(--rn-color-ink); font-size: 24px; }
+        body:has(.rn-m-damage-sheet:not([hidden])) { overflow: hidden; }
+        .rn-m-damage-date-panel > label { margin: 0; color: var(--rn-color-ink); font: var(--rn-type-label); }
+        .rn-m-damage-date-panel > input { min-height: 50px; padding: 8px 12px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-md); font: var(--rn-type-body); }
+        .rn-m-damage-date-done { min-height: 48px; border: 0; border-radius: var(--rn-radius-md); background: var(--rn-color-primary); color: var(--rn-color-on-primary); font: var(--rn-type-button); }
     }
     @media (max-width: 992px) {
         .rn-m-sale-edit-page > .col-md-8 { width: 100%; max-width: 100%; flex: 0 0 100%; }

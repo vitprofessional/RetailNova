@@ -18,7 +18,7 @@ class MobileProductPickerController extends Controller
     {
         abort_unless(auth('admin')->user(), 401);
         $validated = $request->validate([
-            'mode' => 'required|in:sale,purchase,quotation,purchase-return',
+            'mode' => 'required|in:sale,purchase,quotation,purchase-return,damage',
             'q' => 'nullable|string|max:120',
             'category' => 'nullable|integer|min:1',
             'brand' => 'nullable|integer|min:1',
@@ -108,6 +108,7 @@ class MobileProductPickerController extends Controller
                     'latest_purchase.buyPrice as buy_price', 'latest_purchase.salePriceExVat as sale_price',
                     DB::raw('COALESCE(picker_stock.currentStock, 0) as stock'))
                 ->when($mode === 'sale', fn ($q) => $q->orderByRaw('COALESCE(picker_stock.currentStock, 0) > 0 DESC'))
+                ->when($mode === 'damage', fn ($q) => $q->whereRaw('COALESCE(picker_stock.currentStock, 0) > 0')->orderBy('products.name'))
                 ->orderBy('products.name');
         }
 
@@ -132,7 +133,7 @@ class MobileProductPickerController extends Controller
                 'unit' => $item->unit_name,
                 'image' => $uploads->url($item->image, true),
                 'stock' => (int) ($item->stock ?? 0),
-                'buy_price' => in_array($mode, ['purchase', 'purchase-return'], true) && $item->buy_price !== null
+                'buy_price' => in_array($mode, ['purchase', 'purchase-return', 'damage'], true) && $item->buy_price !== null
                     ? (float) $item->buy_price : null,
                 'sale_price' => $mode !== 'purchase-return' && $item->sale_price !== null
                     ? (float) $item->sale_price : null,
