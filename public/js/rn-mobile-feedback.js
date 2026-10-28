@@ -43,6 +43,36 @@
     const kind = icon === 'error' ? 'error' : icon === 'success' ? 'success' : 'info';
     window.RNToast[kind](message || title || root.dataset.labelError);
   };
+
+  // Native required validation runs before submit handlers, so surface it in
+  // the same persistent mobile banner as server-side validation and retain the
+  // user's current form values. Desktop keeps the browser's native behavior.
+  document.addEventListener('invalid', event => {
+    const field = event.target;
+    if (!mobile() || !(field instanceof HTMLElement) || !field.validity?.valueMissing) return;
+    event.preventDefault();
+    const label = field.id
+      ? document.querySelector(`label[for="${window.CSS?.escape ? CSS.escape(field.id) : field.id}"]`)
+      : null;
+    const labelText = (label?.textContent || field.getAttribute('aria-label') || '').replace(/[＊*]/g, '').trim();
+    const action = field instanceof HTMLSelectElement ? 'বাছুন' : 'পূরণ করুন';
+    const message = labelText ? `${labelText} ${action}` : 'এই ঘরটি পূরণ করুন';
+    field.setAttribute('aria-invalid', 'true');
+    const wrapper = field.closest('.rn-m-field,.form-group,.rn-customer-field') || field.parentElement;
+    if (wrapper && !wrapper.querySelector('[data-rn-inline-error]')) {
+      const line = document.createElement('p');
+      line.className = 'rn-m-field-error';
+      line.dataset.rnInlineError = field.name || field.id || 'required';
+      line.textContent = message;
+      field.insertAdjacentElement('afterend', line);
+    }
+    showBanner(message);
+    requestAnimationFrame(() => {
+      field.focus({ preventScroll: true });
+      field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, true);
+
   if (toastMessage.textContent.trim()) {
     toast.classList.add('is-success');
     window.setTimeout(() => { toast.hidden = true; }, 2500);
