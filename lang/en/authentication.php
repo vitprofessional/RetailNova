@@ -39,7 +39,7 @@ return [
     'confirm_password' => 'Confirm Password',
     'email' => 'Email',
     'login' => 'Login',
-    'logout_successful' => 'logout successful',
+    'logout_successful' => 'You have been logged out successfully.',
     'password' => 'Password',
     'remember_me' => 'Remember Me',
     'reset' => 'Reset',

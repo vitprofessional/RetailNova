@@ -17,13 +17,13 @@
         .a4-items th, .a4-items td { padding: 1.5mm 1mm; border-bottom: .2mm solid #aaa; }
         .a4-items th { text-align: left; font-weight: bold; }
         .a4-items .num { text-align: right; }
-        .thermal-item { border-bottom: .2mm solid #ccc; padding: 1.2mm 0; }
+        .thermal-item { border-bottom: .2mm solid #ccc; padding: 1.2mm 0; table-layout: fixed; }
         .thermal-name { font-size: {{ $paper === 'thermal58' ? '8' : '9' }}pt; font-weight: bold; width: 100%; }
-        .thermal-detail { width: 100%; font-size: {{ $paper === 'thermal58' ? '7' : '8' }}pt; }
-        .thermal-total { text-align: right; font-size: {{ $paper === 'thermal58' ? '8' : '9' }}pt; font-weight: bold; }
+        .thermal-detail { width: 60%; font-size: {{ $paper === 'thermal58' ? '7' : '8' }}pt; white-space: nowrap; }
+        .thermal-total { width: 40%; text-align: right; font-size: {{ $paper === 'thermal58' ? '8' : '9' }}pt; font-weight: bold; white-space: nowrap; }
         .serial { font-size: {{ $paper === 'thermal58' ? '7' : '8' }}pt; }
         .totals { margin-top: 3mm; }
-        .totals td { padding: 1mm 0; }
+        .totals td { padding: 1mm 0; white-space: nowrap; }
         .totals .amount { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
         .totals .grand td { font-size: {{ $paper === 'a4' ? '13' : ($paper === 'thermal58' ? '10' : '11') }}pt; font-weight: bold; border-top: .4mm solid #555; border-bottom: .4mm solid #555; padding: 2mm 0; }
         .footer { margin-top: 4mm; border-top: .2mm solid #aaa; padding-top: 2mm; text-align: center; font-size: {{ $paper === 'a4' ? '9' : ($paper === 'thermal58' ? '7' : '8') }}pt; }
@@ -34,6 +34,13 @@
     </style>
 </head>
 <body>
+@php
+    $renderProductTitle = static function (string $title): string {
+        $escapedTitle = e($title);
+        return preg_replace_callback('/[\x{0370}-\x{03FF}]/u', static fn (array $match): string =>
+            '<span style="font-family: dejavusans">'.e($match[0]).'</span>', $escapedTitle) ?? $escapedTitle;
+    };
+@endphp
 <div class="brand">
     @if($logo)<img class="logo" src="{{ $logo }}" alt="">@endif
     <div class="shop">{{ $business?->businessName ?: config('app.name') }}</div>
@@ -55,12 +62,12 @@
     <table class="a4-items">
         <colgroup><col style="width:50%"><col style="width:12%"><col style="width:18%"><col style="width:20%"></colgroup>
         <thead><tr><th>{{ __('documents.product') }}</th><th class="num">{{ __('documents.quantity') }}</th><th class="num">{{ __('documents.rate') }}</th><th class="num">{{ __('documents.amount') }}</th></tr></thead>
-        <tbody>@forelse($receipt['items'] ?? [] as $line)<tr><td>{{ $line['title'] }}</td><td class="num">{{ $line['quantity'] }}</td><td class="num">{{ $line['rate'] }}</td><td class="num"><strong>{{ $line['amount'] }}</strong></td></tr>@empty<tr><td colspan="4">{{ $receipt['empty_label'] }}</td></tr>@endforelse</tbody>
+        <tbody>@forelse($receipt['items'] ?? [] as $line)<tr><td>{!! $renderProductTitle($line['title']) !!}</td><td class="num">{{ $line['quantity'] }}</td><td class="num">{{ $line['rate'] }}</td><td class="num"><strong>{{ $line['amount'] }}</strong></td></tr>@empty<tr><td colspan="4">{{ $receipt['empty_label'] }}</td></tr>@endforelse</tbody>
     </table>
 @else
     @forelse($receipt['items'] ?? [] as $line)
         <table class="thermal-item"><tbody>
-            <tr><td colspan="2" class="thermal-name">{{ $line['title'] }}</td></tr>
+            <tr><td colspan="2" class="thermal-name">{!! $renderProductTitle($line['title']) !!}</td></tr>
             <tr><td class="thermal-detail">{{ $line['quantity'] }} × {{ $line['rate'] }}</td><td class="thermal-total">{{ $line['amount'] }}</td></tr>
             @if(!empty($line['serials']))<tr><td colspan="2" class="serial">{{ __('common.s_n') }}: {{ implode(', ', $line['serials']) }}</td></tr>@endif
         </tbody></table>

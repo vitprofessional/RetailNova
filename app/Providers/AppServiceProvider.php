@@ -37,8 +37,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // A named limiter keeps first-run attempts in their own bucket; plain throttle:5,1
-        // keys by IP only, so it would share a counter with the sign-in throttle.
+        // First-run setup has its own IP-based attempt bucket.
         RateLimiter::for('first-run-setup', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
 
         //global variable

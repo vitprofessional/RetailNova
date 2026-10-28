@@ -51,7 +51,7 @@ Route::post('creat/admin', fn () => abort(410, __('authentication.setup_endpoint
 Route::post('admin/login',[
     userInfo::class,
     'adminLogin'
-])->name('adminLogin')->middleware('throttle:5,1');
+])->name('adminLogin');
 
 Route::get('/user/lock/screen',[
     userInfo::class,

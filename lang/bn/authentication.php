@@ -39,7 +39,7 @@ return [
     'confirm_password' => 'পাসওয়ার্ড নিশ্চিত করুন',
     'email' => 'ইমেইল',
     'login' => 'লগইন',
-    'logout_successful' => 'লগআউট সফল হয়েছে',
+    'logout_successful' => 'আপনি সফলভাবে লগআউট করেছেন।',
     'password' => 'পাসওয়ার্ড',
     'remember_me' => 'মনে রাখুন',
     'reset' => 'পুনঃস্থাপন',

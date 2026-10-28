@@ -30,7 +30,9 @@ class DocumentPdfRenderer
         $measure = $this->newMpdf($paper, [$width, 1000]);
         $measure->SetAutoPageBreak(false, 0);
         $measure->WriteHTML($this->html($receipt, $business, $templateType, $paper, $logo));
-        $height = max(42, ceil($measure->y + 8));
+        // The measured cursor already includes the 4 mm top margin; reserve
+        // just 1 mm below the final content to keep thermal paper compact.
+        $height = max(1, ceil($measure->y + 1));
 
         return $this->render($receipt, $business, $templateType, $paper, $logo, [$width, $height]);
     }
@@ -57,7 +59,7 @@ class DocumentPdfRenderer
         $fontDirectory = storage_path('fonts/hind-siliguri');
         $fontData = (new \Mpdf\Config\FontVariables())->getDefaults()['fontdata'];
 
-        return new Mpdf([
+        $config = [
             'mode' => 'utf-8',
             'format' => $format,
             'fontDir' => array_merge((new \Mpdf\Config\ConfigVariables())->getDefaults()['fontDir'], [$fontDirectory]),
@@ -75,10 +77,15 @@ class DocumentPdfRenderer
             'margin_left' => $paper === 'a4' ? 12 : ($paper === 'thermal58' ? 5 : 4),
             'margin_right' => $paper === 'a4' ? 12 : ($paper === 'thermal58' ? 5 : 4),
             'margin_top' => $paper === 'a4' ? 12 : 4,
-            'margin_bottom' => $paper === 'a4' ? 12 : 4,
-            'setAutoTopMargin' => 'stretch',
-            'setAutoBottomMargin' => 'stretch',
-        ]);
+            'margin_bottom' => $paper === 'a4' ? 12 : 0,
+        ];
+
+        if ($paper === 'a4') {
+            $config['setAutoTopMargin'] = 'stretch';
+            $config['setAutoBottomMargin'] = 'stretch';
+        }
+
+        return new Mpdf($config);
     }
 
     private function html(array $receipt, ?BusinessSetup $business, string $templateType, string $paper, ?string $logo): string

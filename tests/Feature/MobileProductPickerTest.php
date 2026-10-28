@@ -60,6 +60,26 @@ class MobileProductPickerTest extends TestCase
             ->assertOk()->assertJsonCount(0, 'items');
     }
 
+    public function test_same_named_products_from_other_businesses_never_leak_into_picker_results(): void
+    {
+        [$business, $actor] = $this->businessAndActor();
+        $local = Product::forceCreate([
+            'name' => 'USB-C Adapter', 'barCode' => 'LOCAL-SAME-NAME', 'businessId' => $business->id,
+        ]);
+        $foreignBusiness = $this->business('Same-name private shop');
+        $foreign = Product::forceCreate([
+            'name' => 'USB-C Adapter', 'barCode' => 'PRIVATE-SAME-NAME', 'businessId' => $foreignBusiness->id,
+        ]);
+
+        $this->actingAs($actor, 'admin');
+        $response = $this->getJson(route('m.product-picker', ['mode' => 'sale', 'q' => 'USB-C Adapter']))
+            ->assertOk()->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.product_id', $local->id);
+
+        $this->assertNotSame($foreign->id, $response->json('items.0.product_id'));
+        $this->assertSame('LOCAL-SAME-NAME', $response->json('items.0.barcode'));
+    }
+
     public function test_picker_paginates_at_twenty_and_return_mode_selects_business_owned_stock_lots(): void
     {
         [$business, $actor] = $this->businessAndActor();

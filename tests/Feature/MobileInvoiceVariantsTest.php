@@ -336,6 +336,65 @@ class MobileInvoiceVariantsTest extends TestCase
         $this->get(route('documents.pdf', ['type' => 'sale-invoice', 'id' => $foreignSale->id]))->assertNotFound();
     }
 
+    public function test_bangla_receipt_pdfs_render_three_products_in_each_paper_size(): void
+    {
+        [$business, $actor] = $this->businessAndActor();
+        $business->businessName = 'বাংলা পরীক্ষার দোকান';
+        $business->save();
+        $actor->preferred_locale = 'bn';
+        $actor->save();
+        $customer = Customer::forceCreate(['name' => 'সাধারণ কাস্টমার', 'businessId' => $business->id]);
+        $definitions = [
+            ['name' => 'উচ্চক্ষমতাসম্পন্ন প্রযুক্তি প্রিন্টার যুক্তবর্ণসহ দীর্ঘ পরীক্ষামূলক পণ্যের নাম', 'qty' => 1, 'rate' => 1000],
+            ['name' => 'Ωmega Adapter', 'qty' => 2, 'rate' => 2000],
+            ['name' => '১২ ভোল্ট ব্যাটারি', 'qty' => 12, 'rate' => 1250],
+        ];
+        $invoiceLines = [];
+        foreach ($definitions as $index => $definition) {
+            $product = Product::forceCreate(['name' => $definition['name'], 'businessId' => $business->id]);
+            $purchase = PurchaseProduct::forceCreate([
+                'businessId' => $business->id, 'productName' => $product->id,
+                'supplier' => '0', 'invoice' => 'BN-PDF-PURCHASE-'.$index,
+                'purchase_date' => '2026-10-28', 'qty' => $definition['qty'],
+                'buyPrice' => $definition['rate'], 'salePriceExVat' => $definition['rate'],
+                'totalAmount' => $definition['qty'] * $definition['rate'],
+            ]);
+            $invoiceLines[] = [$purchase, $definition];
+        }
+        $sale = SaleProduct::forceCreate([
+            'businessId' => $business->id, 'invoice' => 'SALBN202610280001', 'date' => '2026-10-28',
+            'customerId' => $customer->id, 'grandTotal' => 20000, 'totalSale' => 20000,
+            'paidAmount' => 5000, 'invoiceDue' => 15000, 'curDue' => 15000, 'salespersonId' => $actor->id,
+        ]);
+        foreach ($invoiceLines as [$purchase, $definition]) {
+            $amount = $definition['qty'] * $definition['rate'];
+            InvoiceItem::forceCreate([
+                'businessId' => $business->id, 'saleId' => $sale->id, 'purchaseId' => $purchase->id,
+                'qty' => $definition['qty'], 'salePrice' => $definition['rate'], 'buyPrice' => $definition['rate'],
+                'totalSale' => $amount, 'totalPurchase' => $amount, 'profitTotal' => 0,
+            ]);
+        }
+
+        $this->actingAs($actor, 'admin');
+        app()->setLocale('bn');
+        $directory = base_path('tests-output/q11/bn');
+        if (getenv('RN_Q11_CAPTURE') === '1' && ! is_dir($directory)) {
+            mkdir($directory, 0775, true);
+        }
+
+        foreach (['a4', 'thermal80', 'thermal58'] as $size) {
+            $response = $this->get(route('documents.pdf', ['type' => 'sale-invoice', 'id' => $sale->id, 'size' => $size]))
+                ->assertOk()->assertHeader('Content-Type', 'application/pdf');
+            $pdf = $response->getContent();
+            $this->assertStringContainsString('HindSiliguri', $pdf);
+            if (getenv('RN_Q11_CAPTURE') === '1') {
+                file_put_contents($directory.'/sale-'.$size.'.pdf', $pdf);
+            }
+        }
+
+        $this->assertSame('৳১৫,০০০', LocalizedNumber::money(15000, 'bn'));
+    }
+
     private function businessAndActor(): array
     {
         $business = BusinessSetup::forceCreate(['businessName' => 'Mobile Invoice Shop', 'businessType' => 'computer_shop']);
