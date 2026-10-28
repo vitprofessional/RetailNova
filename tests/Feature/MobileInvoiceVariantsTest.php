@@ -254,6 +254,42 @@ class MobileInvoiceVariantsTest extends TestCase
         }
     }
 
+    public function test_pdf_route_returns_embedded_hind_siliguri_and_enforces_document_business_scope(): void
+    {
+        [$business, $actor] = $this->businessAndActor();
+        $customer = Customer::forceCreate(['name' => 'PDF Customer', 'businessId' => $business->id]);
+        $product = Product::forceCreate(['name' => 'বাংলা যুক্তবর্ণ পণ্য', 'businessId' => $business->id]);
+        $purchase = PurchaseProduct::forceCreate([
+            'businessId' => $business->id, 'productName' => $product->id,
+            'supplier' => '0', 'invoice' => 'PDF-PURCHASE-1', 'purchase_date' => '2026-10-27',
+            'qty' => 12, 'buyPrice' => 1250, 'salePriceExVat' => 1500, 'totalAmount' => 15000,
+        ]);
+        $sale = SaleProduct::forceCreate([
+            'businessId' => $business->id, 'invoice' => 'SAL20261027000007', 'date' => '2026-10-27',
+            'customerId' => $customer->id, 'grandTotal' => 15000, 'totalSale' => 15000,
+            'paidAmount' => 0, 'invoiceDue' => 15000, 'curDue' => 15000, 'salespersonId' => $actor->id,
+        ]);
+        InvoiceItem::forceCreate([
+            'businessId' => $business->id, 'saleId' => $sale->id, 'purchaseId' => $purchase->id,
+            'qty' => 12, 'salePrice' => 1250, 'buyPrice' => 1000, 'totalSale' => 15000,
+            'totalPurchase' => 12000, 'profitTotal' => 3000,
+        ]);
+
+        $this->actingAs($actor, 'admin');
+        $response = $this->get(route('documents.pdf', ['type' => 'sale-invoice', 'id' => $sale->id, 'size' => 'thermal80']));
+        $response->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $pdf = $response->getContent();
+        $this->assertStringStartsWith('%PDF-', $pdf);
+        $this->assertStringContainsString('HindSiliguri', $pdf, 'PDF should embed and identify the configured Hind Siliguri font.');
+
+        $foreignBusiness = BusinessSetup::forceCreate(['businessName' => 'Foreign PDF Shop', 'businessType' => 'computer_shop']);
+        $foreignSale = SaleProduct::forceCreate([
+            'businessId' => $foreignBusiness->id, 'invoice' => 'PRIVATE-PDF-1', 'date' => '2026-10-27',
+            'grandTotal' => 5, 'totalSale' => 5, 'paidAmount' => 0, 'invoiceDue' => 5,
+        ]);
+        $this->get(route('documents.pdf', ['type' => 'sale-invoice', 'id' => $foreignSale->id]))->assertNotFound();
+    }
+
     private function businessAndActor(): array
     {
         $business = BusinessSetup::forceCreate(['businessName' => 'Mobile Invoice Shop', 'businessType' => 'computer_shop']);

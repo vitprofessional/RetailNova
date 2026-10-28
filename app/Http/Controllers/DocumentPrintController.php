@@ -17,11 +17,31 @@ use App\Models\Supplier;
 use App\Support\LocalizedNumber;
 use App\Support\MobileDateTime;
 use App\Services\PurchaseWorkflow;
+use App\Services\DocumentPdfRenderer;
 use Illuminate\Http\Request;
 
 class DocumentPrintController extends Controller
 {
     public function print(Request $request, string $type, int $id, PurchaseWorkflow $workflow)
+    {
+        [$receipt, $business, $templateType] = $this->documentViewModel($type, $id, $workflow);
+
+        $paper = $request->query('size', $request->query('printer', $business?->default_invoice_printer ?: 'thermal80'));
+        $paper = in_array($paper, ['a4', 'thermal80', 'thermal58'], true) ? $paper : 'thermal80';
+
+        return view('documents.print', compact('receipt', 'business', 'type', 'templateType', 'paper'));
+    }
+
+    public function pdf(Request $request, string $type, int $id, PurchaseWorkflow $workflow, DocumentPdfRenderer $renderer)
+    {
+        [$receipt, $business, $templateType] = $this->documentViewModel($type, $id, $workflow);
+        $paper = $request->query('size', $business?->default_invoice_printer ?: 'thermal80');
+        $paper = in_array($paper, ['a4', 'thermal80', 'thermal58'], true) ? $paper : 'thermal80';
+
+        return $renderer->response($receipt, $business, $templateType, $paper);
+    }
+
+    private function documentViewModel(string $type, int $id, PurchaseWorkflow $workflow): array
     {
         abort_unless(in_array($type, [
             'sale-invoice', 'purchase-invoice', 'quotation', 'service-invoice',
@@ -39,15 +59,13 @@ class DocumentPrintController extends Controller
             'supplier-ledger' => $this->contactLedger('supplier', $id),
         };
 
-        $paper = $request->query('size', $request->query('printer', $business?->default_invoice_printer ?: 'thermal80'));
-        $paper = in_array($paper, ['a4', 'thermal80', 'thermal58'], true) ? $paper : 'thermal80';
         $templateType = match ($type) {
             'sale-return', 'purchase-return' => 'return',
             'customer-ledger', 'supplier-ledger' => 'ledger',
             default => $type,
         };
 
-        return view('documents.print', compact('receipt', 'business', 'type', 'templateType', 'paper'));
+        return [$receipt, $business, $templateType];
     }
 
     private function saleInvoice(int $id): array

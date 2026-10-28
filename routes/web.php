@@ -908,6 +908,10 @@ Route::middleware([\App\Http\Middleware\SuperAdmin::class, 'auth:admin', \App\Ht
         'thermalPrint'
     ])->name('invoiceThermalPrint');
 
+    Route::get('/documents/{type}/{id}.pdf', [\App\Http\Controllers\DocumentPrintController::class, 'pdf'])
+        ->where(['type' => '[a-z-]+', 'id' => '[0-9]+'])
+        ->name('documents.pdf');
+
     Route::get('/documents/{type}/{id}', [\App\Http\Controllers\DocumentPrintController::class, 'print'])
         ->where(['type' => '[a-z-]+', 'id' => '[0-9]+'])
         ->name('documents.print');
