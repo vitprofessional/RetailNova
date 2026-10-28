@@ -47,7 +47,7 @@
     };
 @endphp
 <div class="brand">
-    @if($logo)<img class="logo" src="{{ $logo }}" alt="">@endif
+    @if($logo)<img class="logo" src="{{ str_replace('\\', '/', $logo) }}" alt="">@endif
     <div class="shop">{{ $business?->businessName ?: config('app.name') }}</div>
     @if($business?->businessLocation)<div class="contact">{{ $business->businessLocation }}</div>@endif
     @if($business?->mobile)<div class="contact">{{ __('common.phone') }}: {{ $business->mobile }}</div>@endif

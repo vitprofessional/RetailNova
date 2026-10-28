@@ -22,6 +22,7 @@ use App\Models\ServiceInvoiceItem;
 use App\Models\Supplier;
 use App\Support\LocalizedNumber;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Smalot\PdfParser\Parser as PdfParser;
 use Symfony\Component\Process\Process;
 use Tests\TestCase;
@@ -400,6 +401,124 @@ class MobileInvoiceVariantsTest extends TestCase
         }
 
         $this->assertSame('৳১৫,০০০', LocalizedNumber::money(15000, 'bn'));
+    }
+
+    public function test_large_logo_is_resized_cached_and_pdf_succeeds_on_all_paper_sizes(): void
+    {
+        if (! function_exists('imagecreatetruecolor') || ! function_exists('imagecreatefromstring')) {
+            $this->markTestSkipped('GD is required for PDF logo resizing coverage.');
+        }
+
+        [$business, $actor] = $this->businessAndActor();
+        $sale = SaleProduct::forceCreate([
+            'businessId' => $business->id, 'invoice' => 'LARGE-LOGO-1', 'date' => '2026-10-28',
+            'grandTotal' => 0, 'totalSale' => 0, 'paidAmount' => 0, 'invoiceDue' => 0,
+            'salespersonId' => $actor->id,
+        ]);
+        $this->actingAs($actor, 'admin');
+
+        $sourceDirectory = public_path('uploads/business');
+        if (! is_dir($sourceDirectory)) mkdir($sourceDirectory, 0775, true);
+        $sourceName = 'pdf-logo-test-'.bin2hex(random_bytes(6)).'.png';
+        $sourcePath = $sourceDirectory.'/'.$sourceName;
+        $this->writeLargePngWithMetadata($sourcePath, 4000, 3 * 1024 * 1024);
+        $this->assertGreaterThanOrEqual(3 * 1024 * 1024, filesize($sourcePath));
+        $business->forceFill(['businessLogo' => 'uploads/business/'.$sourceName])->save();
+        $cachePattern = storage_path('app/pdf-logos/'.$business->id.'-*.png');
+
+        try {
+            foreach (['a4' => 600, 'thermal80' => 300, 'thermal58' => 300] as $size => $maxWidth) {
+                $this->get(route('documents.pdf', ['type' => 'sale-invoice', 'id' => $sale->id, 'size' => $size]))
+                    ->assertOk()->assertHeader('Content-Type', 'application/pdf');
+                $cacheVariant = $size === 'a4' ? 'a4' : 'thermal';
+                $cacheFiles = glob(storage_path('app/pdf-logos/'.$business->id.'-*-'.$cacheVariant.'.png')) ?: [];
+                $this->assertNotEmpty($cacheFiles, "Expected a resized logo cache for {$size}. Found: ".implode(', ', array_map('basename', glob($cachePattern) ?: [])));
+                $this->assertCount(1, $cacheFiles, "Expected one reusable {$cacheVariant} logo cache.");
+                $cachePath = $cacheFiles[0];
+                $image = getimagesize($cachePath);
+                $this->assertSame(IMAGETYPE_PNG, $image[2]);
+                $this->assertLessThanOrEqual($maxWidth, $image[0]);
+                $this->assertSame($image[0], $image[1], 'The square logo should retain its aspect ratio.');
+                $cachedImage = imagecreatefrompng($cachePath);
+                $rgba = imagecolorsforindex($cachedImage, imagecolorat($cachedImage, 5, 5));
+                $this->assertGreaterThan(0, $rgba['alpha'], 'PNG transparency should be retained in the cached logo.');
+
+                if ($size === 'thermal80') {
+                    $this->assertSame($rgba['red'], $rgba['green'], 'Thermal logo should be grayscale.');
+                    $this->assertSame($rgba['green'], $rgba['blue'], 'Thermal logo should be grayscale.');
+                }
+                imagedestroy($cachedImage);
+            }
+
+            $cacheFiles = glob($cachePattern) ?: [];
+            $this->assertCount(2, $cacheFiles, 'A4 and thermal logo variants should each be cached once.');
+            $before = array_map('hash_file', array_fill(0, count($cacheFiles), 'sha256'), $cacheFiles);
+            $this->get(route('documents.pdf', ['type' => 'sale-invoice', 'id' => $sale->id, 'size' => 'a4']))->assertOk();
+            $afterFiles = glob($cachePattern) ?: [];
+            $after = array_map('hash_file', array_fill(0, count($afterFiles), 'sha256'), $afterFiles);
+            $this->assertSame($before, $after, 'A repeated request should reuse the existing resized cache.');
+            $this->assertCount(2, $afterFiles);
+        } finally {
+            if (is_file($sourcePath)) unlink($sourcePath);
+            foreach (glob($cachePattern) ?: [] as $cacheFile) unlink($cacheFile);
+            foreach (glob(storage_path('app/pdf-logos/'.$business->id.'-*.png.lock')) ?: [] as $lockFile) unlink($lockFile);
+        }
+    }
+
+    public function test_invalid_configured_logo_is_logged_and_omitted_without_failing_pdf(): void
+    {
+        [$business, $actor] = $this->businessAndActor();
+        $sale = SaleProduct::forceCreate([
+            'businessId' => $business->id, 'invoice' => 'BROKEN-LOGO-1', 'date' => '2026-10-28',
+            'grandTotal' => 0, 'totalSale' => 0, 'paidAmount' => 0, 'invoiceDue' => 0,
+            'salespersonId' => $actor->id,
+        ]);
+        $sourceDirectory = public_path('uploads/business');
+        if (! is_dir($sourceDirectory)) mkdir($sourceDirectory, 0775, true);
+        $sourceName = 'pdf-logo-broken-'.bin2hex(random_bytes(6)).'.png';
+        $sourcePath = $sourceDirectory.'/'.$sourceName;
+        file_put_contents($sourcePath, 'not a PNG image');
+        $cacheLockPath = storage_path('app/pdf-logos/'.$business->id.'-'.hash('sha256', $sourcePath.'|'.filemtime($sourcePath)).'-a4.png.lock');
+        $business->forceFill(['businessLogo' => 'uploads/business/'.$sourceName])->save();
+        Log::spy();
+
+        try {
+            $this->actingAs($actor, 'admin')
+                ->get(route('documents.pdf', ['type' => 'sale-invoice', 'id' => $sale->id, 'size' => 'a4']))
+                ->assertOk()->assertHeader('Content-Type', 'application/pdf');
+            Log::shouldHaveReceived('warning')->withArgs(fn (string $message, array $context): bool =>
+                str_contains($message, 'without logo') && $context['business_id'] === $business->id
+            )->once();
+        } finally {
+            if (is_file($sourcePath)) unlink($sourcePath);
+            if (is_file($cacheLockPath)) unlink($cacheLockPath);
+        }
+    }
+
+    private function writeLargePngWithMetadata(string $path, int $dimension, int $metadataBytes): void
+    {
+        $script = <<<'PHP'
+$path = $argv[1];
+$dimension = (int) $argv[2];
+$metadataBytes = (int) $argv[3];
+$image = imagecreatetruecolor($dimension, $dimension);
+imagealphablending($image, false);
+imagesavealpha($image, true);
+$color = imagecolorallocatealpha($image, 180, 40, 120, 48);
+imagefill($image, 0, 0, $color);
+imagepng($image, $path, 6);
+imagedestroy($image);
+$png = file_get_contents($path);
+$endChunk = strrpos($png, "\x00\x00\x00\x00IEND");
+if ($endChunk === false) exit(2);
+$payload = "Comment\0".str_repeat('L', $metadataBytes);
+$chunkType = 'tEXt';
+$chunkData = pack('N', strlen($payload)).$chunkType.$payload.hash('crc32b', $chunkType.$payload, true);
+file_put_contents($path, substr($png, 0, $endChunk).$chunkData.substr($png, $endChunk));
+PHP;
+        $process = new Process([PHP_BINARY, '-d', 'memory_limit=256M', '-r', $script, $path, (string) $dimension, (string) $metadataBytes]);
+        $process->run();
+        $this->assertTrue($process->isSuccessful(), 'Could not create the large logo fixture: '.$process->getErrorOutput());
     }
 
     private function businessAndActor(): array
