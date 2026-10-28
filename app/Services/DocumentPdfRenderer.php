@@ -73,6 +73,7 @@ class DocumentPdfRenderer
             'default_font' => 'hind',
             'useSubstitutions' => true,
             'backupSubsFont' => ['dejavusans'],
+            'shrink_tables_to_fit' => 0,
             'tempDir' => $temporaryDirectory,
             'margin_left' => $paper === 'a4' ? 12 : ($paper === 'thermal58' ? 5 : 4),
             'margin_right' => $paper === 'a4' ? 12 : ($paper === 'thermal58' ? 5 : 4),

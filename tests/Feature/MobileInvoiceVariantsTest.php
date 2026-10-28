@@ -345,7 +345,7 @@ class MobileInvoiceVariantsTest extends TestCase
         $actor->save();
         $customer = Customer::forceCreate(['name' => 'সাধারণ কাস্টমার', 'businessId' => $business->id]);
         $definitions = [
-            ['name' => 'উচ্চক্ষমতাসম্পন্ন প্রযুক্তি প্রিন্টার যুক্তবর্ণসহ দীর্ঘ পরীক্ষামূলক পণ্যের নাম', 'qty' => 1, 'rate' => 1000],
+            ['name' => 'উচ্চক্ষমতাসম্পন্ন প্রযুক্তি প্রিন্টার যুক্তবর্ণসহ দীর্ঘ পরীক্ষামূলক পণ্যের নাম এবং বাণিজ্যিক ব্যবহারের জন্য অতিরিক্ত সংযুক্ত অংশ', 'qty' => 1, 'rate' => 1000],
             ['name' => 'Ωmega Adapter', 'qty' => 2, 'rate' => 2000],
             ['name' => '১২ ভোল্ট ব্যাটারি', 'qty' => 12, 'rate' => 1250],
         ];
@@ -387,6 +387,13 @@ class MobileInvoiceVariantsTest extends TestCase
                 ->assertOk()->assertHeader('Content-Type', 'application/pdf');
             $pdf = $response->getContent();
             $this->assertStringContainsString('HindSiliguri', $pdf);
+            if ($size === 'a4') {
+                $document = (new \Smalot\PdfParser\Parser())->parseContent($pdf);
+                $text = preg_replace('/\s+/u', '', $document->getText());
+                $this->assertCount(1, $document->getPages(), 'The long-name A4 receipt should remain on one page.');
+                $this->assertStringContainsString('ΩmegaAdapter', (string) $text);
+                $this->assertStringContainsString('৳১৫,০০০', (string) $text);
+            }
             if (getenv('RN_Q11_CAPTURE') === '1') {
                 file_put_contents($directory.'/sale-'.$size.'.pdf', $pdf);
             }

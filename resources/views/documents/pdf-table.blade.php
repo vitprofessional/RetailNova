@@ -14,9 +14,14 @@
         .doc-meta { text-align: center; font-size: {{ $paper === 'a4' ? '9' : ($paper === 'thermal58' ? '7' : '8') }}pt; margin-bottom: 3mm; }
         .party { border-top: .2mm solid #aaa; border-bottom: .2mm solid #aaa; padding: 2mm 0; margin-bottom: 3mm; }
         .party-name { font-weight: bold; }
-        .a4-items th, .a4-items td { padding: 1.5mm 1mm; border-bottom: .2mm solid #aaa; }
+        .a4-items { table-layout: fixed; width: 100%; border-spacing: 0; }
+        .a4-items th, .a4-items td { padding: 1.5mm; border-bottom: .2mm solid #aaa; }
         .a4-items th { text-align: left; font-weight: bold; }
-        .a4-items .num { text-align: right; }
+        .a4-items .product-title { width: 52%; word-wrap: break-word; overflow-wrap: break-word; }
+        .a4-items .quantity { width: 10%; }
+        .a4-items .rate { width: 18%; }
+        .a4-items .amount { width: 20%; }
+        .a4-items .num { text-align: right; white-space: nowrap; }
         .thermal-item { border-bottom: .2mm solid #ccc; padding: 1.2mm 0; table-layout: fixed; }
         .thermal-name { font-size: {{ $paper === 'thermal58' ? '8' : '9' }}pt; font-weight: bold; width: 100%; }
         .thermal-detail { width: 60%; font-size: {{ $paper === 'thermal58' ? '7' : '8' }}pt; white-space: nowrap; }
@@ -60,9 +65,8 @@
     <div class="current-balance">{{ __('documents.current_balance') }}: {{ $receipt['current_balance'] }}</div>
 @elseif($paper === 'a4')
     <table class="a4-items">
-        <colgroup><col style="width:50%"><col style="width:12%"><col style="width:18%"><col style="width:20%"></colgroup>
-        <thead><tr><th>{{ __('documents.product') }}</th><th class="num">{{ __('documents.quantity') }}</th><th class="num">{{ __('documents.rate') }}</th><th class="num">{{ __('documents.amount') }}</th></tr></thead>
-        <tbody>@forelse($receipt['items'] ?? [] as $line)<tr><td>{!! $renderProductTitle($line['title']) !!}</td><td class="num">{{ $line['quantity'] }}</td><td class="num">{{ $line['rate'] }}</td><td class="num"><strong>{{ $line['amount'] }}</strong></td></tr>@empty<tr><td colspan="4">{{ $receipt['empty_label'] }}</td></tr>@endforelse</tbody>
+        <thead><tr><th class="product-title" width="52%" style="width:52%">{{ __('documents.product') }}</th><th class="quantity num" width="10%" style="width:10%">{{ __('documents.quantity') }}</th><th class="rate num" width="18%" style="width:18%">{{ __('documents.rate') }}</th><th class="amount num" width="20%" style="width:20%">{{ __('documents.amount') }}</th></tr></thead>
+        <tbody>@forelse($receipt['items'] ?? [] as $line)<tr><td class="product-title" width="52%" style="width:52%">{!! $renderProductTitle($line['title']) !!}</td><td class="quantity num" width="10%" style="width:10%">{{ $line['quantity'] }}</td><td class="rate num" width="18%" style="width:18%">{{ $line['rate'] }}</td><td class="amount num" width="20%" style="width:20%"><strong>{{ $line['amount'] }}</strong></td></tr>@empty<tr><td colspan="4">{{ $receipt['empty_label'] }}</td></tr>@endforelse</tbody>
     </table>
 @else
     @forelse($receipt['items'] ?? [] as $line)
