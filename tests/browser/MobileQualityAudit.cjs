@@ -118,6 +118,34 @@ async function inspectPage(page) {
         const hasPseudoGlyph = pseudo.content && pseudo.content !== 'none' && pseudo.content !== 'normal' && pseudo.content !== '""';
         return rect.width < 2 || (!icon.matches('svg') && !icon.querySelector('svg') && !hasPseudoGlyph);
       }).slice(0, 20).map(icon => ({ className: typeof icon.className === 'string' ? icon.className : icon.getAttribute('class'), width: Math.round(icon.getBoundingClientRect().width), glyph: getComputedStyle(icon, '::before').content }));
+    // Check action/control overlap at the furthest scroll position. Fixed action bars
+    // naturally pass over fields while scrolling, but must never hide a field that
+    // the user has brought to the end of the form.
+    const originalScrollTop = window.scrollY;
+    document.scrollingElement.scrollTop = document.scrollingElement.scrollHeight;
+    const overlappingControls = [];
+    const controls = [...document.querySelectorAll('input,select,textarea')].filter(visible);
+    const actionButtons = [...document.querySelectorAll('button')].filter(visible);
+    for (const button of actionButtons) {
+      const buttonRect = button.getBoundingClientRect();
+      for (const control of controls) {
+        const rect = control.getBoundingClientRect();
+        const overlapX = Math.min(buttonRect.right, rect.right) - Math.max(buttonRect.left, rect.left);
+        const overlapY = Math.min(buttonRect.bottom, rect.bottom) - Math.max(buttonRect.top, rect.top);
+        if (overlapX > 2 && overlapY > 2) overlappingControls.push({ button: button.textContent.trim().slice(0,40), control: control.name || control.id || control.tagName.toLowerCase(), overlap: { x: Math.round(overlapX), y: Math.round(overlapY) } });
+      }
+    }
+    const stickyCoveredFields = [];
+    for (const footer of [...document.querySelectorAll('.rn-m-sticky-actions,.rn-q6-sticky,.rn-q6-payment-footer,[data-rn-sticky-actions]')].filter(visible)) {
+      const footerRect = footer.getBoundingClientRect();
+      for (const field of controls) {
+        const rect = field.getBoundingClientRect();
+        const overlapY = Math.min(footerRect.bottom, rect.bottom) - Math.max(footerRect.top, rect.top);
+        const overlapX = Math.min(footerRect.right, rect.right) - Math.max(footerRect.left, rect.left);
+        if (overlapX > 2 && overlapY > 2) stickyCoveredFields.push({ footer: String(footer.className || footer.tagName), field: field.name || field.id || field.tagName.toLowerCase(), overlap: { x: Math.round(overlapX), y: Math.round(overlapY) } });
+      }
+    }
+    window.scrollTo(0, originalScrollTop);
     const unwrappedFlash = [...document.querySelectorAll('.alert,.alert-success,.alert-danger,.alert-warning,[data-flash-message]')]
       .filter(visible).filter(el => !el.closest('[data-rn-feedback],[data-rn-toast],[data-rn-error-banner]'))
       .slice(0, 12).map(el => ({ text: el.textContent.trim().slice(0,100), className: typeof el.className === 'string' ? el.className : '' }));
@@ -126,7 +154,7 @@ async function inspectPage(page) {
       range.selectNodeContents(el);
       return range.getClientRects().length > 1 || el.scrollWidth > el.clientWidth;
     }).map(el => el.textContent.trim().slice(0,40));
-    return { badFont, badSize, overflow, nestedCards, latinDigits, negativeMoney, emptyAvatars, headingGutter, nativeDialogs, brokenActionIcons, unwrappedFlash, wrappedNumbers, isDocument };
+    return { badFont, badSize, overflow, nestedCards, latinDigits, negativeMoney, emptyAvatars, headingGutter, nativeDialogs, brokenActionIcons, overlappingControls, stickyCoveredFields, unwrappedFlash, wrappedNumbers, isDocument };
   });
 }
 
@@ -205,7 +233,7 @@ async function main() {
   // Source candidates are reported separately; only executed native dialogs fail the browser audit.
   const staticDialogCalls = scanAppNativeDialogCalls();
   if (process.argv.includes('--self-test')) {
-    await page.setContent(`<html lang="bn"><head><style>:root{--rn-color-danger:#c4320a} body{margin:0;font:14px Arial} .card{border:1px solid #aaa;border-radius:8px;background:white;padding:8px} .rn-m-number{color:#111} .rn-m-card-avatar{display:inline-block;width:44px;height:44px}</style></head><body><h2>শিরোনাম</h2><div class="card"><div class="card">nested</div></div><span>মোট 123</span><span class="rn-m-number">−৳১২</span><span class="rn-m-card-avatar" data-rn-avatar></span><div class="alert">flash outside feedback</div><button><i class="las la-plus"></i>যোগ</button></body></html>`);
+    await page.setContent(`<html lang="bn"><head><style>:root{--rn-color-danger:#c4320a} body{margin:0;font:14px Arial} .card{border:1px solid #aaa;border-radius:8px;background:white;padding:8px} .rn-m-number{color:#111} .rn-m-card-avatar{display:inline-block;width:44px;height:44px} .test-sticky{position:fixed;bottom:0;left:0;width:100%;height:30px;background:#ddd} .test-overlap{position:absolute;top:0;left:0;width:100px;height:40px} #overlap-input{position:absolute;top:10px;left:10px;width:120px;height:40px} #covered-input{position:fixed;bottom:0;left:4px;width:80px;height:28px}</style></head><body><h2>শিরোনাম</h2><div class="card"><div class="card">nested</div></div><span>মোট 123</span><span class="rn-m-number">−৳১২</span><span class="rn-m-card-avatar" data-rn-avatar></span><div class="alert">flash outside feedback</div><button><i class="las la-plus"></i>যোগ</button><button class="test-overlap">ওভারল্যাপ</button><input id="overlap-input"><input id="covered-input" name="covered"><div style="height:900px"></div><div class="test-sticky rn-m-sticky-actions">sticky</div></body></html>`);
     await page.evaluate(() => {
       window.__rnNativeDialogCalls = [];
       for (const method of ['alert', 'confirm', 'prompt']) {
@@ -215,7 +243,7 @@ async function main() {
       alert('bad'); confirm('bad'); prompt('bad');
     });
     const result = await inspectPage(page);
-    const catches = { nested: result.nestedCards.length > 0, latinDigits: result.latinDigits.length > 0, negativeMoney: result.negativeMoney.length > 0, emptyAvatar: result.emptyAvatars.length > 0, headingGutter: result.headingGutter.length > 0, nativeDialogs: result.nativeDialogs.length === 3, brokenActionIcons: result.brokenActionIcons.length > 0, unwrappedFlash: result.unwrappedFlash.length > 0 };
+    const catches = { nested: result.nestedCards.length > 0, latinDigits: result.latinDigits.length > 0, negativeMoney: result.negativeMoney.length > 0, emptyAvatar: result.emptyAvatars.length > 0, headingGutter: result.headingGutter.length > 0, nativeDialogs: result.nativeDialogs.length === 3, brokenActionIcons: result.brokenActionIcons.length > 0, overlappingControls: result.overlappingControls.length > 0, stickyCoveredFields: result.stickyCoveredFields.length > 0, unwrappedFlash: result.unwrappedFlash.length > 0 };
     fs.writeFileSync(path.join(out, 'audit-selftest.json'), JSON.stringify({ caught: catches, findings: result }, null, 2));
     await browser.close();
     const missed = Object.entries(catches).filter(([, caught]) => !caught).map(([name]) => name);
@@ -356,7 +384,7 @@ async function main() {
         const result = await inspectPage(page);
         const slug = String(i+1).padStart(3, '0') + '-' + new URL(url).pathname.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').slice(0,50);
         await page.screenshot({ path: path.join(out, slug + '.png'), fullPage: false });
-        for (const check of ['badFont','badSize','nestedCards','latinDigits','negativeMoney','emptyAvatars','headingGutter','nativeDialogs','brokenActionIcons','unwrappedFlash']) if (result[check].length) findings.push({ page: url, check, details: result[check] });
+        for (const check of ['badFont','badSize','nestedCards','latinDigits','negativeMoney','emptyAvatars','headingGutter','nativeDialogs','brokenActionIcons','overlappingControls','stickyCoveredFields','unwrappedFlash']) if (result[check].length) findings.push({ page: url, check, details: result[check] });
         if (result.wrappedNumbers.length) findings.push({ page: url, check: 'wrapped-numbers', details: result.wrappedNumbers });
         if (result.overflow) findings.push({ page: url, check: 'horizontal-overflow' });
         if (result.isDocument) {

@@ -42,20 +42,16 @@
             </div>
 
             <div class="rn-m-form-grid rn-m-form-grid--2">
-                <div class="rn-m-field-with-action">
-                    <x-m.field name="category" id="categoryList" :label="__('inventory.category')"
-                               :options="['' => __('inventory.select')] + collect($categoryList)->pluck('name', 'id')->all()"
-                               :value="$selectedCategory" />
-                    <button type="button" class="rn-m-form-quick-add" data-toggle="modal" data-target="#categoryModal"
-                            aria-label="{{ __('inventory.create_category') }}"><i class="ri-add-line" aria-hidden="true"></i></button>
-                </div>
-                <div class="rn-m-field-with-action">
-                    <x-m.field name="unitName" id="unitName" :label="__('inventory.unit')"
-                               :options="collect($productUnitList)->pluck('name', 'id')->all()"
-                               :value="$selectedUnit" />
-                    <button type="button" class="rn-m-form-quick-add" data-toggle="modal" data-target="#productUnitModal"
-                            aria-label="{{ __('inventory.create_product_unit') }}"><i class="ri-add-line" aria-hidden="true"></i></button>
-                </div>
+                <x-m.field name="category" id="categoryList" :label="__('inventory.category')"
+                           :options="['' => __('inventory.select')] + collect($categoryList)->pluck('name', 'id')->all()"
+                           :value="$selectedCategory">
+                    <x-slot:action><button type="button" class="rn-m-field-action-button" data-toggle="modal" data-target="#categoryModal"><i class="ri-add-line" aria-hidden="true"></i>{{ __('inventory.quick_add_category') }}</button></x-slot:action>
+                </x-m.field>
+                <x-m.field name="unitName" id="unitName" :label="__('inventory.unit')"
+                           :options="collect($productUnitList)->pluck('name', 'id')->all()"
+                           :value="$selectedUnit">
+                    <x-slot:action><button type="button" class="rn-m-field-action-button" data-toggle="modal" data-target="#productUnitModal"><i class="ri-add-line" aria-hidden="true"></i>{{ __('inventory.quick_add_unit') }}</button></x-slot:action>
+                </x-m.field>
             </div>
         </x-m.form-section>
 
@@ -67,13 +63,11 @@
         <details class="rn-m-form-accordion" @if($errors->has('details') || $errors->has('brand')) open @endif>
             <summary>{{ __('inventory.more_information') }} <i class="ri-arrow-down-s-line" aria-hidden="true"></i></summary>
             <div class="rn-m-form-accordion-body">
-                <div class="rn-m-field-with-action">
-                    <x-m.field name="brand" id="brand" :label="__('inventory.brand')"
-                               :options="['' => __('inventory.select')] + collect($brandList)->pluck('name', 'id')->all()"
-                               :value="$selectedBrand" />
-                    <button type="button" class="rn-m-form-quick-add" data-toggle="modal" data-target="#createBrand"
-                            aria-label="{{ __('inventory.create_brand') }}"><i class="ri-add-line" aria-hidden="true"></i></button>
-                </div>
+                <x-m.field name="brand" id="brand" :label="__('inventory.brand')"
+                           :options="['' => __('inventory.select')] + collect($brandList)->pluck('name', 'id')->all()"
+                           :value="$selectedBrand">
+                    <x-slot:action><button type="button" class="rn-m-field-action-button" data-toggle="modal" data-target="#createBrand"><i class="ri-add-line" aria-hidden="true"></i>{{ __('inventory.quick_add_brand') }}</button></x-slot:action>
+                </x-m.field>
                 <x-m.field name="details" id="details" type="textarea" :label="__('inventory.details')"
                            :value="$profile->details ?? ''" maxlength="1000" />
                 <button type="reset" class="rn-m-btn rn-m-btn--outline rn-m-form-reset">{{ __('inventory.reset') }}</button>

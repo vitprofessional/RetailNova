@@ -19,7 +19,7 @@
         'confirm' => __('inventory.delete').' '.$item->name.'?',
     ]);
 @endphp
-<div class="card">
+<div class="card rn-m-master-shell">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-4 rn-m-form-page-title">
             <h4 class="mb-0">@if(isset($profile)) Edit Category @else Add Category @endif</h4>

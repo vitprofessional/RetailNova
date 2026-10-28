@@ -192,7 +192,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="{{ __('inventory.close') }}"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
-                <form action="{{ route('createBrand') }}" method="GET" id="brandForm" data-ajax="true" data-target="#brand" data-modal-id="createBrand">
+                <form action="{{ route('createBrand') }}" method="GET" id="brandForm" data-ajax="true" data-target="#brand" data-modal-id="createBrand" data-rn-created-label="{{ __('inventory.brand_added') }}">
                     <div class="mb-3">
                         <label for="brandName" class="form-label">{{ __('inventory.brand_name') }} <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="brandName" name="name" placeholder="{{ __('common.enter_brand_name') }}" required />
@@ -216,7 +216,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="{{ __('inventory.close') }}"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
-                <form action="{{ route('createCategory') }}" method="GET" id="categoryForm" data-ajax="true" data-target="#categoryList" data-modal-id="categoryModal">
+                <form action="{{ route('createCategory') }}" method="GET" id="categoryForm" data-ajax="true" data-target="#categoryList" data-modal-id="categoryModal" data-rn-created-label="{{ __('inventory.category_added') }}">
                     <div class="mb-3">
                         <label for="categoryName" class="form-label">{{ __('inventory.category_name') }} <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="categoryName" name="name" placeholder="{{ __('common.enter_category_name') }}" required />
@@ -240,7 +240,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="{{ __('inventory.close') }}"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
-                <form action="{{ route('createProductUnit') }}" method="GET" id="productUnitForm" data-ajax="true" data-target="#unitName" data-modal-id="productUnitModal">
+                <form action="{{ route('createProductUnit') }}" method="GET" id="productUnitForm" data-ajax="true" data-target="#unitName" data-modal-id="productUnitModal" data-rn-created-label="{{ __('inventory.unit_added') }}">
                     <div class="mb-3">
                         <label for="productUnitName" class="form-label">{{ __('inventory.unit_name') }} <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="productUnitName" name="name" placeholder="{{ __('common.enter_product_unit_name') }}" required />

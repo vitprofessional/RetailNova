@@ -419,6 +419,16 @@ document.addEventListener('submit', function(e){
                 if(tgt && result && result.data){
                     var nodes = document.querySelectorAll(tgt);
                     nodes.forEach(function(n){ try{ n.innerHTML = result.data; }catch(e){} });
+                    if(f.dataset.rnCreatedLabel){
+                        nodes.forEach(function(select){
+                            if(!select || select.tagName !== 'SELECT') return;
+                            var createdOption = Array.prototype.find.call(select.options, function(option){ return String(option.value || '').trim() !== ''; });
+                            if(createdOption){
+                                select.value = createdOption.value;
+                                select.dispatchEvent(new Event('change', {bubbles:true}));
+                            }
+                        });
+                    }
                     if(tgt === '#productName'){
                         var productSelect = document.querySelector('#productName');
                         if(productSelect){
@@ -496,7 +506,13 @@ document.addEventListener('submit', function(e){
                 // Show success message
                 if(result && result.message){
                     try{
-                        if(typeof window.showToast === 'function'){
+                        if(f.dataset.rnCreatedLabel && result.data){
+                            var nameField = f.querySelector('[name="name"]');
+                            var createdName = nameField ? nameField.value.trim() : '';
+                            var specificMessage = f.dataset.rnCreatedLabel + (createdName ? ' — ' + createdName : '');
+                            if(window.RNToast && typeof window.RNToast.success === 'function') window.RNToast.success(specificMessage);
+                            else if(typeof window.showToast === 'function') window.showToast('', specificMessage, 'success');
+                        }else if(typeof window.showToast === 'function'){
                             window.showToast(window.RNTranslate('common.client_success'), result.message, 'success');
                         }
                     }catch(e){}

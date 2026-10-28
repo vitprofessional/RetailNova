@@ -134,9 +134,24 @@
                     <section class="rn-product-modal-section" aria-labelledby="rn-product-modal-classification">
                         <div class="rn-product-modal-section-heading"><i class="las la-tags" aria-hidden="true"></i><h3 id="rn-product-modal-classification">{{ __('purchases.product_classification') }}</h3></div>
                         <div class="rn-product-modal-section-body rn-product-modal-three">
+                            @mobile
+                            <div class="rn-product-modal-mobile-fields">
+                                <x-m.field name="brand" id="brandName" :label="__('purchases.brand_name')" :options="['' => __('purchases.select')] + collect($brandList ?? [])->pluck('name', 'id')->all()" required>
+                                    <x-slot:action><button type="button" class="rn-m-field-action-button" data-toggle="modal" data-target="#createBrand"><i class="ri-add-line" aria-hidden="true"></i>{{ __('inventory.quick_add_brand') }}</button></x-slot:action>
+                                </x-m.field>
+                                <x-m.field name="category" id="categoryName" :label="__('purchases.product_category')" :options="['' => __('purchases.select')] + collect($categoryList ?? [])->pluck('name', 'id')->all()" required>
+                                    <x-slot:action><button type="button" class="rn-m-field-action-button" data-toggle="modal" data-target="#categoryModal"><i class="ri-add-line" aria-hidden="true"></i>{{ __('inventory.quick_add_category') }}</button></x-slot:action>
+                                </x-m.field>
+                                <x-m.field name="unitName" id="unit" :label="__('purchases.product_unit')" :options="['' => __('purchases.select')] + collect($productUnitList ?? [])->pluck('name', 'id')->all()" required>
+                                    <x-slot:action><button type="button" class="rn-m-field-action-button" data-toggle="modal" data-target="#productUnitModal"><i class="ri-add-line" aria-hidden="true"></i>{{ __('inventory.quick_add_unit') }}</button></x-slot:action>
+                                </x-m.field>
+                            </div>
+                            @endmobile
+                            @desktop
                             <div class="form-group"><label for="brandName">{{ __('purchases.brand_name') }} <span class="text-danger">*</span></label><div class="rn-product-select-action"><span class="rn-product-select-icon" aria-hidden="true"><i class="las la-building"></i></span><select id="brandName" class="form-control" name="brand" required><option value="">{{ __('purchases.select') }}</option>@foreach($brandList ?? [] as $brandData)<option value="{{ $brandData->id }}">{{ $brandData->name }}</option>@endforeach</select><button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#createBrand" aria-label="{{ __('purchases.brand') }}"><i class="las la-plus" aria-hidden="true"></i></button></div></div>
                             <div class="form-group"><label for="categoryName">{{ __('purchases.product_category') }} <span class="text-danger">*</span></label><div class="rn-product-select-action"><span class="rn-product-select-icon" aria-hidden="true"><i class="las la-tag"></i></span><select id="categoryName" class="form-control" name="category" required><option value="">{{ __('purchases.select') }}</option>@foreach($categoryList ?? [] as $categoryData)<option value="{{ $categoryData->id }}">{{ $categoryData->name }}</option>@endforeach</select><button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#categoryModal" aria-label="{{ __('purchases.category') }}"><i class="las la-plus" aria-hidden="true"></i></button></div></div>
                             <div class="form-group"><label for="unit">{{ __('purchases.product_unit') }} <span class="text-danger">*</span></label><div class="rn-product-select-action"><span class="rn-product-select-icon" aria-hidden="true"><i class="las la-layer-group"></i></span><select id="unit" class="form-control" name="unitName" required><option value="">{{ __('purchases.select') }}</option>@foreach($productUnitList ?? [] as $productUnitData)<option value="{{ $productUnitData->id }}">{{ $productUnitData->name }}</option>@endforeach</select><button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#productUnitModal" aria-label="{{ __('purchases.product_unit') }}"><i class="las la-plus" aria-hidden="true"></i></button></div></div>
+                            @enddesktop
                         </div>
                     </section>
                     <section class="rn-product-modal-section" aria-labelledby="rn-product-modal-additional">
@@ -166,7 +181,7 @@
                 <button type="button" class="btn-close"  data-onclick="closeModel('createBrand','brandForm')" aria-label="{{ __('purchases.close') }}"></button>
             </div>
             <div class="modal-body">
-                <form action="{{ route('createBrand') }}" method="GET" id="brandForm" data-ajax="true" data-target="#brandName" data-modal-id="createBrand">
+                <form action="{{ route('createBrand') }}" method="GET" id="brandForm" data-ajax="true" data-target="#brandName" data-modal-id="createBrand" data-rn-created-label="{{ __('inventory.brand_added') }}">
                     @csrf
                     <div class="mb-3">
                         <label for="NewBrand" class="form-label">{{ __('purchases.brand_name') }}</label>
@@ -191,7 +206,7 @@
                 <button type="button" class="btn-close"  data-onclick="closeModel('categoryModal','categoryForm')" aria-label="{{ __('purchases.close') }}"></button>
             </div>
             <div class="modal-body">
-                <form action="{{ route('createCategory') }}" method="GET" id="categoryForm" data-ajax="true" data-target="#categoryName" data-modal-id="categoryModal">
+                <form action="{{ route('createCategory') }}" method="GET" id="categoryForm" data-ajax="true" data-target="#categoryName" data-modal-id="categoryModal" data-rn-created-label="{{ __('inventory.category_added') }}">
                     @csrf
                 <div class="mb-3">
                     <label for="NewCategory" class="form-label">{{ __('purchases.category') }}</label>
@@ -217,7 +232,7 @@
                 <button type="button" class="btn-close" data-onclick="closeModel('productUnitModal','productUnitForm')" aria-label="{{ __('purchases.close') }}"></button>
             </div>
             <div class="modal-body">
-                <form action="{{ route('createProductUnit') }}" method="GET" id="productUnitForm" data-ajax="true" data-target="#unit" data-modal-id="productUnitModal">
+                <form action="{{ route('createProductUnit') }}" method="GET" id="productUnitForm" data-ajax="true" data-target="#unit" data-modal-id="productUnitModal" data-rn-created-label="{{ __('inventory.unit_added') }}">
                     @csrf
                 <div class="mb-3">
                     <label for="productUnitName" class="form-label">{{ __('purchases.product_unit') }}</label>

@@ -461,42 +461,16 @@
     .rn-m-form-section-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 12px; }
     .rn-m-form-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 12px; }
     .rn-m-form-grid--2 { grid-template-columns: minmax(0, 1fr); }
+    .rn-product-modal-mobile-fields { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; }
     .rn-m-field-with-trailing-icon { position: relative; }
     .rn-m-field-with-trailing-icon > .rn-m-field .rn-m-input { padding-right: 44px; }
     .rn-m-field-with-trailing-icon > i { position: absolute; top: 40px; right: 13px; color: var(--rn-color-primary); font-size: var(--rn-icon-control); pointer-events: none; }
-    .rn-m-field-with-action { position: relative; min-width: 0; }
-    .rn-m-field-with-action > .rn-m-field { min-width: 0; }
-    .rn-m-field-with-action:has(select)::after {
-        content: "";
-        position: absolute;
-        top: 49px;
-        right: 48px;
-        width: 8px;
-        height: 8px;
-        border-right: 2px solid var(--rn-color-muted);
-        border-bottom: 2px solid var(--rn-color-muted);
-        transform: rotate(45deg);
-        pointer-events: none;
-    }
-    .rn-m-field-with-action select.rn-m-input { appearance: none; background-image: none; }
-    .rn-m-form-quick-add {
-        display: grid;
-        position: absolute;
-        top: auto;
-        right: 6px;
-        bottom: 18px;
-        z-index: 1;
-        width: var(--rn-touch);
-        place-items: center;
-        height: var(--rn-touch);
-        margin: 0;
-        border: 1px solid var(--rn-color-primary-soft);
-        border-radius: var(--rn-radius-sm);
-        background: var(--rn-color-primary-tint);
-        color: var(--rn-color-primary);
-        font-size: var(--rn-icon-control);
-    }
-    .rn-m-form-quick-add:focus-visible { outline: 3px solid var(--rn-color-primary-soft); outline-offset: 2px; }
+    .rn-m-field-label-row { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; }
+    .rn-m-form .rn-m-field-label-row > label { min-width: 0; margin: 0; }
+    .rn-m-field-action { display: flex; flex: 0 0 auto; align-items: center; }
+    .rn-m-field-action-button { display: inline-flex; min-height: var(--rn-touch); align-items: center; justify-content: center; gap: 4px; margin: 0; padding: 0 4px; border: 0; background: transparent; color: var(--rn-color-primary); font-size: var(--rn-type-bottom-label); font-weight: 700; white-space: nowrap; cursor: pointer; }
+    .rn-m-field-action-button i { font-size: var(--rn-icon-control); line-height: 1; }
+    .rn-m-field-action-button:focus-visible { outline: 3px solid var(--rn-color-primary-soft); outline-offset: 1px; border-radius: var(--rn-radius-sm); }
     .rn-m-contact-ledger .rn-m-list-header h2 { margin: 0; color: var(--rn-color-on-primary); font-size: var(--rn-type-page-title); font-weight: 700; }
     .rn-m-contact-ledger .rn-m-detail-contact { margin: 6px 0 0; color: color-mix(in srgb, var(--rn-color-on-primary) 82%, transparent); font-size: var(--rn-type-helper); }
     .rn-m-form-business-field { margin-bottom: 14px; }
@@ -1124,6 +1098,8 @@
     body:has(.rn-m-master-form.is-open) .rn-m-master-cards { display: none !important; }
     .rn-m-master-desktop-list { display: none !important; }
     .rn-m-master-cards { display: grid; gap: 10px; margin: 12px 0 calc(78px + var(--rn-safe-bottom)); }
+    .rn-m-master-shell { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+    .rn-m-master-shell > .card-body { padding: 0; }
     .rn-m-master-card { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-width: 0; padding: 14px; border: 1px solid var(--rn-color-border); border-radius: var(--rn-radius-lg); background: var(--rn-color-surface); }
     .rn-m-master-card__copy { display: grid; min-width: 0; gap: 5px; }
     .rn-m-master-card__copy strong { overflow-wrap: anywhere; color: var(--rn-color-ink); font-size: var(--rn-type-card-name); font-weight: 600; line-height: 1.4; }

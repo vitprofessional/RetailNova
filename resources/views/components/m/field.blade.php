@@ -10,8 +10,11 @@
     $error = $errors->first($name);
     $describedBy = trim(($hint ? $id.'-hint ' : '').($error ? $id.'-error' : ''));
 @endphp
-<div class="rn-m-field{{ $error ? ' has-error' : '' }}">
-    <label for="{{ $id }}">{{ $label }}@if($required)<span class="rn-m-required" aria-hidden="true"> *</span>@endif</label>
+<div class="rn-m-field{{ $error ? ' has-error' : '' }}{{ isset($action) ? ' has-action' : '' }}">
+    <div class="rn-m-field-label-row">
+        <label for="{{ $id }}">{{ $label }}@if($required)<span class="rn-m-required" aria-hidden="true"> *</span>@endif</label>
+        @isset($action)<div class="rn-m-field-action">{{ $action }}</div>@endisset
+    </div>
     @if($options !== null)
         <select id="{{ $id }}" name="{{ $name }}" class="rn-m-input" @required($required) @if($describedBy) aria-describedby="{{ $describedBy }}" @endif @if($error) aria-invalid="true" @endif {{ $attributes }}>
             @foreach($options as $optionValue => $optionLabel)

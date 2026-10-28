@@ -73,6 +73,10 @@ class MobileProductFormTest extends TestCase
         $this->assertStringContainsString('class="rn-m-form"', $html);
         $this->assertStringNotContainsString('product-mobile-form.css', $html);
         $this->assertStringContainsString('rn-m-bottom-sheet-modal', $html);
+        $this->assertStringContainsString('rn-m-field-action-button', $html);
+        $this->assertStringNotContainsString('rn-m-field-with-action', $html);
+        $this->assertSame(3, $xpath->query('//div[contains(concat(" ",normalize-space(@class)," ")," rn-m-field-action ")]/button[contains(@class,"rn-m-field-action-button")]')->length);
+        $this->assertSame(1, $xpath->query('//div[contains(concat(" ",normalize-space(@class)," ")," rn-m-field-label-row ")]//button[contains(@data-target,"categoryModal")]')->length);
     }
 
     public function test_desktop_choice_keeps_the_existing_product_form(): void
@@ -80,6 +84,21 @@ class MobileProductFormTest extends TestCase
         $this->actingAs($this->actor, 'admin')->withCookie('rn_view', 'desktop')
             ->get(route('addProduct'))
             ->assertOk()->assertSee('rn-product-form-grid')->assertDontSee('rn-m-product-form-page');
+    }
+
+    public function test_purchase_product_modal_reuses_full_width_mobile_quick_create_fields(): void
+    {
+        $this->actor->update(['preferred_locale' => 'bn']);
+        $this->actingAs($this->actor, 'admin')
+            ->withCookie('rn_view', 'mobile')
+            ->get(route('addPurchase'))
+            ->assertOk()
+            ->assertSee('id="brandName" name="brand"', false)
+            ->assertSee('id="categoryName" name="category"', false)
+            ->assertSee('id="unit" name="unitName"', false)
+            ->assertSee('data-rn-created-label="ক্যাটাগরি যোগ হয়েছে"', false)
+            ->assertSee('data-rn-created-label="ব্র্যান্ড যোগ হয়েছে"', false)
+            ->assertSee('data-rn-created-label="ইউনিট যোগ হয়েছে"', false);
     }
 
     public function test_platform_admin_can_choose_a_business_on_mobile(): void

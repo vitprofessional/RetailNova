@@ -502,21 +502,14 @@ class productController extends Controller
         public function createBrand(BrandSaveRequest $req){
             $data = new Brand();
             $data->name     = $req->validated()['name'];
-            
-            $option="";
-
             if($data->save()):
-                $getData = Brand::orderBy('id','DESC')->get();
-                if(!empty($getData)):
-                    $option .='<option value="">Select</option>';
-                    foreach($getData as $d):
-                        $option .='<option value="'.$d->id.'">'.$d->name.'</option>';
-                    endforeach;
-                endif;
-                
+                $option = '<option value="">'.e(__('inventory.select')).'</option>';
+                foreach(Brand::orderBy('id','DESC')->get() as $d):
+                    $option .= '<option value="'.e($d->id).'">'.e($d->name).'</option>';
+                endforeach;
                 return ['data' => $option, 'message'=>__('common.api_success_form_successfully_subjmit')];
             else:
-                return ['data' => $option, 'message'=>__('common.api_error_there_is_an_error_please_try_agin')];
+                return ['data' => '', 'message'=>__('common.api_error_there_is_an_error_please_try_agin')];
             endif;
     }
 
@@ -574,21 +567,14 @@ class productController extends Controller
         public function createCategory(CategorySaveRequest $req){
             $data = new Category();
             $data->name     = $req->validated()['name'];
-            
-            $option="";
-
             if($data->save()):
-                $getData = Category::orderBy('id','DESC')->get();
-                if(!empty($getData)):
-                    $option .='<option value="">Select</option>';
-                    foreach($getData as $d):
-                        $option .='<option value="'.$d->id.'">'.$d->name.'</option>';
-                    endforeach;
-                endif;
-                
+                $option = '<option value="">'.e(__('inventory.select')).'</option>';
+                foreach(Category::orderBy('id','DESC')->get() as $d):
+                    $option .= '<option value="'.e($d->id).'">'.e($d->name).'</option>';
+                endforeach;
                 return ['data' => $option, 'message'=>__('common.api_success_form_successfully_subjmit')];
             else:
-                return ['data' => $option, 'message'=>__('common.api_error_there_is_an_error_please_try_agin')];
+                return ['data' => '', 'message'=>__('common.api_error_there_is_an_error_please_try_agin')];
             endif;
     }
 
@@ -645,21 +631,14 @@ class productController extends Controller
         public function createProductUnit(ProductUnitSaveRequest $req){
             $data = new ProductUnit();
             $data->name     = $req->validated()['name'];
-            
-            $option="";
-
             if($data->save()):
-                $getData = ProductUnit::orderBy('id','DESC')->get();
-                if(!empty($getData)):
-                    $option .='<option value="">Select</option>';
-                    foreach($getData as $d):
-                        $option .='<option value="'.$d->id.'">'.$d->name.'</option>';
-                    endforeach;
-                endif;
-                
+                $option = '<option value="">'.e(__('inventory.select')).'</option>';
+                foreach(ProductUnit::orderBy('id','DESC')->get() as $d):
+                    $option .= '<option value="'.e($d->id).'">'.e($d->name).'</option>';
+                endforeach;
                 return ['data' => $option, 'message'=>__('common.api_success_form_successfully_subjmit')];
             else:
-                return ['data' => $option, 'message'=>__('common.api_error_there_is_an_error_please_try_agin')];
+                return ['data' => '', 'message'=>__('common.api_error_there_is_an_error_please_try_agin')];
             endif;
     }
 

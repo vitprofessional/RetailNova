@@ -537,6 +537,20 @@ document.addEventListener('DOMContentLoaded', function(){
                                 <input type="text" class="form-control" placeholder="{{ __('common.enter_name') }}" id="productNameModal" name="productName" required />
                             </div>
                         </div>
+                        @mobile
+                        <div class="rn-product-modal-mobile-fields">
+                            <x-m.field name="brand" id="brandName" :label="__('purchases.brand_name')" :options="['' => __('purchases.select')] + collect($brandList ?? [])->pluck('name', 'id')->all()" required>
+                                <x-slot:action><button type="button" class="rn-m-field-action-button" data-toggle="modal" data-target="#createBrand"><i class="ri-add-line" aria-hidden="true"></i>{{ __('inventory.quick_add_brand') }}</button></x-slot:action>
+                            </x-m.field>
+                            <x-m.field name="category" id="categoryName" :label="__('purchases.product_category')" :options="['' => __('purchases.select')] + collect($categoryList ?? [])->pluck('name', 'id')->all()">
+                                <x-slot:action><button type="button" class="rn-m-field-action-button" data-toggle="modal" data-target="#categoryModal"><i class="ri-add-line" aria-hidden="true"></i>{{ __('inventory.quick_add_category') }}</button></x-slot:action>
+                            </x-m.field>
+                            <x-m.field name="unitName" id="unit" :label="__('purchases.product_unit')" :options="['' => __('purchases.select')] + collect($productUnitList ?? [])->pluck('name', 'id')->all()">
+                                <x-slot:action><button type="button" class="rn-m-field-action-button" data-toggle="modal" data-target="#productUnitModal"><i class="ri-add-line" aria-hidden="true"></i>{{ __('inventory.quick_add_unit') }}</button></x-slot:action>
+                            </x-m.field>
+                        </div>
+                        @endmobile
+                        @desktop
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>{{ __('purchases.brand_name') }} *</label>
@@ -593,6 +607,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         <div class="col-md-2 mt-4 p-0">
                             <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#productUnitModal" ><i class="las la-plus mr-2"></i>{{ __('purchases.product_unit') }}</button>
                         </div>
+                        @enddesktop
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="quantityName" class="form-label">{{ __('purchases.alert_quantity') }}</label>
@@ -633,14 +648,14 @@ document.addEventListener('DOMContentLoaded', function(){
                                         <button type="button" class="btn-close"  data-onclick="closeModel('createBrand','brandForm')" aria-label="{{ __('purchases.close') }}"></button>
             </div>
             <div class="modal-body">
-                <form action="#" method="POST" id="brandForm">
+                <form action="{{ route('createBrand') }}" method="GET" id="brandForm" data-ajax="true" data-target="#brandName" data-modal-id="createBrand" data-rn-created-label="{{ __('inventory.brand_added') }}">
                     @csrf
                     <div class="mb-3">
                         <label for="NewBrand" class="form-label">{{ __('purchases.brand_name') }}</label>
-                        <input type="text" class="form-control" id="NewBrand" name="NewBrand" placeholder="{{ __('common.enter_brand_name') }}" />
+                        <input type="text" class="form-control" id="NewBrand" name="name" placeholder="{{ __('common.enter_brand_name') }}" required />
                     </div>
 
-                <button type="button" class="btn btn-primary" id="saveBrand">{{ __('purchases.save') }}</button>
+                <button type="submit" class="btn btn-primary" id="saveBrand">{{ __('purchases.save') }}</button>
                 </form>
             </div>
             <div class="modal-footer">
@@ -659,13 +674,13 @@ document.addEventListener('DOMContentLoaded', function(){
                 <button type="button" class="btn-close"  data-onclick="closeModel('categoryModal','categoryForm')" aria-label="{{ __('purchases.close') }}"></button>
             </div>
             <div class="modal-body">
-                <form action="" method="POST" id="categoryForm">
+                <form action="{{ route('createCategory') }}" method="GET" id="categoryForm" data-ajax="true" data-target="#categoryName" data-modal-id="categoryModal" data-rn-created-label="{{ __('inventory.category_added') }}">
                     @csrf
                 <div class="mb-3">
                     <label for="NewCategory" class="form-label">{{ __('purchases.category') }}</label>
-                    <input type="text" class="form-control" id="NewCategory" name="NewCategory" placeholder="{{ __('common.enter_category_name') }}" />
+                    <input type="text" class="form-control" id="NewCategory" name="name" placeholder="{{ __('common.enter_category_name') }}" required />
                 </div>
-                <button type="button" class="btn btn-primary" id="add-category">{{ __('purchases.save') }}</button>
+                <button type="submit" class="btn btn-primary" id="add-category">{{ __('purchases.save') }}</button>
                 </form>
             </div>
             <div class="modal-footer">
@@ -685,13 +700,13 @@ document.addEventListener('DOMContentLoaded', function(){
                 <button type="button" class="btn-close" data-onclick="closeModel('productUnitModal','productUnitForm')" aria-label="{{ __('purchases.close') }}"></button>
             </div>
             <div class="modal-body">
-                <form action="" method="POST" id="productUnitForm">
+                <form action="{{ route('createProductUnit') }}" method="GET" id="productUnitForm" data-ajax="true" data-target="#unit" data-modal-id="productUnitModal" data-rn-created-label="{{ __('inventory.unit_added') }}">
                     @csrf
                 <div class="mb-3">
                     <label for="productUnitName" class="form-label">{{ __('purchases.product_unit') }}</label>
-                    <input type="text" class="form-control" id="productUnitName" name="productUnitName" placeholder="{{ __('common.enter_product_unit_name') }}" />
+                    <input type="text" class="form-control" id="productUnitName" name="name" placeholder="{{ __('common.enter_product_unit_name') }}" required />
                 </div>
-                <button type="button" class="btn btn-primary" id="add-productUnit">{{ __('purchases.save') }}</button>
+                <button type="submit" class="btn btn-primary" id="add-productUnit">{{ __('purchases.save') }}</button>
                 </form>
             </div>
             <div class="modal-footer">
