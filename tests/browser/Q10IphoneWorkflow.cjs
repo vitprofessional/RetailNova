@@ -3,12 +3,13 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { webkit, devices } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { webkit, chromium, devices } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
 const base = (process.env.RN_Q10_BASE_URL || '').replace(/\/$/, '');
 const email = process.env.RN_Q10_EMAIL;
 const password = process.env.RN_Q10_PASSWORD;
-const output = path.resolve(__dirname, '../../tests-output/q10/webkit');
+const engine = process.env.RN_BROWSER === 'chromium' ? 'chromium-android' : 'webkit-iphone';
+const output = path.resolve(__dirname, `../../tests-output/q11/${engine}`);
 const shares = [];
 if (!base || !email || !password) throw new Error('Set RN_Q10_BASE_URL, RN_Q10_EMAIL and RN_Q10_PASSWORD for the isolated browser fixture.');
 
@@ -22,8 +23,10 @@ function assertShare(record, expectedType, expectedSuffix) {
 
 (async () => {
   fs.mkdirSync(output, { recursive: true });
-  const browser = await webkit.launch({ headless: true });
-  const context = await browser.newContext({ ...devices['iPhone 14 Pro Max'], locale: 'bn-BD', serviceWorkers: 'block' });
+  const browserType = process.env.RN_BROWSER === 'chromium' ? chromium : webkit;
+  const browser = await browserType.launch({ headless: true });
+  const device = process.env.RN_BROWSER === 'chromium' ? (devices['Pixel 7'] || devices['Pixel 5']) : devices['iPhone 14 Pro Max'];
+  const context = await browser.newContext({ ...device, locale: 'bn-BD', serviceWorkers: 'block' });
   await context.addInitScript(() => {
     window.__rnShareCalls = [];
     window.__isUserGestureTask = false;
@@ -34,6 +37,7 @@ function assertShare(record, expectedType, expectedSuffix) {
     Object.defineProperty(navigator, 'canShare', { configurable: true, value: payload => Boolean(payload?.files?.length) });
     Object.defineProperty(navigator, 'share', { configurable: true, value: payload => {
       const file = payload.files[0];
+      window.__rnSharedFile = file;
       window.__rnShareCalls.push({ sameTask: window.__isUserGestureTask,
         userActivation: navigator.userActivation?.isActive === true,
         type: file.type, name: file.name, title: payload.title });
@@ -86,23 +90,6 @@ function assertShare(record, expectedType, expectedSuffix) {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(500);
     await page.screenshot({ path: path.join(output, 'sale-invoice.png'), fullPage: true });
-    await page.evaluate(() => {
-      window.__q10ShareStage = 'armed';
-      const tools = window.RNDocumentTools;
-      const html2canvas = tools.html2canvas;
-      tools.html2canvas = async (...args) => { window.__q10ShareStage = 'html2canvas'; const canvas = await html2canvas(...args); window.__q10ShareStage = `captured:${canvas.width}x${canvas.height}`; return canvas; };
-      const toBlob = HTMLCanvasElement.prototype.toBlob;
-      HTMLCanvasElement.prototype.toBlob = function (callback, ...args) {
-        window.__q10ShareStage = `toBlob:${this.width}x${this.height}`;
-        return toBlob.call(this, blob => { window.__q10ShareStage = `blob:${blob?.size || 0}`; callback(blob); }, ...args);
-      };
-      const jsPDF = tools.jsPDF;
-      tools.jsPDF = class extends jsPDF {
-        constructor(...args) { super(...args); window.__q10ShareStage = 'jsPDF-constructor'; }
-        addImage(...args) { window.__q10ShareStage = 'jsPDF-addImage'; return super.addImage(...args); }
-        output(...args) { window.__q10ShareStage = 'jsPDF-output'; return super.output(...args); }
-      };
-    });
     const shareOpen = page.locator('[data-receipt-action="share"]');
     await shareOpen.click();
     const shareButton = page.locator('[data-document-share]');
@@ -110,15 +97,7 @@ function assertShare(record, expectedType, expectedSuffix) {
     await page.screenshot({ path: path.join(output, 'sale-share-preparing.png'), fullPage: true });
     try {
       await page.waitForFunction(() => !document.querySelector('[data-document-share]').disabled, { timeout: 30000 });
-    } catch (error) {
-      const debug = await page.evaluate(() => ({ text: document.querySelector('[data-document-share]')?.textContent,
-        tools: Boolean(window.RNDocumentTools), fonts: document.fonts?.status,
-        stage: window.__q10ShareStage,
-        capturing: document.querySelector('[data-rn-print-document]')?.classList.contains('rn-document-capturing'),
-        qr: document.querySelector('[data-document-qr]')?.dataset.ready, canvases: document.querySelectorAll('canvas').length,
-        dialog: document.querySelector('[data-rn-document-sheet]')?.outerHTML.slice(0, 1200) }));
-      throw new Error(`sale share file preparation did not finish: ${JSON.stringify({ debug, consoleErrors, pageErrors })}`);
-    }
+    } catch (error) { throw new Error(`sale share file preparation did not finish: ${JSON.stringify({ consoleErrors, pageErrors, message: error.message })}`); }
     await page.screenshot({ path: path.join(output, 'sale-share-ready.png'), fullPage: true });
     await shareButton.click();
     const saleShareRecord = (await page.evaluate(() => window.__rnShareCalls)).at(-1);
@@ -158,11 +137,13 @@ function assertShare(record, expectedType, expectedSuffix) {
     await purchaseShare.click();
     const purchaseShareRecord = (await page.evaluate(() => window.__rnShareCalls)).at(-1);
     assertShare(purchaseShareRecord, 'image/png', '.png');
+    const pngWidth = await page.evaluate(async () => (await createImageBitmap(window.__rnSharedFile)).width);
+    assert.ok(pngWidth >= 900, `thermal 80mm PNG must be at least 900px wide; got ${pngWidth}px`);
     shares.push({ flow: 'purchase', ...purchaseShareRecord });
 
     assert.deepEqual([...pageErrors, ...consoleErrors], [], `WebKit app errors: ${[...pageErrors, ...consoleErrors].join('; ')}`);
-    console.log(JSON.stringify({ browser: 'WebKit', device: 'iPhone 14 Pro Max', saleToast: saleToastText,
-      purchaseToast: purchaseToastText, shares, screenshots: output,
+    console.log(JSON.stringify({ browser: engine, device: process.env.RN_BROWSER === 'chromium' ? 'Pixel 7' : 'iPhone 14 Pro Max', saleToast: saleToastText,
+      purchaseToast: purchaseToastText, pngWidth, shares, screenshots: output,
       applicationErrors: pageErrors }, null, 2));
   } finally {
     await context.close();

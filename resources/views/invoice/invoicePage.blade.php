@@ -626,8 +626,6 @@
     @push('styles')<link rel="stylesheet" href="{{ asset('css/rn-documents.css') }}?v={{ filemtime(public_path('css/rn-documents.css')) }}">@endpush
     @include('documents.transaction', ['receipt' => $sharedPrintReceipt, 'business' => $b])
     @include('documents.actions', ['business' => $b, 'paper' => $printVariant])
-    <script src="{{ asset('vendor/rn-document-tools.js') }}?v={{ filemtime(public_path('vendor/rn-document-tools.js')) }}" defer></script>
-    <script src="{{ asset('js/rn-mobile-documents.js') }}?v={{ filemtime(public_path('js/rn-mobile-documents.js')) }}" defer></script>
     @endif
   </div>
 </div>

@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{{ asset('css/rn-tokens.css') }}?v={{ filemtime(public_path('css/rn-tokens.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/rn-documents.css') }}?v={{ filemtime(public_path('css/rn-documents.css')) }}">
 </head>
-<body data-rn-document-preview data-rn-paper="{{ $paper }}">
+<body data-rn-document-preview data-rn-paper="{{ $paper }}" data-document-pdf-url="{{ route('documents.pdf', ['type' => $type, 'id' => $receipt['document_id'] ?? request()->route('id')]) }}">
     <nav class="rn-document-toolbar" aria-label="{{ __('common.actions') }}">
         <button type="button" data-document-back data-back-url="{{ route('dashboard') }}">{{ __('common.back') }}</button>
         <button type="button" data-document-print>{{ __('common.print') }}</button>
@@ -18,7 +18,7 @@
     @include('documents.'.$templateType, ['receipt' => $receipt, 'business' => $business, 'paper' => $paper])
     </main>
     @include('documents.actions', ['business' => $business, 'paper' => $paper])
-    <script src="{{ asset('vendor/rn-document-tools.js') }}?v={{ filemtime(public_path('vendor/rn-document-tools.js')) }}" defer></script>
+    <script src="{{ asset('vendor/rn-qr.js') }}?v={{ filemtime(public_path('vendor/rn-qr.js')) }}" defer></script>
     <script src="{{ asset('js/rn-mobile-documents.js') }}?v={{ filemtime(public_path('js/rn-mobile-documents.js')) }}" defer></script>
 </body>
 </html>

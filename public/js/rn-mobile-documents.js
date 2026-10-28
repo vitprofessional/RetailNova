@@ -2,10 +2,7 @@
   const receipt = document.querySelector('[data-mobile-document-receipt]');
   const sheet = document.querySelector('[data-rn-document-sheet]');
   const printDocument = document.querySelector('[data-rn-print-document]');
-  const tools = window.RNDocumentTools;
-  if (!printDocument || !tools) return;
-  let originalParent = null;
-  let originalNextSibling = null;
+  if (!printDocument) return;
 
   const paper = () => sheet?.querySelector('input[name="paper"]:checked')?.value
     || new URLSearchParams(window.location.search).get('size')
@@ -15,64 +12,95 @@
     const kind = paper();
     const sizes = { a4: { size: 'A4 portrait', margin: 10, width: '190mm' }, thermal80: { size: '80mm', margin: 4, width: '72mm' }, thermal58: { size: '58mm', margin: 4, width: '48mm' } };
     const selected = sizes[kind] || sizes.a4;
-    const { margin, width } = selected;
     printDocument.style.width = document.body.hasAttribute('data-rn-document-preview') && kind === 'a4'
-      ? 'min(190mm, calc(100vw - 32px))' : width;
+      ? 'min(190mm, calc(100vw - 32px))' : selected.width;
     document.body.dataset.rnPaper = kind;
     let pageSize = selected.size;
     if (kind !== 'a4') {
       const old = { display: printDocument.style.display, position: printDocument.style.position, visibility: printDocument.style.visibility, left: printDocument.style.left, top: printDocument.style.top };
       if (getComputedStyle(printDocument).display === 'none') Object.assign(printDocument.style, { display: 'block', position: 'absolute', visibility: 'hidden', left: '-100000px', top: '0' });
-      const contentHeightMm = Math.max(40, Math.ceil(printDocument.getBoundingClientRect().height * 25.4 / 96));
+      const height = Math.max(40, Math.ceil(printDocument.getBoundingClientRect().height * 25.4 / 96));
       Object.assign(printDocument.style, old);
-      pageSize = `${selected.size} ${contentHeightMm + margin * 2}mm`;
+      pageSize = `${selected.size} ${height + selected.margin * 2}mm`;
     }
     let style = document.getElementById('rn-document-page-size');
     if (!style) { style = document.createElement('style'); style.id = 'rn-document-page-size'; document.head.append(style); }
-    style.textContent = `@page { size: ${pageSize}; margin: ${margin}mm; }`;
+    style.textContent = `@page { size: ${pageSize}; margin: ${selected.margin}mm; }`;
     printDocument.dataset.paper = kind;
     return kind;
   };
-  const attachForPrint = () => {
-    if (!originalParent) {
-      originalParent = printDocument.parentNode;
-      originalNextSibling = printDocument.nextSibling;
-    }
-    document.body.appendChild(printDocument);
-  };
-  const restoreAfterPrint = () => {
-    if (!originalParent) return;
-    originalParent.insertBefore(printDocument, originalNextSibling);
-    originalParent = null;
-    originalNextSibling = null;
-  };
   const asciiPart = value => (value || '').normalize('NFKD').replace(/[^\x00-\x7f]/g, '')
     .replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'document';
-  const businessName = printDocument.querySelector('.rn-print-document__brand strong')?.textContent?.trim();
   const documentNumber = printDocument.querySelector('.rn-print-document__title span')?.textContent?.trim();
-  const fileBase = `${asciiPart(businessName)}-${asciiPart(documentNumber)}`;
+  const fileBase = asciiPart(documentNumber || document.title);
   const prepared = new Map();
   let prepareSequence = 0;
   const shareButton = sheet?.querySelector('[data-document-share]');
   const shareFormat = () => sheet?.querySelector('input[name="share-format"]:checked')?.value || 'pdf';
+  const scripts = [...document.scripts];
+  const ownScript = scripts.find(script => script.src.includes('/js/rn-mobile-documents.js'));
+  const pageBase = window.location.href.startsWith('http') ? window.location.href : 'http://localhost/';
+  const scriptBase = ownScript?.src || new URL('/js/rn-mobile-documents.js', pageBase).href;
+  const pdfjsUrl = new URL('../vendor/pdfjs/pdf.min.mjs', scriptBase).href;
+  const pdfWorkerUrl = new URL('../vendor/pdfjs/pdf.worker.min.mjs', scriptBase).href;
+  let pdfjsPromise;
+  const getPdfjs = () => {
+    if (window.RNPdfJs) return Promise.resolve(window.RNPdfJs);
+    if (!pdfjsPromise) pdfjsPromise = import(pdfjsUrl).then(module => {
+      module.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+      return module;
+    });
+    return pdfjsPromise;
+  };
   const qrCanvas = async () => {
     const target = printDocument.querySelector('[data-document-qr]');
-    if (!target || target.dataset.ready === '1') return;
+    const qr = window.RNQrCode;
+    if (!target || target.dataset.ready === '1' || !qr?.toCanvas) return;
     const canvas = document.createElement('canvas');
-    await tools.QRCode.toCanvas(canvas, printDocument.dataset.qrPayload || 'RetailNova document', { width: 180, margin: 1, errorCorrectionLevel: 'M' });
+    await qr.toCanvas(canvas, printDocument.dataset.qrPayload || 'RetailNova document', { width: 180, margin: 1, errorCorrectionLevel: 'M' });
     target.replaceChildren(canvas);
     target.dataset.ready = '1';
   };
-  const capture = async () => {
-    const kind = applyPaper();
-    await qrCanvas();
-    if (document.fonts?.ready) await document.fonts.ready;
-    const old = { display: printDocument.style.display, position: printDocument.style.position, left: printDocument.style.left, top: printDocument.style.top, zIndex: printDocument.style.zIndex };
-    Object.assign(printDocument.style, { display: 'block', position: 'fixed', left: '0', top: '0', zIndex: '-1' });
-    printDocument.classList.add('rn-document-capturing');
-    const scale = Math.max(3, Number(window.devicePixelRatio) || 1);
-    try { return await tools.html2canvas(printDocument, { scale, backgroundColor: '#fff', useCORS: true, logging: false }); }
-    finally { printDocument.classList.remove('rn-document-capturing'); Object.assign(printDocument.style, old); }
+  const pdfUrl = kind => {
+    const direct = document.body.dataset.documentPdfUrl;
+    if (direct) {
+      const url = new URL(direct, window.location.href);
+      url.searchParams.set('size', kind);
+      return url;
+    }
+    const printUrl = receipt?.dataset.documentPrintUrl;
+    if (!printUrl) throw new Error('PDF endpoint is missing for this document.');
+    const url = new URL(printUrl, window.location.href);
+    url.pathname = `${url.pathname.replace(/\/$/, '')}.pdf`;
+    url.searchParams.set('size', kind);
+    return url;
+  };
+  const fetchPdf = async kind => {
+    const response = await fetch(pdfUrl(kind), { credentials: 'same-origin', headers: { Accept: 'application/pdf' } });
+    if (!response.ok) throw new Error(`PDF request failed (${response.status})`);
+    const blob = await response.blob();
+    if (blob.type && !blob.type.includes('application/pdf')) throw new Error('The document service did not return a PDF.');
+    return blob.type === 'application/pdf' ? blob : new Blob([blob], { type: 'application/pdf' });
+  };
+  const firstPagePng = async blob => {
+    const pdfjs = await getPdfjs();
+    const data = new Uint8Array(await blob.arrayBuffer());
+    const loadingTask = pdfjs.getDocument({ data, useSystemFonts: true });
+    const pdf = await loadingTask.promise;
+    try {
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: Math.max(3, 300 / 72) });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      const context = canvas.getContext('2d', { alpha: false });
+      context.fillStyle = '#fff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: context, viewport, background: '#fff' }).promise;
+      const png = await new Promise((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('PNG conversion failed')), 'image/png'));
+      page.cleanup?.();
+      return png;
+    } finally { await pdf.destroy?.(); }
   };
   const download = (blob, filename) => {
     const url = URL.createObjectURL(blob);
@@ -82,52 +110,17 @@
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
-  const canvasToBlob = (canvas, type) => new Promise((resolve, reject) => {
-    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Could not create document image')), type);
-  });
-  const fullPaperPngCanvas = (kind, content) => {
-    const page = kind === 'a4' ? { width:210, contentWidth:190, margin:10 } : kind === 'thermal58' ? { width:58, contentWidth:48, margin:4 } : { width:80, contentWidth:72, margin:4 };
-    const dpi = 300 / 25.4;
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.ceil(page.width * dpi);
-    const contentWidth = Math.round(page.contentWidth * dpi);
-    const contentHeight = Math.round(content.height * contentWidth / content.width);
-    const marginX = Math.round((page.width - page.contentWidth) * dpi / 2);
-    const marginY = Math.round(page.margin * dpi);
-    canvas.height = contentHeight + marginY * 2;
-    const context = canvas.getContext('2d');
-    context.fillStyle = '#fff';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(content, marginX, marginY, contentWidth, contentHeight);
-    return canvas;
-  };
   const showSavedToast = () => {
+    if (window.RNToast?.info) {
+      window.RNToast.info(document.documentElement.lang.startsWith('bn') ? 'ফাইল সেভ হয়েছে — Files থেকে শেয়ার করুন' : 'File saved — share it from Files');
+      return;
+    }
     const toast = document.createElement('div');
     toast.className = 'rn-document-toast';
     toast.setAttribute('role', 'status');
     toast.textContent = receipt?.dataset.documentSavedText || 'File saved';
     document.body.append(toast);
     setTimeout(() => toast.remove(), 2800);
-  };
-  const createPdf = async (kind, canvas) => {
-    const page = kind === 'a4'
-      ? { width: 210, height: 297, contentWidth: 190, margin: 10 }
-      : kind === 'thermal58'
-        ? { width: 58, contentWidth: 48, margin: 4 }
-        : { width: 80, contentWidth: 72, margin: 4 };
-    const scale = page.contentWidth / canvas.width;
-    if (kind !== 'a4') page.height = Math.ceil(canvas.height * scale + page.margin * 2);
-    const sourcePageHeight = kind === 'a4' ? Math.max(1, Math.floor((page.height - page.margin * 2) / scale)) : canvas.height;
-    const pdf = new tools.jsPDF({ orientation: 'portrait', unit: 'mm', format: [page.width, page.height], compress: true });
-    for (let offset = 0, number = 0; offset < canvas.height; offset += sourcePageHeight, number++) {
-      if (number) pdf.addPage([page.width, page.height], 'portrait');
-      const slice = document.createElement('canvas');
-      slice.width = canvas.width;
-      slice.height = Math.min(sourcePageHeight, canvas.height - offset);
-      slice.getContext('2d').drawImage(canvas, 0, offset, canvas.width, slice.height, 0, 0, slice.width, slice.height);
-      pdf.addImage(slice.toDataURL('image/png'), 'PNG', page.margin, page.margin, page.contentWidth, slice.height * scale, undefined, 'SLOW');
-    }
-    return pdf;
   };
   const prepareFiles = async () => {
     if (!sheet || !shareButton) return;
@@ -137,12 +130,11 @@
     shareButton.setAttribute('aria-busy', 'true');
     shareButton.textContent = shareButton.dataset.buildingLabel;
     try {
-      const canvas = await capture();
-      const png = await canvasToBlob(fullPaperPngCanvas(kind, canvas), 'image/png');
-      const pdf = await createPdf(kind, canvas);
+      const pdfBlob = await fetchPdf(kind);
+      const pngBlob = await firstPagePng(pdfBlob);
       const files = {
-        png: new File([png], `${fileBase}.png`, { type: 'image/png' }),
-        pdf: new File([pdf.output('blob')], `${fileBase}.pdf`, { type: 'application/pdf' }),
+        png: new File([pngBlob], `${fileBase}.png`, { type: 'image/png' }),
+        pdf: new File([pdfBlob], `${fileBase}.pdf`, { type: 'application/pdf' }),
       };
       if (token !== prepareSequence) return;
       prepared.set(kind, files);
@@ -154,23 +146,20 @@
       shareButton.disabled = true;
       shareButton.removeAttribute('aria-busy');
       shareButton.textContent = shareButton.dataset.buildingLabel;
-      console.error(error);
+      window.RNToast?.error(error?.message || (document.documentElement.lang.startsWith('bn') ? 'ফাইল তৈরি করা যায়নি' : 'Could not prepare document'));
+      console.error('Document export preparation failed', error);
     }
   };
   const currentFiles = () => prepared.get(paper());
-  const closeThen = async action => { sheet.close(); await action(); };
-  const printInPlace = async () => {
+  const closeThen = action => { sheet.close(); action(); };
+  const printInPlace = () => {
     const kind = applyPaper();
     if (receipt?.dataset.documentPrintUrl && !document.body.hasAttribute('data-rn-document-preview')) {
-      const url = new URL(receipt.dataset.documentPrintUrl, window.location.href);
-      url.searchParams.set('size', kind);
-      url.searchParams.set('autoprint', '1');
-      window.open(url.toString(), '_blank', 'noopener');
-      return;
+      const url = pdfUrl(kind);
+      const opened = window.open(url.toString(), '_blank');
+      if (opened) return;
     }
-    await qrCanvas();
-    attachForPrint();
-    window.print();
+    qrCanvas().then(() => window.print()).catch(() => window.print());
   };
   sheet?.querySelector('[data-document-print]')?.addEventListener('click', () => closeThen(printInPlace));
   document.querySelector('.rn-document-toolbar [data-document-print]')?.addEventListener('click', printInPlace);
@@ -179,7 +168,8 @@
     else window.location.assign(document.querySelector('[data-document-back]').dataset.backUrl);
   });
   document.querySelector('.rn-document-toolbar [data-document-pdf]')?.addEventListener('click', async () => {
-    try { const kind=applyPaper(); const canvas=await capture(); (await createPdf(kind,canvas)).save(`${fileBase}.pdf`); } catch (error) { console.error(error); }
+    try { const kind = applyPaper(); download(await fetchPdf(kind), `${fileBase}.pdf`); }
+    catch (error) { window.RNToast?.error(error?.message || 'PDF export failed'); }
   });
   sheet?.querySelector('[data-document-png]')?.addEventListener('click', () => {
     const file = currentFiles()?.png;
@@ -199,7 +189,7 @@
     const canShareFiles = typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
     if (!canShareFiles) {
       download(file, file.name);
-      window.RNToast?.info(document.documentElement.lang.startsWith('bn') ? 'ফাইল সেভ হয়েছে — Files থেকে শেয়ার করুন' : 'File saved — share it from Files');
+      showSavedToast();
       return;
     }
     let shareRequest;
@@ -221,10 +211,7 @@
   };
   document.querySelectorAll('[data-document-open-share], [data-receipt-action="print"], [data-receipt-action="pdf"], [data-receipt-action="share"]')
     .forEach(button => button.addEventListener('click', openShareSheet));
-  window.addEventListener('afterprint', () => { restoreAfterPrint(); if (!document.body.hasAttribute('data-rn-document-preview')) delete document.body.dataset.rnPaper; });
   applyPaper();
   qrCanvas().catch(error => console.warn('Document QR could not be rendered locally', error));
-  if (new URLSearchParams(window.location.search).get('autoprint') === '1') {
-    setTimeout(printInPlace, 300);
-  }
+  if (new URLSearchParams(window.location.search).get('autoprint') === '1') setTimeout(printInPlace, 300);
 })();

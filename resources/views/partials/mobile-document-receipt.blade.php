@@ -47,5 +47,5 @@
 </main>
 @include('documents.'.($receipt['type'] ?? 'transaction'), ['receipt' => $receipt, 'business' => $documentBusiness])
 @include('documents.actions', ['business' => $documentBusiness, 'paper' => $documentBusiness?->default_invoice_printer ?? 'thermal80'])
-<script src="{{ asset('vendor/rn-document-tools.js') }}?v={{ filemtime(public_path('vendor/rn-document-tools.js')) }}" defer></script>
+<script src="{{ asset('vendor/rn-qr.js') }}?v={{ filemtime(public_path('vendor/rn-qr.js')) }}" defer></script>
 <script src="{{ asset('js/rn-mobile-documents.js') }}?v={{ filemtime(public_path('js/rn-mobile-documents.js')) }}" defer></script>
