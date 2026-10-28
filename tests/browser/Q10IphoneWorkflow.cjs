@@ -24,7 +24,7 @@ function assertShare(record, expectedType, expectedSuffix) {
 (async () => {
   fs.mkdirSync(output, { recursive: true });
   const browserType = process.env.RN_BROWSER === 'chromium' ? chromium : webkit;
-  const browser = await browserType.launch({ headless: true });
+  const browser = await browserType.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE || undefined });
   const device = process.env.RN_BROWSER === 'chromium' ? (devices['Pixel 7'] || devices['Pixel 5']) : devices['iPhone 14 Pro Max'];
   const context = await browser.newContext({ ...device, locale: 'bn-BD', serviceWorkers: 'block' });
   await context.addInitScript(() => {

@@ -20,7 +20,10 @@ use App\Models\QuotationItem;
 use App\Models\ServiceInvoice;
 use App\Models\ServiceInvoiceItem;
 use App\Models\Supplier;
+use App\Support\LocalizedNumber;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Smalot\PdfParser\Parser as PdfParser;
+use Symfony\Component\Process\Process;
 use Tests\TestCase;
 
 class MobileInvoiceVariantsTest extends TestCase
@@ -51,7 +54,7 @@ class MobileInvoiceVariantsTest extends TestCase
             ->assertOk()->assertSee('data-mobile-document-receipt', false)
             ->assertSee('data-rn-print-document', false)->assertSee('data-document-qr', false)
             ->assertSee('value="thermal80"', false)->assertSee('value="thermal58"', false)
-            ->assertSee(asset('vendor/rn-document-tools.js'), false)->assertSee(asset('js/rn-mobile-documents.js'), false)
+            ->assertSee(asset('vendor/rn-qr.js'), false)->assertSee(asset('js/rn-mobile-documents.js'), false)
             ->assertSee('data-document-share', false)->assertSee('name="share-format" value="pdf" checked', false)
             ->assertSee('name="share-format" value="png"', false)
             ->assertDontSee('data-receipt-action="copy"', false)
@@ -233,6 +236,8 @@ class MobileInvoiceVariantsTest extends TestCase
         ];
         foreach ($documents as [$type, $id]) {
             foreach (['a4', 'thermal80', 'thermal58'] as $size) {
+                $this->get(route('documents.pdf', ['type' => $type, 'id' => $id, 'size' => $size]))
+                    ->assertOk()->assertHeader('Content-Type', 'application/pdf');
                 foreach ([false, true] as $autoprint) {
                     $url = route('documents.print', ['type' => $type, 'id' => $id]).'?'.http_build_query(['size' => $size, 'autoprint' => $autoprint ? 1 : 0]);
                     $response = $this->get($url)->assertOk()->assertSee('data-rn-document-preview', false)
@@ -276,11 +281,37 @@ class MobileInvoiceVariantsTest extends TestCase
         ]);
 
         $this->actingAs($actor, 'admin');
-        $response = $this->get(route('documents.pdf', ['type' => 'sale-invoice', 'id' => $sale->id, 'size' => 'thermal80']));
-        $response->assertOk()->assertHeader('Content-Type', 'application/pdf');
-        $pdf = $response->getContent();
-        $this->assertStringStartsWith('%PDF-', $pdf);
-        $this->assertStringContainsString('HindSiliguri', $pdf, 'PDF should embed and identify the configured Hind Siliguri font.');
+        $thermalPdfForText = null;
+        foreach (['a4', 'thermal80', 'thermal58'] as $size) {
+            $response = $this->get(route('documents.pdf', ['type' => 'sale-invoice', 'id' => $sale->id, 'size' => $size]));
+            $response->assertOk()->assertHeader('Content-Type', 'application/pdf')
+                ->assertHeader('Content-Disposition', 'inline; filename="SAL20261027000007'.match ($size) {
+                    'thermal80' => '-80mm', 'thermal58' => '-58mm', default => '',
+                }.'.pdf"');
+            $pdf = $response->getContent();
+            $this->assertStringStartsWith('%PDF-', $pdf);
+            $this->assertStringContainsString('HindSiliguri', $pdf, 'PDF should embed and identify the configured Hind Siliguri font.');
+            if ($size === 'thermal80') $thermalPdfForText = $pdf;
+
+            if (getenv('RN_Q11_CAPTURE') === '1') {
+                $directory = base_path('tests-output/q11');
+                if (! is_dir($directory)) mkdir($directory, 0775, true);
+                file_put_contents($directory.'/sale-'.$size.'.pdf', $pdf);
+            }
+        }
+        $this->assertNotNull($thermalPdfForText);
+        $temporaryPdf = tempnam(sys_get_temp_dir(), 'rn-q11-');
+        try {
+            file_put_contents($temporaryPdf, $thermalPdfForText);
+            $parserScript = 'require $argv[1]; $parser = new \\Smalot\\PdfParser\\Parser(); echo $parser->parseFile($argv[2])->getText();';
+            $parserProcess = new Process([PHP_BINARY, '-d', 'memory_limit=512M', '-r', $parserScript, base_path('vendor/autoload.php'), $temporaryPdf]);
+            $parserProcess->run();
+            $this->assertTrue($parserProcess->isSuccessful(), 'PDF text parser failed: '.$parserProcess->getErrorOutput());
+            $text = preg_replace('/\s+/u', '', $parserProcess->getOutput());
+            $this->assertStringContainsString(LocalizedNumber::money(15000), (string) $text, 'The searchable PDF text must contain the invoice grand total.');
+        } finally {
+            if (is_file($temporaryPdf)) unlink($temporaryPdf);
+        }
 
         $foreignBusiness = BusinessSetup::forceCreate(['businessName' => 'Foreign PDF Shop', 'businessType' => 'computer_shop']);
         $foreignSale = SaleProduct::forceCreate([

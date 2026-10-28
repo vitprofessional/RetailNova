@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\AdminUser;
+use App\Models\Account;
 use App\Models\BusinessSetup;
 use App\Models\Customer;
 use App\Models\InvoiceItem;
@@ -61,6 +62,11 @@ class MobileQualityAuditSeeder extends Seeder
         $customer = $this->firstOrCreate(Customer::class, ['businessId' => $businessId, 'name' => 'অডিট কাস্টমার'], ['mobile' => '01700000000']);
         $supplier = $this->firstOrCreate(Supplier::class, ['businessId' => $businessId, 'name' => 'অডিট মহাজন'], ['mobile' => '01800000000']);
         $product = $this->firstOrCreate(Product::class, ['businessId' => $businessId, 'name' => 'অডিট পণ্য']);
+        $this->firstOrCreate(Account::class,
+            ['businessId' => $businessId, 'account_code' => 'MOBILE-AUDIT-CASH-'.$businessId],
+            ['account_name' => 'অডিট ক্যাশ অ্যাকাউন্ট', 'account_type' => Account::TYPE_ASSET,
+                'opening_balance' => 0, 'current_balance' => 0, 'is_active' => true]
+        );
 
         $purchase = $this->firstOrCreate(PurchaseProduct::class,
             ['businessId' => $businessId, 'invoice' => 'MOBILE-AUDIT-PURCHASE', 'productName' => (string) $product->id],
