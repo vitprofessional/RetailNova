@@ -282,6 +282,7 @@ class MobileInvoiceVariantsTest extends TestCase
 
         $this->actingAs($actor, 'admin');
         $thermalPdfForText = null;
+        $thermalPdfs = [];
         foreach (['a4', 'thermal80', 'thermal58'] as $size) {
             $response = $this->get(route('documents.pdf', ['type' => 'sale-invoice', 'id' => $sale->id, 'size' => $size]));
             $response->assertOk()->assertHeader('Content-Type', 'application/pdf')
@@ -292,6 +293,7 @@ class MobileInvoiceVariantsTest extends TestCase
             $this->assertStringStartsWith('%PDF-', $pdf);
             $this->assertStringContainsString('HindSiliguri', $pdf, 'PDF should embed and identify the configured Hind Siliguri font.');
             if ($size === 'thermal80') $thermalPdfForText = $pdf;
+            if (in_array($size, ['thermal80', 'thermal58'], true)) $thermalPdfs[$size] = $pdf;
 
             if (getenv('RN_Q11_CAPTURE') === '1') {
                 $directory = base_path('tests-output/q11');
@@ -300,6 +302,19 @@ class MobileInvoiceVariantsTest extends TestCase
             }
         }
         $this->assertNotNull($thermalPdfForText);
+        foreach ($thermalPdfs as $size => $pdf) {
+            $temporaryThermalPdf = tempnam(sys_get_temp_dir(), 'rn-q11-pages-');
+            try {
+                file_put_contents($temporaryThermalPdf, $pdf);
+                $pageCountScript = 'require $argv[1]; $parser = new \\Smalot\\PdfParser\\Parser(); echo count($parser->parseFile($argv[2])->getPages());';
+                $pageCountProcess = new Process([PHP_BINARY, '-d', 'memory_limit=512M', '-r', $pageCountScript, base_path('vendor/autoload.php'), $temporaryThermalPdf]);
+                $pageCountProcess->run();
+                $this->assertTrue($pageCountProcess->isSuccessful(), "Could not inspect {$size} PDF page count: ".$pageCountProcess->getErrorOutput());
+                $this->assertSame('1', trim($pageCountProcess->getOutput()), "{$size} thermal receipt must fit on one page without a detached footer page.");
+            } finally {
+                if (is_file($temporaryThermalPdf)) unlink($temporaryThermalPdf);
+            }
+        }
         $temporaryPdf = tempnam(sys_get_temp_dir(), 'rn-q11-');
         try {
             file_put_contents($temporaryPdf, $thermalPdfForText);

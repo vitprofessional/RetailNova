@@ -38,6 +38,11 @@ class DocumentPdfRenderer
     private function render(array $receipt, ?BusinessSetup $business, string $templateType, string $paper, ?string $logo, string|array $format): string
     {
         $mpdf = $this->newMpdf($paper, $format);
+        // Thermal paper height is measured in a first pass. A second automatic
+        // page break can otherwise push the footer onto a mostly blank page.
+        if (is_array($format)) {
+            $mpdf->SetAutoPageBreak(false, 0);
+        }
         $mpdf->WriteHTML($this->html($receipt, $business, $templateType, $paper, $logo));
 
         return $mpdf->Output('', Destination::STRING_RETURN);
