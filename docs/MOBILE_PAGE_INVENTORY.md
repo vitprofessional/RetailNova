@@ -73,7 +73,7 @@
 | `/create/service` | `addServiceName` | তালিকা — তালিকা + যোগ করার ফর্ম একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.4b |
 | `/customer/edit/{id}` | `editCustomer` | ফর্ম — এডিট ফর্ম + তালিকা একই পাতায় | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-2 (ফর্ম) |
 | `/customer/restore/{id}` | `restoreCustomer` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
-| `/damage/product` | `damageProduct` | ফর্ম | সার্ভারে রেন্ডার |  |
+| `/damage/product` | `damageProduct` | ফর্ম | সার্ভারে রেন্ডার | UI-Q14 |
 | `/damage/product/list` | `damageProductList` | তালিকা | সার্ভারে রেন্ডার + DataTables (ব্রাউজারে সাজানো/খোঁজা) | UI-3.L |
 | `/damage/product/print/{id}` | `damageProductPrint` | অন্য | সার্ভারে রেন্ডার |  |
 | `/damage/product/view/{id}` | `damageProductView` | অন্য | সার্ভারে রেন্ডার |  |
@@ -101,7 +101,7 @@
 | `/login` | `userLogin` | ফর্ম | সার্ভারে রেন্ডার |  |
 | `/login-redirect` | `login` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
 | `/logout` | `logout` | অন্য | অ্যাকশন/রিডাইরেক্ট (পাতা নয়) |  |
-| `/new/product` | `addProduct` | ফর্ম | সার্ভারে রেন্ডার |  |
+| `/new/product` | `addProduct` | ফর্ম | সার্ভারে রেন্ডার | UI-Q14 |
 | `/new/sale` | `newsale` | ফর্ম — মোবাইলে UI-1-এর POS এই ফর্মটাই চালায় | সার্ভারে রেন্ডার | UI-1 (POS) |
 | `/product/details/{id}` | `getProductDetails` | অন্য | AJAX JSON (পাতা নয়) |  |
 | `/product/edit/{id}` | `editProduct` | ফর্ম | সার্ভারে রেন্ডার |  |

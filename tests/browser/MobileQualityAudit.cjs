@@ -35,6 +35,7 @@ const documentRoutes = ['sale-invoice','purchase-invoice','quotation','service-i
 const urls = [...new Set([...routes, ...documentRoutes].map(route => new URL(route.replace(/^\//, ''), base + '/').toString()))];
 const onlyRoutes = (process.env.RN_AUDIT_ONLY || '').split(',').map(value => value.trim()).filter(Boolean);
 const auditedUrls = onlyRoutes.length ? urls.filter(url => onlyRoutes.some(route => new URL(url).pathname.includes(route))) : urls;
+  const scrollEndRoutes = (process.env.RN_AUDIT_SCROLL_END_ROUTES || '').split(',').map(value => value.trim()).filter(Boolean);
 
 function scanAppNativeDialogCalls() {
   const roots = ['public/js', 'resources/views'];
@@ -60,7 +61,11 @@ function scanAppNativeDialogCalls() {
 
 async function inspectPage(page) {
   return page.evaluate(async () => {
-    const visible = element => { const r = element.getBoundingClientRect(), s = getComputedStyle(element); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
+    const visible = element => {
+      const r = element.getBoundingClientRect(), s = getComputedStyle(element);
+      return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'
+        && (!element.closest('details:not([open])') || Boolean(element.closest('summary')));
+    };
     const leaves = [...document.querySelectorAll('body *')].filter(el => el.children.length === 0 && el.textContent.trim() && visible(el));
     const isDocument = /\/documents\//.test(location.pathname);
     const allowed = [13,14,16,17,18,21,30];
@@ -72,6 +77,7 @@ async function inspectPage(page) {
     const cardLike = el => {
       const s = getComputedStyle(el);
       if (el.matches('input,select,textarea,button,label,details,summary,option,table,thead,tbody,tfoot,tr,td,th')) return false;
+      if (el.matches('.card') && el.querySelector('.rn-m-master-card')) return false;
       const namedCard = el.matches('.card,.rn-m-card,article');
       const radius = parseFloat(s.borderTopLeftRadius) > 0;
       const border = parseFloat(s.borderTopWidth) > 0 && s.borderTopStyle !== 'none';
@@ -122,7 +128,56 @@ async function inspectPage(page) {
     // naturally pass over fields while scrolling, but must never hide a field that
     // the user has brought to the end of the form.
     const originalScrollTop = window.scrollY;
+    document.scrollingElement.scrollTop = 0;
+    const contentRoot = document.querySelector('body.rn-app .content-page');
+    const isInFlowContent = element => {
+      let current = element;
+      while (current && current !== contentRoot) {
+        if (['fixed','sticky','absolute'].includes(getComputedStyle(current).position)) return false;
+        current = current.parentElement;
+      }
+      return current === contentRoot;
+    };
+    const contentAtTopBottom = contentRoot ? [...contentRoot.querySelectorAll('*')].filter(el => {
+      const style = getComputedStyle(el), rect = el.getBoundingClientRect();
+      return visible(el) && isInFlowContent(el) && rect.width > 0 && rect.height > 0
+        && (style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none'
+          || (parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== 'none')
+          || (el.children.length === 0 && Boolean(el.textContent.trim())) || el.matches('img,canvas,svg,video'));
+    }).reduce((max, el) => Math.max(max, el.getBoundingClientRect().bottom), 0) : 0;
+    const fixedBottom = [...document.querySelectorAll('.rn-m-tabbar,.rn-m-sticky-actions,.rn-m-admin-actions,.rn-q6-sticky,.rn-q6-payment-footer,.rn-m-fab,.rn-m-master-fab,.rn-m-pos-bar')]
+      .filter(el => visible(el) && getComputedStyle(el).position === 'fixed')
+      .map(el => ({ el, top: el.getBoundingClientRect().top, className: String(el.className || '') }))
+      .sort((a, b) => a.top - b.top);
+    const usableBottom = fixedBottom[0]?.top ?? innerHeight;
+    const shortPageScroll = !isDocument && contentAtTopBottom <= usableBottom + 1 && document.scrollingElement.scrollHeight > innerHeight + 1
+      ? [{ scrollHeight: document.scrollingElement.scrollHeight, viewport: innerHeight, contentBottom: Math.round(contentAtTopBottom), usableBottom: Math.round(usableBottom) }]
+      : [];
     document.scrollingElement.scrollTop = document.scrollingElement.scrollHeight;
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const paintedContent = contentRoot ? [...contentRoot.querySelectorAll('*')].filter(el => {
+      if (!visible(el) || !isInFlowContent(el)) return false;
+      const style = getComputedStyle(el), rect = el.getBoundingClientRect();
+      const hasPaint = style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none'
+        || (parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== 'none');
+      const hasText = Boolean(el.textContent.trim()) && (el.children.length === 0 || el.matches('summary'));
+      const isMedia = el.matches('img,canvas,svg,video');
+      return rect.width > 0 && rect.height > 0 && (hasPaint || hasText || isMedia);
+    }) : [];
+    const lastContent = paintedContent
+      .filter(el => {
+        const rect = el.getBoundingClientRect();
+        return rect.bottom > 0 && rect.top < innerHeight;
+      })
+      .sort((a, b) => b.getBoundingClientRect().bottom - a.getBoundingClientRect().bottom)[0];
+    const lastContentBottom = lastContent ? lastContent.getBoundingClientRect().bottom : 0;
+    const fixedTop = fixedBottom[0] || null;
+    const allowedGap = fixedTop && /rn-m-(?:master-)?fab/.test(fixedTop.className) ? 72 : 24;
+    const gap = fixedTop && lastContent ? fixedTop.top - lastContentBottom : null;
+    const bottomSpacing = document.scrollingElement.scrollHeight > innerHeight + 1
+      && gap !== null && (gap > allowedGap || gap < -2)
+      ? [{ gap: Math.round(gap), allowed: allowedGap, lastContent: lastContent.tagName.toLowerCase()+'.'+String(lastContent.className || '').replace(/\s+/g,'.'), fixed: fixedTop.className }]
+      : [];
     const overlappingControls = [];
     const controls = [...document.querySelectorAll('input,select,textarea')].filter(visible);
     const actionButtons = [...document.querySelectorAll('button')].filter(visible);
@@ -154,7 +209,7 @@ async function inspectPage(page) {
       range.selectNodeContents(el);
       return range.getClientRects().length > 1 || el.scrollWidth > el.clientWidth;
     }).map(el => el.textContent.trim().slice(0,40));
-    return { badFont, badSize, overflow, nestedCards, latinDigits, negativeMoney, emptyAvatars, headingGutter, nativeDialogs, brokenActionIcons, overlappingControls, stickyCoveredFields, unwrappedFlash, wrappedNumbers, isDocument };
+    return { badFont, badSize, overflow, nestedCards, latinDigits, negativeMoney, emptyAvatars, headingGutter, nativeDialogs, brokenActionIcons, overlappingControls, stickyCoveredFields, bottomSpacing, shortPageScroll, unwrappedFlash, wrappedNumbers, isDocument };
   });
 }
 
@@ -189,12 +244,20 @@ async function main() {
     if (findings.length) process.exitCode = 1;
     return;
   }
-  const { chromium, devices } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-  const browser = await chromium.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE || process.env.CHROME_PATH || undefined });
-  const context = await browser.newContext({ ...devices['Pixel 7'], viewport: { width: 390, height: 844 }, locale: 'bn-BD',
-    userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36',
+  const { chromium, webkit, devices } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+  const engineName = process.env.RN_AUDIT_ENGINE === 'webkit' ? 'webkit' : 'chromium';
+  const browserType = engineName === 'webkit' ? webkit : chromium;
+  const browser = await browserType.launch({ headless: true, ...(engineName === 'chromium' ? { executablePath: process.env.BROWSER_EXECUTABLE || process.env.CHROME_PATH || undefined } : {}) });
+  const device = engineName === 'webkit' ? devices['iPhone 14 Pro Max'] : devices['Pixel 7'];
+  const context = await browser.newContext({ ...device, viewport: { width: 390, height: 844 }, locale: 'bn-BD',
+    ...(engineName === 'chromium' ? { userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36' } : {}),
     serviceWorkers: 'block', storageState: process.env.RN_AUDIT_STORAGE_STATE || undefined });
   const page = await context.newPage();
+  await page.addInitScript(() => {
+    const setSafeBottom = () => document.documentElement.style.setProperty('--rn-safe-bottom', '34px');
+    if (document.documentElement) setSafeBottom();
+    else document.addEventListener('DOMContentLoaded', setSafeBottom, { once: true });
+  });
   await page.addInitScript(() => {
     const calls = [];
     Object.defineProperty(window, '__rnNativeDialogCalls', { value: calls, configurable: false, writable: true });
@@ -233,7 +296,29 @@ async function main() {
   // Source candidates are reported separately; only executed native dialogs fail the browser audit.
   const staticDialogCalls = scanAppNativeDialogCalls();
   if (process.argv.includes('--self-test')) {
-    await page.setContent(`<html lang="bn"><head><style>:root{--rn-color-danger:#c4320a} body{margin:0;font:14px Arial} .card{border:1px solid #aaa;border-radius:8px;background:white;padding:8px} .rn-m-number{color:#111} .rn-m-card-avatar{display:inline-block;width:44px;height:44px} .test-sticky{position:fixed;bottom:0;left:0;width:100%;height:30px;background:#ddd} .test-overlap{position:absolute;top:0;left:0;width:100px;height:40px} #overlap-input{position:absolute;top:10px;left:10px;width:120px;height:40px} #covered-input{position:fixed;bottom:0;left:4px;width:80px;height:28px}</style></head><body><h2>শিরোনাম</h2><div class="card"><div class="card">nested</div></div><span>মোট 123</span><span class="rn-m-number">−৳১২</span><span class="rn-m-card-avatar" data-rn-avatar></span><div class="alert">flash outside feedback</div><button><i class="las la-plus"></i>যোগ</button><button class="test-overlap">ওভারল্যাপ</button><input id="overlap-input"><input id="covered-input" name="covered"><div style="height:900px"></div><div class="test-sticky rn-m-sticky-actions">sticky</div></body></html>`);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setContent(`<html lang="bn">
+      <head><meta name="viewport" content="width=device-width, initial-scale=1"><style>
+        :root{--rn-color-danger:#c4320a}
+        body{margin:0;font:14px Arial}
+        .content-page{padding-bottom:400px}
+        .card{border:1px solid #aaa;border-radius:8px;background:white;padding:8px}
+        .rn-m-number{color:#111}
+        .rn-m-card-avatar{display:inline-block;width:44px;height:44px}
+        .test-sticky{position:fixed;bottom:0;left:0;width:100%;height:30px;background:#ddd}
+        .test-overlap{position:absolute;top:0;left:0;width:100px;height:40px}
+        #overlap-input{position:absolute;top:10px;left:10px;width:120px;height:40px}
+        #covered-input{position:fixed;bottom:0;left:4px;width:80px;height:28px}
+      </style></head>
+      <body class="rn-app"><div class="content-page">
+        <h2>শিরোনাম</h2><div class="card"><div class="card">nested</div></div>
+        <span>মোট 123</span><span class="rn-m-number">−৳১২</span>
+        <span class="rn-m-card-avatar" data-rn-avatar></span><div class="alert">flash outside feedback</div>
+        <button><i class="las la-plus"></i>যোগ</button><button class="test-overlap">ওভারল্যাপ</button>
+        <input id="overlap-input"><input id="covered-input" name="covered">
+        <div style="height:900px"></div><p>শেষ কনটেন্ট</p>
+        <div class="test-sticky rn-m-sticky-actions">sticky</div>
+      </div></body></html>`);
     await page.evaluate(() => {
       window.__rnNativeDialogCalls = [];
       for (const method of ['alert', 'confirm', 'prompt']) {
@@ -243,8 +328,10 @@ async function main() {
       alert('bad'); confirm('bad'); prompt('bad');
     });
     const result = await inspectPage(page);
-    const catches = { nested: result.nestedCards.length > 0, latinDigits: result.latinDigits.length > 0, negativeMoney: result.negativeMoney.length > 0, emptyAvatar: result.emptyAvatars.length > 0, headingGutter: result.headingGutter.length > 0, nativeDialogs: result.nativeDialogs.length === 3, brokenActionIcons: result.brokenActionIcons.length > 0, overlappingControls: result.overlappingControls.length > 0, stickyCoveredFields: result.stickyCoveredFields.length > 0, unwrappedFlash: result.unwrappedFlash.length > 0 };
-    fs.writeFileSync(path.join(out, 'audit-selftest.json'), JSON.stringify({ caught: catches, findings: result }, null, 2));
+    await page.setContent(`<html lang="bn"><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0} body.rn-app .content-page{height:40px;padding-bottom:1000px} .rn-m-tabbar{position:fixed;inset:auto 0 0;height:60px;background:#ddd}</style></head><body class="rn-app"><main class="content-page"><p>ছোট পাতা</p></main><nav class="rn-m-tabbar">ট্যাব</nav></body></html>`);
+    const shortResult = await inspectPage(page);
+    const catches = { nested: result.nestedCards.length > 0, latinDigits: result.latinDigits.length > 0, negativeMoney: result.negativeMoney.length > 0, emptyAvatar: result.emptyAvatars.length > 0, headingGutter: result.headingGutter.length > 0, nativeDialogs: result.nativeDialogs.length === 3, brokenActionIcons: result.brokenActionIcons.length > 0, overlappingControls: result.overlappingControls.length > 0, stickyCoveredFields: result.stickyCoveredFields.length > 0, bottomSpacing: result.bottomSpacing.length > 0, shortPageScroll: shortResult.shortPageScroll.length > 0, unwrappedFlash: result.unwrappedFlash.length > 0 };
+    fs.writeFileSync(path.join(out, 'audit-selftest.json'), JSON.stringify({ caught: catches, findings: result, shortPageFindings: shortResult.shortPageScroll }, null, 2));
     await browser.close();
     const missed = Object.entries(catches).filter(([, caught]) => !caught).map(([name]) => name);
     console.log(JSON.stringify({ selfTest: true, caught: catches, missed, report: path.join(out, 'audit-selftest.json') }, null, 2));
@@ -384,7 +471,13 @@ async function main() {
         const result = await inspectPage(page);
         const slug = String(i+1).padStart(3, '0') + '-' + new URL(url).pathname.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').slice(0,50);
         await page.screenshot({ path: path.join(out, slug + '.png'), fullPage: false });
-        for (const check of ['badFont','badSize','nestedCards','latinDigits','negativeMoney','emptyAvatars','headingGutter','nativeDialogs','brokenActionIcons','overlappingControls','stickyCoveredFields','unwrappedFlash']) if (result[check].length) findings.push({ page: url, check, details: result[check] });
+        if (scrollEndRoutes.some(route => new URL(url).pathname.includes(route))) {
+          await page.evaluate(() => { document.scrollingElement.scrollTop = document.scrollingElement.scrollHeight; return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
+          fs.mkdirSync(path.join(out, 'scroll-end'), { recursive: true });
+          await page.screenshot({ path: path.join(out, 'scroll-end', slug + '.png'), fullPage: false });
+          await page.evaluate(() => window.scrollTo(0, 0));
+        }
+        for (const check of ['badFont','badSize','nestedCards','latinDigits','negativeMoney','emptyAvatars','headingGutter','nativeDialogs','brokenActionIcons','overlappingControls','stickyCoveredFields','bottomSpacing','shortPageScroll','unwrappedFlash']) if (result[check].length) findings.push({ page: url, check, details: result[check] });
         if (result.wrappedNumbers.length) findings.push({ page: url, check: 'wrapped-numbers', details: result.wrappedNumbers });
         if (result.overflow) findings.push({ page: url, check: 'horizontal-overflow' });
         if (result.isDocument) {
@@ -398,7 +491,7 @@ async function main() {
         }
       } catch (error) { findings.push({ page: url, check: 'navigation', actual: error.message }); }
     }
-    fs.writeFileSync(path.join(out, 'audit.json'), JSON.stringify({ gate: 'full', locale: auditLocale, viewport: { width: 390, height: 844 }, routes: auditedUrls.length, findings, consoleErrors: errors, networkFlakes, sourceDialogCandidates: staticDialogCalls.length, documentIds }, null, 2));
+    fs.writeFileSync(path.join(out, 'audit.json'), JSON.stringify({ gate: 'full', engine: engineName, safeBottom: '34px', locale: auditLocale, viewport: { width: 390, height: 844 }, routes: auditedUrls.length, findings, consoleErrors: errors, networkFlakes, sourceDialogCandidates: staticDialogCalls.length, documentIds }, null, 2));
   }
   await browser.close();
   console.log(JSON.stringify({ gate: fullGate ? 'full' : 'foundation', routes: fullGate ? auditedUrls.length : undefined, violations: findings.length, consoleErrors: errors.length, networkFlakes: networkFlakes.length, report: path.join(out,'audit.json') }, null, 2));

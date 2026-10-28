@@ -84,7 +84,10 @@ class MobileFormRulesTest extends TestCase
 
         $css = file_get_contents(public_path('css/rn-m-components.css'));
         $this->assertIsString($css);
-        $this->assertStringContainsString('body.rn-app:has(.rn-m-admin-form) .rn-m-tabbar { display: none !important; }', $css);
+        $this->assertStringContainsString('body.rn-app:has(.rn-m-admin-form:not(.rn-m-master-form)) .rn-m-tabbar,', $css);
+        $this->assertStringContainsString('body.rn-app:has(.rn-m-master-form.is-open) .rn-m-tabbar,', $css);
+        $this->assertStringContainsString('body.rn-app:has(.rn-m-master-edit) .rn-m-tabbar { display: none !important; }', $css);
+        $this->assertStringContainsString('body.rn-app:has(.rn-m-admin-actions) { --rn-bottom-reserve: calc(69px + var(--rn-safe-bottom) + 16px); }', $css);
         $this->assertStringContainsString('.rn-m-admin-actions .rn-m-btn', $css);
     }
 }

@@ -3,7 +3,7 @@
     body:has(.rn-q6-purchase) { padding-bottom:0 !important; }
     body:has(.rn-q6-purchase) .rn-mobile-bottom-nav,
     body:has(.rn-q6-purchase) .rn-mobile-tab-bar { display:none !important; }
-    .rn-q6-purchase { --q6-teal:#147a76; --q6-bg:#f4f5f7; display:block; position:relative; min-height:calc(100dvh - var(--rn-mobile-header-height, 0px)); margin:0 -12px; padding-bottom:96px; background:var(--q6-bg); color:#20242d; font-size:var(--rn-type-body); }
+    .rn-q6-purchase { --q6-teal:#147a76; --q6-bg:#f4f5f7; display:block; position:relative; min-height:0; margin:0 -12px; padding-bottom:0; background:var(--q6-bg); color:#20242d; font-size:var(--rn-type-body); }
     .rn-q6-purchase[hidden], .rn-q6-purchase [hidden] { display:none !important; }
     body:has(.rn-q6-purchase) .rn-new-purchase .rn-purchase-layout { display:none !important; }
     .rn-q6-header { display:flex; align-items:center; gap:18px; min-height:84px; padding:14px 18px; background:var(--q6-teal); color:#fff; }

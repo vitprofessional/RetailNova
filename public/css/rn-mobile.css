@@ -14,6 +14,7 @@
     /* ---------- Base ---------- */
     html { -webkit-text-size-adjust: 100%; }
     body.rn-app {
+        --rn-bottom-reserve: calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 16px);
         font-family: var(--rn-font-family);
         background: var(--rn-color-bg);
         color: var(--rn-color-ink);
@@ -31,10 +32,21 @@
     body.rn-app .content-page {
         margin-left: 0 !important;
         width: 100% !important;
-        min-height: 100vh;
-        padding: calc(var(--rn-m-header-h) + 12px) 0 calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 20px) !important;
+        min-height: 0;
+        padding: calc(var(--rn-m-header-h) + 12px) 0 var(--rn-bottom-reserve) !important;
     }
     body.rn-app .content-page > .container-fluid { padding-left: 0; padding-right: 0; max-width: 100%; }
+    body.rn-app .content-page .rn-m-page > :last-child,
+    body.rn-app .content-page .rn-m-page .rn-m-home-section > :last-child,
+    body.rn-app .content-page .rn-m-page .rn-m-form > :last-child,
+    body.rn-app .content-page .rn-m-page .rn-m-form > .rn-m-form-section:last-of-type,
+    body.rn-app .content-page .rn-m-page .rn-m-form > .rn-m-form-accordion:last-of-type,
+    body.rn-app .content-page .rn-m-page > .col-12:last-child > .card:last-child,
+    body.rn-app .content-page .rn-m-page .rn-report-page > .card:last-child,
+    body.rn-app .content-page .rn-m-page .rn-report-page > .col-lg-12:last-child > .card:last-child,
+    body.rn-app .content-page .rn-m-page .rn-report-page > .col-lg-12:has(> .card):not(:has(~ .col-lg-12 > .card)) > .card,
+    body.rn-app .content-page .rn-m-page .rn-new-sale .rn-sale-workspace > .rn-sale-items:last-child { margin-bottom: 0; }
+    body.rn-app .content-page .rn-m-page .rn-report-page > .col-lg-12.mt-3:last-child:not(:has(> .card)) { margin-top: 0 !important; }
     body.rn-app .rn-m-page { width: 100%; min-width: 0; padding-inline: var(--rn-space-4); }
     body.rn-app .rn-m-number { white-space: nowrap; font-variant-numeric: tabular-nums; }
     body.rn-app .rn-m-money-fit { display: inline-block; max-width: 100%; transform-origin: left center; }
@@ -500,7 +512,7 @@
     body.rn-app:has(.rn-m-pos) .rn-sale-product-entry,
     body.rn-app:has(.rn-m-pos) .rn-sale-billing { display: none !important; }
     body.rn-app:has(.rn-m-pos) .rn-sale-layout { display: block; }
-    body.rn-app:has(.rn-m-pos) .content-page { padding-bottom: calc(var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 112px) !important; }
+    body.rn-app:has(.rn-m-pos-bar) { --rn-bottom-reserve: calc(56px + 24px + var(--rn-m-tabbar-h) + var(--rn-safe-bottom) + 16px); }
     .rn-m-pos-search {
         display: flex;
         align-items: center;
@@ -602,6 +614,7 @@
         font-weight: 600;
         line-height: 1.2;
     }
+    body.rn-app .rn-m-pos-bar-btn { min-height: 56px; }
     .rn-m-pos-bar-btn:disabled { background: var(--rn-color-primary-tint); color: var(--rn-color-primary); box-shadow: none; cursor: not-allowed; }
     .rn-m-pos-bar-btn:focus-visible { outline: 3px solid var(--rn-color-ink); outline-offset: 2px; }
     .rn-m-pos-bar-count,
