@@ -8,7 +8,7 @@
     body.rn-app:has(.rn-m-admin-actions) { --rn-bottom-reserve: calc(69px + var(--rn-safe-bottom) + 16px); }
     body.rn-app:has(.rn-m-detail-page):not(:has(.rn-m-sticky-actions)),
     body.rn-app:has(.rn-m-sale-invoice):not(:has(.rn-m-sticky-actions)) { --rn-bottom-reserve: calc(var(--rn-safe-bottom) + 16px); }
-    body.rn-app:has(.rn-q6-purchase) { --rn-bottom-reserve: calc(89px + var(--rn-safe-bottom) + 16px); }
+    body.rn-app:has(.rn-q6-purchase):has(.rn-m-form) { --rn-bottom-reserve: calc(89px + var(--rn-safe-bottom) + 16px); }
 
     .rn-m-profile { flex: 0 0 var(--rn-touch); border: 1px solid color-mix(in srgb, var(--rn-color-on-primary) 30%, transparent); background: color-mix(in srgb, var(--rn-color-on-primary) 14%, transparent); font-size: var(--rn-fs-heading); font-weight: 700; }
     .rn-m-profile:hover, .rn-m-profile:focus-visible { background: color-mix(in srgb, var(--rn-color-on-primary) 22%, transparent); }

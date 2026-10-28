@@ -74,6 +74,8 @@ async function inspectPage(page) {
     const badFont = isDocument ? [] : leaves.filter(el => !isIcon(el) && !/^"?Hind Siliguri"?/i.test(getComputedStyle(el).fontFamily.trim())).slice(0, 12).map(el => ({ text: el.textContent.trim().slice(0,40), font: getComputedStyle(el).fontFamily }));
     const badSize = isDocument ? [] : leaves.filter(el => { const size = parseFloat(getComputedStyle(el).fontSize); return size < 13 || !allowed.some(value => Math.abs(value-size)<0.1); }).slice(0, 20).map(el => ({ text: el.textContent.trim().slice(0,40), size: getComputedStyle(el).fontSize }));
     const overflow = document.documentElement.scrollWidth > innerWidth;
+    const desktopOnlyVisible = [...document.querySelectorAll('[data-desktop-only],.d-none.d-md-block,.d-none.d-lg-block,.d-none.d-xl-block,.d-none.d-xxl-block')]
+      .filter(visible).slice(0, 12).map(el => ({ tag: el.tagName.toLowerCase(), className: String(el.className || ''), text: el.textContent.trim().slice(0, 60) }));
     const cardLike = el => {
       const s = getComputedStyle(el);
       if (el.matches('input,select,textarea,button,label,details,summary,option,table,thead,tbody,tfoot,tr,td,th')) return false;
@@ -209,7 +211,7 @@ async function inspectPage(page) {
       range.selectNodeContents(el);
       return range.getClientRects().length > 1 || el.scrollWidth > el.clientWidth;
     }).map(el => el.textContent.trim().slice(0,40));
-    return { badFont, badSize, overflow, nestedCards, latinDigits, negativeMoney, emptyAvatars, headingGutter, nativeDialogs, brokenActionIcons, overlappingControls, stickyCoveredFields, bottomSpacing, shortPageScroll, unwrappedFlash, wrappedNumbers, isDocument };
+    return { badFont, badSize, overflow, desktopOnlyVisible, nestedCards, latinDigits, negativeMoney, emptyAvatars, headingGutter, nativeDialogs, brokenActionIcons, overlappingControls, stickyCoveredFields, bottomSpacing, shortPageScroll, unwrappedFlash, wrappedNumbers, isDocument };
   });
 }
 
@@ -313,7 +315,7 @@ async function main() {
       <body class="rn-app"><div class="content-page">
         <h2>শিরোনাম</h2><div class="card"><div class="card">nested</div></div>
         <span>মোট 123</span><span class="rn-m-number">−৳১২</span>
-        <span class="rn-m-card-avatar" data-rn-avatar></span><div class="alert">flash outside feedback</div>
+        <span class="rn-m-card-avatar" data-rn-avatar></span><div class="alert">flash outside feedback</div><div data-desktop-only>desktop cart</div>
         <button><i class="las la-plus"></i>যোগ</button><button class="test-overlap">ওভারল্যাপ</button>
         <input id="overlap-input"><input id="covered-input" name="covered">
         <div style="height:900px"></div><p>শেষ কনটেন্ট</p>
@@ -330,7 +332,7 @@ async function main() {
     const result = await inspectPage(page);
     await page.setContent(`<html lang="bn"><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0} body.rn-app .content-page{height:40px;padding-bottom:1000px} .rn-m-tabbar{position:fixed;inset:auto 0 0;height:60px;background:#ddd}</style></head><body class="rn-app"><main class="content-page"><p>ছোট পাতা</p></main><nav class="rn-m-tabbar">ট্যাব</nav></body></html>`);
     const shortResult = await inspectPage(page);
-    const catches = { nested: result.nestedCards.length > 0, latinDigits: result.latinDigits.length > 0, negativeMoney: result.negativeMoney.length > 0, emptyAvatar: result.emptyAvatars.length > 0, headingGutter: result.headingGutter.length > 0, nativeDialogs: result.nativeDialogs.length === 3, brokenActionIcons: result.brokenActionIcons.length > 0, overlappingControls: result.overlappingControls.length > 0, stickyCoveredFields: result.stickyCoveredFields.length > 0, bottomSpacing: result.bottomSpacing.length > 0, shortPageScroll: shortResult.shortPageScroll.length > 0, unwrappedFlash: result.unwrappedFlash.length > 0 };
+    const catches = { nested: result.nestedCards.length > 0, latinDigits: result.latinDigits.length > 0, negativeMoney: result.negativeMoney.length > 0, emptyAvatar: result.emptyAvatars.length > 0, headingGutter: result.headingGutter.length > 0, nativeDialogs: result.nativeDialogs.length === 3, brokenActionIcons: result.brokenActionIcons.length > 0, overlappingControls: result.overlappingControls.length > 0, stickyCoveredFields: result.stickyCoveredFields.length > 0, bottomSpacing: result.bottomSpacing.length > 0, shortPageScroll: shortResult.shortPageScroll.length > 0, desktopOnlyVisible: result.desktopOnlyVisible.length > 0, unwrappedFlash: result.unwrappedFlash.length > 0 };
     fs.writeFileSync(path.join(out, 'audit-selftest.json'), JSON.stringify({ caught: catches, findings: result, shortPageFindings: shortResult.shortPageScroll }, null, 2));
     await browser.close();
     const missed = Object.entries(catches).filter(([, caught]) => !caught).map(([name]) => name);
@@ -344,23 +346,34 @@ async function main() {
       const email = process.env.RN_AUDIT_EMAIL;
       const password = process.env.RN_AUDIT_PASSWORD;
       if (!email || !password) throw new Error('Set RN_AUDIT_STORAGE_STATE or RN_AUDIT_EMAIL and RN_AUDIT_PASSWORD.');
-      await page.locator('#userMail,input[name=userMail],input[type=email],input[name=email],input[name=mail],input[name=username]').first().fill(email);
-      await page.locator('#password,input[type=password]').first().fill(password);
-      await Promise.all([page.waitForLoadState('networkidle'), page.locator('.rn-login-form button[type=submit],.rn-sign-in-button').first().click()]);
+      await page.locator('form.rn-login-form #userMail,form.rn-login-form input[name=userMail],form.rn-login-form input[type=email],form.rn-login-form input[name=email],form.rn-login-form input[name=mail],form.rn-login-form input[name=username]').first().fill(email);
+      await page.locator('form.rn-login-form #password,form.rn-login-form input[type=password]').first().fill(password);
+      await Promise.all([page.waitForLoadState('networkidle'), page.locator('form.rn-login-form button[type=submit]').first().click()]);
     }
   } else {
     await page.goto(base + '/dashboard', { waitUntil: 'networkidle' });
   }
+  // Complete authentication/navigation before inspecting the account locale or
+  // mobile shell; WebKit can resolve the form POST before its redirect settles.
+  await page.goto(base + '/dashboard', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(500);
 
   // The server resolves locale from the authenticated admin profile, not Accept-Language.
   // Explicitly switch the isolated audit account to Bengali before capturing the UI baseline.
   if ((await page.locator('html').getAttribute('lang')) !== 'bn') {
     const more = page.locator('[data-rn-tab="more"]');
-    if (await more.count()) await more.click();
+    if (await more.count()) {
+      await more.click();
+      await page.waitForFunction(() => {
+        const sheet = document.querySelector('[data-rn-more]');
+        return sheet && getComputedStyle(sheet).display !== 'none' && sheet.getBoundingClientRect().height > 0;
+      }, { timeout: 5000 });
+    }
     const bangla = page.locator('[data-rn-language] button[name="preferred_locale"][value="bn"]');
     if (await bangla.count()) {
-      await bangla.click();
-      await page.waitForFunction(() => String(document.documentElement.lang || '').startsWith('bn'), { timeout: 15000 });
+      await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle' }), bangla.click()]);
+      await page.goto(base + '/dashboard', { waitUntil: 'networkidle' });
+      await page.waitForTimeout(500);
     }
   }
   // Locale selection can leave the More sheet open. Close it before page checks so
@@ -477,7 +490,7 @@ async function main() {
           await page.screenshot({ path: path.join(out, 'scroll-end', slug + '.png'), fullPage: false });
           await page.evaluate(() => window.scrollTo(0, 0));
         }
-        for (const check of ['badFont','badSize','nestedCards','latinDigits','negativeMoney','emptyAvatars','headingGutter','nativeDialogs','brokenActionIcons','overlappingControls','stickyCoveredFields','bottomSpacing','shortPageScroll','unwrappedFlash']) if (result[check].length) findings.push({ page: url, check, details: result[check] });
+        for (const check of ['badFont','badSize','nestedCards','latinDigits','negativeMoney','emptyAvatars','headingGutter','nativeDialogs','brokenActionIcons','overlappingControls','stickyCoveredFields','bottomSpacing','shortPageScroll','desktopOnlyVisible','unwrappedFlash']) if (result[check].length) findings.push({ page: url, check, details: result[check] });
         if (result.wrappedNumbers.length) findings.push({ page: url, check: 'wrapped-numbers', details: result.wrappedNumbers });
         if (result.overflow) findings.push({ page: url, check: 'horizontal-overflow' });
         if (result.isDocument) {
