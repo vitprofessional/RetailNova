@@ -107,6 +107,17 @@ async function inspectPage(page) {
     const headingGutter = [...document.querySelectorAll('h2,h3')].filter(visible).filter(el => el.getBoundingClientRect().left < 16)
       .slice(0, 12).map(el => ({ text: el.textContent.trim().slice(0,60), left: Math.round(el.getBoundingClientRect().left) }));
     const nativeDialogs = (window.__rnNativeDialogCalls || []).map(call => ({ method: call.method }));
+    const actionIconCandidates = [...document.querySelectorAll('button i,button svg,a i,a svg,button [class*="ri-"],a [class*="ri-"],button [class*="la-"],a [class*="la-"],button [class*="fa-"],a [class*="fa-"]')];
+    const brokenActionIcons = actionIconCandidates
+      .filter(icon => {
+        const style = getComputedStyle(icon);
+        return visible(icon.parentElement) && style.display !== 'none' && style.visibility !== 'hidden';
+      }).filter(icon => {
+        const rect = icon.getBoundingClientRect();
+        const pseudo = getComputedStyle(icon, '::before');
+        const hasPseudoGlyph = pseudo.content && pseudo.content !== 'none' && pseudo.content !== 'normal' && pseudo.content !== '""';
+        return rect.width < 2 || (!icon.matches('svg') && !icon.querySelector('svg') && !hasPseudoGlyph);
+      }).slice(0, 20).map(icon => ({ className: typeof icon.className === 'string' ? icon.className : icon.getAttribute('class'), width: Math.round(icon.getBoundingClientRect().width), glyph: getComputedStyle(icon, '::before').content }));
     const unwrappedFlash = [...document.querySelectorAll('.alert,.alert-success,.alert-danger,.alert-warning,[data-flash-message]')]
       .filter(visible).filter(el => !el.closest('[data-rn-feedback],[data-rn-toast],[data-rn-error-banner]'))
       .slice(0, 12).map(el => ({ text: el.textContent.trim().slice(0,100), className: typeof el.className === 'string' ? el.className : '' }));
@@ -115,7 +126,7 @@ async function inspectPage(page) {
       range.selectNodeContents(el);
       return range.getClientRects().length > 1 || el.scrollWidth > el.clientWidth;
     }).map(el => el.textContent.trim().slice(0,40));
-    return { badFont, badSize, overflow, nestedCards, latinDigits, negativeMoney, emptyAvatars, headingGutter, nativeDialogs, unwrappedFlash, wrappedNumbers, isDocument };
+    return { badFont, badSize, overflow, nestedCards, latinDigits, negativeMoney, emptyAvatars, headingGutter, nativeDialogs, brokenActionIcons, unwrappedFlash, wrappedNumbers, isDocument };
   });
 }
 
@@ -194,7 +205,7 @@ async function main() {
   // Source candidates are reported separately; only executed native dialogs fail the browser audit.
   const staticDialogCalls = scanAppNativeDialogCalls();
   if (process.argv.includes('--self-test')) {
-    await page.setContent(`<html lang="bn"><head><style>:root{--rn-color-danger:#c4320a} body{margin:0;font:14px Arial} .card{border:1px solid #aaa;border-radius:8px;background:white;padding:8px} .rn-m-number{color:#111} .rn-m-card-avatar{display:inline-block;width:44px;height:44px}</style></head><body><h2>শিরোনাম</h2><div class="card"><div class="card">nested</div></div><span>মোট 123</span><span class="rn-m-number">−৳১২</span><span class="rn-m-card-avatar" data-rn-avatar></span><div class="alert">flash outside feedback</div></body></html>`);
+    await page.setContent(`<html lang="bn"><head><style>:root{--rn-color-danger:#c4320a} body{margin:0;font:14px Arial} .card{border:1px solid #aaa;border-radius:8px;background:white;padding:8px} .rn-m-number{color:#111} .rn-m-card-avatar{display:inline-block;width:44px;height:44px}</style></head><body><h2>শিরোনাম</h2><div class="card"><div class="card">nested</div></div><span>মোট 123</span><span class="rn-m-number">−৳১২</span><span class="rn-m-card-avatar" data-rn-avatar></span><div class="alert">flash outside feedback</div><button><i class="las la-plus"></i>যোগ</button></body></html>`);
     await page.evaluate(() => {
       window.__rnNativeDialogCalls = [];
       for (const method of ['alert', 'confirm', 'prompt']) {
@@ -204,7 +215,7 @@ async function main() {
       alert('bad'); confirm('bad'); prompt('bad');
     });
     const result = await inspectPage(page);
-    const catches = { nested: result.nestedCards.length > 0, latinDigits: result.latinDigits.length > 0, negativeMoney: result.negativeMoney.length > 0, emptyAvatar: result.emptyAvatars.length > 0, headingGutter: result.headingGutter.length > 0, nativeDialogs: result.nativeDialogs.length === 3, unwrappedFlash: result.unwrappedFlash.length > 0 };
+    const catches = { nested: result.nestedCards.length > 0, latinDigits: result.latinDigits.length > 0, negativeMoney: result.negativeMoney.length > 0, emptyAvatar: result.emptyAvatars.length > 0, headingGutter: result.headingGutter.length > 0, nativeDialogs: result.nativeDialogs.length === 3, brokenActionIcons: result.brokenActionIcons.length > 0, unwrappedFlash: result.unwrappedFlash.length > 0 };
     fs.writeFileSync(path.join(out, 'audit-selftest.json'), JSON.stringify({ caught: catches, findings: result }, null, 2));
     await browser.close();
     const missed = Object.entries(catches).filter(([, caught]) => !caught).map(([name]) => name);
@@ -345,7 +356,7 @@ async function main() {
         const result = await inspectPage(page);
         const slug = String(i+1).padStart(3, '0') + '-' + new URL(url).pathname.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').slice(0,50);
         await page.screenshot({ path: path.join(out, slug + '.png'), fullPage: false });
-        for (const check of ['badFont','badSize','nestedCards','latinDigits','negativeMoney','emptyAvatars','headingGutter','nativeDialogs','unwrappedFlash']) if (result[check].length) findings.push({ page: url, check, details: result[check] });
+        for (const check of ['badFont','badSize','nestedCards','latinDigits','negativeMoney','emptyAvatars','headingGutter','nativeDialogs','brokenActionIcons','unwrappedFlash']) if (result[check].length) findings.push({ page: url, check, details: result[check] });
         if (result.wrappedNumbers.length) findings.push({ page: url, check: 'wrapped-numbers', details: result.wrappedNumbers });
         if (result.overflow) findings.push({ page: url, check: 'horizontal-overflow' });
         if (result.isDocument) {

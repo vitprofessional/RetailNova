@@ -14,7 +14,7 @@
                 <div class="col-12 col-md-4 mb-2"><label>{{ __('common.customer') }}</label><select name="customer_id" class="form-control"><option value="">{{ __('common.all') }}</option>@foreach($customers as $customer)<option value="{{ $customer->id }}" {{ (string)request('customer_id') === (string)$customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>@endforeach</select></div>
                 <div class="col-12 col-md-2 mb-2"><button type="submit" class="btn btn-primary w-100">{{ __('common.filter') }}</button></div>
             </form>
-            <div class="d-flex justify-content-end my-2"><a class="btn btn-outline-primary" href="{{ route('admin.provideServices.missing.export', request()->query()) }}"><i class="las la-download"></i> {{ __('common.export') }}</a></div>
+            <div class="d-flex justify-content-end my-2"><a class="btn btn-outline-primary" href="{{ route('admin.provideServices.missing.export', request()->query()) }}"><i class="ri-download-line" aria-hidden="true"></i> {{ __('common.export') }}</a></div>
             <div id="reportSpinner" class="d-none" role="status">{{ __('common.loading') }}</div>
             <div id="reportContent">@include('admin.partials.provide_services_table', ['rows' => $rows])</div>
         </div>

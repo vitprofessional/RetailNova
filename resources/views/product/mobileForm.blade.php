@@ -38,7 +38,7 @@
             <div class="rn-m-field-with-trailing-icon">
                 <x-m.field name="barCode" id="barCode" :label="__('inventory.barcode')"
                            :value="$profile->barCode ?? ''" maxlength="190" autocomplete="off" />
-                <i class="las la-barcode" aria-hidden="true"></i>
+                <i class="ri-barcode-line" aria-hidden="true"></i>
             </div>
 
             <div class="rn-m-form-grid rn-m-form-grid--2">
@@ -47,14 +47,14 @@
                                :options="['' => __('inventory.select')] + collect($categoryList)->pluck('name', 'id')->all()"
                                :value="$selectedCategory" />
                     <button type="button" class="rn-m-form-quick-add" data-toggle="modal" data-target="#categoryModal"
-                            aria-label="{{ __('inventory.create_category') }}"><i class="las la-plus" aria-hidden="true"></i></button>
+                            aria-label="{{ __('inventory.create_category') }}"><i class="ri-add-line" aria-hidden="true"></i></button>
                 </div>
                 <div class="rn-m-field-with-action">
                     <x-m.field name="unitName" id="unitName" :label="__('inventory.unit')"
                                :options="collect($productUnitList)->pluck('name', 'id')->all()"
                                :value="$selectedUnit" />
                     <button type="button" class="rn-m-form-quick-add" data-toggle="modal" data-target="#productUnitModal"
-                            aria-label="{{ __('inventory.create_product_unit') }}"><i class="las la-plus" aria-hidden="true"></i></button>
+                            aria-label="{{ __('inventory.create_product_unit') }}"><i class="ri-add-line" aria-hidden="true"></i></button>
                 </div>
             </div>
         </x-m.form-section>
@@ -65,14 +65,14 @@
         </x-m.form-section>
 
         <details class="rn-m-form-accordion" @if($errors->has('details') || $errors->has('brand')) open @endif>
-            <summary>{{ __('inventory.more_information') }} <i class="las la-angle-down" aria-hidden="true"></i></summary>
+            <summary>{{ __('inventory.more_information') }} <i class="ri-arrow-down-s-line" aria-hidden="true"></i></summary>
             <div class="rn-m-form-accordion-body">
                 <div class="rn-m-field-with-action">
                     <x-m.field name="brand" id="brand" :label="__('inventory.brand')"
                                :options="['' => __('inventory.select')] + collect($brandList)->pluck('name', 'id')->all()"
                                :value="$selectedBrand" />
                     <button type="button" class="rn-m-form-quick-add" data-toggle="modal" data-target="#createBrand"
-                            aria-label="{{ __('inventory.create_brand') }}"><i class="las la-plus" aria-hidden="true"></i></button>
+                            aria-label="{{ __('inventory.create_brand') }}"><i class="ri-add-line" aria-hidden="true"></i></button>
                 </div>
                 <x-m.field name="details" id="details" type="textarea" :label="__('inventory.details')"
                            :value="$profile->details ?? ''" maxlength="1000" />

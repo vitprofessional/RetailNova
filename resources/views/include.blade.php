@@ -23,7 +23,9 @@
     @endmobile
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/fortawesome/fontawesome-free/css/all.min.css">
     {{-- Libraries load from public/vendor/ (App\Support\VendorAsset); a missing local copy falls back to its CDN. --}}
-    <link rel="stylesheet" href="{{ \App\Support\VendorAsset::url('line-awesome/css/line-awesome.min.css', 'https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css') }}">
+    @desktop
+        <link rel="stylesheet" href="{{ \App\Support\VendorAsset::url('line-awesome/css/line-awesome.min.css', 'https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css') }}">
+    @enddesktop
     <link rel="stylesheet" href="{{asset('eshop')}}/assets/vendor/remixicon/fonts/remixicon.css">
     @if($rnFontAwesome = \App\Support\VendorAsset::local('fontawesome/css/all.min.css'))
         <link rel="stylesheet" href="{{ $rnFontAwesome }}">
